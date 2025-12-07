@@ -7,6 +7,25 @@
   <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-  {{ content | safe }}
+  <header class="header">
+    <div class="container">
+      <h1 class="header-title">HabitualOS</h1>
+      <p class="header-subtitle">Your Personal AI Orchestration Platform</p>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      {{ content | safe }}
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="text-muted">&copy; 2025 HabitualOS</p>
+    </div>
+  </footer>
+
+  <script src="/scripts/app.js"></script>
 </body>
 </html>

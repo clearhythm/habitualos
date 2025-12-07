@@ -9,6 +9,42 @@
   }
 }
 
+// Header
+.header {
+  background: $color-bg;
+  border-bottom: 1px solid $color-border;
+  padding: $space-lg 0;
+  margin-bottom: $space-xl;
+}
+
+.header-title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  color: $color-primary;
+  margin: 0;
+}
+
+.header-subtitle {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: $space-xs 0 0 0;
+}
+
+// Main content
+.main {
+  min-height: calc(100vh - 200px);
+  padding-bottom: $space-2xl;
+}
+
+// Footer
+.footer {
+  background: $color-bg-muted;
+  border-top: 1px solid $color-border;
+  padding: $space-lg 0;
+  margin-top: $space-2xl;
+  text-align: center;
+}
+
 .container-narrow {
   max-width: 800px;
   margin: 0 auto;
