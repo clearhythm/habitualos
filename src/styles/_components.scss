@@ -1,0 +1,323 @@
+// Buttons
+.btn {
+  display: inline-block;
+  padding: $space-sm $space-lg;
+  font-size: $font-size-base;
+  font-weight: 500;
+  text-align: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background-color: $color-primary;
+  color: white;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+.btn-success {
+  background-color: $color-success;
+  color: white;
+
+  &:hover {
+    background-color: darken($color-success, 10%);
+  }
+}
+
+.btn-secondary {
+  background-color: $color-bg-muted;
+  color: $color-text;
+
+  &:hover {
+    background-color: darken($color-bg-muted, 5%);
+  }
+}
+
+.btn-danger {
+  background-color: $color-danger;
+  color: white;
+
+  &:hover {
+    background-color: darken($color-danger, 10%);
+  }
+}
+
+// Cards
+.card {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-lg;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.card-clickable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: $color-primary;
+    transform: translateY(-2px);
+  }
+}
+
+.card-title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+  color: $color-text;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-md;
+}
+
+// Badges
+.badge {
+  display: inline-block;
+  padding: $space-xs $space-sm;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-high {
+  background-color: lighten($color-danger, 35%);
+  color: $color-danger;
+}
+
+.badge-medium {
+  background-color: lighten($color-warning, 35%);
+  color: darken($color-warning, 20%);
+}
+
+.badge-low {
+  background-color: lighten($color-primary, 35%);
+  color: $color-primary;
+}
+
+.badge-open {
+  background-color: lighten($color-primary, 35%);
+  color: $color-primary;
+}
+
+.badge-in-progress {
+  background-color: lighten($color-warning, 35%);
+  color: darken($color-warning, 20%);
+}
+
+.badge-completed {
+  background-color: lighten($color-success, 35%);
+  color: $color-success;
+}
+
+.badge-dismissed {
+  background-color: $color-bg-muted;
+  color: $color-text-muted;
+}
+
+// Forms
+.form-group {
+  margin-bottom: $space-lg;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: $space-sm;
+  color: $color-text;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: $space-sm $space-md;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+// Chat interface
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  background-color: $color-bg-muted;
+  border-radius: 8px;
+  margin-bottom: $space-md;
+  max-height: 500px;
+}
+
+.chat-message {
+  padding: $space-md;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-message-user {
+  background-color: $color-primary;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message-assistant {
+  background-color: white;
+  color: $color-text;
+  align-self: flex-start;
+  border: 1px solid $color-border;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-form {
+  display: flex;
+  gap: $space-sm;
+
+  .input {
+    flex: 1;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
+// Progress bar
+.progress {
+  background-color: $color-bg-muted;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+  margin: $space-md 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: $color-success;
+  transition: width 0.3s ease;
+}
+
+// Breadcrumb
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  margin-bottom: $space-lg;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  a {
+    color: $color-primary;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .separator {
+    color: $color-text-muted;
+  }
+}
+
+// Artifacts list
+.artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.artifact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-md;
+  background: $color-bg-muted;
+  border-radius: 6px;
+  border: 1px solid $color-border;
+
+  &:hover {
+    background: darken($color-bg-muted, 2%);
+  }
+}
+
+.artifact-info {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+}
+
+.artifact-icon {
+  font-size: $font-size-2xl;
+}
+
+.artifact-title {
+  font-weight: 500;
+}
+
+.artifact-meta {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.artifact-actions {
+  display: flex;
+  gap: $space-sm;
+}
