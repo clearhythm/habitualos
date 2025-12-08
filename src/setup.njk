@@ -4,63 +4,11 @@ layout: base.njk
 permalink: /setup/
 ---
 
+<script>
+  // Redirect to dashboard - it will auto-create and redirect to setup action
+  window.location.href = '/';
+</script>
+
 <div class="container-narrow">
-  <h2 class="mb-lg">Welcome to HabitualOS</h2>
-  <p class="text-muted mb-xl">Let's create your NorthStar goal</p>
-
-  <form id="setup-form" class="card">
-    <div class="form-group">
-      <label class="label" for="title">Goal Title:</label>
-      <input
-        type="text"
-        id="title"
-        name="title"
-        class="input"
-        placeholder="e.g., Build HabitualOS MVP"
-        required
-      />
-    </div>
-
-    <div class="form-group">
-      <label class="label" for="goal">Goal Description:</label>
-      <textarea
-        id="goal"
-        name="goal"
-        class="textarea"
-        placeholder="Describe what you want to achieve..."
-        required
-      ></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="label" for="success_criteria">Success Criteria (one per line):</label>
-      <textarea
-        id="success_criteria"
-        name="success_criteria"
-        class="textarea"
-        placeholder="Working UI&#10;Agent generates actions&#10;Artifacts stored"
-        required
-      ></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="label" for="timeline">Timeline:</label>
-      <input
-        type="text"
-        id="timeline"
-        name="timeline"
-        class="input"
-        placeholder="e.g., December 2025"
-        required
-      />
-    </div>
-
-    <button type="submit" class="btn btn-primary" id="submit-btn">
-      Create NorthStar & Generate Actions
-    </button>
-
-    <div id="loading-state" class="mt-md" style="display: none;">
-      <p class="text-muted">Generating your action plan...</p>
-    </div>
-  </form>
+  <p class="text-muted">Redirecting to your agent...</p>
 </div>

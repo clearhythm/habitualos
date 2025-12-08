@@ -6,7 +6,7 @@
 // ============================================================================
 
 /**
- * Load and display dashboard data (NorthStar + Actions)
+ * Load and display dashboard data (North Star + Actions)
  */
 async function loadDashboard() {
   const loadingEl = document.querySelector('#loading-dashboard');
@@ -14,27 +14,33 @@ async function loadDashboard() {
   const dashboardContentEl = document.querySelector('#dashboard-content');
 
   try {
-    // Fetch NorthStar - for PoC we assume there's only one
-    const northstarResponse = await fetch('/api/northstar/get');
+    // Fetch North Star - for PoC we assume there's only one
+    const northstarResponse = await fetch('/api/northstar-get');
     const northstarData = await northstarResponse.json();
 
     if (!northstarData.success || !northstarData.northstar) {
-      // No NorthStar exists yet, show setup prompt
+      // No North Star exists yet, show setup prompt
       loadingEl.style.display = 'none';
       noNorthstarEl.style.display = 'block';
       return;
     }
 
+    // If setup action was just created, redirect to it
+    if (northstarData.setupActionId) {
+      window.location.href = `/action/${northstarData.setupActionId}`;
+      return;
+    }
+
     // Fetch all actions
-    const actionsResponse = await fetch('/api/actions');
+    const actionsResponse = await fetch('/api/actions-list');
     const actionsData = await actionsResponse.json();
 
     if (!actionsData.success) {
       throw new Error('Failed to load actions');
     }
 
-    // Display NorthStar
-    displayNorthStar(northstarData.northstar);
+    // Display North Star
+    displayNorthStar(northstarData.northstar, actionsData.actions || []);
 
     // Display Actions
     displayActions(actionsData.actions || []);
@@ -50,15 +56,65 @@ async function loadDashboard() {
 }
 
 /**
- * Display NorthStar data
+ * Display North Star data and agent cards
  */
-function displayNorthStar(northstar) {
-  document.querySelector('#northstar-title').textContent = northstar.title;
-  document.querySelector('#northstar-goal').textContent = northstar.goal;
-  document.querySelector('#northstar-timeline').textContent = northstar.timeline || 'Not specified';
+function displayNorthStar(northstar, actions) {
+  const runUndefined = document.querySelector('#northstar-undefined');
+  const runDefined = document.querySelector('#northstar-defined');
+  const configUndefined = document.querySelector('#config-undefined');
+  const configDefined = document.querySelector('#config-defined');
+  const statusBadge = document.querySelector('#agent-status');
+
+  // Find the "Define Your North Star Goal" action
+  const setupAction = actions.find(a => a.title === 'Define Your North Star Goal');
+
+  // North Star is only "defined" if the setup action is completed
+  const isUndefined = !setupAction || setupAction.state !== 'completed';
+
+  if (isUndefined) {
+    // Show undefined state - Run card
+    runUndefined.style.display = 'block';
+    runDefined.style.display = 'none';
+
+    // Show undefined state - Config card
+    configUndefined.style.display = 'block';
+    configDefined.style.display = 'none';
+
+    // Link to the setup action
+    if (setupAction) {
+      const createLink = document.querySelector('#create-northstar-link');
+      const configLink = document.querySelector('#config-northstar-link');
+      createLink.href = `/action/${setupAction.id}`;
+      configLink.href = `/action/${setupAction.id}`;
+    }
+  } else {
+    // Show defined state - Run card
+    runUndefined.style.display = 'none';
+    runDefined.style.display = 'block';
+
+    // Show defined state - Config card
+    configUndefined.style.display = 'none';
+    configDefined.style.display = 'block';
+
+    document.querySelector('#config-northstar-title').textContent = northstar.title;
+  }
+
+  // Update Live Stats card
+  const completedCount = actions.filter(a => a.state === 'completed').length;
+  document.querySelector('#actions-completed-count').textContent = completedCount;
+
+  // Get last completed action timestamp
+  const completedActions = actions.filter(a => a.state === 'completed' && a.updated_at);
+  if (completedActions.length > 0) {
+    const lastCompleted = completedActions.sort((a, b) =>
+      new Date(b.updated_at) - new Date(a.updated_at)
+    )[0];
+    document.querySelector('#last-run-time').textContent = formatDate(lastCompleted.updated_at);
+  } else {
+    document.querySelector('#last-run-time').textContent = 'Never';
+  }
 
   // Update status badge
-  const statusBadge = document.querySelector('#northstar-status');
   statusBadge.textContent = northstar.status === 'active' ? 'Active' : northstar.status;
   statusBadge.className = `badge badge-${northstar.status === 'active' ? 'open' : 'completed'}`;
 }
@@ -94,9 +150,6 @@ function displayActions(actions) {
     toggleBtn.textContent = `Show Completed (${completedActions.length})`;
     toggleBtn.style.display = 'inline-block';
   }
-
-  // Calculate and display progress
-  displayProgress(actions);
 }
 
 /**
@@ -170,7 +223,7 @@ async function loadActionDetail() {
   }
 
   try {
-    const response = await fetch(`/api/action/${actionId}`);
+    const response = await fetch(`/api/action-get/${actionId}`);
     const data = await response.json();
 
     if (!data.success || !data.action) {
@@ -272,7 +325,7 @@ function displayArtifacts(artifacts) {
 window.viewArtifact = async function(artifactId) {
   try {
     const actionId = window.currentActionId;
-    const response = await fetch(`/api/action/${actionId}`);
+    const response = await fetch(`/api/action-get/${actionId}`);
     const data = await response.json();
 
     if (data.success && data.artifacts) {
@@ -298,7 +351,7 @@ window.viewArtifact = async function(artifactId) {
 async function sendMessage(actionId, message) {
   const chatLoadingEl = document.querySelector('#chat-loading');
   const submitBtn = document.querySelector('#chat-form button[type="submit"]');
-  const messageInput = document.querySelector('#chat-form input[name="message"]');
+  const messageInput = document.querySelector('#chat-form textarea[name="message"]');
 
   try {
     // Show loading state
@@ -310,7 +363,7 @@ async function sendMessage(actionId, message) {
     appendMessage('user', message, true);
     messageInput.value = '';
 
-    const response = await fetch(`/api/action/${actionId}/chat`, {
+    const response = await fetch(`/api/action-chat/${actionId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
@@ -321,6 +374,13 @@ async function sendMessage(actionId, message) {
     if (data.success) {
       // Append assistant response
       appendMessage('assistant', data.response, true);
+
+      // If North Star was updated, redirect to dashboard after a brief delay
+      if (data.north_star_updated) {
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      }
     } else {
       console.error('Failed to send message:', data.error);
       alert('Failed to send message. Please try again.');
@@ -351,7 +411,13 @@ function appendMessage(role, content, scroll = true) {
 
   const messageDiv = document.createElement('div');
   messageDiv.className = `chat-message chat-message-${role}`;
-  messageDiv.textContent = content;
+
+  // Render markdown for assistant messages, plain text for user messages
+  if (role === 'assistant') {
+    messageDiv.innerHTML = marked.parse(content);
+  } else {
+    messageDiv.textContent = content;
+  }
 
   messagesContainer.appendChild(messageDiv);
 
@@ -374,7 +440,7 @@ function initChatForm() {
   chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const input = e.target.querySelector('input[name="message"]');
+    const input = e.target.querySelector('textarea[name="message"]');
     const message = input.value.trim();
 
     if (!message) return;
@@ -390,62 +456,110 @@ function initChatForm() {
 }
 
 /**
- * Handle setup form submission
+ * Handle setup chat - conversational North Star creation
  */
-function initSetupForm() {
-  const setupForm = document.querySelector('#setup-form');
-  if (!setupForm) return;
+function initSetupChat() {
+  const setupChatForm = document.querySelector('#setup-chat-form');
+  if (!setupChatForm) return;
 
-  setupForm.addEventListener('submit', async (e) => {
+  // Store chat history on client side
+  const chatHistory = [];
+
+  setupChatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = new FormData(e.target);
-    const successCriteria = formData.get('success_criteria')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
+    const input = e.target.querySelector('textarea[name="message"]');
+    const message = input.value.trim();
 
-    const data = {
-      title: formData.get('title'),
-      goal: formData.get('goal'),
-      success_criteria: successCriteria,
-      timeline: formData.get('timeline')
-    };
+    if (!message) return;
 
-    const submitBtn = document.querySelector('#submit-btn');
-    const loadingState = document.querySelector('#loading-state');
-
-    // Show loading state
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Creating...';
-    loadingState.style.display = 'block';
+    const loadingEl = document.querySelector('#setup-loading');
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const messagesContainer = document.querySelector('#setup-messages');
 
     try {
-      const response = await fetch('/api/northstar/create', {
+      // Show loading state
+      loadingEl.style.display = 'block';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      // Append user message immediately
+      appendSetupMessage('user', message);
+      chatHistory.push({ role: 'user', content: message });
+      input.value = '';
+
+      // Send to setup-chat API
+      const response = await fetch('/api/setup-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ message, chatHistory })
       });
 
-      const result = await response.json();
+      const data = await response.json();
 
-      if (result.success) {
-        // Redirect to dashboard
-        window.location.href = '/';
-      } else {
-        alert(result.error || 'Failed to create NorthStar. Please try again.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Create NorthStar & Generate Actions';
-        loadingState.style.display = 'none';
+      if (!data.success) {
+        alert('Failed to send message. Please try again.');
+        return;
+      }
+
+      // Append assistant response
+      appendSetupMessage('assistant', data.response);
+      chatHistory.push({ role: 'assistant', content: data.response });
+
+      // Check if ready to create North Star
+      if (data.ready && data.northstarData) {
+        // Show final loading state
+        submitBtn.textContent = 'Creating...';
+        input.disabled = true;
+
+        // Create the North Star
+        const createResponse = await fetch('/api/northstar-create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data.northstarData)
+        });
+
+        const createResult = await createResponse.json();
+
+        if (createResult.success) {
+          // Redirect to dashboard
+          window.location.href = '/';
+        } else {
+          alert(createResult.error || 'Failed to create North Star. Please try again.');
+          input.disabled = false;
+        }
       }
     } catch (error) {
-      console.error('Error creating NorthStar:', error);
+      console.error('Error in setup chat:', error);
       alert('Network error. Please try again.');
+    } finally {
+      // Hide loading state
+      loadingEl.style.display = 'none';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Create NorthStar & Generate Actions';
-      loadingState.style.display = 'none';
+      submitBtn.textContent = 'Send';
     }
   });
+}
+
+/**
+ * Append a message to the setup chat UI
+ */
+function appendSetupMessage(role, content) {
+  const messagesContainer = document.querySelector('#setup-messages');
+  if (!messagesContainer) return;
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `chat-message chat-message-${role}`;
+
+  // Render markdown for assistant messages, plain text for user messages
+  if (role === 'assistant') {
+    messageDiv.innerHTML = marked.parse(content);
+  } else {
+    messageDiv.textContent = content;
+  }
+
+  messagesContainer.appendChild(messageDiv);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 /**
@@ -464,7 +578,7 @@ function initActionControls() {
       completeBtn.textContent = 'Completing...';
 
       try {
-        const response = await fetch(`/api/action/${actionId}/complete`, {
+        const response = await fetch(`/api/action-complete/${actionId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -500,7 +614,7 @@ function initActionControls() {
       dismissBtn.textContent = 'Dismissing...';
 
       try {
-        const response = await fetch(`/api/action/${actionId}/dismiss`, {
+        const response = await fetch(`/api/action-dismiss/${actionId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reason: reason.trim() })
@@ -543,7 +657,7 @@ function initActionControls() {
       generateBtn.textContent = 'Generating...';
 
       try {
-        const response = await fetch(`/api/action/${actionId}/generate`, {
+        const response = await fetch(`/api/action-generate/${actionId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type, title: title.trim() })
@@ -688,10 +802,8 @@ function initPage() {
     loadActionDetail();
     initChatForm();
     initActionControls();
-  } else if (path === '/setup' || path === '/setup/') {
-    // Setup page
-    initSetupForm();
   }
+  // /setup page now just redirects to dashboard
 }
 
 // ============================================================================

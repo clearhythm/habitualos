@@ -67,12 +67,14 @@
 .card {
   background: $color-bg;
   border: 1px solid $color-border;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: $space-lg;
-  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
   }
 }
 
@@ -81,7 +83,6 @@
 
   &:hover {
     border-color: $color-primary;
-    transform: translateY(-2px);
   }
 }
 
@@ -320,4 +321,88 @@
 .artifact-actions {
   display: flex;
   gap: $space-sm;
+}
+
+// Text links
+.text-link {
+  color: $color-primary;
+  font-size: $font-size-lg;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    color: $color-primary-dark;
+    text-decoration: underline;
+  }
+}
+
+// Agent cards grid (3-up on desktop, carousel on mobile)
+.agent-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $space-lg;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 767px) {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: $space-md;
+    padding-bottom: $space-sm;
+
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card {
+      flex: 0 0 85%;
+      scroll-snap-align: start;
+    }
+  }
+}
+
+// Actions grid (3-up on desktop, 1-up on mobile)
+.actions-grid {
+  display: grid;
+  gap: $space-md;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Stats styling
+.stat-item {
+  .stat-value {
+    font-size: $font-size-3xl;
+    font-weight: 700;
+    color: $color-text;
+    margin: 0;
+  }
+
+  .stat-value-sm {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $color-text;
+    margin: 0;
+  }
+}
+
+.config-text {
+  font-size: $font-size-base;
+  color: $color-text;
+  margin: 0;
+  font-weight: 500;
 }

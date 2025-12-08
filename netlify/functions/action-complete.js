@@ -18,9 +18,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Extract action ID from path
-    const pathParts = event.path.split('/');
-    const actionId = pathParts[pathParts.indexOf('action') + 1];
+    // Extract action ID from path (last part of path)
+    const pathParts = event.path.split('/').filter(p => p);
+    const actionId = pathParts[pathParts.length - 1];
 
     if (!actionId) {
       return {

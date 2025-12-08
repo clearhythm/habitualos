@@ -14,9 +14,13 @@ npm-debug.log*
 
 # System files
 .DS_Store
+**/.DS_Store
 
-# Optional: keep if using VSCode
+# VSCode metadata
 .vscode/
+*.code-workspace
 
 # Keep the example env
 !.env.example
+# Local Netlify folder
+.netlify

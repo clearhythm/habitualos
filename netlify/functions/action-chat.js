@@ -1,5 +1,7 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
+const Database = require('better-sqlite3');
+const path = require('path');
 const {
   getAction,
   getChatMessages,
@@ -10,6 +12,20 @@ const {
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
+
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../db/habitualos.db');
+const db = new Database(dbPath);
+
+// Helper function to update North Star
+function updateNorthStar(northStarId, { title, goal, success_criteria, timeline }) {
+  const stmt = db.prepare(`
+    UPDATE north_stars
+    SET title = ?, goal = ?, success_criteria = ?, timeline = ?, updated_at = datetime('now')
+    WHERE id = ?
+  `);
+
+  stmt.run(title, goal, JSON.stringify(success_criteria), timeline, northStarId);
+}
 
 /**
  * POST /api/action/:id/chat
@@ -25,9 +41,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Extract action ID from path
-    const pathParts = event.path.split('/');
-    const actionId = pathParts[pathParts.indexOf('action') + 1];
+    // Extract action ID from path (last part of path)
+    const pathParts = event.path.split('/').filter(p => p);
+    const actionId = pathParts[pathParts.length - 1];
 
     if (!actionId) {
       return {
@@ -75,8 +91,107 @@ exports.handler = async (event) => {
     // Get full chat history (including the new message)
     const chatHistory = getChatMessages(actionId);
 
-    // Build chat prompt for Claude
-    const chatPrompt = `You are an AI agent helping refine an actionable task.
+    // Check if this is the North Star definition action
+    const isNorthStarDefinition = action.title === 'Define Your North Star Goal';
+
+    let apiResponse;
+    let assistantResponse;
+
+    if (isNorthStarDefinition) {
+      // Special handling for North Star definition
+      const conversationHistory = chatHistory.map(msg => ({
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      }));
+
+      const systemPrompt = `You are a helpful AI assistant guiding a user to create their North Star goal in HabitualOS. Your job is to:
+
+1. Help them articulate a clear, specific goal
+2. Ensure it follows SMART principles (Specific, Measurable, Achievable, Relevant, Time-bound)
+3. Extract success criteria (concrete milestones that indicate completion)
+4. Determine a realistic timeline
+
+Be conversational and helpful. Ask follow-up questions to refine vague goals. When you have enough information to create a well-defined North Star, you MUST respond with a special format.
+
+**Response Format:**
+
+If MORE information is needed, respond conversationally to guide the user.
+
+If you have ENOUGH information (clear goal, success criteria, timeline), respond with:
+READY_TO_CREATE
+---
+TITLE: [A concise title for the goal]
+GOAL: [Full description of what they want to achieve]
+SUCCESS_CRITERIA:
+- [Criterion 1]
+- [Criterion 2]
+- [Criterion 3]
+TIMELINE: [When they want to complete this by]`;
+
+      apiResponse = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: conversationHistory
+      });
+
+      assistantResponse = apiResponse.content[0].text;
+
+      // Check if ready to create North Star
+      if (assistantResponse.startsWith('READY_TO_CREATE')) {
+        // Parse the structured data (same parsing logic as setup-chat)
+        const lines = assistantResponse.split('\n');
+        let title = '';
+        let goal = '';
+        let successCriteria = [];
+        let timeline = '';
+        let currentSection = null;
+        let criteriaLines = [];
+
+        for (let i = 2; i < lines.length; i++) {
+          const line = lines[i];
+
+          if (line.startsWith('TITLE:')) {
+            currentSection = 'title';
+            title = line.substring(6).trim();
+          } else if (line.startsWith('GOAL:')) {
+            currentSection = 'goal';
+            goal = line.substring(5).trim();
+          } else if (line.startsWith('SUCCESS_CRITERIA:')) {
+            currentSection = 'criteria';
+          } else if (line.startsWith('TIMELINE:')) {
+            currentSection = 'timeline';
+            timeline = line.substring(9).trim();
+          } else if (currentSection === 'goal' && line.trim()) {
+            goal += ' ' + line.trim();
+          } else if (currentSection === 'criteria' && line.trim().startsWith('-')) {
+            criteriaLines.push(line.trim().substring(1).trim());
+          } else if (currentSection === 'timeline' && line.trim()) {
+            timeline += ' ' + line.trim();
+          }
+        }
+
+        successCriteria = criteriaLines;
+
+        // Update the North Star
+        updateNorthStar(action.north_star_id, {
+          title: title.trim(),
+          goal: goal.trim(),
+          success_criteria: successCriteria,
+          timeline: timeline.trim()
+        });
+
+        // Mark action as completed
+        updateActionState(actionId, 'completed', {
+          completed_at: new Date().toISOString()
+        });
+
+        // Store a user-friendly response
+        assistantResponse = "Perfect! I've defined your North Star goal. Your agent will now start generating actions to help you achieve it.";
+      }
+    } else {
+      // Regular action chat
+      const chatPrompt = `You are an AI agent helping refine an actionable task.
 
 Action: ${action.title}
 Description: ${action.description}
@@ -88,18 +203,17 @@ User's latest message: ${message}
 
 Respond helpfully to refine the action. Be concise and actionable.`;
 
-    // Call Claude API
-    const apiResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      messages: [{
-        role: 'user',
-        content: chatPrompt
-      }]
-    });
+      apiResponse = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: chatPrompt
+        }]
+      });
 
-    // Extract assistant response
-    const assistantResponse = apiResponse.content[0].text;
+      assistantResponse = apiResponse.content[0].text;
+    }
 
     // Insert assistant response
     insertChatMessage({
@@ -110,9 +224,13 @@ Respond helpfully to refine the action. Be concise and actionable.`;
 
     // Update action state to 'in_progress' if it was 'open'
     let updatedState = action.state;
-    if (action.state === 'open') {
+    if (action.state === 'open' && !isNorthStarDefinition) {
       updateActionState(actionId, 'in_progress');
       updatedState = 'in_progress';
+    } else if (assistantResponse.includes("I've defined your North Star goal")) {
+      updatedState = 'completed';
+    } else {
+      updatedState = action.state;
     }
 
     // Return success response
@@ -124,7 +242,8 @@ Respond helpfully to refine the action. Be concise and actionable.`;
       body: JSON.stringify({
         success: true,
         response: assistantResponse,
-        updated_state: updatedState
+        updated_state: updatedState,
+        north_star_updated: assistantResponse.includes("I've defined your North Star goal")
       })
     };
 
