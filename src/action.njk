@@ -1,107 +1,74 @@
 ---
 title: Action Detail - HabitualOS
 layout: base.njk
-permalink: /action/:id/
+permalink: /action/index.html
 ---
 
 {% include "breadcrumb.njk" %}
 
-{# Action Header #}
-<div class="mb-lg">
-  <h2 class="mb-sm">Build frontend UI components</h2>
-  <div class="flex gap-md mb-md">
-    <span class="badge badge-high">High Priority</span>
-    <span class="badge badge-in-progress">In Progress</span>
+<div id="loading-action" class="mb-xl">
+  <p class="text-muted">Loading action details...</p>
+</div>
+
+<div id="action-error" class="mb-xl" style="display: none;">
+  <div class="card">
+    <h2 class="mb-md">Action Not Found</h2>
+    <p class="mb-md">The action you're looking for doesn't exist.</p>
+    <a href="/" class="btn btn-primary">Back to Dashboard</a>
   </div>
 </div>
 
-{# Action Description #}
-<div class="card mb-lg">
-  <h3 class="mb-md">Description:</h3>
-  <p class="text-muted">
-    Create dashboard, setup page, and action detail page with placeholder data and client-side JavaScript.
-    Implement the complete frontend UI following the design specifications in POC-design.md, including
-    all necessary forms, navigation, and interaction patterns.
-  </p>
-</div>
-
-{# Chat Section #}
-<div class="mb-lg">
-  <h3 class="mb-md">Chat History:</h3>
-
-  <div class="chat-messages" id="chat-messages">
-    <div class="chat-message chat-message-user">
-      Can you add TypeScript support to the project?
-    </div>
-
-    <div class="chat-message chat-message-assistant">
-      I'd recommend sticking with vanilla JavaScript for the PoC to keep things simple and minimize
-      dependencies. TypeScript adds build complexity that we don't need at this stage. We can always
-      add it later if needed.
-    </div>
-
-    <div class="chat-message chat-message-user">
-      Ok, sounds good. What about the CSS framework?
-    </div>
-
-    <div class="chat-message chat-message-assistant">
-      We're using a custom Sass architecture with design tokens (variables, base, layout, components).
-      This gives us full control and keeps the bundle small. The component classes are already defined
-      and ready to use.
-    </div>
+<div id="action-content" style="display: none;">
+  {# Action Header #}
+  <div class="mb-lg">
+    <h2 class="mb-sm" id="action-title"></h2>
+    <div class="flex gap-md mb-md" id="action-badges"></div>
   </div>
 
-  <form id="chat-form" class="chat-form" data-action-id="1">
-    <input
-      type="text"
-      name="message"
-      class="input"
-      placeholder="Type your message..."
-      required
-    />
-    <button type="submit" class="btn btn-primary">Send</button>
-  </form>
-</div>
-
-{# Artifacts Section #}
-<div class="card mb-lg">
-  <h3 class="mb-md">Artifacts:</h3>
-
-  <div class="artifact-list">
-    <div class="artifact-item">
-      <div class="artifact-info">
-        <span class="artifact-icon">📄</span>
-        <div>
-          <div class="artifact-title">project-structure.md</div>
-          <div class="artifact-meta">Created 2 hours ago</div>
-        </div>
-      </div>
-      <div class="artifact-actions">
-        <button class="btn btn-secondary">View</button>
-        <button class="btn btn-secondary">Download</button>
-      </div>
-    </div>
-
-    <div class="artifact-item">
-      <div class="artifact-info">
-        <span class="artifact-icon">💻</span>
-        <div>
-          <div class="artifact-title">frontend-components.md</div>
-          <div class="artifact-meta">Created 1 hour ago</div>
-        </div>
-      </div>
-      <div class="artifact-actions">
-        <button class="btn btn-secondary">View</button>
-        <button class="btn btn-secondary">Download</button>
-      </div>
-    </div>
+  {# Action Description #}
+  <div class="card mb-lg">
+    <h3 class="mb-md">Description:</h3>
+    <p class="text-muted" id="action-description"></p>
   </div>
 
-  <button class="btn btn-primary mt-md" id="generate-artifact-btn">+ Generate New Artifact</button>
-</div>
+  {# Chat Section #}
+  <div class="mb-lg">
+    <h3 class="mb-md">Chat History:</h3>
 
-{# Action Controls #}
-<div class="flex gap-md">
-  <button class="btn btn-success" id="mark-complete-btn">Mark Complete</button>
-  <button class="btn btn-danger" id="dismiss-btn">Dismiss</button>
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div id="chat-loading" class="mt-md" style="display: none;">
+      <p class="text-muted">Sending message...</p>
+    </div>
+
+    <form id="chat-form" class="chat-form">
+      <input
+        type="text"
+        name="message"
+        class="input"
+        placeholder="Type your message..."
+        required
+      />
+      <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+  </div>
+
+  {# Artifacts Section #}
+  <div class="card mb-lg">
+    <h3 class="mb-md">Artifacts:</h3>
+
+    <div class="artifact-list" id="artifact-list"></div>
+
+    <div id="no-artifacts" class="text-muted" style="display: none;">
+      No artifacts generated yet.
+    </div>
+
+    <button class="btn btn-primary mt-md" id="generate-artifact-btn">+ Generate New Artifact</button>
+  </div>
+
+  {# Action Controls #}
+  <div class="flex gap-md">
+    <button class="btn btn-success" id="mark-complete-btn">Mark Complete</button>
+    <button class="btn btn-danger" id="dismiss-btn">Dismiss</button>
+  </div>
 </div>
