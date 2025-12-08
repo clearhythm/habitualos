@@ -3,98 +3,51 @@ title: HabitualOS Dashboard
 layout: base.njk
 ---
 
-{# NorthStar Section #}
-<div class="mb-xl">
-  <div class="flex flex-between mb-md">
-    <h2>Your NorthStar</h2>
-    <span class="badge badge-open">Active</span>
-  </div>
+<div id="loading-dashboard" class="mb-xl">
+  <p class="text-muted">Loading your dashboard...</p>
+</div>
 
+<div id="no-northstar" class="mb-xl" style="display: none;">
   <div class="card">
-    <h3 class="card-title">Build HabitualOS MVP</h3>
-    <p class="mb-md">Create a working prototype ready for demo and job search, demonstrating AI-powered task orchestration with persistent chat and artifact generation.</p>
-    <p class="text-muted"><strong>Timeline:</strong> December 2025</p>
+    <h2 class="mb-md">Welcome to HabitualOS</h2>
+    <p class="mb-md">You haven't created a NorthStar goal yet. Let's get started!</p>
+    <a href="/setup" class="btn btn-primary">Create Your NorthStar</a>
   </div>
 </div>
 
-{# Progress Metrics #}
-<div class="mb-lg">
-  <p class="text-muted">Progress: <strong>2 completed</strong>, <strong>1 in progress</strong>, <strong>2 open</strong></p>
-  <div class="progress">
-    <div class="progress-bar" style="width: 40%;"></div>
-  </div>
-</div>
-
-{# Action Cards Section #}
-<div class="mb-lg">
-  <div class="flex flex-between mb-md">
-    <h2>Action Cards</h2>
-    <button id="toggle-completed" class="btn btn-secondary">Show Completed (2)</button>
-  </div>
-
-  <div class="grid gap-md">
-    {# Open Action Card #}
-    <a href="/action/1" class="card card-clickable" style="text-decoration: none;">
-      <div class="flex flex-between">
-        <h3 class="card-title">Set up project structure</h3>
-        <span class="badge badge-high">High</span>
-      </div>
-      <p class="text-muted mb-sm">Initialize 11ty, configure Sass, set up folder structure, and create basic templates for the application.</p>
-      <div class="card-meta">
-        <span class="badge badge-open">Open</span>
-        <span>&rarr;</span>
-      </div>
-    </a>
-
-    {# In Progress Action Card #}
-    <a href="/action/2" class="card card-clickable" style="text-decoration: none;">
-      <div class="flex flex-between">
-        <h3 class="card-title">Build frontend UI components</h3>
-        <span class="badge badge-high">High</span>
-      </div>
-      <p class="text-muted mb-sm">Create dashboard, setup page, and action detail page with placeholder data and client-side JavaScript.</p>
-      <div class="card-meta">
-        <span class="badge badge-in-progress">In Progress</span>
-        <span>&rarr;</span>
-      </div>
-    </a>
-
-    {# Another Open Action Card #}
-    <a href="/action/3" class="card card-clickable" style="text-decoration: none;">
-      <div class="flex flex-between">
-        <h3 class="card-title">Define database schema</h3>
-        <span class="badge badge-medium">Medium</span>
-      </div>
-      <p class="text-muted mb-sm">Create SQLite tables for NorthStars, ActionCards, chat messages, and artifacts with proper indexes.</p>
-      <div class="card-meta">
-        <span class="badge badge-open">Open</span>
-        <span>&rarr;</span>
-      </div>
-    </a>
-  </div>
-
-  {# Completed Actions (hidden by default) #}
-  <div id="completed-actions" class="grid gap-md mt-md" style="display: none;">
-    <div class="card" style="opacity: 0.7;">
-      <div class="flex flex-between">
-        <h3 class="card-title">Initialize npm and install dependencies</h3>
-        <span class="badge badge-high">High</span>
-      </div>
-      <p class="text-muted mb-sm">Set up package.json, install 11ty, Sass, and other required dependencies.</p>
-      <div class="card-meta">
-        <span class="badge badge-completed">Completed</span>
-      </div>
+<div id="dashboard-content" style="display: none;">
+  {# NorthStar Section #}
+  <div class="mb-xl">
+    <div class="flex flex-between mb-md">
+      <h2>Your NorthStar</h2>
+      <span class="badge badge-open" id="northstar-status">Active</span>
     </div>
 
-    <div class="card" style="opacity: 0.7;">
-      <div class="flex flex-between">
-        <h3 class="card-title">Create Sass architecture</h3>
-        <span class="badge badge-medium">Medium</span>
-      </div>
-      <p class="text-muted mb-sm">Build variables, base, layout, and components structure with reusable classes.</p>
-      <div class="card-meta">
-        <span class="badge badge-completed">Completed</span>
-      </div>
+    <div class="card" id="northstar-card">
+      <h3 class="card-title" id="northstar-title"></h3>
+      <p class="mb-md" id="northstar-goal"></p>
+      <p class="text-muted"><strong>Timeline:</strong> <span id="northstar-timeline"></span></p>
     </div>
+  </div>
+
+  {# Progress Metrics #}
+  <div class="mb-lg" id="progress-section">
+    <p class="text-muted" id="progress-text"></p>
+    <div class="progress">
+      <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  {# Action Cards Section #}
+  <div class="mb-lg">
+    <div class="flex flex-between mb-md">
+      <h2>Action Cards</h2>
+      <button id="toggle-completed" class="btn btn-secondary" style="display: none;"></button>
+    </div>
+
+    <div class="grid gap-md" id="active-actions"></div>
+
+    {# Completed Actions (hidden by default) #}
+    <div id="completed-actions" class="grid gap-md mt-md" style="display: none;"></div>
   </div>
 </div>
