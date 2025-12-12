@@ -63,16 +63,34 @@ function getActiveNorthStar() {
  */
 
 // Insert a new ActionCard
-function insertActionCard({ north_star_id, title, description, priority }) {
+function insertActionCard({ north_star_id, title, description, priority, task_type, schedule_time, task_config }) {
   const id = randomUUID();
   const stmt = db.prepare(`
-    INSERT INTO action_cards (id, north_star_id, title, description, priority)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO action_cards (
+      id, north_star_id, title, description, priority,
+      task_type, schedule_time, task_config, updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `);
 
   try {
-    stmt.run(id, north_star_id, title, description, priority || 'medium');
-    return { id, north_star_id, title, description, priority: priority || 'medium', state: 'open' };
+    stmt.run(
+      id,
+      north_star_id,
+      title,
+      description,
+      priority || 'medium',
+      task_type || 'interactive',
+      schedule_time || null,
+      task_config ? JSON.stringify(task_config) : null
+    );
+    return {
+      id, north_star_id, title, description,
+      priority: priority || 'medium',
+      task_type: task_type || 'interactive',
+      schedule_time, task_config,
+      state: 'open'
+    };
   } catch (error) {
     throw new Error(`Failed to insert ActionCard: ${error.message}`);
   }
@@ -145,6 +163,16 @@ function updateActionState(id, state, additionalFields = {}) {
     params.push(additionalFields.dismissed_reason);
   }
 
+  if (additionalFields.started_at) {
+    sql += ', started_at = ?';
+    params.push(additionalFields.started_at);
+  }
+
+  if (additionalFields.error_message) {
+    sql += ', error_message = ?';
+    params.push(additionalFields.error_message);
+  }
+
   sql += ' WHERE id = ?';
   params.push(id);
 
@@ -155,6 +183,28 @@ function updateActionState(id, state, additionalFields = {}) {
     return getAction(id);
   } catch (error) {
     throw new Error(`Failed to update ActionCard state: ${error.message}`);
+  }
+}
+
+// Get scheduled tasks that are due to run
+function getScheduledTasksDue() {
+  const stmt = db.prepare(`
+    SELECT * FROM action_cards
+    WHERE task_type = 'scheduled'
+      AND state = 'open'
+      AND schedule_time IS NOT NULL
+      AND schedule_time <= datetime('now')
+    ORDER BY schedule_time ASC
+  `);
+
+  try {
+    const rows = stmt.all();
+    return rows.map(row => ({
+      ...row,
+      task_config: row.task_config ? JSON.parse(row.task_config) : null
+    }));
+  } catch (error) {
+    throw new Error(`Failed to get scheduled tasks: ${error.message}`);
   }
 }
 
@@ -260,6 +310,7 @@ module.exports = {
   getAllActions,
   getAction,
   updateActionState,
+  getScheduledTasksDue,
 
   // Chat operations
   insertChatMessage,

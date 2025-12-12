@@ -18,9 +18,15 @@ CREATE TABLE IF NOT EXISTS action_cards (
   description TEXT,
   state TEXT DEFAULT 'open',       -- open | in_progress | completed | dismissed
   priority TEXT DEFAULT 'medium',  -- high | medium | low
+  task_type TEXT DEFAULT 'interactive',  -- interactive | scheduled
+  schedule_time TEXT,              -- ISO timestamp for scheduled tasks
+  task_config TEXT,                -- JSON config for scheduled tasks
   created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  started_at TEXT,
   completed_at TEXT,
-  dismissed_reason TEXT
+  dismissed_reason TEXT,
+  error_message TEXT
 );
 
 -- Chat Messages: Persistent conversation history

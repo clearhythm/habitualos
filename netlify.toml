@@ -8,16 +8,10 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/action/*"
-  to = "/action/index.html"
+  to = "/action/"
   status = 200
-
-[dev]
-  command = "npm run eleventy:serve"
-  framework = "#custom"
-  port = 8888
-  targetPort = 8080
-  publish = "_site"
-  autoLaunch = false
+  force = true
