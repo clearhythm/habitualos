@@ -150,7 +150,7 @@ function getAction(id) {
 
 // Update ActionCard state
 function updateActionState(id, state, additionalFields = {}) {
-  let sql = 'UPDATE action_cards SET state = ?, updated_at = datetime("now")';
+  let sql = "UPDATE action_cards SET state = ?, updated_at = datetime('now')";
   const params = [state];
 
   if (additionalFields.completed_at) {
@@ -193,7 +193,7 @@ function getScheduledTasksDue() {
     WHERE task_type = 'scheduled'
       AND state = 'open'
       AND schedule_time IS NOT NULL
-      AND schedule_time <= datetime('now')
+      AND datetime(schedule_time) <= datetime('now')
     ORDER BY schedule_time ASC
   `);
 

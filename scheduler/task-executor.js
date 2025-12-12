@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAction, updateActionState } = require('../db/helpers');
+require('dotenv').config();
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
