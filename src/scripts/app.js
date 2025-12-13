@@ -45,6 +45,9 @@ async function loadDashboard() {
     // Display Actions
     displayActions(actionsData.actions || []);
 
+    // Initialize toggle after cards are rendered
+    initToggleCompleted();
+
     // Show dashboard content
     loadingEl.style.display = 'none';
     dashboardContentEl.style.display = 'block';
@@ -123,26 +126,29 @@ function displayNorthStar(northstar, actions) {
  * Display action cards and calculate progress
  */
 function displayActions(actions) {
-  const activeActionsEl = document.querySelector('#active-actions');
-  const completedActionsEl = document.querySelector('#completed-actions');
+  const actionsGridEl = document.querySelector('#actions-grid');
   const toggleBtn = document.querySelector('#toggle-completed');
 
   // Separate active and completed actions
   const activeActions = actions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
   const completedActions = actions.filter(a => a.state === 'completed' || a.state === 'dismissed');
 
-  // Display active actions
-  activeActionsEl.innerHTML = '';
+  // Clear grid
+  actionsGridEl.innerHTML = '';
+
+  // Add all active actions
   activeActions.forEach(action => {
-    activeActionsEl.appendChild(createActionCard(action));
+    const card = createActionCard(action);
+    card.dataset.cardType = 'active';
+    actionsGridEl.appendChild(card);
   });
 
-  // Display completed actions
-  completedActionsEl.innerHTML = '';
+  // Add all completed actions
   completedActions.forEach(action => {
     const card = createActionCard(action);
+    card.dataset.cardType = 'completed';
     card.style.opacity = '0.7';
-    completedActionsEl.appendChild(card);
+    actionsGridEl.appendChild(card);
   });
 
   // Update toggle button
@@ -150,6 +156,9 @@ function displayActions(actions) {
     toggleBtn.textContent = `Show Completed (${completedActions.length})`;
     toggleBtn.style.display = 'inline-block';
   }
+
+  // Store completed count for nav.js
+  window.completedActionsCount = completedActions.length;
 }
 
 /**
@@ -248,6 +257,69 @@ async function loadActionDetail() {
 }
 
 /**
+ * Load and display a markdown file
+ */
+async function loadFileView() {
+  const loadingEl = document.querySelector('#loading-file');
+  const errorEl = document.querySelector('#file-error');
+  const contentEl = document.querySelector('#file-content');
+
+  // Extract actionId and filename from URL: /file/:actionId/:filename
+  const pathParts = window.location.pathname.split('/').filter(p => p);
+  const actionId = pathParts[1];
+  const filename = pathParts[2];
+
+  if (!actionId || !filename) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/file-view/${actionId}/${filename}`);
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'File not found');
+    }
+
+    // Display file info
+    document.querySelector('#file-title').textContent = data.filename;
+    document.querySelector('#file-meta').textContent = `Modified: ${formatDate(data.modified)} • Size: ${formatFileSize(data.size)}`;
+
+    // Setup back link
+    const backLink = document.querySelector('#back-to-task');
+    backLink.textContent = data.actionTitle;
+    backLink.href = `/action/${actionId}`;
+
+    // Update breadcrumb with context
+    updateBreadcrumb([
+      { label: 'Dashboard', url: getDashboardURL() },
+      { label: data.actionTitle, url: `/action/${actionId}` },
+      { label: data.filename, url: '#' }
+    ]);
+
+    // Render markdown using marked library
+    const markdownContent = document.querySelector('#markdown-content');
+    if (typeof marked !== 'undefined') {
+      markdownContent.innerHTML = marked.parse(data.content);
+    } else {
+      // Fallback if marked library not loaded
+      markdownContent.innerHTML = `<pre>${escapeHtml(data.content)}</pre>`;
+    }
+
+    // Show content
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+
+  } catch (error) {
+    console.error('Error loading file:', error);
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+  }
+}
+
+/**
  * Display action detail data
  */
 function displayActionDetail(action, chatHistory, artifacts) {
@@ -263,20 +335,127 @@ function displayActionDetail(action, chatHistory, artifacts) {
   // Display description
   document.querySelector('#action-description').textContent = action.description || 'No description available.';
 
-  // Display chat history
-  const chatMessagesEl = document.querySelector('#chat-messages');
-  chatMessagesEl.innerHTML = '';
+  // Check if this is a scheduled task
+  const isScheduledTask = action.task_type === 'scheduled';
 
-  if (chatHistory.length === 0) {
-    chatMessagesEl.innerHTML = '<p class="text-muted">No messages yet. Start a conversation!</p>';
+  if (isScheduledTask) {
+    // Show scheduled task details, hide interactive task details
+    document.querySelector('#scheduled-task-details').style.display = 'block';
+    document.querySelector('#interactive-task-details').style.display = 'none';
+
+    // Display scheduled task info
+    displayScheduledTaskInfo(action);
   } else {
-    chatHistory.forEach(msg => {
-      appendMessage(msg.role, msg.content, false);
-    });
+    // Show interactive task details, hide scheduled task details
+    document.querySelector('#scheduled-task-details').style.display = 'none';
+    document.querySelector('#interactive-task-details').style.display = 'block';
+
+    // Display chat history
+    const chatMessagesEl = document.querySelector('#chat-messages');
+    chatMessagesEl.innerHTML = '';
+
+    if (chatHistory.length === 0) {
+      chatMessagesEl.innerHTML = '<p class="text-muted">No messages yet. Start a conversation!</p>';
+    } else {
+      chatHistory.forEach(msg => {
+        appendMessage(msg.role, msg.content, false);
+      });
+    }
+
+    // Display artifacts
+    displayArtifacts(artifacts);
+  }
+}
+
+/**
+ * Display scheduled task information (inputs, outputs, schedule)
+ */
+function displayScheduledTaskInfo(action) {
+  const config = action.task_config ? JSON.parse(action.task_config) : null;
+
+  // Display schedule time
+  if (action.schedule_time) {
+    document.querySelector('#schedule-time').textContent = formatDate(action.schedule_time);
   }
 
-  // Display artifacts
-  displayArtifacts(artifacts);
+  // Display input files
+  const inputFilesEl = document.querySelector('#input-files-list');
+  if (config && config.inputs_path) {
+    inputFilesEl.innerHTML = `
+      <p><strong>Location:</strong> ${config.inputs_path}</p>
+      <p class="text-muted">context.md + user JSON files</p>
+    `;
+  } else {
+    inputFilesEl.innerHTML = '<p>No input configuration available.</p>';
+  }
+
+  // Display output files
+  const outputFilesEl = document.querySelector('#output-files-list');
+  const noOutputsEl = document.querySelector('#no-outputs');
+
+  if (action.state === 'completed') {
+    // Fetch and display output files
+    fetchOutputFiles(action.id, outputFilesEl, noOutputsEl);
+  } else {
+    outputFilesEl.style.display = 'none';
+    noOutputsEl.style.display = 'block';
+  }
+
+  // Setup "Run Now" button (basic implementation - could enhance with API endpoint)
+  const runNowBtn = document.querySelector('#run-now-btn');
+  if (action.state === 'open') {
+    runNowBtn.style.display = 'block';
+    runNowBtn.onclick = () => {
+      alert('To run this task now, use: node -e "require(\'./scheduler/task-executor\')(\'' + action.id + '\').catch(console.error);"');
+    };
+  } else {
+    runNowBtn.style.display = 'none';
+  }
+}
+
+/**
+ * Fetch and display output files for a scheduled task
+ */
+async function fetchOutputFiles(actionId, outputFilesEl, noOutputsEl) {
+  try {
+    const response = await fetch(`/api/task-outputs/${actionId}`);
+    const data = await response.json();
+
+    if (!data.success || !data.files || data.files.length === 0) {
+      outputFilesEl.style.display = 'none';
+      noOutputsEl.style.display = 'block';
+      return;
+    }
+
+    // Display file list with links
+    outputFilesEl.innerHTML = '<ul class="file-list">' +
+      data.files.map(file => `
+        <li class="file-item">
+          <a href="/file/${actionId}/${file.filename}" class="file-link">
+            📄 ${escapeHtml(file.filename)}
+          </a>
+          <span class="file-meta">(${formatFileSize(file.size)})</span>
+        </li>
+      `).join('') +
+      '</ul>';
+    outputFilesEl.style.display = 'block';
+    noOutputsEl.style.display = 'none';
+
+  } catch (error) {
+    console.error('Error fetching output files:', error);
+    outputFilesEl.innerHTML = '<p class="text-muted">Error loading output files.</p>';
+    outputFilesEl.style.display = 'block';
+    noOutputsEl.style.display = 'none';
+  }
+}
+
+/**
+ * Format file size for display
+ */
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 /**
@@ -683,30 +862,6 @@ function initActionControls() {
   }
 }
 
-/**
- * Toggle completed actions visibility
- */
-function initToggleCompleted() {
-  const toggleBtn = document.querySelector('#toggle-completed');
-  const completedSection = document.querySelector('#completed-actions');
-
-  if (toggleBtn && completedSection) {
-    toggleBtn.addEventListener('click', () => {
-      const isHidden = completedSection.style.display === 'none';
-
-      if (isHidden) {
-        completedSection.style.display = 'grid';
-        const count = completedSection.children.length;
-        toggleBtn.textContent = `Hide Completed (${count})`;
-      } else {
-        completedSection.style.display = 'none';
-        const count = completedSection.children.length;
-        toggleBtn.textContent = `Show Completed (${count})`;
-      }
-    });
-  }
-}
-
 // ============================================================================
 // Utility Functions
 // ============================================================================
@@ -769,18 +924,16 @@ function formatDate(dateString) {
   if (!dateString) return 'Unknown';
 
   const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
-
-  return date.toLocaleDateString();
+  // Return precise timestamp with date and time
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 // ============================================================================
@@ -793,15 +946,20 @@ function formatDate(dateString) {
 function initPage() {
   const path = window.location.pathname;
 
+  // Initialize breadcrumb state preservation on all pages
+  initBreadcrumb();
+
   if (path === '/' || path === '/index.html') {
     // Dashboard page
     loadDashboard();
-    initToggleCompleted();
   } else if (path.startsWith('/action')) {
     // Action detail page
     loadActionDetail();
     initChatForm();
     initActionControls();
+  } else if (path.startsWith('/file')) {
+    // File viewer page
+    loadFileView();
   }
   // /setup page now just redirects to dashboard
 }

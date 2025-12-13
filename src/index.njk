@@ -32,7 +32,7 @@ layout: base.njk
         <p class="stat-value" id="actions-completed-count">0</p>
       </div>
       <div class="stat-item">
-        <p class="text-muted mb-xs">Last Run</p>
+        <h4 class="mb-sm">Last Run</h4>
         <p class="stat-value-sm" id="last-run-time">Never</p>
       </div>
     </div>
@@ -73,9 +73,6 @@ layout: base.njk
       <button id="toggle-completed" class="btn btn-secondary" style="display: none;"></button>
     </div>
 
-    <div class="actions-grid" id="active-actions"></div>
-
-    {# Completed Actions (hidden by default) #}
-    <div id="completed-actions" class="actions-grid mt-md" style="display: none;"></div>
+    <div class="actions-grid" id="actions-grid"></div>
   </div>
 </div>

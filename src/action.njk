@@ -31,44 +31,76 @@ permalink: /action/index.html
     <p class="text-muted" id="action-description"></p>
   </div>
 
-  {# Chat Section #}
-  <div class="mb-lg">
-    <h3 class="mb-md">Chat History:</h3>
-
-    <div class="chat-messages" id="chat-messages"></div>
-
-    <div id="chat-loading" class="mt-md" style="display: none;">
-      <p class="text-muted">Sending message...</p>
+  {# Scheduled Task Details (only for scheduled tasks) #}
+  <div id="scheduled-task-details" style="display: none;">
+    {# Schedule Info #}
+    <div class="card mb-lg" id="schedule-info">
+      <h3 class="mb-md">Schedule:</h3>
+      <p class="text-muted" id="schedule-time"></p>
     </div>
 
-    <form id="chat-form" class="chat-form">
-      <textarea
-        name="message"
-        class="textarea"
-        placeholder="Type your message..."
-        required
-        rows="3"
-      ></textarea>
-      <button type="submit" class="btn btn-primary">Send</button>
-    </form>
-  </div>
-
-  {# Artifacts Section #}
-  <div class="card mb-lg">
-    <h3 class="mb-md">Artifacts:</h3>
-
-    <div class="artifact-list" id="artifact-list"></div>
-
-    <div id="no-artifacts" class="text-muted" style="display: none;">
-      No artifacts generated yet.
+    {# Input Files #}
+    <div class="card mb-lg">
+      <h3 class="mb-md">Input Files:</h3>
+      <div id="input-files-list" class="text-muted"></div>
     </div>
 
-    <button class="btn btn-primary mt-md" id="generate-artifact-btn">+ Generate New Artifact</button>
+    {# Output Files #}
+    <div class="card mb-lg">
+      <h3 class="mb-md">Output Files:</h3>
+      <div id="output-files-list" class="text-muted"></div>
+      <div id="no-outputs" class="text-muted" style="display: none;">
+        No output files generated yet.
+      </div>
+    </div>
+
+    {# Run Now Button #}
+    <div class="mb-lg">
+      <button class="btn btn-primary" id="run-now-btn">Run Now</button>
+    </div>
   </div>
 
-  {# Action Controls #}
-  <div class="flex gap-md">
-    <button class="btn btn-success" id="mark-complete-btn">Mark Complete</button>
-    <button class="btn btn-danger" id="dismiss-btn">Dismiss</button>
+  {# Interactive Task Details (only for interactive tasks) #}
+  <div id="interactive-task-details" style="display: none;">
+    {# Chat Section #}
+    <div class="mb-lg">
+      <h3 class="mb-md">Chat History:</h3>
+
+      <div class="chat-messages" id="chat-messages"></div>
+
+      <div id="chat-loading" class="mt-md" style="display: none;">
+        <p class="text-muted">Sending message...</p>
+      </div>
+
+      <form id="chat-form" class="chat-form">
+        <textarea
+          name="message"
+          class="textarea"
+          placeholder="Type your message..."
+          required
+          rows="3"
+        ></textarea>
+        <button type="submit" class="btn btn-primary">Send</button>
+      </form>
+    </div>
+
+    {# Artifacts Section #}
+    <div class="card mb-lg">
+      <h3 class="mb-md">Artifacts:</h3>
+
+      <div class="artifact-list" id="artifact-list"></div>
+
+      <div id="no-artifacts" class="text-muted" style="display: none;">
+        No artifacts generated yet.
+      </div>
+
+      <button class="btn btn-primary mt-md" id="generate-artifact-btn">+ Generate New Artifact</button>
+    </div>
+
+    {# Action Controls #}
+    <div class="flex gap-md">
+      <button class="btn btn-success" id="mark-complete-btn">Mark Complete</button>
+      <button class="btn btn-danger" id="dismiss-btn">Dismiss</button>
+    </div>
   </div>
 </div>

@@ -393,8 +393,8 @@
   }
 
   .stat-value-sm {
-    font-size: $font-size-lg;
-    font-weight: 600;
+    font-size: $font-size-base;
+    font-weight: 300;
     color: $color-text;
     margin: 0;
   }
@@ -405,4 +405,117 @@
   color: $color-text;
   margin: 0;
   font-weight: 500;
+}
+
+// File list styling
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  padding: $space-sm 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.file-link {
+  color: $color-primary;
+  text-decoration: none;
+  font-weight: 500;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.file-meta {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  margin-left: $space-sm;
+}
+
+// Markdown content styling
+.markdown-body {
+  color: $color-text;
+  line-height: 1.6;
+
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: $space-lg;
+    margin-bottom: $space-md;
+    font-weight: 600;
+  }
+
+  h1 { font-size: $font-size-2xl; }
+  h2 { font-size: $font-size-xl; }
+  h3 { font-size: $font-size-lg; }
+
+  p {
+    margin-bottom: $space-md;
+  }
+
+  ul, ol {
+    margin-bottom: $space-md;
+    padding-left: $space-xl;
+  }
+
+  li {
+    margin-bottom: $space-xs;
+  }
+
+  code {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: $space-md;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: $space-md;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid $color-primary;
+    padding-left: $space-md;
+    margin-left: 0;
+    margin-bottom: $space-md;
+    color: $color-text-muted;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: $space-lg 0;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  a {
+    color: $color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }

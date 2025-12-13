@@ -1,0 +1,37 @@
+---
+title: File Viewer - HabitualOS
+layout: base.njk
+permalink: /file/index.html
+---
+
+{% include "breadcrumb.njk" %}
+
+<div id="loading-file" class="mb-xl">
+  <p class="text-muted">Loading file...</p>
+</div>
+
+<div id="file-error" class="mb-xl" style="display: none;">
+  <div class="card">
+    <h2 class="mb-md">File Not Found</h2>
+    <p class="mb-md">The file you're looking for doesn't exist or could not be loaded.</p>
+    <a href="/" class="btn btn-primary">Back to Dashboard</a>
+  </div>
+</div>
+
+<div id="file-content" style="display: none;">
+  {# File Header #}
+  <div class="mb-lg">
+    <h2 class="mb-sm" id="file-title"></h2>
+    <p class="text-muted mb-sm">
+      From task: <a href="#" id="back-to-task" class="text-link"></a>
+    </p>
+    <p class="text-muted text-sm" id="file-meta"></p>
+  </div>
+
+  {# Rendered Markdown Content #}
+  <div class="card mb-lg">
+    <div id="markdown-content" class="markdown-body"></div>
+  </div>
+</div>
+
+<script src="/scripts/app.js"></script>
