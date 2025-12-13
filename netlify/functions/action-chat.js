@@ -13,7 +13,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../db/habitualos.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '../../data/habitualos.db');
 const db = new Database(dbPath);
 
 // Helper function to update North Star

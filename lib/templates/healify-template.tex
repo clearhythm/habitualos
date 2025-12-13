@@ -1,0 +1,66 @@
+% Healify Shift Cards LaTeX Template
+% Uses Copernicus for H1 only and Poppins for everything else
+
+\documentclass[$if(fontsize)$$fontsize$,$endif$$if(papersize)$$papersize$paper,$endif$]{article}
+
+% Fonts
+\usepackage{fontspec}
+\setmainfont{$if(mainfont)$$mainfont$$else$Poppins$endif$}
+
+% Geometry
+\usepackage[margin=$if(margin)$$margin$$else$1in$endif$]{geometry}
+
+% Line spacing
+\usepackage{setspace}
+$if(linestretch)$
+\setstretch{$linestretch$}
+$endif$
+
+% Colors - Healify branding
+\usepackage{xcolor}
+\definecolor{healifytitle}{RGB}{42, 74, 108}      % All headings
+\definecolor{healifybody}{RGB}{85, 85, 85}        % Paragraphs
+\definecolor{healifybackground}{RGB}{230, 241, 255}  % Page background
+
+% Set page background color
+\pagecolor{healifybackground}
+
+% Set default text color for body
+\color{healifybody}
+
+% Make headings use Healify styling
+\usepackage{titlesec}
+
+% H1 (\section) - Copernicus font
+\titleformat{\section}
+  {\fontspec{$if(headingfont)$$headingfont$$else$Copernicus$endif$}\Large\bfseries\color{healifytitle}}{\thesection}{1em}{}
+
+% H2 (\subsection) - Poppins font
+\titleformat{\subsection}
+  {\large\bfseries\color{healifytitle}}{\thesubsection}{1em}{}
+
+% H3 (\subsubsection) - Poppins font
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{healifytitle}}{\thesubsubsection}{1em}{}
+
+% Improved spacing
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% Better quotes
+\usepackage{csquotes}
+
+% Hyperlinks (for any links in the document)
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=healifytitle,
+  urlcolor=healifytitle
+}
+
+% Document begins
+\begin{document}
+
+$body$
+
+\end{document}

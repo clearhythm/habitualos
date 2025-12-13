@@ -3,7 +3,7 @@ const path = require('path');
 const { randomUUID } = require('crypto');
 
 // Initialize database connection
-const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'habitualos.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'habitualos.db');
 const db = new Database(dbPath);
 
 // Enable foreign keys

@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'habitualos.db');
+const dbPath = path.join(__dirname, '..', 'data', 'habitualos.db');
 const schemaPath = path.join(__dirname, 'schema.sql');
 
 // Check if database already exists

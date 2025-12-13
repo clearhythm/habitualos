@@ -171,7 +171,15 @@ function createActionCard(action) {
   card.style.textDecoration = 'none';
 
   const priorityBadge = `<span class="badge badge-${action.priority}">${capitalize(action.priority)}</span>`;
-  const stateBadge = `<span class="badge badge-${action.state}">${formatState(action.state)}</span>`;
+
+  // Show "Scheduled" with time for scheduled tasks
+  let stateBadge;
+  if (action.task_type === 'scheduled' && action.state === 'open' && action.schedule_time) {
+    const scheduledTime = formatDate(action.schedule_time);
+    stateBadge = `<span class="badge badge-scheduled">Scheduled: ${scheduledTime}</span>`;
+  } else {
+    stateBadge = `<span class="badge badge-${action.state}">${formatState(action.state)}</span>`;
+  }
 
   card.innerHTML = `
     <div class="flex flex-between">
