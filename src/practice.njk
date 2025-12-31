@@ -8,12 +8,20 @@ permalink: /practice/
   <div id="practice-form" style="display: block;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
       <h1 style="margin: 0;">Practice Check-in</h1>
-      <a
-        href="/practices/"
-        style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
-      >
-        View History
-      </a>
+      <div style="display: flex; gap: 0.75rem;">
+        <a
+          href="/garden/"
+          style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+        >
+          🌸 Garden
+        </a>
+        <a
+          href="/practices/"
+          style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+        >
+          View History
+        </a>
+      </div>
     </div>
 
     <form id="practiceForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -76,7 +84,11 @@ permalink: /practice/
   <!-- System Success Message (hidden initially) -->
   <div id="system-success" style="display: none;">
     <div style="text-align: center; margin-bottom: 2rem;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+      <!-- Flower growth visual metaphor -->
+      <div id="flower-visual" style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+        <div id="flower-emoji" style="font-size: 5rem; line-height: 1; transition: all 0.3s ease;"></div>
+        <div id="flower-label" style="font-size: 0.85rem; color: #888; font-style: italic;"></div>
+      </div>
       <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Practice Logged</h2>
       <p style="color: #666;">Your practice has been recorded.</p>
     </div>
@@ -164,6 +176,37 @@ permalink: /practice/
 
   let currentPracticeId = null;
   let expandedWisdom = null;
+  let practiceCount = 0;
+
+  // Get flower growth stage based on practice count
+  function getFlowerStage(count) {
+    if (count <= 2) {
+      return { emoji: '🌱', label: 'Seedling', size: '4rem' };
+    } else if (count <= 5) {
+      return { emoji: '🌿', label: 'Sprout', size: '4.5rem' };
+    } else if (count <= 10) {
+      return { emoji: '🌺', label: 'Budding', size: '5rem' };
+    } else if (count <= 20) {
+      return { emoji: '🌸', label: 'Blooming', size: '5.5rem' };
+    } else if (count <= 50) {
+      return { emoji: '🌻', label: 'Full Bloom', size: '6rem' };
+    } else {
+      return { emoji: '🌼', label: 'Garden', size: '6.5rem' };
+    }
+  }
+
+  // Render flower growth visual
+  function renderFlower(count) {
+    const actualCount = Math.max(1, count || 1);
+    const stage = getFlowerStage(actualCount);
+
+    const flowerEmoji = document.getElementById('flower-emoji');
+    const flowerLabel = document.getElementById('flower-label');
+
+    flowerEmoji.textContent = stage.emoji;
+    flowerEmoji.style.fontSize = stage.size;
+    flowerLabel.textContent = `${stage.label} • ${actualCount} ${actualCount === 1 ? 'practice' : 'practices'}`;
+  }
 
   // Handle expand/collapse wisdom
   expandButton.addEventListener('click', () => {
@@ -202,8 +245,11 @@ permalink: /practice/
       const data = await response.json();
 
       if (data.success) {
-        // Store practice ID for feedback
+        // Store practice ID and count for feedback and visualization
         currentPracticeId = data.practice.id;
+        practiceCount = data.practice_count;
+
+        console.log('Practice submitted successfully. Count:', practiceCount);
 
         // Hide form
         formContainer.style.display = 'none';
@@ -216,6 +262,9 @@ permalink: /practice/
           expandButton.textContent = 'Read more...';
           responseContainer.style.display = 'block';
         } else {
+          // Render flower growth visual
+          console.log('Rendering flower with count:', practiceCount);
+          renderFlower(practiceCount);
           document.getElementById('system-success').style.display = 'block';
         }
       } else {
@@ -236,6 +285,8 @@ permalink: /practice/
 
   // Handle Obi-Wai "Continue" button (goes to system success)
   document.getElementById('obiWanContinue').addEventListener('click', () => {
+    // Render flower growth visual
+    renderFlower(practiceCount);
     responseContainer.style.display = 'none';
     document.getElementById('system-success').style.display = 'block';
   });

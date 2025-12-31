@@ -1,0 +1,197 @@
+---
+title: Practice Garden - HabitualOS
+layout: base.njk
+permalink: /garden/
+---
+
+<style>
+  @keyframes sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  @keyframes fadeInGrow {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .flower-sway {
+    animation: sway 4s ease-in-out infinite;
+    transform-origin: bottom center;
+  }
+
+  .garden-appear {
+    animation: fadeInGrow 0.6s ease-out forwards;
+  }
+</style>
+
+<div id="garden-scene" style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; position: relative;">
+  <div id="loading" style="text-align: center; color: #999;">
+    Loading your garden...
+  </div>
+
+  <div id="garden-container" style="display: none; text-align: center; position: relative; z-index: 1;">
+    <!-- Flower visual -->
+    <div id="flower-visual" style="margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+      <div id="flower-emoji" class="flower-sway garden-appear" style="font-size: 10rem; line-height: 1; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"></div>
+      <div style="width: 150px; height: 4px; background: linear-gradient(to bottom, #8B4513, #654321); border-radius: 2px; opacity: 0.6; margin-top: -1rem;"></div>
+      <div id="flower-label" style="font-size: 1.5rem; color: #555; font-weight: 600; margin-top: 1rem;"></div>
+      <div id="practice-count" style="font-size: 1.1rem; color: #888; line-height: 1.6; white-space: pre-line;"></div>
+      <div id="planted-date" style="font-size: 0.9rem; color: #999; font-style: italic; margin-top: 0.5rem;"></div>
+    </div>
+
+    <!-- Navigation -->
+    <div style="margin-top: 3rem; display: flex; gap: 1rem; justify-content: center;">
+      <a
+        href="/practices/"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+      >
+        View History
+      </a>
+      <a
+        href="/practice/"
+        style="padding: 0.75rem 1.5rem; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;"
+      >
+        + New Practice
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Get flower growth stage based on practice count
+  function getFlowerStage(count) {
+    if (count === 0) {
+      return {
+        emoji: '🌑',
+        label: 'Unplanted',
+        sublabel: 'A garden waiting to be born'
+      };
+    } else if (count <= 2) {
+      return {
+        emoji: '🌱',
+        label: 'Seedling',
+        sublabel: 'Tender and new, reaching toward light'
+      };
+    } else if (count <= 5) {
+      return {
+        emoji: '🌿',
+        label: 'Young Sprout',
+        sublabel: 'Roots deepening, stem strengthening'
+      };
+    } else if (count <= 10) {
+      return {
+        emoji: '🌺',
+        label: 'First Buds',
+        sublabel: 'Something beautiful forming beneath the surface'
+      };
+    } else if (count <= 20) {
+      return {
+        emoji: '🌸',
+        label: 'Opening Bloom',
+        sublabel: 'Petals unfurling, showing what was hidden'
+      };
+    } else if (count <= 50) {
+      return {
+        emoji: '🌻',
+        label: 'Full Bloom',
+        sublabel: 'Radiant, confident, facing the sun'
+      };
+    } else {
+      return {
+        emoji: '🌼',
+        label: 'Wild Garden',
+        sublabel: 'An entire ecosystem of growth and life'
+      };
+    }
+  }
+
+  // Format date poetically
+  function formatPlantedDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const days = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+
+    const formattedDate = `${monthNames[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+
+    if (days === 0) {
+      return `Planted today`;
+    } else if (days === 1) {
+      return `Planted yesterday`;
+    } else if (days < 7) {
+      return `Planted ${days} days ago`;
+    } else if (days < 30) {
+      const weeks = Math.floor(days / 7);
+      return `Planted ${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    } else {
+      return `Planted ${formattedDate}`;
+    }
+  }
+
+  // Render flower visual
+  function renderGarden(count, firstPracticeDate) {
+    const stage = getFlowerStage(count);
+
+    // Use default text colors (no night mode adjustment needed without custom background)
+    const labelColor = '#555';
+    const countColor = '#888';
+    const dateColor = '#999';
+
+    document.getElementById('flower-emoji').textContent = stage.emoji;
+    document.getElementById('flower-label').textContent = stage.label;
+    document.getElementById('flower-label').style.color = labelColor;
+    document.getElementById('practice-count').textContent = count === 0
+      ? stage.sublabel
+      : `${count} ${count === 1 ? 'practice' : 'practices'}\n${stage.sublabel}`;
+    document.getElementById('practice-count').style.color = countColor;
+    document.getElementById('planted-date').style.color = dateColor;
+
+    // Show planted date
+    if (firstPracticeDate) {
+      document.getElementById('planted-date').textContent = formatPlantedDate(firstPracticeDate);
+    }
+  }
+
+  // Load practice count and render garden
+  async function loadGarden() {
+    try {
+      // Fetch all practices to get count and first practice date
+      const response = await fetch('/.netlify/functions/practice-list?limit=1000');
+      const data = await response.json();
+
+      const loading = document.getElementById('loading');
+      const container = document.getElementById('garden-container');
+
+      loading.style.display = 'none';
+
+      if (data.success) {
+        const practiceCount = data.practices.length;
+
+        // Get first practice date (practices are in descending order, so last one is first)
+        const firstPracticeDate = practiceCount > 0
+          ? data.practices[practiceCount - 1].timestamp
+          : null;
+
+        renderGarden(practiceCount, firstPracticeDate);
+        container.style.display = 'block';
+      } else {
+        loading.innerHTML = '<div style="color: #d32f2f;">Failed to load garden. Please refresh the page.</div>';
+      }
+    } catch (error) {
+      console.error('Error loading garden:', error);
+      document.getElementById('loading').innerHTML = '<div style="color: #d32f2f;">Failed to load garden. Please refresh the page.</div>';
+    }
+  }
+
+  // Load garden on page load
+  loadGarden();
+</script>

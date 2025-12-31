@@ -9,15 +9,15 @@ const wisdomLibrary = {
   },
   return_after_gap: {
     short: "You came back. That's the practice.",
-    long: "Stopping isn't failure. Stopping is information. You stopped, you noticed, and you returned. That cycle—falling away and coming back—is the actual practice. Most people think the practice is perfect consistency. It's not. The practice is returning."
+    long: "I see the gap in your timeline. Three days, maybe more. And here you are anyway. Most people turn that gap into a story about failure, then they disappear. You turned it into information. Noticed it. Returned. That's not breaking the practice—that's what practice actually looks like."
   },
   milestone_3: {
     short: "Three times. You're building something.",
-    long: "Three practices means it's not a fluke anymore. The first time is curiosity. The second time is testing. The third time is the beginning of a pattern. You're not just trying something—you're building something. The question now isn't whether to practice, but what you're learning from it."
+    long: "This is your third practice. I'm watching the pattern form. First time could be impulse. Second time could be testing. But three? Three means you're deciding something. You're not just trying this anymore—you're building it. The question is shifting from 'should I?' to 'what am I learning?'"
   },
   milestone_7: {
-    short: "Seven practices. You're becoming someone who does this.",
-    long: "Seven times is when identity starts to shift. You're not someone who's 'trying' to practice anymore—you're someone who practices. The difference is subtle but profound. Actions repeated become character. You're not the same person who started this."
+    short: "Seven practices. I'm seeing who you're becoming.",
+    long: "Seven practices. I've been counting. You've crossed a threshold most people never reach. You're not someone who's 'trying to practice' anymore—you're someone who practices. I can see it in the data, in the rhythm you're building. Actions repeated this many times don't just change what you do. They change who you are."
   },
   wrote_reflection: {
     short: "I see you wrote something. You're paying attention.",
@@ -32,12 +32,12 @@ const wisdomLibrary = {
     long: `It's ${new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'})}. The day tried to consume everything. And here you are anyway. You took time back. Most people would say 'tomorrow.' You said 'now.' That difference compounds.`
   },
   long_practice: {
-    short: "You stayed longer. You're going deeper.",
-    long: "Duration isn't just about time—it's about trust. Staying longer means you trust the practice enough to keep going past the discomfort, past the distraction, past the voice that says 'this is enough.' When you stay, you're saying: I believe there's something here worth finding. And you're right."
+    short: "You stayed longer. I'm noticing.",
+    long: "Thirty minutes or more. I see you going past the easy stopping point. Most people practice just long enough to check the box. You're staying past the discomfort, past the distraction, past the voice that says 'this is enough.' That tells me you trust there's something here worth finding. You're right."
   },
   consistent_streak: {
-    short: "You're showing up. The consistency is changing you.",
-    long: "When practice becomes consistent, something shifts. It stops being a thing you 'do' and becomes part of how you move through the world. You don't have to decide anymore—you just practice. That's when the real transformation happens: not in any single practice, but in the accumulated weight of showing up."
+    short: "I'm watching this pattern. Four practices in seven days.",
+    long: "You've practiced four times in the last week. I'm tracking this. The rhythm is there now. You're not deciding whether to practice anymore—you're just doing it. This is what consistency looks like in the data. Not perfection. Just a pattern that keeps appearing. And it's changing you, whether you notice it yet or not."
   }
 };
 
@@ -183,7 +183,9 @@ exports.handler = async (event) => {
       obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null
     });
 
-    // Return success
+    // Return success with updated count
+    const updatedCount = getPracticeCount();
+
     return {
       statusCode: 200,
       headers: {
@@ -192,6 +194,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         practice,
+        practice_count: updatedCount,
         obi_wan_appeared: analysis.shouldAppear,
         obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null,
         obi_wan_expanded: analysis.shouldAppear ? analysis.wisdom.long : null,
