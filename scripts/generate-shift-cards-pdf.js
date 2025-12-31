@@ -33,19 +33,19 @@ async function generateShiftCardsPDF(userId, outputDir) {
   }
 
   // Intro text
-  const intro = `# Your Healify Shift Cards
+  const intro = `# Your Healify Reflections
 
-Thank you for sharing your check-in data with Healify. Based on your entries, we've generated 3 personalized Shift Cards to help you reflect on patterns in your mental health journey.
+Thank you for sharing your check-in data with Healify. Based on your entries, we've generated 3 personalized reflections to help you understand patterns in your mental health journey.
 
-## How to Use These Cards
+## How to Use These Reflections
 
-Each card highlights a different aspect of your experience:
+Each reflection highlights a different aspect of your experience:
 
-- **Card 1 (Primary Theme):** A pattern that stayed consistent
-- **Card 2 (Primary Shift):** A significant change or turning point
-- **Card 3 (Current Orientation):** Where you are now
+- **Primary Theme:** A pattern that stayed consistent
+- **Biggest Shift:** A significant change or turning point
+- **Current Orientation:** Where you are now
 
-Take time to read each card and sit with the reflection question. There's no right or wrong answer — these are invitations to notice what resonates.
+Take time to read each reflection and sit with the question at the end. There's no right or wrong answer — these are invitations to notice what resonates.
 
 ---
 
@@ -64,7 +64,7 @@ Take time to read each card and sit with the reflection question. There's no rig
       fontSize: '11pt',
       lineStretch: '1.5',
       mainFont: 'Poppins',
-      headingFont: 'Copernicus',
+      headingFont: 'Copernicus Trial',
       template: templatePath
     }
   );

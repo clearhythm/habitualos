@@ -1,0 +1,304 @@
+---
+title: Practice Tracker - HabitualOS
+layout: base.njk
+permalink: /practice/
+---
+
+<div class="container-narrow" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+  <div id="practice-form" style="display: block;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="margin: 0;">Practice Check-in</h1>
+      <a
+        href="/practices/"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+      >
+        View History
+      </a>
+    </div>
+
+    <form id="practiceForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- Practice Name (optional) -->
+      <div>
+        <label for="practice_name" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          Practice Name <span style="color: #999; font-weight: 400;">(optional)</span>
+        </label>
+        <input
+          type="text"
+          id="practice_name"
+          name="practice_name"
+          placeholder="e.g., Meditation, Writing, Exercise"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+        />
+      </div>
+
+      <!-- Duration (optional) -->
+      <div>
+        <label for="duration" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          Duration <span style="color: #999; font-weight: 400;">(minutes, optional)</span>
+        </label>
+        <input
+          type="number"
+          id="duration"
+          name="duration"
+          min="1"
+          placeholder="e.g., 15"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+        />
+      </div>
+
+      <!-- Reflection (optional) -->
+      <div>
+        <label for="reflection" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          How was it? <span style="color: #999; font-weight: 400;">(optional)</span>
+        </label>
+        <textarea
+          id="reflection"
+          name="reflection"
+          rows="4"
+          placeholder="What did you notice? How did it feel?"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;"
+        ></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        id="submitBtn"
+        style="padding: 1rem 2rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+        onmouseover="this.style.background='#0052a3'"
+        onmouseout="this.style.background='#0066cc'"
+      >
+        I Did It ✓
+      </button>
+    </form>
+  </div>
+
+  <!-- System Success Message (hidden initially) -->
+  <div id="system-success" style="display: none;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✓</div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Practice Logged</h2>
+      <p style="color: #666;">Your practice has been recorded.</p>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+      <button
+        id="systemViewHistory"
+        style="flex: 1; padding: 1rem; background: white; border: 2px solid #0066cc; color: #0066cc; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+        onmouseover="this.style.background='#f0f8ff'"
+        onmouseout="this.style.background='white'"
+        onclick="window.location.href='/practices/'"
+      >
+        View History
+      </button>
+      <button
+        id="systemAnotherPractice"
+        style="flex: 1; padding: 1rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+        onmouseover="this.style.background='#0052a3'"
+        onmouseout="this.style.background='#0066cc'"
+      >
+        Log Another Practice
+      </button>
+    </div>
+  </div>
+
+  <!-- Obi-Wai Response (hidden initially) -->
+  <div id="obi-wan-response" style="display: none;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+      <div style="font-size: 1rem; font-weight: 600; color: #9b59b6; margin-bottom: 1rem;">Obi-Wai appears...</div>
+      <p id="obi-wan-message" style="font-size: 1.25rem; line-height: 1.6; font-style: italic; color: #333; margin-bottom: 1rem;"></p>
+
+      <!-- Expandable wisdom -->
+      <div id="obi-wan-expand-container" style="margin-bottom: 2rem;">
+        <button
+          id="expandWisdom"
+          style="background: none; border: none; color: #9b59b6; cursor: pointer; font-size: 0.9rem; text-decoration: underline; padding: 0;"
+        >
+          Read more...
+        </button>
+        <div id="obi-wan-expanded" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(155, 89, 182, 0.05); border-radius: 4px; line-height: 1.6; color: #555;"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+      <button
+        id="thumbsUp"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;"
+        onmouseover="this.style.background='#e0e0e0'"
+        onmouseout="this.style.background='#f0f0f0'"
+        title="This felt supportive"
+      >
+        👍
+      </button>
+      <button
+        id="thumbsDown"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;"
+        onmouseover="this.style.background='#e0e0e0'"
+        onmouseout="this.style.background='#f0f0f0'"
+        title="This didn't land well"
+      >
+        👎
+      </button>
+    </div>
+
+    <button
+      id="obiWanContinue"
+      style="width: 100%; padding: 1rem; background: #9b59b6; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+      onmouseover="this.style.background='#8b4a96'"
+      onmouseout="this.style.background='#9b59b6'"
+    >
+      Continue
+    </button>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('practiceForm');
+  const formContainer = document.getElementById('practice-form');
+  const responseContainer = document.getElementById('obi-wan-response');
+  const obiWanMessage = document.getElementById('obi-wan-message');
+  const obiWanExpanded = document.getElementById('obi-wan-expanded');
+  const expandButton = document.getElementById('expandWisdom');
+  const submitBtn = document.getElementById('submitBtn');
+
+  let currentPracticeId = null;
+  let expandedWisdom = null;
+
+  // Handle expand/collapse wisdom
+  expandButton.addEventListener('click', () => {
+    if (obiWanExpanded.style.display === 'none') {
+      obiWanExpanded.style.display = 'block';
+      expandButton.textContent = 'Show less';
+    } else {
+      obiWanExpanded.style.display = 'none';
+      expandButton.textContent = 'Read more...';
+    }
+  });
+
+  // Handle form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Recording...';
+
+    const formData = {
+      practice_name: document.getElementById('practice_name').value || null,
+      duration: document.getElementById('duration').value ? parseInt(document.getElementById('duration').value) : null,
+      reflection: document.getElementById('reflection').value || null
+    };
+
+    try {
+      const response = await fetch('/.netlify/functions/practice-submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store practice ID for feedback
+        currentPracticeId = data.practice.id;
+
+        // Hide form
+        formContainer.style.display = 'none';
+
+        // Show either Obi-Wai or system success
+        if (data.obi_wan_appeared) {
+          obiWanMessage.textContent = data.obi_wan_message;
+          obiWanExpanded.textContent = data.obi_wan_expanded;
+          obiWanExpanded.style.display = 'none';
+          expandButton.textContent = 'Read more...';
+          responseContainer.style.display = 'block';
+        } else {
+          document.getElementById('system-success').style.display = 'block';
+        }
+      } else {
+        alert('Error: ' + data.error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'I Did It ✓';
+      }
+    } catch (error) {
+      console.error('Error submitting practice:', error);
+      alert('Failed to submit practice. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'I Did It ✓';
+    }
+  });
+
+  // Handle "Log Another Practice" button
+  document.getElementById('systemAnotherPractice').addEventListener('click', resetForm);
+
+  // Handle Obi-Wai "Continue" button (goes to system success)
+  document.getElementById('obiWanContinue').addEventListener('click', () => {
+    responseContainer.style.display = 'none';
+    document.getElementById('system-success').style.display = 'block';
+  });
+
+  function resetForm() {
+    // Reset form
+    form.reset();
+    currentPracticeId = null;
+
+    // Re-enable submit button
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'I Did It ✓';
+
+    // Switch views
+    document.getElementById('system-success').style.display = 'none';
+    responseContainer.style.display = 'none';
+    formContainer.style.display = 'block';
+  }
+
+  // Handle thumbs up/down feedback
+  document.getElementById('thumbsUp').addEventListener('click', async () => {
+    if (!currentPracticeId) return;
+
+    try {
+      await fetch('/.netlify/functions/practice-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: currentPracticeId,
+          feedback: 'thumbs_up'
+        })
+      });
+
+      // Visual feedback
+      document.getElementById('thumbsUp').style.background = '#d4edda';
+      document.getElementById('thumbsDown').style.opacity = '0.3';
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  });
+
+  document.getElementById('thumbsDown').addEventListener('click', async () => {
+    if (!currentPracticeId) return;
+
+    try {
+      await fetch('/.netlify/functions/practice-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: currentPracticeId,
+          feedback: 'thumbs_down'
+        })
+      });
+
+      // Visual feedback
+      document.getElementById('thumbsDown').style.background = '#f8d7da';
+      document.getElementById('thumbsUp').style.opacity = '0.3';
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  });
+</script>

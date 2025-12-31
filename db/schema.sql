@@ -50,7 +50,19 @@ CREATE TABLE IF NOT EXISTS artifacts (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+-- Practices: Simple practice tracking (Obi-Wan system)
+CREATE TABLE IF NOT EXISTS practices (
+  id TEXT PRIMARY KEY,
+  practice_name TEXT,
+  duration INTEGER,                -- Duration in minutes (optional)
+  reflection TEXT,                 -- User's reflection after practice
+  obi_wan_message TEXT,            -- Encouragement message shown
+  obi_wan_feedback TEXT,           -- thumbs_up | thumbs_down | null
+  timestamp TEXT DEFAULT (datetime('now'))
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_action_cards_north_star ON action_cards(north_star_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_action ON chat_messages(action_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_action ON artifacts(action_id);
+CREATE INDEX IF NOT EXISTS idx_practices_timestamp ON practices(timestamp);

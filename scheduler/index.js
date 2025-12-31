@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const executeTask = require('./task-executor');
+const executeShiftReportTask = require('./shift-reports-executor');
 const { getScheduledTasksDue } = require('../db/helpers');
 require('dotenv').config();
 
@@ -33,8 +34,13 @@ async function checkAndExecuteTasks() {
       // Mark as executing
       executingTasks.add(task.id);
 
+      // Choose executor based on task title
+      const executor = task.title.includes('Shift Report')
+        ? executeShiftReportTask
+        : executeTask;
+
       // Execute task (non-blocking)
-      executeTask(task.id)
+      executor(task.id)
         .then(() => {
           console.log(`[Scheduler] ✓ Task ${task.id} completed successfully`);
           executingTasks.delete(task.id);

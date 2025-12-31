@@ -290,6 +290,68 @@ function getArtifact(id) {
 }
 
 /**
+ * Practice Operations (Obi-Wan System)
+ */
+
+// Insert a practice entry
+function insertPractice({ practice_name, duration, reflection, obi_wan_message }) {
+  const id = randomUUID();
+  const stmt = db.prepare(`
+    INSERT INTO practices (id, practice_name, duration, reflection, obi_wan_message)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  try {
+    stmt.run(id, practice_name || null, duration || null, reflection || null, obi_wan_message);
+    return { id, practice_name, duration, reflection, obi_wan_message, timestamp: new Date().toISOString() };
+  } catch (error) {
+    throw new Error(`Failed to insert practice: ${error.message}`);
+  }
+}
+
+// Get total practice count
+function getPracticeCount() {
+  const stmt = db.prepare('SELECT COUNT(*) as count FROM practices');
+  try {
+    const result = stmt.get();
+    return result.count;
+  } catch (error) {
+    throw new Error(`Failed to get practice count: ${error.message}`);
+  }
+}
+
+// Get recent practices
+function getRecentPractices(limit = 10) {
+  const stmt = db.prepare(`
+    SELECT * FROM practices
+    ORDER BY timestamp DESC
+    LIMIT ?
+  `);
+
+  try {
+    return stmt.all(limit);
+  } catch (error) {
+    throw new Error(`Failed to get recent practices: ${error.message}`);
+  }
+}
+
+// Update practice feedback
+function updatePracticeFeedback(id, feedback) {
+  const stmt = db.prepare(`
+    UPDATE practices
+    SET obi_wan_feedback = ?
+    WHERE id = ?
+  `);
+
+  try {
+    stmt.run(feedback, id);
+    return { id, obi_wan_feedback: feedback };
+  } catch (error) {
+    throw new Error(`Failed to update practice feedback: ${error.message}`);
+  }
+}
+
+/**
  * Utility Functions
  */
 
@@ -320,6 +382,12 @@ module.exports = {
   insertArtifact,
   getArtifacts,
   getArtifact,
+
+  // Practice operations
+  insertPractice,
+  getPracticeCount,
+  getRecentPractices,
+  updatePracticeFeedback,
 
   // Utilities
   closeDatabase
