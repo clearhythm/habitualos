@@ -111,19 +111,23 @@ permalink: /practices/
           // Obi-Wai response (appears FIRST in chronological order - he responds after you practice)
           if (practice.obi_wan_message) {
             html += `
-              <div style="padding: 1.25rem; background: #faf9f7; border-radius: 8px; border-left: 4px solid #9b59b6;">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                  <div style="flex: 1;">
-                    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: #9b59b6;">
-                      Obi-Wai
+              <a href="/practice/?practice=${practice.id}" style="text-decoration: none; color: inherit; display: block;">
+                <div style="padding: 1.25rem; background: #faf9f7; border-radius: 8px; border-left: 4px solid #9b59b6; cursor: pointer; transition: background 0.2s;"
+                     onmouseover="this.style.background='#f5f3f1'"
+                     onmouseout="this.style.background='#faf9f7'">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                      <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: #9b59b6;">
+                        Obi-Wai
+                      </div>
+                      <div style="font-style: italic; font-size: 0.95rem; line-height: 1.5; color: #555;">
+                        "${escapeHtml(practice.obi_wan_message)}"
+                      </div>
                     </div>
-                    <div style="font-style: italic; font-size: 0.95rem; line-height: 1.5; color: #555;">
-                      "${escapeHtml(practice.obi_wan_message)}"
-                    </div>
+                    ${getFeedbackIcon(practice.obi_wan_feedback)}
                   </div>
-                  ${getFeedbackIcon(practice.obi_wan_feedback)}
                 </div>
-              </div>
+              </a>
             `;
           }
 

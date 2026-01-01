@@ -151,7 +151,7 @@ Return as JSON: {"short": "...", "long": "..."}`;
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-latest',
+      model: 'claude-sonnet-4-5',
       max_tokens: 500,
       messages: [{
         role: 'user',

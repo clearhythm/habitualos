@@ -217,6 +217,59 @@ permalink: /practice/
     }
   });
 
+  // Check if viewing a specific practice (from history)
+  async function checkForPracticeView() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const practiceId = urlParams.get('practice');
+
+    if (practiceId) {
+      // Hide form, show loading state
+      formContainer.style.display = 'none';
+
+      try {
+        // Fetch all practices to find this one
+        const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+          cache: 'no-store'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          const practice = data.practices.find(p => p.id === practiceId);
+
+          if (practice && practice.obi_wan_message) {
+            // Show the Obi-Wai message
+            currentPracticeId = practice.id;
+            practiceCount = data.practices.length;
+
+            obiWanMessage.textContent = practice.obi_wan_message;
+            obiWanExpanded.textContent = practice.obi_wan_expanded || '';
+            obiWanExpanded.style.display = 'none';
+            expandButton.textContent = 'Read more...';
+
+            // Show "back to history" instead of "continue"
+            const continueBtn = document.getElementById('obiWanContinue');
+            const newBtn = continueBtn.cloneNode(true);
+            continueBtn.parentNode.replaceChild(newBtn, continueBtn);
+            newBtn.textContent = 'Back to History';
+            newBtn.addEventListener('click', () => window.location.href = '/practices/');
+
+            responseContainer.style.display = 'block';
+          } else {
+            // Practice not found or no Obi-Wai message
+            formContainer.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading practice:', error);
+        formContainer.style.display = 'block';
+      }
+    }
+  }
+
+  // Check on page load
+  checkForPracticeView();
+
   // Handle form submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
