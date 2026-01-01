@@ -15,7 +15,7 @@
     "pdf:shift-cards": "node scripts/generate-shift-cards-pdf.js",
     "pdf:shift-report": "node scripts/generate-shift-report-pdf.js",
     "dev": "npm-run-all db:init --parallel sass:watch eleventy:serve",
-    "start": "npm run db:init && concurrently --kill-others \"npm run sass:watch\" \"npx netlify dev\"",
+    "start": "npm run db:init && concurrently --kill-others \"npm run sass:watch\" \"npm run eleventy:serve\" \"npx netlify dev\"",
     "build": "npm-run-all db:init sass:build eleventy:build",
     "clean": "rm -rf _site"
   },
