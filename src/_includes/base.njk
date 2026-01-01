@@ -7,15 +7,9 @@
   <link rel="stylesheet" href="/css/main.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container">
-      <h1 class="header-title"><a href="/">🧙🏻‍♂️ HabitualOS</a></h1>
-      {# <p class="header-subtitle"> Launch agents that move your life forward while you sleep.</p> #}
-      <p class="header-subtitle"> Embody your state and master your life.</p>
-    </div>
-  </header>
+  {% include "nav.njk" %}
 
-  <main class="main">
+  <main class="main" style="padding-top: 80px;">
     <div class="container">
       {{ content | safe }}
     </div>
@@ -28,6 +22,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module" src="/assets/js/navigation.js"></script>
   <script src="/scripts/nav.js"></script>
   <script src="/scripts/app.js"></script>
 </body>
