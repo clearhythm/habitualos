@@ -10,6 +10,10 @@ import { generateUserId } from "/assets/js/utils/utils.js";
 // Keys & Constants
 const LOCAL_STORAGE_KEY = "user";
 
+// TEMPORARY: Hardcoded userId for testing across localhost and dev server
+// This ensures the same data is visible regardless of domain
+const HARDCODED_USER_ID = "u-mgpqwa49";
+
 // -----------------------------
 // User Initialization
 // -----------------------------
@@ -29,6 +33,11 @@ const LOCAL_STORAGE_KEY = "user";
  * @returns {string|null} The userId (e.g., "u-abc123"), or null if initialization failed
  */
 export function initializeUser() {
+  // TEMPORARY: Return hardcoded userId for testing across environments
+  // This bypasses localStorage to ensure same data across localhost and dev server
+  return HARDCODED_USER_ID;
+
+  /* Original implementation (commented out for testing):
   let user = getLocalUser();
   if (!user) {
     user = createLocalUser();
@@ -41,6 +50,7 @@ export function initializeUser() {
   }
 
   return userId;
+  */
 }
 
 // -----------------------------
