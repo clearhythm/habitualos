@@ -45,9 +45,10 @@ permalink: /practices/
 </div>
 
 <script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
   async function loadPractices() {
     // Get userId from localStorage
-    const { initializeUser } = await import('/assets/js/auth/auth.js');
     const userId = initializeUser();
 
     try {
