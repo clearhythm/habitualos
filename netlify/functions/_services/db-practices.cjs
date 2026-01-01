@@ -16,7 +16,8 @@
 //     duration: number (minutes),
 //     practice_name: string,
 //     reflection: string,
-//     obi_wan_message: string (optional),
+//     obi_wan_message: string (optional, AI-generated short wisdom),
+//     obi_wan_expanded: string (optional, AI-generated long wisdom),
 //     obi_wan_feedback: "thumbs_up" | "thumbs_down" (optional),
 //     _createdAt: Firestore timestamp,
 //     _updatedAt: Firestore timestamp (optional)

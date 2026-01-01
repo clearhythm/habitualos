@@ -1,5 +1,10 @@
 require('dotenv').config();
+const Anthropic = require('@anthropic-ai/sdk');
 const { getPracticesByUserId, createPractice, getPracticeCount } = require('./_services/db-practices.cjs');
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 // Helper to generate practice ID (p- prefix + timestamp-based unique ID)
 function generatePracticeId() {
@@ -48,8 +53,128 @@ const wisdomLibrary = {
   }
 };
 
+/**
+ * Generate personalized Obi-Wai wisdom using Claude AI
+ * @param {string} pattern - The detected pattern type
+ * @param {number} practiceCount - Total practice count before this practice
+ * @param {Object} currentPractice - Current practice data
+ * @param {Array} recentPractices - Recent practice history
+ * @returns {Promise<{short: string, long: string}>} Generated wisdom
+ */
+async function generateObiWaiWisdom(pattern, practiceCount, currentPractice, recentPractices) {
+  const now = new Date();
+  const hour = now.getHours();
+  const timeOfDay = new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+
+  // Build context about the practice
+  let contextDetails = [];
+
+  if (currentPractice.practice_name) {
+    contextDetails.push(`Practice type: ${currentPractice.practice_name}`);
+  }
+
+  if (currentPractice.duration) {
+    contextDetails.push(`Duration: ${currentPractice.duration} minutes`);
+  }
+
+  if (currentPractice.reflection) {
+    contextDetails.push(`User's reflection: "${currentPractice.reflection}"`);
+  }
+
+  contextDetails.push(`Total practices so far: ${practiceCount}`);
+  contextDetails.push(`Time: ${timeOfDay}`);
+
+  // Add pattern-specific context
+  let patternContext = '';
+  switch (pattern) {
+    case 'first_practice':
+      patternContext = 'This is their very first practice. They crossed the gap from thinking to doing.';
+      break;
+    case 'return_after_gap':
+      const lastPractice = new Date(recentPractices[0].timestamp);
+      const daysSince = Math.floor((now - lastPractice) / (1000 * 60 * 60 * 24));
+      patternContext = `They returned after a ${daysSince}-day gap. They came back despite the break.`;
+      break;
+    case 'milestone_3':
+      patternContext = 'This is their 3rd practice. A pattern is forming - this is more than impulse.';
+      break;
+    case 'milestone_7':
+      patternContext = '7 practices completed. They\'re becoming someone who practices.';
+      break;
+    case 'wrote_reflection':
+      patternContext = 'They wrote a substantial reflection, paying attention to their experience.';
+      break;
+    case 'early_morning':
+      patternContext = `Early morning practice (${timeOfDay}). They claimed this time before the day takes it.`;
+      break;
+    case 'late_night':
+      patternContext = `Late night practice (${timeOfDay}). They didn\'t let the day consume everything.`;
+      break;
+    case 'long_practice':
+      patternContext = `${currentPractice.duration}+ minutes. They stayed past the easy stopping point.`;
+      break;
+    case 'consistent_streak':
+      patternContext = 'They\'ve practiced 4+ times in the last week. Consistency is appearing.';
+      break;
+  }
+
+  const prompt = `You are Obi-Wai, a wise, observant companion for people building practice habits. You appear occasionally when you notice something meaningful in someone's practice pattern. Your voice is:
+- Calm, direct, present-tense observation
+- Focused on what you see in the data/behavior, not assumptions
+- Specific to their actual practice, not generic
+- Understated wisdom - you notice patterns others miss
+- No exclamation marks, no cheerleading, no "great job!"
+- You speak like someone who's been watching quietly and sees something worth noting
+
+Context about this practice:
+${contextDetails.join('\n')}
+
+Pattern detected: ${patternContext}
+
+Generate two pieces of wisdom:
+
+1. SHORT (1-2 sentences): A brief, direct observation. This will be shown immediately.
+
+2. LONG (one paragraph, 3-5 sentences): A deeper reflection on what you're noticing. This expands on the short message.
+
+Examples of the style (for reference only, don't copy):
+
+SHORT: "I see you starting."
+LONG: "Most people think about starting for months, maybe years. You actually did it. That gap between thinking and doing—that's where most practices die. You crossed it. I'll be here watching what you build."
+
+SHORT: "You came back. That's the practice."
+LONG: "I see the gap in your timeline. Three days, maybe more. And here you are anyway. Most people turn that gap into a story about failure, then they disappear. You turned it into information. Noticed it. Returned. That's not breaking the practice—that's what practice actually looks like."
+
+Now generate wisdom for THIS specific practice. Make it personal to what they actually did, their reflection, the time of day, the practice name - reference the specifics, not generic patterns.
+
+Return as JSON: {"short": "...", "long": "..."}`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: prompt
+      }]
+    });
+
+    const responseText = message.content[0].text;
+    const wisdom = JSON.parse(responseText);
+
+    return wisdom;
+  } catch (error) {
+    console.error('Error generating Obi-Wai wisdom:', error);
+    // Fallback to canned response if API fails
+    return wisdomLibrary[pattern] || { short: "I see you practicing.", long: "I see you practicing." };
+  }
+}
+
 // Detect meaningful patterns and decide if Obi-Wai should speak
 function analyzeAndRespond(practiceCount, recentPractices, currentPractice) {
+  // TESTING BYPASS: If OBI_WAI_ALWAYS_APPEAR is set, always show Obi-Wai
+  const alwaysAppear = process.env.OBI_WAI_ALWAYS_APPEAR === 'true';
+
   // First practice - always meaningful
   if (practiceCount === 0) {
     return {
@@ -147,6 +272,15 @@ function analyzeAndRespond(practiceCount, recentPractices, currentPractice) {
   }
 
   // No meaningful pattern detected - silence is wisdom too
+  // BUT if testing bypass is enabled, force appearance with a generic pattern
+  if (alwaysAppear) {
+    return {
+      shouldAppear: true,
+      pattern: 'wrote_reflection', // Use reflection pattern as default for testing
+      wisdom: wisdomLibrary.wrote_reflection
+    };
+  }
+
   return {
     shouldAppear: false,
     pattern: null,
@@ -201,6 +335,17 @@ exports.handler = async (event) => {
       reflection
     });
 
+    // Generate AI wisdom if a pattern was detected
+    let wisdom = null;
+    if (analysis.shouldAppear) {
+      wisdom = await generateObiWaiWisdom(
+        analysis.pattern,
+        practiceCount,
+        { practice_name, duration, reflection },
+        recentPractices
+      );
+    }
+
     // Create practice document
     const practiceId = generatePracticeId();
     const timestamp = new Date().toISOString();
@@ -211,7 +356,8 @@ exports.handler = async (event) => {
       practice_name: practice_name || null,
       duration: duration || null,
       reflection: reflection || null,
-      obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null
+      obi_wan_message: wisdom ? wisdom.short : null,
+      obi_wan_expanded: wisdom ? wisdom.long : null
     };
 
     // Insert practice into Firestore
@@ -233,8 +379,8 @@ exports.handler = async (event) => {
         },
         practice_count: updatedCount,
         obi_wan_appeared: analysis.shouldAppear,
-        obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null,
-        obi_wan_expanded: analysis.shouldAppear ? analysis.wisdom.long : null,
+        obi_wan_message: wisdom ? wisdom.short : null,
+        obi_wan_expanded: wisdom ? wisdom.long : null,
         pattern_detected: analysis.pattern
       })
     };
