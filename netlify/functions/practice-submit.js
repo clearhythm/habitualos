@@ -160,11 +160,26 @@ Return as JSON: {"short": "...", "long": "..."}`;
     });
 
     const responseText = message.content[0].text;
-    const wisdom = JSON.parse(responseText);
+
+    // Strip markdown code fences if present
+    let jsonText = responseText.trim();
+    if (jsonText.startsWith('```')) {
+      // Remove opening fence (```json or ```)
+      jsonText = jsonText.replace(/^```(?:json)?\n?/, '');
+      // Remove closing fence
+      jsonText = jsonText.replace(/\n?```$/, '');
+    }
+
+    const wisdom = JSON.parse(jsonText.trim());
 
     return wisdom;
   } catch (error) {
     console.error('Error generating Obi-Wai wisdom:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      pattern: pattern
+    });
     // Fallback to canned response if API fails
     return wisdomLibrary[pattern] || { short: "I see you practicing.", long: "I see you practicing." };
   }
