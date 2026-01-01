@@ -44,10 +44,21 @@ permalink: /practices/
   </div>
 </div>
 
-<script>
+<script type="module">
   async function loadPractices() {
+    // Get userId from localStorage
+    const { initializeUser } = await import('/assets/js/auth/auth.js');
+    const userId = initializeUser();
+
     try {
-      const response = await fetch('/.netlify/functions/practice-list');
+      // Add timestamp to bust all caching layers
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
 
       const loading = document.getElementById('loading');
@@ -176,4 +187,12 @@ permalink: /practices/
 
   // Load practices on page load
   loadPractices();
+
+  // Reload when page is shown (including from back/forward cache)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      // Page was loaded from cache, reload data
+      loadPractices();
+    }
+  });
 </script>

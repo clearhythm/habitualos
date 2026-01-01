@@ -1,78 +1,18 @@
 ---
-title: HabitualOS Dashboard
+title: HabitualOS
 layout: base.njk
+permalink: /
 ---
 
-<div id="loading-dashboard" class="mb-xl">
-  <p class="text-muted">Loading your dashboard...</p>
-</div>
+<script>
+  window.location.replace('/practice/');
+</script>
 
-<div id="no-northstar" class="mb-xl" style="display: none;">
-  <div class="card">
-    <h2 class="mb-md">Welcome to HabitualOS</h2>
-    <p class="mb-md">You haven't created any goals yet. Let's get started!</p>
-    <a href="/setup" class="btn btn-primary">Create Your First Goal</a>
-  </div>
-</div>
+<noscript>
+  <meta http-equiv="refresh" content="0; url=/practice/">
+</noscript>
 
-<div id="dashboard-content" style="display: none;">
-  {# Agent Section Header #}
-  <div class="flex flex-between mb-md">
-    <h2>📡&nbsp;&nbsp;Controls</h2>
-    <span class="badge badge-open" id="agent-status">Active</span>
-  </div>
-
-  {# Agent Cards - 3 column grid #}
-  <div class="agent-cards mb-xl">
-    {# Live Stats Card #}
-    <div class="card">
-      <h3 class="card-title mb-md">Live Stats</h3>
-      <div class="stat-item mb-md">
-        <p class="text-muted mb-xs">Actions Automated</p>
-        <p class="stat-value" id="actions-completed-count">0</p>
-      </div>
-      <div class="stat-item">
-        <h4 class="mb-sm">Last Run</h4>
-        <p class="stat-value-sm" id="last-run-time">Never</p>
-      </div>
-    </div>
-
-    {# Run Card #}
-    <div class="card">
-      <h3 class="card-title mb-md">Run</h3>
-      <div id="northstar-undefined" style="display: none;">
-        <p class="text-muted mb-sm">Define your North Star to generate actions</p>
-        <a href="#" id="create-northstar-link" class="btn btn-primary">Define North Star &rarr;</a>
-      </div>
-      <div id="northstar-defined" style="display: none;">
-        <p class="text-muted mb-sm">Generate new actions for your goal</p>
-        <button class="btn btn-primary" id="generate-actions-btn">Generate Actions</button>
-      </div>
-    </div>
-
-    {# Configuration Card #}
-    <div class="card">
-      <h3 class="card-title mb-md">Configuration</h3>
-      <div id="config-undefined" style="display: none;">
-        <p class="text-muted mb-sm">North Star Goal</p>
-        <p class="mb-md"><a href="#" id="config-northstar-link" class="text-link">Define now &rarr;</a></p>
-      </div>
-      <div id="config-defined" style="display: none;">
-        <p class="text-muted mb-xs">North Star Goal</p>
-        <p class="mb-md config-text" id="config-northstar-title"></p>
-      </div>
-      <p class="text-muted mb-xs">Connections</p>
-      <p class="config-text">None configured</p>
-    </div>
-  </div>
-
-  {# Actions Section #}
-  <div class="mb-lg">
-    <div class="flex flex-between mb-md">
-      <h2>⚡ Actions</h2>
-      <button id="toggle-completed" class="btn btn-secondary" style="display: none;"></button>
-    </div>
-
-    <div class="actions-grid" id="actions-grid"></div>
-  </div>
+<div style="text-align: center; padding: 4rem 2rem;">
+  <p>Redirecting to practice check-in...</p>
+  <p><a href="/practice/">Click here if you are not redirected</a></p>
 </div>

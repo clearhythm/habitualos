@@ -1,9 +1,9 @@
 require('dotenv').config();
-const { getRecentPractices } = require('../../db/helpers');
+const { getPracticesByUserId } = require('./_services/db-practices.cjs');
 
 /**
- * GET /api/practices
- * Get list of recent practices
+ * GET /api/practice-list?userId=u-abc123
+ * Get all practices for a user
  */
 exports.handler = async (event) => {
   // Only allow GET
@@ -15,23 +15,37 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Get limit from query params (default 50)
-    const limit = event.queryStringParameters?.limit
-      ? parseInt(event.queryStringParameters.limit)
-      : 50;
+    const { userId, limit } = event.queryStringParameters || {};
 
-    // Get recent practices
-    const practices = getRecentPractices(limit);
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, error: 'Valid userId is required' })
+      };
+    }
 
-    // Return success
+    // Get all practices for this user (already sorted by timestamp desc)
+    let practices = await getPracticesByUserId(userId);
+
+    // Apply limit if specified
+    if (limit) {
+      const limitNum = parseInt(limit, 10);
+      if (!isNaN(limitNum) && limitNum > 0) {
+        practices = practices.slice(0, limitNum);
+      }
+    }
+
     return {
       statusCode: 200,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
       },
       body: JSON.stringify({
         success: true,
-        practices
+        practices,
+        count: practices.length
       })
     };
 

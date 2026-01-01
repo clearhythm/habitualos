@@ -12,14 +12,15 @@ body {
   font-size: $font-size-base;
   line-height: 1.6;
   color: $color-text;
-  background: linear-gradient(
-    to bottom,
-    #fff 0%,
-    #fff 20%,
-    #def1e7 30%,
-    #dff2e3 90%,
-    #dff2e3 100%
-  );
+  background: linear-gradient(#EBEDFD, #FDFCF3 70%, #B5DAFF);
+  // background: linear-gradient(
+  //   to bottom,
+  //   #fff 0%,
+  //   #fff 20%,
+  //   #def1e7 30%,
+  //   #dff2e3 90%,
+  //   #dff2e3 100%
+  // );
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

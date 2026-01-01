@@ -1,5 +1,12 @@
 require('dotenv').config();
-const { insertPractice, getPracticeCount, getRecentPractices } = require('../../db/helpers');
+const { getPracticesByUserId, createPractice, getPracticeCount } = require('./_services/db-practices.cjs');
+
+// Helper to generate practice ID (p- prefix + timestamp-based unique ID)
+function generatePracticeId() {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const randomPart = Math.floor(Math.random() * 1000);
+  return 'p-' + (timestamp * 1000 + randomPart).toString(36).slice(-8);
+}
 
 // Obi-Wai's wisdom library (short form + long form)
 const wisdomLibrary = {
@@ -162,11 +169,30 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { practice_name, duration, reflection } = JSON.parse(event.body);
+    const { userId, practice_name, duration, reflection } = JSON.parse(event.body);
 
-    // Get current practice count and recent practices
-    const practiceCount = getPracticeCount();
-    const recentPractices = getRecentPractices(10);
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, error: 'Valid userId is required' })
+      };
+    }
+
+    // Get current practice count and recent practices for this user
+    // Handle case where collection doesn't exist yet (first practice)
+    let recentPractices = [];
+    let practiceCount = 0;
+
+    try {
+      recentPractices = await getPracticesByUserId(userId);
+      practiceCount = recentPractices.length;
+    } catch (error) {
+      // Collection doesn't exist yet - this is the first practice
+      console.log('No existing practices found (likely first practice):', error.message);
+      recentPractices = [];
+      practiceCount = 0;
+    }
 
     // Analyze patterns and decide if Obi-Wai should speak
     const analysis = analyzeAndRespond(practiceCount, recentPractices, {
@@ -175,16 +201,24 @@ exports.handler = async (event) => {
       reflection
     });
 
-    // Insert practice
-    const practice = insertPractice({
-      practice_name,
-      duration,
-      reflection,
+    // Create practice document
+    const practiceId = generatePracticeId();
+    const timestamp = new Date().toISOString();
+
+    const practiceData = {
+      _userId: userId,
+      timestamp,
+      practice_name: practice_name || null,
+      duration: duration || null,
+      reflection: reflection || null,
       obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null
-    });
+    };
+
+    // Insert practice into Firestore
+    await createPractice(practiceId, practiceData);
 
     // Return success with updated count
-    const updatedCount = getPracticeCount();
+    const updatedCount = practiceCount + 1;
 
     return {
       statusCode: 200,
@@ -193,7 +227,10 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        practice,
+        practice: {
+          id: practiceId,
+          ...practiceData
+        },
         practice_count: updatedCount,
         obi_wan_appeared: analysis.shouldAppear,
         obi_wan_message: analysis.shouldAppear ? analysis.wisdom.short : null,

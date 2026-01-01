@@ -37,11 +37,18 @@ permalink: /garden/
   </div>
 
   <div id="garden-container" style="display: none; text-align: center; position: relative; z-index: 1;">
-    <!-- Flower visual -->
-    <div id="flower-visual" style="margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-      <div id="flower-emoji" class="flower-sway garden-appear" style="font-size: 10rem; line-height: 1; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));"></div>
-      <div style="width: 150px; height: 4px; background: linear-gradient(to bottom, #8B4513, #654321); border-radius: 2px; opacity: 0.6; margin-top: -1rem;"></div>
-      <div id="flower-label" style="font-size: 1.5rem; color: #555; font-weight: 600; margin-top: 1rem;"></div>
+    <!-- Generative Garden Canvas -->
+    <div style="margin-bottom: 2rem;">
+      <svg id="garden-canvas" width="600" height="400" style="border-radius: 12px; background: linear-gradient(to bottom, #f0f8ff 0%, #e8f5e9 100%); filter: drop-shadow(0 4px 12px rgba(0,0,0,0.1));">
+        <!-- Ground -->
+        <ellipse cx="300" cy="380" rx="280" ry="30" fill="#8B7355" opacity="0.3"/>
+        <!-- Flowers will be added here by JavaScript -->
+      </svg>
+    </div>
+
+    <!-- Stats -->
+    <div style="margin-bottom: 2rem;">
+      <div id="flower-label" style="font-size: 1.5rem; color: #555; font-weight: 600; margin-bottom: 0.5rem;"></div>
       <div id="practice-count" style="font-size: 1.1rem; color: #888; line-height: 1.6; white-space: pre-line;"></div>
       <div id="planted-date" style="font-size: 0.9rem; color: #999; font-style: italic; margin-top: 0.5rem;"></div>
     </div>
@@ -65,6 +72,115 @@ permalink: /garden/
 </div>
 
 <script>
+  // Seeded random number generator (deterministic)
+  function seededRandom(seed) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  // Hash string to number (for practice IDs)
+  function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  }
+
+  // Generate a flower from practice data
+  function generateFlower(practice, index, canvas) {
+    const seed = hashCode(practice.id);
+
+    // Deterministic position based on practice ID
+    const x = 60 + (seededRandom(seed) * 480);
+    const y = 280 + (seededRandom(seed + 1) * 80);
+
+    // Attributes influence appearance
+    const duration = practice.duration || 10;
+    const hasReflection = practice.reflection && practice.reflection.length > 20;
+
+    // Size based on duration (10-40 minutes = small to large)
+    const size = Math.min(Math.max(duration / 40, 0.4), 1.2);
+
+    // Color based on time of day
+    const hour = new Date(practice.timestamp).getHours();
+    let petalColor, centerColor;
+
+    if (hour >= 4 && hour < 6) {
+      // Early morning - purple/pink
+      petalColor = `hsl(${280 + seededRandom(seed + 2) * 40}, 70%, 75%)`;
+      centerColor = '#FFD700';
+    } else if (hour >= 6 && hour < 12) {
+      // Morning - yellow/orange
+      petalColor = `hsl(${40 + seededRandom(seed + 2) * 40}, 80%, 70%)`;
+      centerColor = '#FF8C00';
+    } else if (hour >= 12 && hour < 18) {
+      // Afternoon - bright colors
+      petalColor = `hsl(${seededRandom(seed + 2) * 360}, 75%, 70%)`;
+      centerColor = '#FFD700';
+    } else if (hour >= 18 && hour < 22) {
+      // Evening - warm colors
+      petalColor = `hsl(${320 + seededRandom(seed + 2) * 40}, 65%, 65%)`;
+      centerColor = '#FF6347';
+    } else {
+      // Night - deep purples/blues
+      petalColor = `hsl(${240 + seededRandom(seed + 2) * 60}, 60%, 60%)`;
+      centerColor = '#4169E1';
+    }
+
+    // Petal count based on whether they reflected
+    const petalCount = hasReflection ? 8 : 6;
+
+    // Create flower group
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    group.setAttribute('opacity', '0');
+
+    // Animate in
+    setTimeout(() => {
+      group.style.transition = 'opacity 0.6s ease-out';
+      group.setAttribute('opacity', '1');
+    }, index * 100);
+
+    // Stem
+    const stem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    stem.setAttribute('x1', x);
+    stem.setAttribute('y1', y);
+    stem.setAttribute('x2', x);
+    stem.setAttribute('y2', y + 40);
+    stem.setAttribute('stroke', '#2D5016');
+    stem.setAttribute('stroke-width', 2 * size);
+    stem.setAttribute('stroke-linecap', 'round');
+    group.appendChild(stem);
+
+    // Petals
+    for (let i = 0; i < petalCount; i++) {
+      const angle = (i / petalCount) * Math.PI * 2;
+      const petalX = x + Math.cos(angle) * (12 * size);
+      const petalY = y + Math.sin(angle) * (12 * size);
+
+      const petal = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+      petal.setAttribute('cx', petalX);
+      petal.setAttribute('cy', petalY);
+      petal.setAttribute('rx', 6 * size);
+      petal.setAttribute('ry', 10 * size);
+      petal.setAttribute('fill', petalColor);
+      petal.setAttribute('transform', `rotate(${(angle * 180 / Math.PI)}, ${petalX}, ${petalY})`);
+      group.appendChild(petal);
+    }
+
+    // Center
+    const center = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    center.setAttribute('cx', x);
+    center.setAttribute('cy', y);
+    center.setAttribute('r', 8 * size);
+    center.setAttribute('fill', centerColor);
+    group.appendChild(center);
+
+    canvas.appendChild(group);
+  }
+
   // Get flower growth stage based on practice count
   function getFlowerStage(count) {
     if (count === 0) {
@@ -137,23 +253,21 @@ permalink: /garden/
     }
   }
 
-  // Render flower visual
-  function renderGarden(count, firstPracticeDate) {
+  // Render generative garden
+  function renderGarden(practices, count, firstPracticeDate) {
     const stage = getFlowerStage(count);
+    const canvas = document.getElementById('garden-canvas');
 
-    // Use default text colors (no night mode adjustment needed without custom background)
-    const labelColor = '#555';
-    const countColor = '#888';
-    const dateColor = '#999';
+    // Generate a flower for each practice
+    practices.forEach((practice, index) => {
+      generateFlower(practice, index, canvas);
+    });
 
-    document.getElementById('flower-emoji').textContent = stage.emoji;
+    // Update stats
     document.getElementById('flower-label').textContent = stage.label;
-    document.getElementById('flower-label').style.color = labelColor;
     document.getElementById('practice-count').textContent = count === 0
       ? stage.sublabel
       : `${count} ${count === 1 ? 'practice' : 'practices'}\n${stage.sublabel}`;
-    document.getElementById('practice-count').style.color = countColor;
-    document.getElementById('planted-date').style.color = dateColor;
 
     // Show planted date
     if (firstPracticeDate) {
@@ -163,9 +277,20 @@ permalink: /garden/
 
   // Load practice count and render garden
   async function loadGarden() {
+    // Get userId from localStorage
+    const { initializeUser } = await import('/assets/js/auth/auth.js');
+    const userId = initializeUser();
+
     try {
       // Fetch all practices to get count and first practice date
-      const response = await fetch('/.netlify/functions/practice-list?limit=1000');
+      // Add timestamp to bust all caching layers
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&limit=1000&_=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       const data = await response.json();
 
       const loading = document.getElementById('loading');
@@ -181,7 +306,10 @@ permalink: /garden/
           ? data.practices[practiceCount - 1].timestamp
           : null;
 
-        renderGarden(practiceCount, firstPracticeDate);
+        // Reverse practices so oldest appears first (left to right garden growth)
+        const practicesOldestFirst = [...data.practices].reverse();
+
+        renderGarden(practicesOldestFirst, practiceCount, firstPracticeDate);
         container.style.display = 'block';
       } else {
         loading.innerHTML = '<div style="color: #d32f2f;">Failed to load garden. Please refresh the page.</div>';
@@ -194,4 +322,12 @@ permalink: /garden/
 
   // Load garden on page load
   loadGarden();
+
+  // Reload when page is shown (including from back/forward cache)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      // Page was loaded from cache, reload data
+      loadGarden();
+    }
+  });
 </script>
