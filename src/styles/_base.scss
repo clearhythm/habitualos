@@ -7,6 +7,10 @@
   padding: 0;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   font-family: $font-family;
   font-size: $font-size-base;
@@ -22,6 +26,8 @@ body {
   //   #dff2e3 100%
   // );
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

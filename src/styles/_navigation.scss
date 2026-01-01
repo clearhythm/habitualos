@@ -33,6 +33,10 @@
   margin: 0 auto;
 }
 
+.navbar-brand:hover {
+  text-decoration: none;
+}
+
 .navbar.active .navbar-brand {
   color: #333;
 }
