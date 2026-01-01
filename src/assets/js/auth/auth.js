@@ -33,8 +33,20 @@ const HARDCODED_USER_ID = "u-mgpqwa49";
  * @returns {string|null} The userId (e.g., "u-abc123"), or null if initialization failed
  */
 export function initializeUser() {
-  // TEMPORARY: Return hardcoded userId for testing across environments
-  // This bypasses localStorage to ensure same data across localhost and dev server
+  // TEMPORARY: Always set userId to hardcoded value for testing across environments
+  // This overwrites any existing localStorage to ensure same data across localhost and dev server
+  const user = {
+    _userId: HARDCODED_USER_ID,
+    _createdAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+    console.log("Set hardcoded userId:", HARDCODED_USER_ID);
+  } catch (e) {
+    console.error("Failed to set hardcoded userId in localStorage", e);
+  }
+
   return HARDCODED_USER_ID;
 
   /* Original implementation (commented out for testing):
