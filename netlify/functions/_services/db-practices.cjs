@@ -1,61 +1,58 @@
 //
 // netlify/functions/_services/db-practices.cjs
 // ------------------------------------------------------
-// DATA ACCESS LAYER (Practices) for Firestore.
-// Single source of truth for practice document operations.
+// DATA ACCESS LAYER (Practice Library) for Firestore.
+// Single source of truth for practice definitions.
 //
 // Responsibilities:
+//   - getPracticeByName(userId, name) - Find practice by name (case-insensitive)
+//   - createPractice(id, data) - Create a new practice definition
+//   - updatePractice(id, updates) - Update practice instructions/metadata
+//   - incrementPracticeCheckins(practiceId) - Increment checkins counter
 //   - getPracticesByUserId(userId) - Get all practices for a user
-//   - createPractice(id, data) - Create a new practice
 //
 // Schema:
 //   {
-//     id: "p-abc123",
+//     id: "practice-xyz",
+//     name: "LASSO",  // Original casing preserved
+//     instructions: "Latest/best version of instructions",
+//     checkins: 12,  // Counter of how many times this practice was done
 //     _userId: "u-xyz789",
-//     timestamp: ISO string,
-//     duration: number (minutes),
-//     practice_name: string,
-//     reflection: string,
-//     obi_wan_message: string (optional, AI-generated short wisdom),
-//     obi_wan_expanded: string (optional, AI-generated long wisdom),
-//     obi_wan_feedback: "thumbs_up" | "thumbs_down" (optional),
 //     _createdAt: Firestore timestamp,
-//     _updatedAt: Firestore timestamp (optional)
+//     _updatedAt: Firestore timestamp
 //   }
 // ------------------------------------------------------
 
 const dbCore = require('./db-core.cjs');
 
 /**
- * Get all practices for a specific user (newest first)
- * @param {string} userId - User ID to query
- * @returns {Promise<Array>} Array of practice documents
+ * Find a practice by name (case-insensitive) for a specific user
+ * @param {string} userId - User ID
+ * @param {string} name - Practice name (case-insensitive)
+ * @returns {Promise<Object|null>} Practice document or null if not found
  */
-exports.getPracticesByUserId = async (userId) => {
-  // Query without orderBy to avoid index requirement initially
-  // We'll sort client-side until the Firestore index is created
+exports.getPracticeByName = async (userId, name) => {
   const results = await dbCore.query({
     collection: 'practices',
     where: `_userId::eq::${userId}`
-    // TODO: Add back once index is created: orderBy: 'timestamp::desc'
   });
 
-  // Sort by timestamp descending (newest first) in JavaScript
-  return results.sort((a, b) => {
-    const timeA = new Date(a.timestamp).getTime();
-    const timeB = new Date(b.timestamp).getTime();
-    return timeB - timeA;
-  });
+  // Case-insensitive match in JavaScript
+  const practice = results.find(p =>
+    p.name && p.name.toLowerCase() === name.toLowerCase()
+  );
+
+  return practice || null;
 };
 
 /**
  * Create a new practice
- * @param {string} id - Practice ID (with "p-" prefix)
+ * @param {string} id - Practice ID (with "practice-" prefix)
  * @param {Object} data - Practice data
  * @returns {Promise<Object>} Result with id
  */
 exports.createPractice = async (id, data) => {
-  const formattedId = id?.startsWith('p-') ? id : `p-${id}`;
+  const formattedId = id?.startsWith('practice-') ? id : `practice-${id}`;
 
   await dbCore.create(
     { collection: 'practices', id: formattedId, data }
@@ -65,11 +62,49 @@ exports.createPractice = async (id, data) => {
 };
 
 /**
- * Get practice count for a user
- * @param {string} userId - User ID to query
- * @returns {Promise<number>} Count of practices
+ * Update practice instructions and metadata
+ * @param {string} id - Practice ID
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<void>}
  */
-exports.getPracticeCount = async (userId) => {
+exports.updatePractice = async (id, updates) => {
+  await dbCore.update(
+    { collection: 'practices', id, data: updates }
+  );
+};
+
+/**
+ * Increment practice checkins counter
+ * @param {string} practiceId - Practice ID
+ * @returns {Promise<void>}
+ */
+exports.incrementPracticeCheckins = async (practiceId) => {
+  await dbCore.increment(
+    { collection: 'practices', id: practiceId, field: 'checkins', value: 1 }
+  );
+};
+
+/**
+ * Get all practices for a user
+ * @param {string} userId - User ID to query
+ * @returns {Promise<Array>} Array of practice documents
+ */
+exports.getPracticesByUserId = async (userId) => {
+  const results = await dbCore.query({
+    collection: 'practices',
+    where: `_userId::eq::${userId}`
+  });
+
+  // Sort by checkins descending (most practiced first)
+  return results.sort((a, b) => (b.checkins || 0) - (a.checkins || 0));
+};
+
+/**
+ * Get total checkins count for a user (sum across all practices)
+ * @param {string} userId - User ID to query
+ * @returns {Promise<number>} Total checkins count
+ */
+exports.getTotalCheckins = async (userId) => {
   const practices = await exports.getPracticesByUserId(userId);
-  return practices.length;
+  return practices.reduce((total, practice) => total + (practice.checkins || 0), 0);
 };

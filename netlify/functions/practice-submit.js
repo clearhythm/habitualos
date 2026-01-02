@@ -1,6 +1,7 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { getPracticesByUserId, createPractice, getPracticeCount } = require('./_services/db-practices.cjs');
+const { getPracticeLogsByUserId, createPracticeLog, getPracticeLogCount } = require('./_services/db-practice-logs.cjs');
+const { getPracticeByName, incrementPracticeCheckins, createPractice } = require('./_services/db-practices.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -334,11 +335,11 @@ exports.handler = async (event) => {
     let practiceCount = 0;
 
     try {
-      recentPractices = await getPracticesByUserId(userId);
+      recentPractices = await getPracticeLogsByUserId(userId);
       practiceCount = recentPractices.length;
     } catch (error) {
       // Collection doesn't exist yet - this is the first practice
-      console.log('No existing practices found (likely first practice):', error.message);
+      console.log('No existing practice logs found (likely first practice):', error.message);
       recentPractices = [];
       practiceCount = 0;
     }
@@ -375,8 +376,32 @@ exports.handler = async (event) => {
       obi_wan_expanded: wisdom ? wisdom.long : null
     };
 
-    // Insert practice into Firestore
-    await createPractice(practiceId, practiceData);
+    // Insert practice log into Firestore
+    await createPracticeLog(practiceId, practiceData);
+
+    // Create or update practice definition (if practice name exists)
+    if (practice_name) {
+      try {
+        const practice = await getPracticeByName(userId, practice_name);
+        if (practice) {
+          // Practice exists - increment checkins
+          await incrementPracticeCheckins(practice.id);
+        } else {
+          // Practice doesn't exist - create it with checkins: 1
+          const newPracticeId = 'practice-' + Math.random().toString(36).substring(2, 15);
+          await createPractice(newPracticeId, {
+            _userId: userId,
+            name: practice_name,  // Preserve original casing
+            instructions: `${practice_name} practice`,   // Default instructions (will be updated when chat is saved)
+            checkins: 1,
+            _createdAt: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('Error creating/updating practice:', error);
+        // Don't fail the practice log if practice creation fails
+      }
+    }
 
     // Return success with updated count
     const updatedCount = practiceCount + 1;

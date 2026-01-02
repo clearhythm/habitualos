@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { createPracticeChat } = require('./_services/db-practice-chats.cjs');
+const { getPracticeByName, createPractice, updatePractice } = require('./_services/db-practices.cjs');
 
 // Helper to generate practice chat ID (pc- prefix + timestamp-based unique ID)
 function generatePracticeChatId() {
@@ -58,6 +59,35 @@ exports.handler = async (event) => {
     };
 
     await createPracticeChat(chatId, chatData);
+
+    // Create or update practice definition if we have a suggested practice
+    if (suggestedPractice && fullSuggestion) {
+      try {
+        // Look up existing practice (case-insensitive)
+        const existingPractice = await getPracticeByName(userId, suggestedPractice);
+
+        if (existingPractice) {
+          // Update instructions and _updatedAt
+          await updatePractice(existingPractice.id, {
+            instructions: fullSuggestion,
+            _updatedAt: new Date().toISOString()
+          });
+        } else {
+          // Create new practice with original casing
+          const practiceId = 'practice-' + Math.random().toString(36).substring(2, 15);
+          await createPractice(practiceId, {
+            _userId: userId,
+            name: suggestedPractice,  // Preserve original casing
+            instructions: fullSuggestion,
+            checkins: 0,
+            _createdAt: new Date().toISOString()
+          });
+        }
+      } catch (practiceError) {
+        // Log but don't fail the chat save if practice creation fails
+        console.error('Error creating/updating practice:', practiceError);
+      }
+    }
 
     return {
       statusCode: 200,

@@ -85,12 +85,10 @@ permalink: /
       const data = await response.json();
 
       if (data.success) {
-        const totalCheckins = data.practices.length;
-        const uniquePractices = new Set(
-          data.practices
-            .map(p => p.practice_name)
-            .filter(name => name && name.trim())
-        ).size;
+        // data.practices is now the practice library (unique practices)
+        // Each practice has a checkins counter
+        const totalCheckins = data.practices.reduce((sum, p) => sum + (p.checkins || 0), 0);
+        const uniquePractices = data.practices.length;
 
         document.getElementById('checkins-count').textContent = totalCheckins;
         document.getElementById('practices-count').textContent = uniquePractices;
