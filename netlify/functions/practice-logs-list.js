@@ -1,9 +1,9 @@
 require('dotenv').config();
-const { getPracticesByUserId } = require('./_services/db-practices.cjs');
+const { getPracticeLogsByUserId } = require('./_services/db-practice-logs.cjs');
 
 /**
- * GET /api/practice-list?userId=u-abc123
- * Get all practices for a user
+ * GET /api/practice-logs-list?userId=u-abc123
+ * Get all practice logs (check-in history timeline) for a user
  */
 exports.handler = async (event) => {
   // Only allow GET
@@ -25,14 +25,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // Get all practices for this user (already sorted by checkins descending)
-    let practices = await getPracticesByUserId(userId);
+    // Get all practice logs for this user (already sorted by timestamp desc)
+    let logs = await getPracticeLogsByUserId(userId);
 
     // Apply limit if specified
     if (limit) {
       const limitNum = parseInt(limit, 10);
       if (!isNaN(limitNum) && limitNum > 0) {
-        practices = practices.slice(0, limitNum);
+        logs = logs.slice(0, limitNum);
       }
     }
 
@@ -44,13 +44,13 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        practices,
-        count: practices.length
+        practices: logs, // Keep "practices" key for backward compatibility with frontend
+        count: logs.length
       })
     };
 
   } catch (error) {
-    console.error('Error in practice-list:', error);
+    console.error('Error in practice-logs-list:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({

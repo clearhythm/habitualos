@@ -50,26 +50,13 @@ permalink: /practices/
         return;
       }
 
-      // Group practices by name and count check-ins
-      const practiceGroups = {};
-      data.practices.forEach(practice => {
-        const name = practice.practice_name || 'Unnamed Practice';
-        if (!practiceGroups[name]) {
-          practiceGroups[name] = {
-            name: name,
-            count: 0,
-            lastPracticed: practice.timestamp
-          };
-        }
-        practiceGroups[name].count++;
-        // Update last practiced if this is more recent
-        if (new Date(practice.timestamp) > new Date(practiceGroups[name].lastPracticed)) {
-          practiceGroups[name].lastPracticed = practice.timestamp;
-        }
-      });
-
-      // Convert to array and sort by count (descending)
-      const sortedPractices = Object.values(practiceGroups).sort((a, b) => b.count - a.count);
+      // Practice library data already has name, checkins, and _createdAt
+      // Already sorted by checkins (descending) from backend
+      const sortedPractices = data.practices.map(practice => ({
+        name: practice.name || 'Unnamed Practice',
+        count: practice.checkins || 0,
+        lastPracticed: practice._updatedAt || practice._createdAt // Use updated time if available
+      }));
 
       // Render practice cards
       listEl.innerHTML = sortedPractices.map(practice => {

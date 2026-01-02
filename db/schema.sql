@@ -53,43 +53,45 @@ CREATE TABLE IF NOT EXISTS artifacts (
 -- Practice Library: Canonical practice definitions
 CREATE TABLE IF NOT EXISTS practices (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  _userId TEXT NOT NULL,
   name TEXT NOT NULL,              -- Practice name (original casing preserved)
   instructions TEXT,               -- Latest/best version of practice instructions
   checkins INTEGER DEFAULT 0,      -- Counter of how many times this practice was done
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT                  -- Updated when instructions change
+  _createdAt TEXT DEFAULT (datetime('now')),
+  _updatedAt TEXT                  -- Updated when instructions change
 );
 
 -- Practice Logs: Individual practice log entries
 CREATE TABLE IF NOT EXISTS practice_logs (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  _userId TEXT NOT NULL,
   practice_name TEXT,
   duration INTEGER,                -- Duration in minutes (optional)
   reflection TEXT,                 -- User's reflection after practice
   obi_wan_message TEXT,            -- Encouragement message shown
+  obi_wan_expanded TEXT,           -- Expanded Obi-Wai wisdom
   obi_wan_feedback TEXT,           -- thumbs_up | thumbs_down | null
-  timestamp TEXT DEFAULT (datetime('now'))
+  timestamp TEXT DEFAULT (datetime('now')),
+  _createdAt TEXT
 );
 
 -- Practice Conversations: Save Obi-Wai conversations
-CREATE TABLE IF NOT EXISTS practice_conversations (
+CREATE TABLE IF NOT EXISTS practice_chats (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  _userId TEXT NOT NULL,
   messages TEXT NOT NULL,          -- JSON array of {role, content, timestamp}
-  suggested_practice TEXT,         -- Practice name if conversation completed
-  full_suggestion TEXT,            -- Full practice instructions from conversation
+  suggestedPractice TEXT,          -- Practice name if conversation completed
+  fullSuggestion TEXT,             -- Full practice instructions from conversation
   completed BOOLEAN DEFAULT 0,     -- 1 if resulted in practice, 0 otherwise
-  saved_at TEXT DEFAULT (datetime('now'))
+  savedAt TEXT DEFAULT (datetime('now'))
 );
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_action_cards_north_star ON action_cards(north_star_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_action ON chat_messages(action_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_action ON artifacts(action_id);
-CREATE INDEX IF NOT EXISTS idx_practices_user ON practices(user_id);
+CREATE INDEX IF NOT EXISTS idx_practices_user ON practices(_userId);
 CREATE INDEX IF NOT EXISTS idx_practice_logs_timestamp ON practice_logs(timestamp);
-CREATE INDEX IF NOT EXISTS idx_practice_logs_user ON practice_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_practice_conversations_user ON practice_conversations(user_id);
-CREATE INDEX IF NOT EXISTS idx_practice_conversations_saved_at ON practice_conversations(saved_at);
+CREATE INDEX IF NOT EXISTS idx_practice_logs_user ON practice_logs(_userId);
+CREATE INDEX IF NOT EXISTS idx_practice_chats_user ON practice_chats(_userId);
+CREATE INDEX IF NOT EXISTS idx_practice_chats_saved_at ON practice_chats(savedAt);

@@ -36,7 +36,7 @@ permalink: /history/
 
     try {
       // Add timestamp to bust all caching layers
-      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+      const response = await fetch(`/.netlify/functions/practice-logs-list?userId=${userId}&_=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
