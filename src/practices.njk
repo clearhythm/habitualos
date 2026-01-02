@@ -1,17 +1,17 @@
 ---
-title: Practice History - HabitualOS
+title: Practices - HabitualOS
 layout: base.njk
 permalink: /practices/
 ---
 
 <div class="container-narrow" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <h1 style="margin: 0;">Practice History</h1>
+    <h1 style="margin: 0;">Practices</h1>
     <a
-      href="/practice/"
-      style="padding: 0.75rem 1.5rem; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;"
+      href="/"
+      style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
     >
-      + New Practice
+      ← Back
     </a>
   </div>
 
@@ -19,161 +19,99 @@ permalink: /practices/
     Loading practices...
   </div>
 
-  <div id="practices-container" style="display: none;">
-    <div id="practices-list"></div>
+  <div id="practices-list" style="display: none;"></div>
 
-    <div id="empty-state" style="display: none; text-align: center; padding: 4rem 2rem; color: #999;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">🌱</div>
-      <p style="font-size: 1.25rem; margin-bottom: 1rem;">No practices yet</p>
-      <p>Start your journey by logging your first practice.</p>
-      <a
-        href="/practice/"
-        style="display: inline-block; margin-top: 1.5rem; padding: 1rem 2rem; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;"
-      >
-        Log Your First Practice
-      </a>
-    </div>
+  <div id="no-practices" style="display: none; text-align: center; padding: 3rem; color: #999;">
+    <p>No practices logged yet.</p>
+    <a href="/practice/" style="color: #0066cc; text-decoration: underline;">Log your first practice</a>
   </div>
 </div>
 
 <script type="module">
   import { initializeUser } from '/assets/js/auth/auth.js';
 
-  async function loadPractices() {
-    // Get userId from localStorage
-    const userId = initializeUser();
+  const userId = initializeUser();
+  const loadingEl = document.getElementById('loading');
+  const listEl = document.getElementById('practices-list');
+  const noPracticesEl = document.getElementById('no-practices');
 
+  async function loadPractices() {
     try {
-      // Add timestamp to bust all caching layers
       const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
+        cache: 'no-store'
       });
+
       const data = await response.json();
 
-      const loading = document.getElementById('loading');
-      const container = document.getElementById('practices-container');
-      const listEl = document.getElementById('practices-list');
-      const emptyState = document.getElementById('empty-state');
+      loadingEl.style.display = 'none';
 
-      loading.style.display = 'none';
-      container.style.display = 'block';
-
-      if (!data.success || data.practices.length === 0) {
-        emptyState.style.display = 'block';
+      if (!data.success || !data.practices || data.practices.length === 0) {
+        noPracticesEl.style.display = 'block';
         return;
       }
 
-      // Group practices by date
-      const groupedByDate = {};
+      // Group practices by name and count check-ins
+      const practiceGroups = {};
       data.practices.forEach(practice => {
-        const date = new Date(practice.timestamp);
-        const dateKey = date.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-
-        if (!groupedByDate[dateKey]) {
-          groupedByDate[dateKey] = [];
+        const name = practice.practice_name || 'Unnamed Practice';
+        if (!practiceGroups[name]) {
+          practiceGroups[name] = {
+            name: name,
+            count: 0,
+            lastPracticed: practice.timestamp
+          };
         }
-        groupedByDate[dateKey].push(practice);
+        practiceGroups[name].count++;
+        // Update last practiced if this is more recent
+        if (new Date(practice.timestamp) > new Date(practiceGroups[name].lastPracticed)) {
+          practiceGroups[name].lastPracticed = practice.timestamp;
+        }
       });
 
-      // Render grouped practices
-      let html = '';
-      for (const [dateKey, practices] of Object.entries(groupedByDate)) {
-        html += `
-          <div style="margin-bottom: 2rem;">
-            <h3 style="font-size: 1rem; font-weight: 600; color: #666; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee;">
-              ${dateKey}
-            </h3>
-            <div style="display: flex; flex-direction: column; gap: 1rem;">
-        `;
+      // Convert to array and sort by count (descending)
+      const sortedPractices = Object.values(practiceGroups).sort((a, b) => b.count - a.count);
 
-        practices.forEach(practice => {
-          const time = new Date(practice.timestamp).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit'
-          });
+      // Render practice cards
+      listEl.innerHTML = sortedPractices.map(practice => {
+        const lastDate = new Date(practice.lastPracticed);
+        const relativeTime = getRelativeTime(lastDate);
+        const encodedName = encodeURIComponent(practice.name);
 
-          // Obi-Wai response (appears FIRST in chronological order - he responds after you practice)
-          if (practice.obi_wan_message) {
-            html += `
-              <a href="/practice/?practice=${practice.id}" style="text-decoration: none; color: inherit; display: block;">
-                <div style="padding: 1.25rem; background: #faf9f7; border-radius: 8px; border-left: 4px solid #9b59b6; cursor: pointer; transition: background 0.2s;"
-                     onmouseover="this.style.background='#f5f3f1'"
-                     onmouseout="this.style.background='#faf9f7'">
-                  <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div style="flex: 1;">
-                      <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: #9b59b6;">
-                        Obi-Wai
-                      </div>
-                      <div style="font-style: italic; font-size: 0.95rem; line-height: 1.5; color: #555;">
-                        "${escapeHtml(practice.obi_wan_message)}"
-                      </div>
-                    </div>
-                    ${getFeedbackIcon(practice.obi_wan_feedback)}
-                  </div>
+        return `
+          <a
+            href="/practice-detail/?name=${encodedName}"
+            style="display: block; text-decoration: none; padding: 1.5rem; background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; transition: all 0.2s; color: inherit;"
+            onmouseover="this.style.background='#f9f9f9'; this.style.borderColor='#0066cc'"
+            onmouseout="this.style.background='white'; this.style.borderColor='#ddd'"
+          >
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; color: #333;">
+                  ${escapeHtml(practice.name)}
                 </div>
-              </a>
-            `;
-          }
-
-          // Practice entry (appears SECOND - the original action)
-          html += `
-            <div style="padding: 1.25rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #0066cc;">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                <div>
-                  ${practice.practice_name
-                    ? `<div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">${escapeHtml(practice.practice_name)}</div>`
-                    : '<div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: #999;">Practice</div>'
-                  }
-                  <div style="font-size: 0.9rem; color: #666;">
-                    ${time}${practice.duration ? ` • ${practice.duration} min` : ''}
-                  </div>
+                <div style="font-size: 0.9rem; color: #666;">
+                  Last practiced ${relativeTime}
                 </div>
               </div>
-
-              ${practice.reflection
-                ? `<div style="margin-top: 0.75rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.95rem; line-height: 1.5; color: #333;">
-                    ${escapeHtml(practice.reflection).replace(/\n/g, '<br>')}
-                   </div>`
-                : ''
-              }
+              <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: 600; color: #0066cc;">
+                  ${practice.count}
+                </div>
+                <div style="font-size: 0.85rem; color: #999;">
+                  check-in${practice.count === 1 ? '' : 's'}
+                </div>
+              </div>
             </div>
-          `;
-        });
-
-        html += `
-            </div>
-          </div>
+          </a>
         `;
-      }
+      }).join('');
 
-      listEl.innerHTML = html;
+      listEl.style.display = 'block';
 
     } catch (error) {
       console.error('Error loading practices:', error);
-      document.getElementById('loading').innerHTML = `
-        <div style="color: #d32f2f;">
-          Failed to load practices. Please refresh the page.
-        </div>
-      `;
+      loadingEl.textContent = 'Error loading practices. Please try again.';
     }
-  }
-
-  function getFeedbackIcon(feedback) {
-    if (feedback === 'thumbs_up') {
-      return '<div style="font-size: 1.5rem;">👍</div>';
-    } else if (feedback === 'thumbs_down') {
-      return '<div style="font-size: 1.5rem;">👎</div>';
-    }
-    return '';
   }
 
   function escapeHtml(text) {
@@ -182,14 +120,24 @@ permalink: /practices/
     return div.innerHTML;
   }
 
-  // Load practices on page load
-  loadPractices();
+  function getRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-  // Reload when page is shown (including from back/forward cache)
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-      // Page was loaded from cache, reload data
-      loadPractices();
-    }
-  });
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) === 1 ? '' : 's'} ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) === 1 ? '' : 's'} ago`;
+    return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) === 1 ? '' : 's'} ago`;
+  }
+
+  loadPractices();
 </script>

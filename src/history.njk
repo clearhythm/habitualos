@@ -1,0 +1,186 @@
+---
+title: History - HabitualOS
+layout: base.njk
+permalink: /history/
+---
+
+<div class="container-narrow" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="margin: 0;">History</h1>
+    <a
+      href="/"
+      style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+    >
+      ← Back
+    </a>
+  </div>
+
+  <div id="loading" style="text-align: center; padding: 3rem; color: #999;">
+    Loading check-ins...
+  </div>
+
+  <div id="practices-list" style="display: none;"></div>
+
+  <div id="no-practices" style="display: none; text-align: center; padding: 3rem; color: #999;">
+    <p>No check-ins yet.</p>
+    <a href="/practice/" style="color: #0066cc; text-decoration: underline;">Log your first practice</a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  async function loadPractices() {
+    // Get userId from localStorage
+    const userId = initializeUser();
+
+    try {
+      // Add timestamp to bust all caching layers
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
+      const data = await response.json();
+
+      const loading = document.getElementById('loading');
+      const listEl = document.getElementById('practices-list');
+      const noPracticesEl = document.getElementById('no-practices');
+
+      loading.style.display = 'none';
+
+      if (!data.success || data.practices.length === 0) {
+        noPracticesEl.style.display = 'block';
+        return;
+      }
+
+      listEl.style.display = 'block';
+
+      // Group practices by date
+      const groupedByDate = {};
+      data.practices.forEach(practice => {
+        const date = new Date(practice.timestamp);
+        const dateKey = date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+        groupedByDate[dateKey].push(practice);
+      });
+
+      // Render grouped practices
+      let html = '';
+      for (const [dateKey, practices] of Object.entries(groupedByDate)) {
+        html += `
+          <div style="margin-bottom: 2rem;">
+            <h3 style="font-size: 1rem; font-weight: 600; color: #666; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #eee;">
+              ${dateKey}
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+        `;
+
+        practices.forEach(practice => {
+          const time = new Date(practice.timestamp).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit'
+          });
+
+          // Obi-Wai response (appears FIRST in chronological order - he responds after you practice)
+          if (practice.obi_wan_message) {
+            html += `
+              <a href="/practice/?practice=${practice.id}" style="text-decoration: none; color: inherit; display: block;">
+                <div style="padding: 1.25rem; background: #faf9f7; border-radius: 8px; border-left: 4px solid #9b59b6; cursor: pointer; transition: background 0.2s;"
+                     onmouseover="this.style.background='#f5f3f1'"
+                     onmouseout="this.style.background='#faf9f7'">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                      <div style="font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: #9b59b6;">
+                        Obi-Wai
+                      </div>
+                      <div style="font-style: italic; font-size: 0.95rem; line-height: 1.5; color: #555;">
+                        "${escapeHtml(practice.obi_wan_message)}"
+                      </div>
+                    </div>
+                    ${getFeedbackIcon(practice.obi_wan_feedback)}
+                  </div>
+                </div>
+              </a>
+            `;
+          }
+
+          // Practice entry (appears SECOND - the original action)
+          html += `
+            <div style="padding: 1.25rem; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #0066cc;">
+              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <div>
+                  ${practice.practice_name
+                    ? `<div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem;">${escapeHtml(practice.practice_name)}</div>`
+                    : '<div style="font-weight: 600; font-size: 1.1rem; margin-bottom: 0.25rem; color: #999;">Practice</div>'
+                  }
+                  <div style="font-size: 0.9rem; color: #666;">
+                    ${time}${practice.duration ? ` • ${practice.duration} min` : ''}
+                  </div>
+                </div>
+              </div>
+
+              ${practice.reflection
+                ? `<div style="margin-top: 0.75rem; padding: 0.75rem; background: white; border-radius: 4px; font-size: 0.95rem; line-height: 1.5; color: #333;">
+                    ${escapeHtml(practice.reflection).replace(/\n/g, '<br>')}
+                   </div>`
+                : ''
+              }
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      }
+
+      listEl.innerHTML = html;
+
+    } catch (error) {
+      console.error('Error loading practices:', error);
+      document.getElementById('loading').innerHTML = `
+        <div style="color: #d32f2f;">
+          Failed to load practices. Please refresh the page.
+        </div>
+      `;
+    }
+  }
+
+  function getFeedbackIcon(feedback) {
+    if (feedback === 'thumbs_up') {
+      return '<div style="font-size: 1.5rem;">👍</div>';
+    } else if (feedback === 'thumbs_down') {
+      return '<div style="font-size: 1.5rem;">👎</div>';
+    }
+    return '';
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Load practices on page load
+  loadPractices();
+
+  // Reload when page is shown (including from back/forward cache)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      // Page was loaded from cache, reload data
+      loadPractices();
+    }
+  });
+</script>

@@ -1,0 +1,156 @@
+---
+title: Practice Detail - HabitualOS
+layout: base.njk
+permalink: /practice-detail/
+---
+
+<div class="container-narrow" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+  <div id="loading" style="text-align: center; padding: 3rem; color: #999;">
+    Loading practice history...
+  </div>
+
+  <div id="practice-detail" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <a href="/practices/" style="color: #666; text-decoration: none; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">
+          ← Back to Practices
+        </a>
+        <h1 style="margin: 0;" id="practice-name"></h1>
+        <div style="color: #666; margin-top: 0.5rem;" id="practice-stats"></div>
+      </div>
+    </div>
+
+    <div id="checkins-list"></div>
+  </div>
+
+  <div id="no-checkins" style="display: none; text-align: center; padding: 3rem; color: #999;">
+    <p>No check-ins found for this practice.</p>
+    <a href="/practices/" style="color: #0066cc; text-decoration: underline;">View all practices</a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  const userId = initializeUser();
+  const loadingEl = document.getElementById('loading');
+  const detailEl = document.getElementById('practice-detail');
+  const noCheckinsEl = document.getElementById('no-checkins');
+
+  // Get practice name from URL query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const practiceName = urlParams.get('name') || '';
+
+  async function loadPracticeDetail() {
+    try {
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+
+      loadingEl.style.display = 'none';
+
+      if (!data.success || !data.practices) {
+        noCheckinsEl.style.display = 'block';
+        return;
+      }
+
+      // Filter practices by name (case-insensitive)
+      const filteredPractices = data.practices.filter(p =>
+        (p.practice_name || '').toLowerCase() === practiceName.toLowerCase()
+      );
+
+      if (filteredPractices.length === 0) {
+        noCheckinsEl.style.display = 'block';
+        return;
+      }
+
+      // Update page title and stats
+      const displayName = filteredPractices[0].practice_name || 'Unnamed Practice';
+      document.getElementById('practice-name').textContent = displayName;
+      document.getElementById('practice-stats').textContent =
+        `${filteredPractices.length} check-in${filteredPractices.length === 1 ? '' : 's'}`;
+
+      // Sort by date (newest first)
+      filteredPractices.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      // Render check-ins
+      const checkinsHtml = filteredPractices.map(practice => {
+        const date = new Date(practice.timestamp);
+        const dateStr = date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        const timeStr = date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit'
+        });
+
+        return `
+          <div style="padding: 1.5rem; background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+              <div>
+                <div style="font-weight: 600; color: #333; margin-bottom: 0.25rem;">
+                  ${dateStr}
+                </div>
+                <div style="font-size: 0.9rem; color: #999;">
+                  ${timeStr}
+                </div>
+              </div>
+              ${practice.duration ? `
+                <div style="text-align: right;">
+                  <div style="font-size: 1.25rem; font-weight: 600; color: #0066cc;">
+                    ${practice.duration}
+                  </div>
+                  <div style="font-size: 0.85rem; color: #666;">
+                    minutes
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+
+            ${practice.reflection ? `
+              <div style="padding: 1rem; background: #f9f9f9; border-radius: 4px; margin-bottom: 1rem;">
+                <div style="font-size: 0.85rem; font-weight: 600; color: #666; text-transform: uppercase; margin-bottom: 0.5rem;">
+                  Reflection
+                </div>
+                <div style="color: #333; line-height: 1.6; white-space: pre-wrap;">
+                  ${escapeHtml(practice.reflection)}
+                </div>
+              </div>
+            ` : ''}
+
+            ${practice.obi_wan_message ? `
+              <div style="padding: 1rem; background: rgba(155, 89, 182, 0.05); border-left: 3px solid #9b59b6; border-radius: 4px;">
+                <div style="font-size: 0.85rem; font-weight: 600; color: #9b59b6; margin-bottom: 0.5rem;">
+                  ✨ Obi-Wai
+                </div>
+                <div style="color: #333; font-style: italic; line-height: 1.6;">
+                  ${escapeHtml(practice.obi_wan_message)}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('checkins-list').innerHTML = checkinsHtml;
+      detailEl.style.display = 'block';
+
+    } catch (error) {
+      console.error('Error loading practice detail:', error);
+      loadingEl.textContent = 'Error loading practice detail. Please try again.';
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  loadPracticeDetail();
+</script>

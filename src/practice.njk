@@ -159,6 +159,7 @@ permalink: /practice/
 
 <script type="module">
   import { initializeUser } from '/assets/js/auth/auth.js';
+  import { getPracticeChatState, clearPracticeChatState } from '/assets/js/practice-chat-state.js';
 
   const form = document.getElementById('practiceForm');
   const formContainer = document.getElementById('practice-form');
@@ -171,6 +172,47 @@ permalink: /practice/
   // Initialize userId (creates one if doesn't exist)
   const userId = initializeUser();
   console.log('Initialized userId:', userId);
+
+  // Check for suggested practice from chat and pre-fill
+  const chatState = getPracticeChatState();
+  if (chatState && chatState.suggestedPractice) {
+    const practiceNameInput = document.getElementById('practice_name');
+    practiceNameInput.value = chatState.suggestedPractice;
+
+    // Add visual indicator and clear button
+    const practiceNameContainer = practiceNameInput.parentElement;
+    const label = practiceNameContainer.querySelector('label');
+
+    // Add "suggested by Obi-Wai" indicator
+    const indicator = document.createElement('span');
+    indicator.id = 'obi-wai-suggestion-indicator';
+    indicator.innerHTML = ' <span style="color: #9b59b6; font-weight: 400;">✨ suggested by Obi-Wai</span>';
+    label.appendChild(indicator);
+
+    // Add clear button
+    const clearButton = document.createElement('button');
+    clearButton.type = 'button';
+    clearButton.id = 'clear-suggestion-btn';
+    clearButton.textContent = '✕ Clear suggestion';
+    clearButton.style.cssText = 'background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; text-decoration: underline; margin-left: 0.5rem;';
+    clearButton.onmouseover = () => clearButton.style.color = '#666';
+    clearButton.onmouseout = () => clearButton.style.color = '#999';
+    clearButton.onclick = () => {
+      // Clear from localStorage
+      clearPracticeChatState();
+
+      // Clear input
+      practiceNameInput.value = '';
+
+      // Remove indicator and button
+      indicator.remove();
+      clearButton.remove();
+
+      // Focus input
+      practiceNameInput.focus();
+    };
+    label.appendChild(clearButton);
+  }
 
   let currentPracticeId = null;
   let expandedWisdom = null;

@@ -1,18 +1,104 @@
 ---
-title: HabitualOS
+title: Dashboard - HabitualOS
 layout: base.njk
 permalink: /
 ---
 
-<script>
-  window.location.replace('/practice/');
-</script>
+<div class="container-narrow" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+  <h1 style="margin-bottom: 2rem;">Journey</h1>
 
-<noscript>
-  <meta http-equiv="refresh" content="0; url=/practice/">
-</noscript>
+  <!-- Practice Action Cards -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+    <!-- Get Motivated Card -->
+    <a
+      href="/practice/chat/"
+      style="text-decoration: none; display: block; padding: 2rem; background: linear-gradient(135deg, #f9f6ff 0%, #f0e6ff 100%); border: 2px solid #e0d4f7; border-radius: 8px; transition: all 0.2s; cursor: pointer;"
+      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(155, 89, 182, 0.2)'"
+      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
+    >
+      <div style="text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🐉</div>
+        <div style="font-weight: 600; font-size: 1.1rem; color: #9b59b6; margin-bottom: 0.5rem;">Get Motivated</div>
+        <div style="font-size: 0.9rem; color: #666;">Obi-Wai is here to help. Find a practice, get motivated.</div>
+      </div>
+    </a>
 
-<div style="text-align: center; padding: 4rem 2rem;">
-  <p>Redirecting to practice check-in...</p>
-  <p><a href="/practice/">Click here if you are not redirected</a></p>
+    <!-- Log Practice Card -->
+    <a
+      href="/practice/"
+      style="text-decoration: none; display: block; padding: 2rem; background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%); border: 2px solid #b3d9ff; border-radius: 8px; transition: all 0.2s; cursor: pointer;"
+      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 102, 204, 0.2)'"
+      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
+    >
+      <div style="text-align: center;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🪵</div>
+        <div style="font-weight: 600; font-size: 1.1rem; color: #0066cc; margin-bottom: 0.5rem;">Log Practice</div>
+        <div style="font-size: 0.9rem; color: #666;">Watch your life transform.</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Mobile responsive: Stack cards on small screens -->
+  <style>
+    @media (max-width: 600px) {
+      div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+
+  <!-- Entries Section -->
+  <h2 style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Entries</h2>
+  <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; background: #f9f9f9; border-radius: 8px;">
+    <!-- Check-ins Stat -->
+    <a href="/history/" style="text-decoration: none; text-align: center; color: inherit;">
+      <div style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="checkins-count">--</div>
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">check-ins</div>
+      <div style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+    </a>
+
+    <!-- Vertical Divider -->
+    <div style="width: 1px; height: 60px; background: #ddd;"></div>
+
+    <!-- Practices Stat -->
+    <a href="/practices/" style="text-decoration: none; text-align: center; color: inherit;">
+      <div style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="practices-count">--</div>
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">practices</div>
+      <div style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+    </a>
+  </div>
 </div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  // Initialize userId
+  const userId = initializeUser();
+
+  // Load stats
+  async function loadStats() {
+    try {
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const totalCheckins = data.practices.length;
+        const uniquePractices = new Set(
+          data.practices
+            .map(p => p.practice_name)
+            .filter(name => name && name.trim())
+        ).size;
+
+        document.getElementById('checkins-count').textContent = totalCheckins;
+        document.getElementById('practices-count').textContent = uniquePractices;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  loadStats();
+</script>

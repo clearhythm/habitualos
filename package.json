@@ -9,6 +9,7 @@
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve",
     "db:init": "node db/init.js",
+    "db:reset": "node db/reset-firestore.js",
     "scheduler": "node scheduler/index.js",
     "task:healify": "node data/tasks/healify-shift-cards/scripts/create-healify-task.js",
     "task:shift-report": "node data/tasks/healify-shift-reports/scripts/create-shift-report-task.js",
