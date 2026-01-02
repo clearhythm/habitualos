@@ -61,8 +61,20 @@ CREATE TABLE IF NOT EXISTS practices (
   timestamp TEXT DEFAULT (datetime('now'))
 );
 
+-- Practice Conversations: Save Obi-Wai conversations
+CREATE TABLE IF NOT EXISTS practice_conversations (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  messages TEXT NOT NULL,          -- JSON array of {role, content, timestamp}
+  suggested_practice TEXT,         -- Practice name if conversation completed
+  completed BOOLEAN DEFAULT 0,     -- 1 if resulted in practice, 0 otherwise
+  saved_at TEXT DEFAULT (datetime('now'))
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_action_cards_north_star ON action_cards(north_star_id);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_action ON chat_messages(action_id);
 CREATE INDEX IF NOT EXISTS idx_artifacts_action ON artifacts(action_id);
 CREATE INDEX IF NOT EXISTS idx_practices_timestamp ON practices(timestamp);
+CREATE INDEX IF NOT EXISTS idx_practice_conversations_user ON practice_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_practice_conversations_saved_at ON practice_conversations(saved_at);

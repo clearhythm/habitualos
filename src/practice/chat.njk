@@ -5,21 +5,9 @@ permalink: /practice/chat/
 ---
 
 <div class="container-narrow" style="max-width: 700px; margin: 0 auto; padding: 2rem;">
-  <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end;">
-    <div>
-      <h1 style="margin-bottom: 0.5rem;">Get Motivated</h1>
-      <p style="color: #666; margin: 0;">Obi-Wai can help light up your path.</p>
-    </div>
-    <button
-      id="reset-chat-btn"
-      type="button"
-      style="background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
-      onmouseover="this.style.color='#666'"
-      onmouseout="this.style.color='#999'"
-      title="Start over"
-    >
-      Reset <span style="font-size: 1.1rem;">↻</span>
-    </button>
+  <div style="margin-bottom: 2rem;">
+    <h1 style="margin-bottom: 0.5rem;">Get Motivated</h1>
+    <p style="color: #666; margin: 0;">Obi-Wai can help light up your path.</p>
   </div>
 
   <!-- Chat Container -->
@@ -48,6 +36,31 @@ permalink: /practice/chat/
         Send
       </button>
     </form>
+
+    <!-- Chat Actions -->
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 1.5rem 0;">
+    <div style="display: flex; justify-content: center; gap: 1.5rem;">
+      <button
+        id="save-chat-btn"
+        type="button"
+        style="background: none; border: none; color: #9b59b6; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
+        onmouseover="this.style.color='#8b4a96'"
+        onmouseout="this.style.color='#9b59b6'"
+        title="Save conversation"
+      >
+        Save <span style="font-size: 1.1rem;">➜</span>
+      </button>
+      <button
+        id="reset-chat-btn"
+        type="button"
+        style="background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
+        onmouseover="this.style.color='#666'"
+        onmouseout="this.style.color='#999'"
+        title="Start over"
+      >
+        Reset <span style="font-size: 1.1rem;">↻</span>
+      </button>
+    </div>
 
     <!-- "I'm Ready" Modal Overlay (appears after READY_TO_PRACTICE signal) -->
     <div id="ready-button-container" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
@@ -90,7 +103,7 @@ permalink: /practice/chat/
 </div>
 
 <script type="module">
-  import { saveChatHistory, getChatHistory, clearChatHistory, savePracticeChatState } from '/assets/js/practice-chat-state.js';
+  import { saveChatHistory, getChatHistory, clearChatHistory, savePracticeChatState, getPracticeChatState, clearPracticeChatState } from '/assets/js/practice-chat-state.js';
 
   const chatMessages = document.getElementById('chat-messages');
   const chatForm = document.getElementById('chat-form');
@@ -287,6 +300,60 @@ permalink: /practice/chat/
   messageInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
+  });
+
+  // Handle save chat button
+  document.getElementById('save-chat-btn').addEventListener('click', async () => {
+    if (chatHistory.length === 0) {
+      alert('No conversation to save.');
+      return;
+    }
+
+    try {
+      // Show loading state
+      const saveBtn = document.getElementById('save-chat-btn');
+      const originalText = saveBtn.innerHTML;
+      saveBtn.innerHTML = 'Saving... <span style="font-size: 1.1rem;">⏳</span>';
+      saveBtn.disabled = true;
+
+      // Get current practice chat state (if any)
+      const chatState = getPracticeChatState();
+
+      // Save practice chat to backend
+      const response = await fetch('/.netlify/functions/practice-chat-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'u-mgpqwa49', // Hardcoded for now
+          messages: chatHistory,
+          suggestedPractice: chatState?.suggestedPractice || null,
+          fullSuggestion: chatState?.fullSuggestion || null,
+          completed: chatState?.suggestedPractice ? true : false
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save practice chat');
+      }
+
+      // Restore button and show success
+      saveBtn.innerHTML = originalText;
+      saveBtn.disabled = false;
+      alert('Conversation saved!');
+
+    } catch (error) {
+      console.error('Error saving practice chat:', error);
+      alert('Failed to save. Please try again.');
+
+      // Restore button state
+      const saveBtn = document.getElementById('save-chat-btn');
+      saveBtn.innerHTML = originalText;
+      saveBtn.disabled = false;
+    }
   });
 
   // Handle reset chat button
