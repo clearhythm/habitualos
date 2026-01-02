@@ -1,6 +1,7 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { getPracticesByUserId, getPracticeCount } = require('./_services/db-practices.cjs');
+const { getPracticesByUserId } = require('./_services/db-practices.cjs');
+const { getPracticeLogsByUserId } = require('./_services/db-practice-logs.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -34,16 +35,19 @@ exports.handler = async (event) => {
     }
 
     // Fetch practice history for context
-    const practiceCount = await getPracticeCount(userId);
-    const recentPractices = await getPracticesByUserId(userId, 10); // Last 10 practices
+    const practices = await getPracticesByUserId(userId); // Practice library (unique practices)
+    const practiceLogs = await getPracticeLogsByUserId(userId); // Practice logs (timeline)
 
-    // Extract recent practice names
-    const practiceNames = recentPractices
+    const practiceCount = practices.length; // Number of unique practices
+
+    // Extract recent practice names from logs (what they've been doing lately)
+    const practiceNames = practiceLogs
+      .slice(0, 10) // Last 10 logs
       .map(p => p.practice_name)
       .filter(name => name && name.trim());
 
-    // Extract recent reflections (last 3)
-    const recentReflections = recentPractices
+    // Extract recent reflections from logs (last 3)
+    const recentReflections = practiceLogs
       .slice(0, 3)
       .map(p => p.reflection)
       .filter(r => r && r.trim())
