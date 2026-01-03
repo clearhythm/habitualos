@@ -148,10 +148,35 @@ async function remove({ collection, id }) {
   return { id: docId };
 }
 
+/**
+ * increment({ collection, id, field, value }) -> { id }
+ * Atomically increment a numeric field.
+ * - Uses Firestore's FieldValue.increment() for atomic updates
+ * - Also updates _updatedAt timestamp
+ */
+async function increment({ collection, id, field, value = 1 }) {
+  const col = sanitize(collection);
+  const docId = sanitize(id);
+  if (!col) throw new Error("db-core.increment: 'collection' is required");
+  if (!docId) throw new Error("db-core.increment: 'id' is required");
+  if (!field) throw new Error("db-core.increment: 'field' is required");
+
+  const ref = db.collection(col).doc(docId);
+  const now = FieldValue.serverTimestamp();
+
+  await ref.update({
+    [field]: FieldValue.increment(value),
+    _updatedAt: now,
+  });
+
+  return { id: docId };
+}
+
 module.exports = {
   create,
   patch,
   get,
   query,
   remove,
+  increment,
 };

@@ -28,8 +28,8 @@ exports.handler = async (event) => {
     if (!northstar) {
       // Create undefined North Star (not yet defined by user)
       northstar = insertNorthStar({
-        title: null,
-        goal: null,
+        title: 'Untitled Goal',
+        goal: 'Not yet defined',
         success_criteria: [],
         timeline: null
       });

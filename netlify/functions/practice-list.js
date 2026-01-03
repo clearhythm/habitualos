@@ -36,6 +36,13 @@ exports.handler = async (event) => {
       }
     }
 
+    // Convert Firestore Timestamps to ISO strings for frontend
+    const practicesWithDates = practices.map(practice => ({
+      ...practice,
+      _createdAt: practice._createdAt?.toDate ? practice._createdAt.toDate().toISOString() : practice._createdAt,
+      _updatedAt: practice._updatedAt?.toDate ? practice._updatedAt.toDate().toISOString() : practice._updatedAt
+    }));
+
     return {
       statusCode: 200,
       headers: {
@@ -44,8 +51,8 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        practices,
-        count: practices.length
+        practices: practicesWithDates,
+        count: practicesWithDates.length
       })
     };
 
