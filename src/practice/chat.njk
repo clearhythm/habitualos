@@ -4,62 +4,86 @@ layout: base.njk
 permalink: /practice/chat/
 ---
 
-<div class="container-narrow" style="max-width: 700px; margin: 0 auto; padding: 2rem;">
-  <div style="margin-bottom: 2rem;">
-    <h1 style="margin-bottom: 0.5rem;">Get Motivated</h1>
-    <p style="color: #666; margin: 0;">Obi-Wai can help light up your path.</p>
-  </div>
+<style>
+  /* Hide base layout elements for full-screen chat */
+  body > nav,
+  body > footer,
+  body > .container,
+  body > .container-narrow {
+    display: none !important;
+  }
 
-  <!-- Chat Container -->
-  <div id="chat-container" style="display: block;">
-    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background-color: #f9f9f9; border-radius: 8px; margin-bottom: 1.5rem; max-height: 500px; min-height: 300px;"></div>
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+</style>
 
-    <div id="chat-loading" style="display: none; padding: 1rem; text-align: center;">
-      <p style="color: #9b59b6; margin: 0; font-style: italic;">Obi-Wai is thinking...</p>
-    </div>
-
-    <form id="chat-form" style="display: flex; gap: 0.75rem; align-items: flex-end;">
-      <textarea
-        name="message"
-        id="message-input"
-        placeholder="Reply..."
-        required
-        rows="3"
-        style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;"
-      ></textarea>
-      <button
-        type="submit"
-        style="padding: 0.75rem 1.5rem; background: #9b59b6; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; height: fit-content;"
-        onmouseover="this.style.background='#8b4a96'"
-        onmouseout="this.style.background='#9b59b6'"
-      >
-        Send
-      </button>
-    </form>
-
-    <!-- Chat Actions -->
-    <hr style="border: none; border-top: 1px solid #ddd; margin: 1.5rem 0;">
-    <div style="display: flex; justify-content: center; gap: 1.5rem;">
-      <button
-        id="save-chat-btn"
-        type="button"
-        style="background: none; border: none; color: #9b59b6; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
-        onmouseover="this.style.color='#8b4a96'"
-        onmouseout="this.style.color='#9b59b6'"
-        title="Save conversation"
-      >
-        Save <span style="font-size: 1.1rem;">➜</span>
-      </button>
+<!-- Full-viewport chat container -->
+<div id="chat-page-container" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; background: white;">
+  <!-- Header -->
+  <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #eee; flex-shrink: 0; background: white;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="/" style="color: #666; text-decoration: none; font-size: 1.25rem; line-height: 1;">←</a>
+      <div style="flex: 1;">
+        <h1 style="margin: 0; font-size: 1.25rem;">Get Motivated</h1>
+        <p style="color: #999; margin: 0; font-size: 0.85rem;">Obi-Wai can help light up your path</p>
+      </div>
       <button
         id="reset-chat-btn"
         type="button"
-        style="background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
-        onmouseover="this.style.color='#666'"
-        onmouseout="this.style.color='#999'"
+        style="background: none; border: none; color: #999; font-size: 1.25rem; cursor: pointer; padding: 0.25rem;"
         title="Start over"
       >
-        Reset <span style="font-size: 1.1rem;">↻</span>
+        ↻
       </button>
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div id="chat-container" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; align-items: center;">
+    <!-- Messages (scrollable area) -->
+    <div class="chat-messages" id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; background-color: #f9f9f9; width: 100%; max-width: 700px;"></div>
+
+    <div id="chat-loading" style="display: none; padding: 1rem; text-align: center; background: #f9f9f9; width: 100%; max-width: 700px;">
+      <p style="color: #9b59b6; margin: 0; font-style: italic;">Obi-Wai is thinking...</p>
+    </div>
+
+    <!-- Input area (fixed at bottom) -->
+    <div style="flex-shrink: 0; background: white; border-top: 1px solid #eee; padding: 1rem 1.5rem; width: 100%; max-width: 700px;">
+      <form id="chat-form" style="display: flex; gap: 0.75rem; align-items: flex-end;">
+        <textarea
+          name="message"
+          id="message-input"
+          placeholder="Reply..."
+          required
+          rows="1"
+          style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 20px; font-size: 1rem; font-family: inherit; resize: none; max-height: 150px; overflow-y: auto;"
+        ></textarea>
+        <button
+          type="submit"
+          id="send-button"
+          disabled
+          style="width: 36px; height: 36px; background: #ddd; color: white; border: none; border-radius: 50%; font-size: 1.25rem; cursor: not-allowed; transition: all 0.2s; flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 0;"
+        >
+          ↑
+        </button>
+      </form>
+
+      <!-- Chat Actions (moved to bottom bar) -->
+      <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem;">
+        <button
+          id="save-chat-btn"
+          type="button"
+          style="background: none; border: none; color: #9b59b6; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s; display: flex; align-items: center; gap: 0.35rem;"
+          onmouseover="this.style.color='#8b4a96'"
+          onmouseout="this.style.color='#9b59b6'"
+          title="Save conversation"
+        >
+          Save <span style="font-size: 1.1rem;">➜</span>
+        </button>
+      </div>
     </div>
 
     <!-- "I'm Ready" Modal Overlay (appears after READY_TO_PRACTICE signal) -->
@@ -85,20 +109,24 @@ permalink: /practice/chat/
     </div>
   </div>
 
+  </div>
+
   <!-- "Do Your Practice" Overlay -->
-  <div id="do-practice-overlay" style="display: none; text-align: center; padding: 4rem 2rem;">
-    <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #333;">Do Your Practice</h2>
-    <p style="font-size: 1.1rem; color: #666; margin-bottom: 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">
-      Return here when you've completed it to track that you did it. You got this.
-    </p>
-    <button
-      id="i-practiced-button"
-      style="padding: 1rem 2rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-      onmouseover="this.style.background='#0052a3'"
-      onmouseout="this.style.background='#0066cc'"
-    >
-      I Practiced
-    </button>
+  <div id="do-practice-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 2000; align-items: center; justify-content: center; flex-direction: column; padding: 2rem;">
+    <div style="text-align: center; max-width: 400px;">
+      <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #333;">Do Your Practice</h2>
+      <p style="font-size: 1.1rem; color: #666; margin-bottom: 2rem;">
+        Return here when you've completed it to track that you did it. You got this.
+      </p>
+      <button
+        id="i-practiced-button"
+        style="padding: 1rem 2rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+        onmouseover="this.style.background='#0052a3'"
+        onmouseout="this.style.background='#0066cc'"
+      >
+        I Practiced
+      </button>
+    </div>
   </div>
 </div>
 
@@ -108,6 +136,7 @@ permalink: /practice/chat/
   const chatMessages = document.getElementById('chat-messages');
   const chatForm = document.getElementById('chat-form');
   const messageInput = document.getElementById('message-input');
+  const sendButton = document.getElementById('send-button');
   const chatLoading = document.getElementById('chat-loading');
   const readyButtonContainer = document.getElementById('ready-button-container');
   const readyButton = document.getElementById('ready-button');
@@ -118,6 +147,20 @@ permalink: /practice/chat/
 
   // Track practice data when ready
   let currentPracticeData = null;
+
+  // Update send button state based on textarea content
+  function updateSendButton() {
+    const hasContent = messageInput.value.trim().length > 0;
+    sendButton.disabled = !hasContent;
+
+    if (hasContent) {
+      sendButton.style.background = '#9b59b6';
+      sendButton.style.cursor = 'pointer';
+    } else {
+      sendButton.style.background = '#ddd';
+      sendButton.style.cursor = 'not-allowed';
+    }
+  }
 
   // Load chat history from localStorage
   let chatHistory = getChatHistory();
@@ -184,9 +227,13 @@ permalink: /practice/chat/
     messageInput.value = '';
     messageInput.style.height = 'auto';
 
+    // Disable send button
+    sendButton.disabled = true;
+    sendButton.style.background = '#ddd';
+    sendButton.style.cursor = 'not-allowed';
+
     // Show loading
     chatLoading.style.display = 'block';
-    chatForm.querySelector('button[type="submit"]').disabled = true;
 
     try {
       // Call backend
@@ -213,7 +260,7 @@ permalink: /practice/chat/
 
       // Hide loading
       chatLoading.style.display = 'none';
-      chatForm.querySelector('button[type="submit"]').disabled = false;
+      // Button state is controlled by textarea content (updateSendButton)
 
       // Add assistant response to UI and history
       const assistantMessage = {
@@ -236,14 +283,16 @@ permalink: /practice/chat/
         readyButtonContainer.style.display = 'flex';
 
         // Disable chat form
-        chatForm.querySelector('button[type="submit"]').disabled = true;
+        sendButton.disabled = true;
+        sendButton.style.background = '#ddd';
+        sendButton.style.cursor = 'not-allowed';
         messageInput.disabled = true;
       }
 
     } catch (error) {
       console.error('Error sending message:', error);
       chatLoading.style.display = 'none';
-      chatForm.querySelector('button[type="submit"]').disabled = false;
+      // Button state is controlled by textarea content (updateSendButton)
 
       // Show error message
       const errorMessage = {
@@ -270,16 +319,16 @@ permalink: /practice/chat/
 
     // Show "Do Your Practice" screen
     chatContainer.style.display = 'none';
-    doPracticeOverlay.style.display = 'block';
+    doPracticeOverlay.style.display = 'flex';
   });
 
   // Handle dismiss "I'm Ready" button
   dismissReadyButton.addEventListener('click', () => {
     // Hide ready button, re-enable chat
     readyButtonContainer.style.display = 'none';
-    chatForm.querySelector('button[type="submit"]').disabled = false;
     messageInput.disabled = false;
     messageInput.focus();
+    updateSendButton(); // Update button state based on current textarea content
   });
 
   // Handle "I Practiced" button
@@ -296,10 +345,11 @@ permalink: /practice/chat/
     }
   });
 
-  // Auto-resize textarea
+  // Auto-resize textarea and toggle send button
   messageInput.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
+    updateSendButton();
   });
 
   // Handle save chat button

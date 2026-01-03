@@ -269,8 +269,8 @@ permalink: /practice/
       formContainer.style.display = 'none';
 
       try {
-        // Fetch all practices to find this one
-        const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
+        // Fetch all practice logs to find this one
+        const response = await fetch(`/.netlify/functions/practice-logs-list?userId=${userId}&_=${Date.now()}`, {
           cache: 'no-store'
         });
 
@@ -294,7 +294,7 @@ permalink: /practice/
             const newBtn = continueBtn.cloneNode(true);
             continueBtn.parentNode.replaceChild(newBtn, continueBtn);
             newBtn.textContent = 'Back to History';
-            newBtn.addEventListener('click', () => window.location.href = '/practices/');
+            newBtn.addEventListener('click', () => window.location.href = '/history/');
 
             responseContainer.style.display = 'block';
           } else {
