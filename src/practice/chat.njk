@@ -262,6 +262,9 @@ permalink: /practice/chat/
     showLoadingMessage();
 
     try {
+      // Get user's timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       // Call backend
       const response = await fetch('/.netlify/functions/practice-chat', {
         method: 'POST',
@@ -271,6 +274,7 @@ permalink: /practice/chat/
         body: JSON.stringify({
           userId: 'u-mgpqwa49', // Hardcoded for now
           message,
+          timezone: userTimezone,
           chatHistory: chatHistory.map(msg => ({
             role: msg.role,
             content: msg.content

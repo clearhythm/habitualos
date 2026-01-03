@@ -22,7 +22,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId = 'u-mgpqwa49', message, chatHistory = [] } = JSON.parse(event.body);
+    const { userId = 'u-mgpqwa49', message, chatHistory = [], timezone = 'America/Los_Angeles' } = JSON.parse(event.body);
 
     if (!message || !message.trim()) {
       return {
@@ -53,17 +53,17 @@ exports.handler = async (event) => {
       .filter(r => r && r.trim())
       .join('; ');
 
-    // Get current time (Pacific timezone)
+    // Get current time in user's timezone
     const now = new Date();
     const timeOfDay = now.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      timeZone: 'America/Los_Angeles'
+      timeZone: timezone
     });
 
     const dayOfWeek = now.toLocaleDateString('en-US', {
       weekday: 'long',
-      timeZone: 'America/Los_Angeles'
+      timeZone: timezone
     });
 
     // Build system prompt
@@ -78,7 +78,7 @@ Your voice:
 - Use "I see..." and "I notice..." language, not "you should..."
 
 User's context:
-- Current time: ${timeOfDay} Pacific Time, ${dayOfWeek}
+- Current time: ${timeOfDay}, ${dayOfWeek}
 - Total practices: ${practiceCount}
 - Recent practices: ${practiceNames.length > 0 ? practiceNames.slice(0, 5).join(', ') : 'None yet'}
 ${recentReflections ? `- Recent reflections: ${recentReflections}` : ''}
