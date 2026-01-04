@@ -1,14 +1,14 @@
 ---
-title: Practices - HabitualOS
+title: Practice Library - HabitualOS
 layout: base.njk
-permalink: /practices/
+permalink: /practice/library/
 ---
 
 <div class="container-narrow" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
     <h1 style="margin: 0;">Practices</h1>
     <a
-      href="/"
+      href="/practice/"
       style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
     >
       ← Back
@@ -66,7 +66,7 @@ permalink: /practices/
 
         return `
           <a
-            href="/practice-detail/?name=${encodedName}"
+            href="/practice/detail/?name=${encodedName}"
             style="display: block; text-decoration: none; padding: 1.5rem; background: white; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 1rem; transition: all 0.2s; color: inherit;"
             onmouseover="this.style.background='#f9f9f9'; this.style.borderColor='#0066cc'"
             onmouseout="this.style.background='white'; this.style.borderColor='#ddd'"
@@ -120,23 +120,10 @@ permalink: /practices/
     const diffMonths = Math.floor(diffDays / 30);
     const diffYears = Math.floor(diffDays / 365);
 
-    // Same day
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return 'yesterday';
-
-    // Days
+    // Simpler numeric format
     if (diffDays < 7) return `${diffDays} days ago`;
-
-    // Weeks
-    if (diffWeeks === 1) return 'last week';
     if (diffWeeks < 4) return `${diffWeeks} weeks ago`;
-
-    // Months
-    if (diffMonths === 1) return 'last month';
     if (diffMonths < 12) return `${diffMonths} months ago`;
-
-    // Years
-    if (diffYears === 1) return 'last year';
     return `${diffYears} years ago`;
   }
 

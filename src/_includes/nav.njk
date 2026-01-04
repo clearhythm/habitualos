@@ -9,11 +9,22 @@
     <div class="sidemenu-main">
       <div class="sidemenu-left">
         <ul>
-          <li><h3><a href="/">Home</a></h3></li>
-          <li><h3><a href="/practice/chat/">Get Motivated</a></h3></li>
-          <li><h3><a href="/practice/">Log Practice</a></h3></li>
-          <li><h3><a href="/history/">History</a></h3></li>
-          <li><h3><a href="/garden/">Garden</a></h3></li>
+          {% if page.url.startsWith('/practice/') %}
+            {# Practice section navigation #}
+            <li><h3><a href="/practice/">Home</a></h3></li>
+            <li><h3><a href="/practice/chat/">Get Motivated</a></h3></li>
+            <li><h3><a href="/practice/log/">Log Practice</a></h3></li>
+            <li><h3><a href="/practice/history/">History</a></h3></li>
+            <li><h3><a href="/practice/garden/">Garden</a></h3></li>
+          {% elif page.url.startsWith('/do/') %}
+            {# North Star section navigation #}
+            <li><h3><a href="/do/">Dashboard</a></h3></li>
+            <li><h3><a href="/do/setup/">Setup</a></h3></li>
+          {% else %}
+            {# Landing page navigation #}
+            <li><h3><a href="/practice/">Practice</a></h3></li>
+            <li><h3><a href="/do/">Do</a></h3></li>
+          {% endif %}
         </ul>
         <footer>
           <p style="color: #666; font-size: 0.9rem; padding: 1rem;">HabitualOS</p>

@@ -11,13 +11,13 @@
   force = true
 
 [[redirects]]
-  from = "/action/*"
-  to = "/action/"
+  from = "/do/action/*"
+  to = "/do/action/"
   status = 200
   force = true
 
 [[redirects]]
-  from = "/file/*"
-  to = "/file/"
+  from = "/do/file/*"
+  to = "/do/file/"
   status = 200
   force = true

@@ -27,7 +27,7 @@ async function loadDashboard() {
 
     // If setup action was just created, redirect to it
     if (northstarData.setupActionId) {
-      window.location.href = `/action/${northstarData.setupActionId}`;
+      window.location.href = `/do/action/${northstarData.setupActionId}`;
       return;
     }
 
@@ -87,8 +87,8 @@ function displayNorthStar(northstar, actions) {
     if (setupAction) {
       const createLink = document.querySelector('#create-northstar-link');
       const configLink = document.querySelector('#config-northstar-link');
-      createLink.href = `/action/${setupAction.id}`;
-      configLink.href = `/action/${setupAction.id}`;
+      createLink.href = `/do/action/${setupAction.id}`;
+      configLink.href = `/do/action/${setupAction.id}`;
     }
   } else {
     // Show defined state - Run card
@@ -166,7 +166,7 @@ function displayActions(actions) {
  */
 function createActionCard(action) {
   const card = document.createElement('a');
-  card.href = `/action/${action.id}`;
+  card.href = `/do/action/${action.id}`;
   card.className = 'card card-clickable';
   card.style.textDecoration = 'none';
 
@@ -272,10 +272,10 @@ async function loadFileView() {
   const errorEl = document.querySelector('#file-error');
   const contentEl = document.querySelector('#file-content');
 
-  // Extract actionId and filename from URL: /file/:actionId/:filename
+  // Extract actionId and filename from URL: /do/file/:actionId/:filename
   const pathParts = window.location.pathname.split('/').filter(p => p);
-  const actionId = pathParts[1];
-  const filename = pathParts[2];
+  const actionId = pathParts[2];
+  const filename = pathParts[3];
 
   if (!actionId || !filename) {
     loadingEl.style.display = 'none';
@@ -298,12 +298,12 @@ async function loadFileView() {
     // Setup back link
     const backLink = document.querySelector('#back-to-task');
     backLink.textContent = data.actionTitle;
-    backLink.href = `/action/${actionId}`;
+    backLink.href = `/do/action/${actionId}`;
 
     // Update breadcrumb with context
     updateBreadcrumb([
-      { label: 'Dashboard', url: getDashboardURL() },
-      { label: data.actionTitle, url: `/action/${actionId}` },
+      { label: 'Dashboard', url: '/do/' },
+      { label: data.actionTitle, url: `/do/action/${actionId}` },
       { label: data.filename, url: '#' }
     ]);
 
@@ -439,7 +439,7 @@ async function fetchOutputFiles(actionId, outputFilesEl, noOutputsEl) {
     outputFilesEl.innerHTML = '<ul class="file-list">' +
       data.files.map(file => `
         <li class="file-item">
-          <a href="/file/${actionId}/${file.filename}" class="file-link">
+          <a href="/do/file/${actionId}/${file.filename}" class="file-link">
             📄 ${escapeHtml(file.filename)}
           </a>
           <span class="file-meta">(${formatFileSize(file.size)})</span>
@@ -565,7 +565,7 @@ async function sendMessage(actionId, message) {
       // If North Star was updated, redirect to dashboard after a brief delay
       if (data.north_star_updated) {
         setTimeout(() => {
-          window.location.href = '/';
+          window.location.href = '/do/';
         }, 2000);
       }
     } else {
@@ -710,7 +710,7 @@ function initSetupChat() {
 
         if (createResult.success) {
           // Redirect to dashboard
-          window.location.href = '/';
+          window.location.href = '/do/';
         } else {
           alert(createResult.error || 'Failed to create North Star. Please try again.');
           input.disabled = false;
@@ -773,7 +773,7 @@ function initActionControls() {
         const data = await response.json();
 
         if (data.success) {
-          window.location.href = '/';
+          window.location.href = '/do/';
         } else {
           alert('Failed to mark action as complete.');
           completeBtn.disabled = false;
@@ -810,7 +810,7 @@ function initActionControls() {
         const data = await response.json();
 
         if (data.success) {
-          window.location.href = '/';
+          window.location.href = '/do/';
         } else {
           alert('Failed to dismiss action.');
           dismissBtn.disabled = false;
@@ -879,9 +879,9 @@ function initActionControls() {
  */
 function getActionIdFromUrl() {
   const pathParts = window.location.pathname.split('/').filter(p => p);
-  // URL format: /action/UUID
-  if (pathParts[0] === 'action' && pathParts[1]) {
-    return pathParts[1];
+  // URL format: /do/action/UUID
+  if (pathParts[0] === 'do' && pathParts[1] === 'action' && pathParts[2]) {
+    return pathParts[2];
   }
   return null;
 }
@@ -957,19 +957,21 @@ function initPage() {
   // Initialize breadcrumb state preservation on all pages
   initBreadcrumb();
 
-  if (path === '/' || path === '/index.html') {
-    // Dashboard page
+  if (path === '/do/' || path === '/do/index.html') {
+    // North Star dashboard page
     loadDashboard();
-  } else if (path.startsWith('/action')) {
+  } else if (path.startsWith('/do/action')) {
     // Action detail page
     loadActionDetail();
     initChatForm();
     initActionControls();
-  } else if (path.startsWith('/file')) {
+  } else if (path.startsWith('/do/file')) {
     // File viewer page
     loadFileView();
+  } else if (path.startsWith('/do/setup')) {
+    // Setup page
+    initSetupChat();
   }
-  // /setup page now just redirects to dashboard
 }
 
 // ============================================================================
