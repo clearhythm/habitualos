@@ -76,6 +76,17 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
   }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      border-color: $dark-color-border-hover;
+    }
+  }
 }
 
 .card-clickable {
@@ -179,6 +190,17 @@
   &::placeholder {
     color: $color-text-muted;
   }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-border-hover;
+    border-color: $dark-color-border-hover;
+    color: $dark-color-text;
+
+    &:focus {
+      border-color: #3b82f6;
+      background: $dark-color-bg;
+    }
+  }
 }
 
 .textarea {
@@ -224,6 +246,12 @@
   align-self: flex-start;
   border: 1px solid $color-border;
   border-bottom-left-radius: 4px;
+
+  html[data-theme="dark"] & {
+    background-color: $dark-color-bg;
+    color: $dark-color-text;
+    border-color: $dark-color-border;
+  }
 }
 
 .chat-form {
@@ -515,5 +543,30 @@
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+
+// Dark Mode Toggle (in sidemenu)
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  width: 100%;
+  justify-content: space-between;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .theme-icon {
+    font-size: $font-size-2xl;
   }
 }

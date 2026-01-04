@@ -4,36 +4,33 @@ layout: base.njk
 permalink: /practice/
 ---
 
-<div class="container-narrow" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
-  <h1 style="margin-bottom: 2rem;">Journey</h1>
+<div style="max-width: 800px; margin: 4rem auto; padding: 2rem; text-align: center;">
+  <h1 id="rank-title"><span id="rank-emoji"></span> <span id="rank-name">&nbsp;</span></h1>
+  <p style="font-size: 1.2rem; color: #666; margin: 0 0 2rem 0;" id="rank-subtitle">
+    Loading...
+  </p>
 
   <!-- Practice Action Cards -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0;">
     <!-- Get Motivated Card -->
-    <a
-      href="/practice/chat/"
-      style="text-decoration: none; display: block; padding: 2rem; background: linear-gradient(135deg, #f9f6ff 0%, #f0e6ff 100%); border: 2px solid #e0d4f7; border-radius: 8px; transition: all 0.2s; cursor: pointer;"
-      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(155, 89, 182, 0.2)'"
-      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
-    >
-      <div style="text-align: center;">
-        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🐉</div>
-        <div style="font-weight: 600; font-size: 1.1rem; color: #9b59b6; margin-bottom: 0.5rem;">Get Motivated</div>
-        <div style="font-size: 0.9rem; color: #666;">Obi-Wai is here to help.<br/>Find a practice, get motivated.</div>
+    <a href="/practice/chat/" style="text-decoration: none; color: inherit;">
+      <div style="padding: 3rem 2rem; border: 2px solid #ddd; border-radius: 12px; transition: all 0.2s;"
+           onmouseover="this.style.borderColor='#9b59b6'"
+           onmouseout="this.style.borderColor='#ddd'">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🐉</div>
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Motivate</h2>
+        <p style="color: #666; margin: 0;">Obi-Wai is here to help.<br/>Find a practice, get motivated.</p>
       </div>
     </a>
 
     <!-- Log Practice Card -->
-    <a
-      href="/practice/log/"
-      style="text-decoration: none; display: block; padding: 2rem; background: linear-gradient(135deg, #e6f2ff 0%, #cce5ff 100%); border: 2px solid #b3d9ff; border-radius: 8px; transition: all 0.2s; cursor: pointer;"
-      onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 102, 204, 0.2)'"
-      onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'"
-    >
-      <div style="text-align: center;">
-        <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🪵</div>
-        <div style="font-weight: 600; font-size: 1.1rem; color: #0066cc; margin-bottom: 0.5rem;">Log Practice</div>
-        <div style="font-size: 0.9rem; color: #666;">Watch your life transform.</div>
+    <a href="/practice/log/" style="text-decoration: none; color: inherit;">
+      <div style="padding: 3rem 2rem; border: 2px solid #ddd; border-radius: 12px; transition: all 0.2s;"
+           onmouseover="this.style.borderColor='#0066cc'"
+           onmouseout="this.style.borderColor='#ddd'">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🪵</div>
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Log Practice</h2>
+        <p style="color: #666; margin: 0;">Share what you did.<br/>Learn from your reflections.</p>
       </div>
     </a>
   </div>
@@ -48,7 +45,7 @@ permalink: /practice/
   </style>
 
   <!-- Entries Section -->
-  <h2 style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Entries</h2>
+  <h2 style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Habits</h2>
   <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; background: #f9f9f9; border-radius: 8px;">
     <!-- Check-ins Stat -->
     <a href="/practice/history/" style="text-decoration: none; text-align: center; color: inherit;">
@@ -75,6 +72,15 @@ permalink: /practice/
   // Initialize userId
   const userId = initializeUser();
 
+  // Calculate rank based on check-ins
+  function getRank(checkins) {
+    if (checkins === 0) return { name: 'Seed', emoji: '🌱' };
+    if (checkins < 5) return { name: 'Sprout', emoji: '🌿' };
+    if (checkins < 20) return { name: 'Sapling', emoji: '🌳' };
+    if (checkins < 50) return { name: 'Tree', emoji: '🌲' };
+    return { name: 'Grove', emoji: '🏞️' };
+  }
+
   // Load stats
   async function loadStats() {
     try {
@@ -90,6 +96,17 @@ permalink: /practice/
         const totalCheckins = data.practices.reduce((sum, p) => sum + (p.checkins || 0), 0);
         const uniquePractices = data.practices.length;
 
+        // Update rank
+        const rank = getRank(totalCheckins);
+        document.getElementById('rank-emoji').textContent = rank.emoji;
+        document.getElementById('rank-name').textContent = rank.name;
+
+        // Update subtitle
+        const practicesText = totalCheckins === 1 ? 'practice' : 'practices';
+        document.getElementById('rank-subtitle').textContent =
+          `You logged ${totalCheckins} ${practicesText}.`;
+
+        // Update stats
         document.getElementById('checkins-count').textContent = totalCheckins;
         document.getElementById('practices-count').textContent = uniquePractices;
       }

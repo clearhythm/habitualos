@@ -1,10 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title or "HabitualOS" }}</title>
   <link rel="stylesheet" href="/css/main.css">
+  <script>
+    // Initialize theme before page renders to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
 </head>
 <body>
   {% include "nav.njk" %}
@@ -25,5 +32,37 @@
   <script type="module" src="/assets/js/navigation.js"></script>
   <script src="/scripts/nav.js"></script>
   <script src="/scripts/app.js"></script>
+  <script>
+    // Dark mode toggle functionality
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      const html = document.documentElement;
+
+      function updateToggle() {
+        const currentTheme = html.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+          icon.textContent = '☀️';
+          text.textContent = 'Light Mode';
+        } else {
+          icon.textContent = '🌙';
+          text.textContent = 'Dark Mode';
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateToggle();
+      });
+
+      // Set initial state
+      updateToggle();
+    })();
+  </script>
 </body>
 </html>

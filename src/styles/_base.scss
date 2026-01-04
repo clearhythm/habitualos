@@ -10,6 +10,11 @@
 html {
   min-height: 100vh;
   background: linear-gradient(to bottom, #EBEDFD, #FDFCF3 70%, #B5DAFF);
+  transition: background 0.3s ease;
+
+  &[data-theme="dark"] {
+    background: linear-gradient(to bottom, #1a1b26, #1f2937 70%, #111827);
+  }
 }
 
 body {
@@ -17,19 +22,15 @@ body {
   font-size: $font-size-base;
   line-height: 1.6;
   color: $color-text;
-  // background: linear-gradient(
-  //   to bottom,
-  //   #fff 0%,
-  //   #fff 20%,
-  //   #def1e7 30%,
-  //   #dff2e3 90%,
-  //   #dff2e3 100%
-  // );
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
