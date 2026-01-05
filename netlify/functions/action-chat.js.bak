@@ -84,7 +84,7 @@ exports.handler = async (event) => {
     }
 
     // Insert user message
-    const userMessageId = crypto.randomUUID();
+    const userMessageId = uuidv4();
     await createChatMessage(userMessageId, {
       _userId: userId,
       actionId: actionId,
@@ -224,7 +224,7 @@ Respond helpfully to refine the action. Be concise and actionable.`;
     }
 
     // Insert assistant response
-    const assistantMessageId = crypto.randomUUID();
+    const assistantMessageId = uuidv4();
     await createChatMessage(assistantMessageId, {
       _userId: userId,
       actionId: actionId,

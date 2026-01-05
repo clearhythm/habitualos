@@ -42,26 +42,47 @@ permalink: /practice/
         grid-template-columns: 1fr !important;
       }
     }
+
+    /* Dark mode styles for Your Habits section */
+    html[data-theme="dark"] .habits-title {
+      color: #e5e7eb;
+    }
+
+    html[data-theme="dark"] .stat-number {
+      color: #e5e7eb !important;
+    }
+
+    html[data-theme="dark"] .stat-label {
+      color: #9ca3af !important;
+    }
+
+    html[data-theme="dark"] .stat-link {
+      color: #60a5fa !important;
+    }
+
+    html[data-theme="dark"] .stat-divider {
+      background: #374151 !important;
+    }
   </style>
 
   <!-- Entries Section -->
-  <h2 style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Habits</h2>
-  <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; background: #f9f9f9; border-radius: 8px;">
+  <h2 class="habits-title" style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Habits</h2>
+  <div class="habits-stats" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; border-radius: 8px;">
     <!-- Check-ins Stat -->
     <a href="/practice/history/" style="text-decoration: none; text-align: center; color: inherit;">
-      <div style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="checkins-count">--</div>
-      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">check-ins</div>
-      <div style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="checkins-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">check-ins</div>
+      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
     </a>
 
     <!-- Vertical Divider -->
-    <div style="width: 1px; height: 60px; background: #ddd;"></div>
+    <div class="stat-divider" style="width: 1px; height: 60px; background: #ddd;"></div>
 
     <!-- Practices Stat -->
     <a href="/practice/library/" style="text-decoration: none; text-align: center; color: inherit;">
-      <div style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="practices-count">--</div>
-      <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">practices</div>
-      <div style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="practices-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">practices</div>
+      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
     </a>
   </div>
 </div>

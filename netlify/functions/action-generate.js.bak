@@ -120,7 +120,7 @@ ${type === 'code' ? 'Include comments and follow conventions.' : ''}`;
     const content = apiResponse.content[0].text;
 
     // Insert artifact into database
-    const artifactId = crypto.randomUUID();
+    const artifactId = uuidv4();
     const artifact = await createArtifact(artifactId, {
       _userId: userId,
       actionId: actionId,

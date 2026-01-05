@@ -2,6 +2,23 @@
 // Handles dynamic data loading, chat interface, form submissions, and UI interactions
 
 // ============================================================================
+// User ID Management
+// ============================================================================
+
+/**
+ * Get or create userId from localStorage
+ * Temporary solution until proper authentication is implemented
+ */
+function getUserId() {
+  let userId = localStorage.getItem('habitualos_userId');
+  if (!userId) {
+    userId = 'u-' + crypto.randomUUID();
+    localStorage.setItem('habitualos_userId', userId);
+  }
+  return userId;
+}
+
+// ============================================================================
 // Dashboard Data Loading
 // ============================================================================
 
@@ -14,33 +31,35 @@ async function loadDashboard() {
   const dashboardContentEl = document.querySelector('#dashboard-content');
 
   try {
-    // Fetch North Star - for PoC we assume there's only one
-    const northstarResponse = await fetch('/api/northstar-get');
-    const northstarData = await northstarResponse.json();
+    const userId = getUserId();
 
-    if (!northstarData.success || !northstarData.northstar) {
-      // No North Star exists yet, show setup prompt
+    // Fetch Agent (replaces North Star)
+    const agentResponse = await fetch(`/.netlify/functions/agent-get?userId=${userId}`);
+    const agentData = await agentResponse.json();
+
+    if (!agentData.success || !agentData.agent) {
+      // No agent exists yet, show setup prompt
       loadingEl.style.display = 'none';
       noNorthstarEl.style.display = 'block';
       return;
     }
 
     // If setup action was just created, redirect to it
-    if (northstarData.setupActionId) {
-      window.location.href = `/do/action/${northstarData.setupActionId}`;
+    if (agentData.setupActionId) {
+      window.location.href = `/do/action/${agentData.setupActionId}`;
       return;
     }
 
     // Fetch all actions
-    const actionsResponse = await fetch('/api/actions-list');
+    const actionsResponse = await fetch(`/.netlify/functions/actions-list?userId=${userId}`);
     const actionsData = await actionsResponse.json();
 
     if (!actionsData.success) {
       throw new Error('Failed to load actions');
     }
 
-    // Display North Star
-    displayNorthStar(northstarData.northstar, actionsData.actions || []);
+    // Display Agent (replaces North Star)
+    displayNorthStar(agentData.agent, actionsData.actions || []);
 
     // Display Actions
     displayActions(actionsData.actions || []);
@@ -107,12 +126,12 @@ function displayNorthStar(northstar, actions) {
   document.querySelector('#actions-completed-count').textContent = completedCount;
 
   // Get last completed action timestamp
-  const completedActions = actions.filter(a => a.state === 'completed' && a.updated_at);
+  const completedActions = actions.filter(a => a.state === 'completed' && a._updatedAt);
   if (completedActions.length > 0) {
     const lastCompleted = completedActions.sort((a, b) =>
-      new Date(b.updated_at) - new Date(a.updated_at)
+      new Date(b._updatedAt) - new Date(a._updatedAt)
     )[0];
-    document.querySelector('#last-run-time').textContent = formatDate(lastCompleted.updated_at);
+    document.querySelector('#last-run-time').textContent = formatDate(lastCompleted._updatedAt);
   } else {
     document.querySelector('#last-run-time').textContent = 'Never';
   }
@@ -174,8 +193,8 @@ function createActionCard(action) {
 
   // Show "Scheduled" with time for scheduled tasks
   let stateBadge;
-  if (action.task_type === 'scheduled' && action.state === 'open' && action.schedule_time) {
-    const scheduledTime = formatDate(action.schedule_time);
+  if (action.taskType === 'scheduled' && action.state === 'open' && action.scheduleTime) {
+    const scheduledTime = formatDate(action.scheduleTime);
     stateBadge = `<span class="badge badge-scheduled">Scheduled: ${scheduledTime}</span>`;
   } else {
     stateBadge = `<span class="badge badge-${action.state}">${formatState(action.state)}</span>`;
@@ -240,7 +259,8 @@ async function loadActionDetail() {
   }
 
   try {
-    const response = await fetch(`/api/action-get/${actionId}`);
+    const userId = getUserId();
+    const response = await fetch(`/.netlify/functions/action-get/${actionId}?userId=${userId}`);
     const data = await response.json();
 
     if (!data.success || !data.action) {
@@ -512,7 +532,8 @@ function displayArtifacts(artifacts) {
 window.viewArtifact = async function(artifactId) {
   try {
     const actionId = window.currentActionId;
-    const response = await fetch(`/api/action-get/${actionId}`);
+    const userId = getUserId();
+    const response = await fetch(`/.netlify/functions/action-get/${actionId}?userId=${userId}`);
     const data = await response.json();
 
     if (data.success && data.artifacts) {
@@ -550,7 +571,8 @@ async function sendMessage(actionId, message) {
     appendMessage('user', message, true);
     messageInput.value = '';
 
-    const response = await fetch(`/api/action-chat/${actionId}`, {
+    const userId = getUserId();
+    const response = await fetch(`/.netlify/functions/action-chat/${actionId}?userId=${userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message })
@@ -699,11 +721,13 @@ function initSetupChat() {
         submitBtn.textContent = 'Creating...';
         input.disabled = true;
 
-        // Create the North Star
-        const createResponse = await fetch('/api/northstar-create', {
+        // Create the Agent
+        const userId = getUserId();
+        const agentData = { ...data.northstarData, userId };
+        const createResponse = await fetch('/.netlify/functions/agent-create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data.northstarData)
+          body: JSON.stringify(agentData)
         });
 
         const createResult = await createResponse.json();
@@ -765,7 +789,8 @@ function initActionControls() {
       completeBtn.textContent = 'Completing...';
 
       try {
-        const response = await fetch(`/api/action-complete/${actionId}`, {
+        const userId = getUserId();
+        const response = await fetch(`/.netlify/functions/action-complete/${actionId}?userId=${userId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -801,7 +826,8 @@ function initActionControls() {
       dismissBtn.textContent = 'Dismissing...';
 
       try {
-        const response = await fetch(`/api/action-dismiss/${actionId}`, {
+        const userId = getUserId();
+        const response = await fetch(`/.netlify/functions/action-dismiss/${actionId}?userId=${userId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reason: reason.trim() })
@@ -844,7 +870,8 @@ function initActionControls() {
       generateBtn.textContent = 'Generating...';
 
       try {
-        const response = await fetch(`/api/action-generate/${actionId}`, {
+        const userId = getUserId();
+        const response = await fetch(`/.netlify/functions/action-generate/${actionId}?userId=${userId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type, title: title.trim() })

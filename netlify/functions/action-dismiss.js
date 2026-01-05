@@ -1,13 +1,12 @@
 require('dotenv').config();
-const {
-  getAction,
-  updateActionState,
-  insertChatMessage
-} = require('../../db/helpers');
+const { v4: uuidv4 } = require('uuid');
+const { getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { createChatMessage } = require('./_services/db-action-chats.cjs');
+const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
 
 /**
- * POST /api/action/:id/dismiss
- * Dismiss ActionCard with reason
+ * POST /api/action/:id/dismiss?userId=u-abc123
+ * Dismiss ActionCard with reason and update agent metrics
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -33,6 +32,17 @@ exports.handler = async (event) => {
       };
     }
 
+    // Get userId from query parameters
+    const { userId } = event.queryStringParameters || {};
+
+    // Validate userId
+    if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ success: false, error: 'Valid userId is required' })
+      };
+    }
+
     // Parse request body
     const { reason } = JSON.parse(event.body);
 
@@ -47,7 +57,7 @@ exports.handler = async (event) => {
     }
 
     // Check if action exists
-    const action = getAction(actionId);
+    const action = await getAction(actionId);
 
     if (!action) {
       return {
@@ -59,17 +69,47 @@ exports.handler = async (event) => {
       };
     }
 
+    // Verify action belongs to user
+    if (action._userId !== userId) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ success: false, error: 'Unauthorized' })
+      };
+    }
+
     // Insert dismissal reason as system message in chat
-    insertChatMessage({
-      action_id: actionId,
+    const messageId = crypto.randomUUID();
+    await createChatMessage(messageId, {
+      _userId: userId,
+      actionId: actionId,
       role: 'user',
-      content: `[DISMISSED] ${reason}`
+      content: `[DISMISSED] ${reason}`,
+      timestamp: new Date().toISOString()
     });
 
     // Update action state to dismissed
-    const updatedAction = updateActionState(actionId, 'dismissed', {
-      dismissed_reason: reason
+    await updateActionState(actionId, 'dismissed', {
+      dismissedReason: reason,
+      dismissedAt: new Date().toISOString()
     });
+
+    // Decrement inProgressActions if it was in progress
+    if (action.agentId && action.state === 'in_progress') {
+      await incrementAgentActionCount(action.agentId, 'inProgressActions', -1);
+    }
+
+    // Get updated action
+    const updatedAction = await getAction(actionId);
+
+    // Convert Firestore Timestamps
+    const actionWithDates = {
+      ...updatedAction,
+      _createdAt: updatedAction._createdAt?.toDate ? updatedAction._createdAt.toDate().toISOString() : updatedAction._createdAt,
+      _updatedAt: updatedAction._updatedAt?.toDate ? updatedAction._updatedAt.toDate().toISOString() : updatedAction._updatedAt,
+      startedAt: updatedAction.startedAt,
+      completedAt: updatedAction.completedAt,
+      dismissedAt: updatedAction.dismissedAt
+    };
 
     // Return success response
     return {
@@ -79,7 +119,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        action: updatedAction
+        action: actionWithDates
       })
     };
 

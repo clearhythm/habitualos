@@ -1,10 +1,12 @@
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
 const { getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { createChatMessage } = require('./_services/db-action-chats.cjs');
 const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
 
 /**
- * POST /api/action/:id/complete?userId=u-abc123
- * Mark ActionCard as completed and update agent metrics
+ * POST /api/action/:id/dismiss?userId=u-abc123
+ * Dismiss ActionCard with reason and update agent metrics
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -41,6 +43,19 @@ exports.handler = async (event) => {
       };
     }
 
+    // Parse request body
+    const { reason } = JSON.parse(event.body);
+
+    if (!reason || !reason.trim()) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: 'Dismissal reason is required'
+        })
+      };
+    }
+
     // Check if action exists
     const action = await getAction(actionId);
 
@@ -62,19 +77,25 @@ exports.handler = async (event) => {
       };
     }
 
-    // Update action state to completed
-    await updateActionState(actionId, 'completed', {
-      completedAt: new Date().toISOString()
+    // Insert dismissal reason as system message in chat
+    const messageId = uuidv4();
+    await createChatMessage(messageId, {
+      _userId: userId,
+      actionId: actionId,
+      role: 'user',
+      content: `[DISMISSED] ${reason}`,
+      timestamp: new Date().toISOString()
     });
 
-    // Increment agent's completedActions counter
-    if (action.agentId) {
-      await incrementAgentActionCount(action.agentId, 'completedActions', 1);
+    // Update action state to dismissed
+    await updateActionState(actionId, 'dismissed', {
+      dismissedReason: reason,
+      dismissedAt: new Date().toISOString()
+    });
 
-      // Decrement inProgressActions if it was in progress
-      if (action.state === 'in_progress') {
-        await incrementAgentActionCount(action.agentId, 'inProgressActions', -1);
-      }
+    // Decrement inProgressActions if it was in progress
+    if (action.agentId && action.state === 'in_progress') {
+      await incrementAgentActionCount(action.agentId, 'inProgressActions', -1);
     }
 
     // Get updated action
@@ -103,7 +124,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Error in action-complete:', error);
+    console.error('Error in action-dismiss:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
