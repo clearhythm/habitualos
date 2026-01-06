@@ -673,7 +673,7 @@
   font-weight: 500;
 
   html[data-theme="dark"] & {
-    color: $color-text-muted-dark;
+    color: $dark-color-text-muted;
   }
 }
 
@@ -687,10 +687,10 @@
   }
 
   html[data-theme="dark"] & {
-    color: $color-text-dark;
+    color: $dark-color-text;
 
     &.text-muted {
-      color: $color-text-muted-dark;
+      color: $dark-color-text-muted;
     }
   }
 }
@@ -708,7 +708,7 @@
   }
 
   html[data-theme="dark"] & {
-    border-top-color: lighten($color-border-dark, 5%);
+    border-top-color: lighten($dark-color-border, 5%);
   }
 }
 
@@ -760,11 +760,11 @@
   }
 
   html[data-theme="dark"] & {
-    border-color: lighten($color-border-dark, 5%);
-    color: $color-text-dark;
+    border-color: lighten($dark-color-border, 5%);
+    color: $dark-color-text;
 
     &:hover {
-      background: lighten($color-bg-dark, 5%);
+      background: lighten($dark-color-bg, 5%);
       border-color: $color-primary;
     }
   }
