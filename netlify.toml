@@ -3,6 +3,11 @@
   publish = "_site"
   functions = "netlify/functions"
 
+[functions]
+  # Increase timeout for Firestore queries (default is 10s)
+  node_bundler = "esbuild"
+  included_files = ["netlify/functions/_services/**", "netlify/functions/_utils/**"]
+
 # Browser API - gateway for all /api/* requests
 [[redirects]]
   from = "/api/*"
