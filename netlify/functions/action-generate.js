@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { v4: uuidv4 } = require('uuid');
+const { generateActionArtifactId } = require('./_utils/data-utils.cjs');
 const { getAction, recordApiCall } = require('./_services/db-actions.cjs');
 const { getChatMessagesByAction } = require('./_services/db-action-chats.cjs');
 const { createArtifact } = require('./_services/db-action-artifacts.cjs');
@@ -120,7 +120,7 @@ ${type === 'code' ? 'Include comments and follow conventions.' : ''}`;
     const content = apiResponse.content[0].text;
 
     // Insert artifact into database
-    const artifactId = crypto.randomUUID();
+    const artifactId = generateActionArtifactId();
     const artifact = await createArtifact(artifactId, {
       _userId: userId,
       actionId: actionId,

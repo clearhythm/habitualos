@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { v4: uuidv4 } = require('uuid');
+const { generateActionChatId } = require('./_utils/data-utils.cjs');
 const { getAction, updateActionState } = require('./_services/db-actions.cjs');
 const { createChatMessage } = require('./_services/db-action-chats.cjs');
 const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
@@ -78,7 +78,7 @@ exports.handler = async (event) => {
     }
 
     // Insert dismissal reason as system message in chat
-    const messageId = crypto.randomUUID();
+    const messageId = generateActionChatId();
     await createChatMessage(messageId, {
       _userId: userId,
       actionId: actionId,

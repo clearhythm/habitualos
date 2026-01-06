@@ -1,5 +1,5 @@
 require('dotenv').config();
-const crypto = require('crypto');
+const { generateAgentId, generateActionId } = require('./_utils/data-utils.cjs');
 const { getAgent, getAgentsByUserId, createAgent } = require('./_services/db-agents.cjs');
 const { createAction } = require('./_services/db-actions.cjs');
 
@@ -65,8 +65,8 @@ exports.handler = async (event) => {
 
     // If no agents exist, auto-create default agent with setup action
     if (!agents || agents.length === 0) {
-      const agentId = crypto.randomUUID();
-      const actionId = crypto.randomUUID();
+      const agentId = generateAgentId();
+      const actionId = generateActionId();
 
       // Create default agent
       const newAgent = await createAgent(agentId, {

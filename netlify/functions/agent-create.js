@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { v4: uuidv4 } = require('uuid');
+const { generateAgentId, generateActionId } = require('./_utils/data-utils.cjs');
 const { createAgent } = require('./_services/db-agents.cjs');
 const { createAction, recordApiCall } = require('./_services/db-actions.cjs');
 const { createApiCallRecord } = require('./_utils/metrics-calculator.cjs');
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
     }
 
     // Create agent in Firestore
-    const agentId = crypto.randomUUID();
+    const agentId = generateAgentId();
     const agent = await createAgent(agentId, {
       _userId: userId,
       type: type || 'northstar',
@@ -116,7 +116,7 @@ No preamble, no explanation, just the JSON array.`;
     // Create actions in Firestore
     const actions = [];
     for (const generatedAction of generatedActions) {
-      const actionId = crypto.randomUUID();
+      const actionId = generateActionId();
       const action = await createAction(actionId, {
         _userId: userId,
         agentId: agent.id,

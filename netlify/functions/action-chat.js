@@ -1,6 +1,6 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { v4: uuidv4 } = require('uuid');
+const { generateActionChatId } = require('./_utils/data-utils.cjs');
 const { getAction, updateActionState, recordApiCall } = require('./_services/db-actions.cjs');
 const { getAgent, updateAgent } = require('./_services/db-agents.cjs');
 const { getChatMessagesByAction, createChatMessage } = require('./_services/db-action-chats.cjs');
@@ -84,7 +84,7 @@ exports.handler = async (event) => {
     }
 
     // Insert user message
-    const userMessageId = crypto.randomUUID();
+    const userMessageId = generateActionChatId();
     await createChatMessage(userMessageId, {
       _userId: userId,
       actionId: actionId,
@@ -224,7 +224,7 @@ Respond helpfully to refine the action. Be concise and actionable.`;
     }
 
     // Insert assistant response
-    const assistantMessageId = crypto.randomUUID();
+    const assistantMessageId = generateActionChatId();
     await createChatMessage(assistantMessageId, {
       _userId: userId,
       actionId: actionId,
