@@ -570,3 +570,207 @@
     font-size: $font-size-2xl;
   }
 }
+
+// ============================================================================
+// Multi-Agent Dashboard
+// ============================================================================
+
+// Agents grid - responsive layout
+.agents-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-lg;
+  margin-bottom: $space-xl;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Agent card
+.agent-card {
+  background: $color-bg;
+  border: 2px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    border-color: $color-primary;
+  }
+
+  &.selected {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  &.paused {
+    opacity: 0.7;
+    background: $color-bg-muted;
+  }
+
+  html[data-theme="dark"] & {
+    background: lighten($dark-color-bg, 3%);
+    border-color: lighten($dark-color-border, 5%);
+
+    &:hover {
+      border-color: $color-primary;
+    }
+
+    &.paused {
+      background: $dark-color-bg;
+      opacity: 0.6;
+    }
+  }
+}
+
+// Agent card header
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $space-md;
+  gap: $space-sm;
+}
+
+.agent-name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin: 0;
+  color: $color-text;
+  flex: 1;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+  }
+}
+
+// Agent metrics rows
+.agent-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  margin-bottom: $space-md;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: $font-size-sm;
+}
+
+.metric-label {
+  color: $color-text-muted;
+  font-weight: 500;
+
+  html[data-theme="dark"] & {
+    color: $color-text-muted-dark;
+  }
+}
+
+.metric-value {
+  color: $color-text;
+  font-weight: 600;
+
+  &.text-muted {
+    color: $color-text-muted;
+    font-weight: 500;
+  }
+
+  html[data-theme="dark"] & {
+    color: $color-text-dark;
+
+    &.text-muted {
+      color: $color-text-muted-dark;
+    }
+  }
+}
+
+// Agent controls
+.agent-controls {
+  display: flex;
+  gap: $space-sm;
+  margin-top: $space-md;
+  border-top: 1px solid $color-border;
+  padding-top: $space-md;
+
+  button {
+    flex: 1;
+  }
+
+  html[data-theme="dark"] & {
+    border-top-color: lighten($color-border-dark, 5%);
+  }
+}
+
+// New Agent card
+.new-agent-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  min-height: 280px;
+
+  &:hover {
+    background: lighten($color-primary, 45%);
+    border-color: $color-primary;
+  }
+
+  html[data-theme="dark"] & {
+    &:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+  }
+}
+
+.new-agent-content {
+  text-align: center;
+}
+
+.new-agent-icon {
+  font-size: 3rem;
+  color: $color-primary;
+  margin-bottom: $space-sm;
+  font-weight: 300;
+}
+
+// Button variants
+.btn-sm {
+  padding: $space-xs $space-md;
+  font-size: $font-size-sm;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid $color-border;
+  color: $color-text;
+
+  &:hover {
+    background: $color-bg-muted;
+    border-color: $color-primary;
+  }
+
+  html[data-theme="dark"] & {
+    border-color: lighten($color-border-dark, 5%);
+    color: $color-text-dark;
+
+    &:hover {
+      background: lighten($color-bg-dark, 5%);
+      border-color: $color-primary;
+    }
+  }
+}
+
+// Gap utility
+.gap-sm {
+  gap: $space-sm;
+}

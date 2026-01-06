@@ -22,8 +22,11 @@ function getUserId() {
 // Dashboard Data Loading
 // ============================================================================
 
+// Global state for agent filtering
+let selectedAgentId = null;
+
 /**
- * Load and display dashboard data (North Star + Actions)
+ * Load and display dashboard data (Multi-Agent + Actions)
  */
 async function loadDashboard() {
   const loadingEl = document.querySelector('#loading-dashboard');
@@ -33,20 +36,14 @@ async function loadDashboard() {
   try {
     const userId = getUserId();
 
-    // Fetch Agent (replaces North Star)
-    const agentResponse = await fetch(`/.netlify/functions/agent-get?userId=${userId}`);
-    const agentData = await agentResponse.json();
+    // Fetch all agents
+    const agentsResponse = await fetch(`/.netlify/functions/agents-list?userId=${userId}`);
+    const agentsData = await agentsResponse.json();
 
-    if (!agentData.success || !agentData.agent) {
-      // No agent exists yet, show setup prompt
+    if (!agentsData.success || !agentsData.agents || agentsData.agents.length === 0) {
+      // No agents exist yet, show setup prompt
       loadingEl.style.display = 'none';
       noNorthstarEl.style.display = 'block';
-      return;
-    }
-
-    // If setup action was just created, redirect to it
-    if (agentData.setupActionId) {
-      window.location.href = `/do/action/${agentData.setupActionId}`;
       return;
     }
 
@@ -58,14 +55,14 @@ async function loadDashboard() {
       throw new Error('Failed to load actions');
     }
 
-    // Display Agent (replaces North Star)
-    displayNorthStar(agentData.agent, actionsData.actions || []);
+    // Display Agents grid
+    renderAgentsGrid(agentsData.agents, actionsData.actions || []);
 
-    // Display Actions
-    displayActions(actionsData.actions || []);
+    // Display Actions (filtered by selected agent if applicable)
+    displayActions(actionsData.actions || [], selectedAgentId);
 
-    // Initialize toggle after cards are rendered
-    initToggleCompleted();
+    // Initialize dashboard controls
+    initDashboardControls();
 
     // Show dashboard content
     loadingEl.style.display = 'none';
@@ -78,79 +75,251 @@ async function loadDashboard() {
 }
 
 /**
- * Display North Star data and agent cards
+ * Render agents grid with all agent cards
  */
-function displayNorthStar(northstar, actions) {
-  const runUndefined = document.querySelector('#northstar-undefined');
-  const runDefined = document.querySelector('#northstar-defined');
-  const configUndefined = document.querySelector('#config-undefined');
-  const configDefined = document.querySelector('#config-defined');
-  const statusBadge = document.querySelector('#agent-status');
+function renderAgentsGrid(agents, allActions) {
+  const agentsGridEl = document.querySelector('#agents-grid');
+  agentsGridEl.innerHTML = '';
 
-  // Find the "Define Your North Star Goal" action
-  const setupAction = actions.find(a => a.title === 'Define Your North Star Goal');
+  // Create agent cards
+  agents.forEach(agent => {
+    const agentActions = allActions.filter(a => a.agentId === agent.id);
+    const card = createAgentCard(agent, agentActions);
+    agentsGridEl.appendChild(card);
+  });
 
-  // North Star is only "defined" if the setup action is completed
-  const isUndefined = !setupAction || setupAction.state !== 'completed';
+  // Add "+ New Agent" card
+  const newAgentCard = createNewAgentCard();
+  agentsGridEl.appendChild(newAgentCard);
+}
 
-  if (isUndefined) {
-    // Show undefined state - Run card
-    runUndefined.style.display = 'block';
-    runDefined.style.display = 'none';
+/**
+ * Create an agent card element
+ */
+function createAgentCard(agent, agentActions) {
+  const card = document.createElement('div');
+  card.className = `agent-card ${selectedAgentId === agent.id ? 'selected' : ''} ${agent.status === 'paused' ? 'paused' : ''}`;
+  card.dataset.agentId = agent.id;
 
-    // Show undefined state - Config card
-    configUndefined.style.display = 'block';
-    configDefined.style.display = 'none';
+  // Find setup action for this agent
+  const setupAction = agentActions.find(a => a.title === 'Define Your North Star Goal');
+  const isConfigured = setupAction && setupAction.state === 'completed';
+  const displayName = isConfigured ? agent.name : 'Untitled Agent';
 
-    // Link to the setup action
-    if (setupAction) {
-      const createLink = document.querySelector('#create-northstar-link');
-      const configLink = document.querySelector('#config-northstar-link');
-      createLink.href = `/do/action/${setupAction.id}`;
-      configLink.href = `/do/action/${setupAction.id}`;
+  // Calculate metrics
+  const completedCount = agent.metrics?.completedActions || 0;
+  const totalCount = agent.metrics?.totalActions || 0;
+  const totalCost = agent.metrics?.totalCost || 0;
+  const projectedCost = calculateProjectedCost(agent);
+  const runtime = formatRuntime(agent._createdAt);
+  const model = agent.model || 'Sonnet 4.5';
+
+  card.innerHTML = `
+    <div class="agent-card-header">
+      <h3 class="agent-name">${displayName}</h3>
+      <span class="badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}">${agent.status}</span>
+    </div>
+
+    <div class="agent-metrics">
+      <div class="metric-row">
+        <span class="metric-label">Model:</span>
+        <span class="metric-value">${model}</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Runtime:</span>
+        <span class="metric-value">${runtime}</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Cost:</span>
+        <span class="metric-value">$${totalCost.toFixed(2)}</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Projected:</span>
+        <span class="metric-value text-muted">~$${projectedCost}/mo</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Actions:</span>
+        <span class="metric-value">${completedCount}/${totalCount}</span>
+      </div>
+    </div>
+
+    <div class="agent-controls">
+      <button class="btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}" onclick="toggleAgentStatus('${agent.id}')">
+        ${agent.status === 'paused' ? 'Resume' : 'Pause'}
+      </button>
+      <button class="btn btn-sm btn-ghost" onclick="viewAgentActions('${agent.id}')">
+        View Actions
+      </button>
+    </div>
+  `;
+
+  return card;
+}
+
+/**
+ * Create "+ New Agent" card
+ */
+function createNewAgentCard() {
+  const card = document.createElement('div');
+  card.className = 'agent-card new-agent-card';
+  card.innerHTML = `
+    <div class="new-agent-content">
+      <div class="new-agent-icon">+</div>
+      <h3>New Agent</h3>
+      <p class="text-muted">Create a new goal</p>
+    </div>
+  `;
+  card.onclick = () => window.location.href = '/do/setup/';
+  return card;
+}
+
+/**
+ * Calculate projected monthly cost based on agent's usage
+ */
+function calculateProjectedCost(agent) {
+  const createdDate = new Date(agent._createdAt);
+  const now = new Date();
+  const daysSinceCreated = Math.max(1, Math.floor((now - createdDate) / (1000 * 60 * 60 * 24)));
+  const dailyAvgCost = (agent.metrics?.totalCost || 0) / daysSinceCreated;
+  return (dailyAvgCost * 30).toFixed(2);
+}
+
+/**
+ * Format runtime as "X days ago" or "X hours ago"
+ */
+function formatRuntime(createdAt) {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now - created;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+  if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''}`;
+  if (diffMinutes > 0) return `${diffMinutes} min`;
+  return 'Just now';
+}
+
+/**
+ * Toggle agent status (pause/resume)
+ */
+async function toggleAgentStatus(agentId) {
+  try {
+    const userId = getUserId();
+
+    // Get current agent to determine new status
+    const agentResponse = await fetch(`/.netlify/functions/agent-get?userId=${userId}&agentId=${agentId}`);
+    const agentData = await agentResponse.json();
+
+    if (!agentData.success) {
+      throw new Error('Failed to fetch agent');
     }
-  } else {
-    // Show defined state - Run card
-    runUndefined.style.display = 'none';
-    runDefined.style.display = 'block';
 
-    // Show defined state - Config card
-    configUndefined.style.display = 'none';
-    configDefined.style.display = 'block';
+    const newStatus = agentData.agent.status === 'paused' ? 'active' : 'paused';
 
-    document.querySelector('#config-northstar-title').textContent = northstar.title;
+    // Update agent status
+    const updateResponse = await fetch(`/.netlify/functions/agent-update?userId=${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId, status: newStatus })
+    });
+
+    const updateData = await updateResponse.json();
+
+    if (!updateData.success) {
+      throw new Error('Failed to update agent status');
+    }
+
+    // Reload dashboard
+    await loadDashboard();
+
+  } catch (error) {
+    console.error('Error toggling agent status:', error);
+    alert('Failed to update agent status. Please try again.');
   }
+}
 
-  // Update Live Stats card
-  const completedCount = actions.filter(a => a.state === 'completed').length;
-  document.querySelector('#actions-completed-count').textContent = completedCount;
+/**
+ * Filter actions view to show only selected agent's actions
+ */
+async function viewAgentActions(agentId) {
+  selectedAgentId = agentId;
 
-  // Get last completed action timestamp
-  const completedActions = actions.filter(a => a.state === 'completed' && a._updatedAt);
-  if (completedActions.length > 0) {
-    const lastCompleted = completedActions.sort((a, b) =>
-      new Date(b._updatedAt) - new Date(a._updatedAt)
-    )[0];
-    document.querySelector('#last-run-time').textContent = formatDate(lastCompleted._updatedAt);
-  } else {
-    document.querySelector('#last-run-time').textContent = 'Never';
+  // Highlight selected agent card
+  document.querySelectorAll('.agent-card').forEach(card => {
+    if (card.dataset.agentId === agentId) {
+      card.classList.add('selected');
+    } else {
+      card.classList.remove('selected');
+    }
+  });
+
+  // Show "Show All Agents" button
+  const showAllBtn = document.querySelector('#show-all-agents-btn');
+  showAllBtn.style.display = 'block';
+
+  // Reload dashboard to filter actions
+  await loadDashboard();
+}
+
+/**
+ * Show actions from all agents (clear filter)
+ */
+async function showAllAgents() {
+  selectedAgentId = null;
+
+  // Remove selected class from all cards
+  document.querySelectorAll('.agent-card').forEach(card => {
+    card.classList.remove('selected');
+  });
+
+  // Hide "Show All Agents" button
+  const showAllBtn = document.querySelector('#show-all-agents-btn');
+  showAllBtn.style.display = 'none';
+
+  // Reload dashboard
+  await loadDashboard();
+}
+
+/**
+ * Initialize dashboard controls (event listeners)
+ */
+function initDashboardControls() {
+  // Show All Agents button
+  const showAllBtn = document.querySelector('#show-all-agents-btn');
+  if (showAllBtn) {
+    showAllBtn.onclick = showAllAgents;
   }
-
-  // Update status badge
-  statusBadge.textContent = northstar.status === 'active' ? 'Active' : northstar.status;
-  statusBadge.className = `badge badge-${northstar.status === 'active' ? 'open' : 'completed'}`;
 }
 
 /**
  * Display action cards and calculate progress
  */
-function displayActions(actions) {
+function displayActions(actions, filterByAgentId = null) {
   const actionsGridEl = document.querySelector('#actions-grid');
   const toggleBtn = document.querySelector('#toggle-completed');
 
+  // Filter actions by agent if specified
+  let filteredActions = actions;
+  if (filterByAgentId) {
+    filteredActions = actions.filter(a => a.agentId === filterByAgentId);
+  }
+
+  // Filter out scheduled actions from paused agents
+  filteredActions = filteredActions.filter(action => {
+    // Find the agent for this action
+    const agentId = action.agentId;
+    if (!agentId) return true; // Include if no agent
+
+    // Check if agent is paused (would need to fetch agent status, for now assume active)
+    // This will be handled by backend filtering in future iteration
+    return true;
+  });
+
   // Separate active and completed actions
-  const activeActions = actions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
-  const completedActions = actions.filter(a => a.state === 'completed' || a.state === 'dismissed');
+  const activeActions = filteredActions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
+  const completedActions = filteredActions.filter(a => a.state === 'completed' || a.state === 'dismissed');
 
   // Clear grid
   actionsGridEl.innerHTML = '';
