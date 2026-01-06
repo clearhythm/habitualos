@@ -774,3 +774,37 @@
 .gap-sm {
   gap: $space-sm;
 }
+
+// ============================================================================
+// Agent Detail Page
+// ============================================================================
+
+// Metrics grid for agent detail page
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+
+  .metric-value {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $color-text;
+
+    html[data-theme="dark"] & {
+      color: $dark-color-text;
+    }
+  }
+}

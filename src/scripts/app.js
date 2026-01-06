@@ -144,14 +144,19 @@ function createAgentCard(agent, agentActions) {
     </div>
 
     <div class="agent-controls">
-      <button class="btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}" onclick="toggleAgentStatus('${agent.id}')">
+      <button class="btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}" onclick="event.stopPropagation(); toggleAgentStatus('${agent.id}')">
         ${agent.status === 'paused' ? 'Resume' : 'Pause'}
       </button>
-      <button class="btn btn-sm btn-ghost" onclick="viewAgentActions('${agent.id}')">
-        View Actions
+      <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); window.location.href='/do/agent/?id=${agent.id}'">
+        View Details
       </button>
     </div>
   `;
+
+  // Make the whole card clickable to go to agent detail page
+  card.onclick = () => {
+    window.location.href = `/do/agent/?id=${agent.id}`;
+  };
 
   return card;
 }
@@ -1141,6 +1146,242 @@ function formatDate(dateString) {
 }
 
 // ============================================================================
+// Agent Detail Page
+// ============================================================================
+
+/**
+ * Load and display agent detail page
+ */
+async function loadAgentDetail() {
+  const loadingEl = document.querySelector('#loading-agent');
+  const errorEl = document.querySelector('#agent-error');
+  const detailEl = document.querySelector('#agent-detail');
+
+  // Get agent ID from URL query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const agentId = urlParams.get('id');
+
+  if (!agentId) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const userId = getUserId();
+
+    // Fetch agent details
+    const agentResponse = await fetch(`/.netlify/functions/agent-get?userId=${userId}&agentId=${agentId}`);
+    const agentData = await agentResponse.json();
+
+    if (!agentData.success || !agentData.agent) {
+      throw new Error('Agent not found');
+    }
+
+    // Fetch all actions for this agent
+    const actionsResponse = await fetch(`/.netlify/functions/actions-list?userId=${userId}&agentId=${agentId}`);
+    const actionsData = await actionsResponse.json();
+
+    if (!actionsData.success) {
+      throw new Error('Failed to load actions');
+    }
+
+    // Display agent details
+    displayAgentDetail(agentData.agent, actionsData.actions || []);
+
+    // Initialize filter buttons
+    initAgentActionFilters(actionsData.actions || []);
+
+    // Show detail content
+    loadingEl.style.display = 'none';
+    detailEl.style.display = 'block';
+
+  } catch (error) {
+    console.error('Error loading agent detail:', error);
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+  }
+}
+
+/**
+ * Display agent detail information
+ */
+function displayAgentDetail(agent, actions) {
+  // Agent name and status
+  document.querySelector('#agent-name').textContent = agent.name || 'Untitled Agent';
+
+  const statusBadge = document.querySelector('#agent-status-badge');
+  statusBadge.textContent = agent.status;
+  statusBadge.className = `badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}`;
+
+  // Toggle status button
+  const toggleBtn = document.querySelector('#toggle-agent-status-btn');
+  toggleBtn.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
+  toggleBtn.onclick = async () => {
+    await toggleAgentStatusDetail(agent.id);
+  };
+
+  // Metrics
+  document.querySelector('#agent-model').textContent = agent.model || 'Sonnet 4.5';
+  document.querySelector('#agent-runtime').textContent = formatRuntime(agent._createdAt);
+  document.querySelector('#agent-cost').textContent = `$${(agent.metrics?.totalCost || 0).toFixed(2)}`;
+  document.querySelector('#agent-projected').textContent = `~$${calculateProjectedCost(agent)}/mo`;
+  document.querySelector('#agent-total-actions').textContent = agent.metrics?.totalActions || 0;
+  document.querySelector('#agent-completed-actions').textContent = agent.metrics?.completedActions || 0;
+
+  // Instructions
+  if (agent.instructions) {
+    document.querySelector('#agent-goal').textContent = agent.instructions.goal || 'Not yet defined';
+
+    // Success criteria
+    if (agent.instructions.success_criteria && agent.instructions.success_criteria.length > 0) {
+      const criteriaList = document.querySelector('#agent-success-criteria');
+      criteriaList.innerHTML = agent.instructions.success_criteria
+        .map(c => `<li>${escapeHtml(c)}</li>`)
+        .join('');
+      document.querySelector('#success-criteria-section').style.display = 'block';
+    }
+
+    // Timeline
+    if (agent.instructions.timeline) {
+      document.querySelector('#agent-timeline').textContent = agent.instructions.timeline;
+      document.querySelector('#timeline-section').style.display = 'block';
+    }
+  }
+
+  // Display all actions
+  displayAgentActions(actions);
+}
+
+/**
+ * Display actions for agent detail page
+ */
+function displayAgentActions(actions, filter = null) {
+  const gridEl = document.querySelector('#agent-actions-grid');
+
+  let filteredActions = actions;
+
+  // Apply filter if specified
+  if (filter === 'scheduled') {
+    filteredActions = actions.filter(a => a.taskType === 'scheduled');
+  } else if (filter === 'active') {
+    filteredActions = actions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
+  } else if (filter === 'completed') {
+    filteredActions = actions.filter(a => a.state === 'completed' || a.state === 'dismissed');
+  }
+
+  // Clear grid
+  gridEl.innerHTML = '';
+
+  if (filteredActions.length === 0) {
+    gridEl.innerHTML = '<p class="text-muted">No actions found.</p>';
+    return;
+  }
+
+  // Add action cards
+  filteredActions.forEach(action => {
+    const card = createActionCard(action);
+    gridEl.appendChild(card);
+  });
+}
+
+/**
+ * Initialize action filter buttons
+ */
+function initAgentActionFilters(actions) {
+  const scheduledBtn = document.querySelector('#filter-scheduled-btn');
+  const activeBtn = document.querySelector('#filter-active-btn');
+  const completedBtn = document.querySelector('#filter-completed-btn');
+
+  let currentFilter = null;
+
+  const setActive = (btn) => {
+    [scheduledBtn, activeBtn, completedBtn].forEach(b => {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-ghost');
+      b.dataset.active = 'false';
+    });
+    if (btn) {
+      btn.classList.remove('btn-ghost');
+      btn.classList.add('btn-primary');
+      btn.dataset.active = 'true';
+    }
+  };
+
+  scheduledBtn.onclick = () => {
+    if (currentFilter === 'scheduled') {
+      currentFilter = null;
+      setActive(null);
+    } else {
+      currentFilter = 'scheduled';
+      setActive(scheduledBtn);
+    }
+    displayAgentActions(actions, currentFilter);
+  };
+
+  activeBtn.onclick = () => {
+    if (currentFilter === 'active') {
+      currentFilter = null;
+      setActive(null);
+    } else {
+      currentFilter = 'active';
+      setActive(activeBtn);
+    }
+    displayAgentActions(actions, currentFilter);
+  };
+
+  completedBtn.onclick = () => {
+    if (currentFilter === 'completed') {
+      currentFilter = null;
+      setActive(null);
+    } else {
+      currentFilter = 'completed';
+      setActive(completedBtn);
+    }
+    displayAgentActions(actions, currentFilter);
+  };
+}
+
+/**
+ * Toggle agent status on detail page
+ */
+async function toggleAgentStatusDetail(agentId) {
+  try {
+    const userId = getUserId();
+
+    // Get current agent to determine new status
+    const agentResponse = await fetch(`/.netlify/functions/agent-get?userId=${userId}&agentId=${agentId}`);
+    const agentData = await agentResponse.json();
+
+    if (!agentData.success) {
+      throw new Error('Failed to fetch agent');
+    }
+
+    const newStatus = agentData.agent.status === 'paused' ? 'active' : 'paused';
+
+    // Update agent status
+    const updateResponse = await fetch(`/.netlify/functions/agent-update?userId=${userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId, status: newStatus })
+    });
+
+    const updateData = await updateResponse.json();
+
+    if (!updateData.success) {
+      throw new Error('Failed to update agent status');
+    }
+
+    // Reload page
+    location.reload();
+
+  } catch (error) {
+    console.error('Error toggling agent status:', error);
+    alert('Failed to update agent status. Please try again.');
+  }
+}
+
+// ============================================================================
 // Page-specific initialization
 // ============================================================================
 
@@ -1154,8 +1395,11 @@ function initPage() {
   initBreadcrumb();
 
   if (path === '/do/' || path === '/do/index.html') {
-    // North Star dashboard page
+    // Agent dashboard page
     loadDashboard();
+  } else if (path.startsWith('/do/agent')) {
+    // Agent detail page
+    loadAgentDetail();
   } else if (path.startsWith('/do/action')) {
     // Action detail page
     loadActionDetail();

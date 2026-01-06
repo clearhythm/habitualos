@@ -1,0 +1,98 @@
+---
+title: Agent - HabitualOS
+layout: base.njk
+permalink: /do/agent/
+---
+
+<div id="loading-agent" class="mb-xl">
+  <p class="text-muted">Loading agent details...</p>
+</div>
+
+<div id="agent-error" class="mb-xl" style="display: none;">
+  <div class="card">
+    <h2 class="mb-md">Agent Not Found</h2>
+    <p class="mb-md">The agent you're looking for doesn't exist or you don't have access to it.</p>
+    <a href="/do/" class="btn btn-secondary">Back to Dashboard</a>
+  </div>
+</div>
+
+<div id="agent-detail" style="display: none;">
+  {# Breadcrumb Navigation #}
+  <div class="mb-md">
+    <a href="/do/" class="text-link">← Back to Dashboard</a>
+  </div>
+
+  {# Agent Header #}
+  <div class="card mb-lg">
+    <div class="flex flex-between mb-md">
+      <div>
+        <h1 class="mb-xs" id="agent-name">Agent Name</h1>
+        <span class="badge badge-open" id="agent-status-badge">Active</span>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="toggle-agent-status-btn">Pause</button>
+      </div>
+    </div>
+
+    {# Agent Metrics #}
+    <div class="metrics-grid mb-lg">
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Model</p>
+        <p class="metric-value" id="agent-model">Sonnet 4.5</p>
+      </div>
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Runtime</p>
+        <p class="metric-value" id="agent-runtime">0 days</p>
+      </div>
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Total Cost</p>
+        <p class="metric-value" id="agent-cost">$0.00</p>
+      </div>
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Projected Cost</p>
+        <p class="metric-value text-muted" id="agent-projected">~$0.00/mo</p>
+      </div>
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Total Actions</p>
+        <p class="metric-value" id="agent-total-actions">0</p>
+      </div>
+      <div class="metric-item">
+        <p class="text-muted mb-xs">Completed</p>
+        <p class="metric-value" id="agent-completed-actions">0</p>
+      </div>
+    </div>
+
+    {# Agent Instructions #}
+    <div id="agent-instructions">
+      <h3 class="mb-md">Instructions</h3>
+      <div id="instructions-content">
+        <p class="text-muted mb-xs">Goal:</p>
+        <p class="mb-md" id="agent-goal">Not yet defined</p>
+
+        <div id="success-criteria-section" style="display: none;">
+          <p class="text-muted mb-xs">Success Criteria:</p>
+          <ul class="mb-md" id="agent-success-criteria"></ul>
+        </div>
+
+        <div id="timeline-section" style="display: none;">
+          <p class="text-muted mb-xs">Timeline:</p>
+          <p id="agent-timeline">Not specified</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Agent Actions Section #}
+  <div class="mb-lg">
+    <div class="flex flex-between mb-md">
+      <h2>⚡ Actions</h2>
+      <div class="flex gap-sm">
+        <button id="filter-scheduled-btn" class="btn btn-sm btn-ghost" data-active="false">Scheduled Only</button>
+        <button id="filter-active-btn" class="btn btn-sm btn-ghost" data-active="false">Active Only</button>
+        <button id="filter-completed-btn" class="btn btn-sm btn-ghost" data-active="false">Completed Only</button>
+      </div>
+    </div>
+
+    <div class="actions-grid" id="agent-actions-grid"></div>
+  </div>
+</div>
