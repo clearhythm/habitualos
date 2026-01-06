@@ -3,6 +3,9 @@
   publish = "_site"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
 # Browser API - gateway for all /api/* requests
 [[redirects]]
   from = "/api/*"
