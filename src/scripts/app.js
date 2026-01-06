@@ -101,10 +101,8 @@ function createAgentCard(agent, agentActions) {
   card.className = `agent-card ${selectedAgentId === agent.id ? 'selected' : ''} ${agent.status === 'paused' ? 'paused' : ''}`;
   card.dataset.agentId = agent.id;
 
-  // Find setup action for this agent
-  const setupAction = agentActions.find(a => a.title === 'Define Your North Star Goal');
-  const isConfigured = setupAction && setupAction.state === 'completed';
-  const displayName = isConfigured ? agent.name : 'Untitled Agent';
+  // Use agent name directly
+  const displayName = agent.name || 'Untitled Agent';
 
   // Calculate metrics
   const completedCount = agent.metrics?.completedActions || 0;
@@ -1286,60 +1284,18 @@ function displayAgentActions(actions, filter = null) {
 }
 
 /**
- * Initialize action filter buttons
+ * Initialize action filter dropdown
  */
 function initAgentActionFilters(actions) {
-  const scheduledBtn = document.querySelector('#filter-scheduled-btn');
-  const activeBtn = document.querySelector('#filter-active-btn');
-  const completedBtn = document.querySelector('#filter-completed-btn');
+  const filterSelect = document.querySelector('#actions-filter');
 
-  let currentFilter = null;
-
-  const setActive = (btn) => {
-    [scheduledBtn, activeBtn, completedBtn].forEach(b => {
-      b.classList.remove('btn-primary');
-      b.classList.add('btn-ghost');
-      b.dataset.active = 'false';
-    });
-    if (btn) {
-      btn.classList.remove('btn-ghost');
-      btn.classList.add('btn-primary');
-      btn.dataset.active = 'true';
-    }
-  };
-
-  scheduledBtn.onclick = () => {
-    if (currentFilter === 'scheduled') {
-      currentFilter = null;
-      setActive(null);
-    } else {
-      currentFilter = 'scheduled';
-      setActive(scheduledBtn);
-    }
-    displayAgentActions(actions, currentFilter);
-  };
-
-  activeBtn.onclick = () => {
-    if (currentFilter === 'active') {
-      currentFilter = null;
-      setActive(null);
-    } else {
-      currentFilter = 'active';
-      setActive(activeBtn);
-    }
-    displayAgentActions(actions, currentFilter);
-  };
-
-  completedBtn.onclick = () => {
-    if (currentFilter === 'completed') {
-      currentFilter = null;
-      setActive(null);
-    } else {
-      currentFilter = 'completed';
-      setActive(completedBtn);
-    }
-    displayAgentActions(actions, currentFilter);
-  };
+  if (filterSelect) {
+    filterSelect.onchange = (e) => {
+      const filterValue = e.target.value;
+      const filter = filterValue === 'all' ? null : filterValue;
+      displayAgentActions(actions, filter);
+    };
+  }
 }
 
 /**

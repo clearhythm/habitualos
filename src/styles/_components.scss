@@ -808,3 +808,68 @@
     }
   }
 }
+
+// Two-column layout for agent detail page
+.agent-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    gap: $space-xl;
+  }
+}
+
+.agent-detail-column {
+  flex: 1;
+  min-width: 0;
+
+  @media (min-width: 1024px) {
+    max-width: 400px;
+  }
+}
+
+.agent-actions-column {
+  flex: 2;
+  min-width: 0;
+}
+
+// Metrics for agent detail page (2-column grid)
+.agent-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md;
+}
+
+// Actions filter dropdown
+.actions-filter-select {
+  padding: $space-xs $space-md;
+  font-size: $font-size-sm;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  background: $color-bg;
+  color: $color-text;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+    color: $dark-color-text;
+
+    &:hover {
+      border-color: $color-primary;
+    }
+  }
+}
