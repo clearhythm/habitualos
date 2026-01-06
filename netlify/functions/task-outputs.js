@@ -9,8 +9,8 @@ exports.handler = async (event) => {
   const actionId = event.path.split('/').pop();
 
   try {
-    const { getAction } = require('../../db/helpers');
-    const action = getAction(actionId);
+    const { getAction } = require('./_services/db-actions.cjs');
+    const action = await getAction(actionId);
 
     if (!action) {
       return {
@@ -22,7 +22,7 @@ exports.handler = async (event) => {
       };
     }
 
-    if (action.task_type !== 'scheduled') {
+    if (action.taskType !== 'scheduled') {
       return {
         statusCode: 400,
         body: JSON.stringify({
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const config = action.task_config ? JSON.parse(action.task_config) : null;
+    const config = action.taskConfig || null;
     if (!config || !config.outputs_path) {
       return {
         statusCode: 200,

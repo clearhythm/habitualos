@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { updatePracticeFeedback } = require('../../db/helpers');
+const { updatePracticeLogFeedback } = require('./_services/db-practice-logs.cjs');
 
 /**
  * POST /api/practice/feedback
@@ -39,7 +39,8 @@ exports.handler = async (event) => {
     }
 
     // Update feedback
-    const result = updatePracticeFeedback(id, feedback);
+    await updatePracticeLogFeedback(id, feedback);
+    const result = { id, feedback };
 
     // Return success
     return {

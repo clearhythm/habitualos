@@ -69,3 +69,17 @@ exports.getPracticeLogCount = async (userId) => {
   const logs = await exports.getPracticeLogsByUserId(userId);
   return logs.length;
 };
+
+/**
+ * Update practice log feedback (thumbs up/down)
+ * @param {string} id - Practice log ID
+ * @param {string} feedback - Feedback value ('thumbs_up' or 'thumbs_down')
+ * @returns {Promise<void>}
+ */
+exports.updatePracticeLogFeedback = async (id, feedback) => {
+  await dbCore.patch({
+    collection: 'practice-logs',
+    id,
+    data: { obi_wan_feedback: feedback }
+  });
+};
