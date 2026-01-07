@@ -1212,6 +1212,12 @@ function displayAgentDetail(agent, actions) {
   statusBadge.textContent = agent.status;
   statusBadge.className = `badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}`;
 
+  // Update status text in settings view
+  const statusTextEl = document.querySelector('#agent-status-text');
+  if (statusTextEl) {
+    statusTextEl.textContent = agent.status.charAt(0).toUpperCase() + agent.status.slice(1);
+  }
+
   // Toggle status button
   const toggleBtn = document.querySelector('#toggle-agent-status-btn');
   toggleBtn.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
