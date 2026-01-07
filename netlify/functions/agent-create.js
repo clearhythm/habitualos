@@ -1,18 +1,11 @@
 require('dotenv').config();
-const Anthropic = require('@anthropic-ai/sdk');
-const { generateAgentId, generateActionId, generateAgentCreationChatId } = require('./_utils/data-utils.cjs');
+const { generateAgentId, generateAgentCreationChatId } = require('./_utils/data-utils.cjs');
 const { createAgent } = require('./_services/db-agents.cjs');
-const { createAction, recordApiCall } = require('./_services/db-actions.cjs');
-const { createApiCallRecord } = require('./_utils/metrics-calculator.cjs');
 const { createAgentCreationChat } = require('./_services/db-agent-creation-chats.cjs');
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
-});
 
 /**
  * POST /api/agent-create
- * Create agent and generate initial actions via Claude API with metrics tracking
+ * Create agent and save creation chat history
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -61,90 +54,6 @@ exports.handler = async (event) => {
       }
     });
 
-    // Generate actions via Claude API
-    const generateActionsPrompt = `You are an AI agent helping a user achieve their goal.
-
-NorthStar Goal: ${goal}
-Success Criteria: ${JSON.stringify(success_criteria || [])}
-Timeline: ${timeline || 'Not specified'}
-
-Generate 3-5 high-priority, immediately actionable steps to move toward this goal.
-
-Requirements for each action:
-- Completable in 1-4 hours
-- Has a clear deliverable/outcome
-- Does not depend on other actions being completed first
-- Specific and concrete (not vague)
-- Focuses on tangible work product
-
-Return ONLY a JSON array with this exact structure:
-[
-  {
-    "title": "Short, clear action title",
-    "description": "Detailed description of what needs to be done and why",
-    "priority": "high|medium|low"
-  }
-]
-
-No preamble, no explanation, just the JSON array.`;
-
-    // Call Claude API
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 2000,
-      messages: [{
-        role: 'user',
-        content: generateActionsPrompt
-      }]
-    });
-
-    // Parse Claude's response
-    let generatedActions = [];
-    try {
-      const responseText = message.content[0].text;
-      generatedActions = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse Claude response:', parseError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          success: false,
-          error: 'Failed to parse AI response'
-        })
-      };
-    }
-
-    // Create actions in Firestore
-    const actions = [];
-    for (const generatedAction of generatedActions) {
-      const actionId = generateActionId();
-      const action = await createAction(actionId, {
-        _userId: userId,
-        agentId: agent.id,
-        title: generatedAction.title,
-        description: generatedAction.description,
-        priority: generatedAction.priority || 'medium',
-        state: 'open',
-        taskType: 'interactive',
-        scheduleTime: null,
-        taskConfig: {}
-      });
-
-      // Track metrics for the initial action generation API call
-      // We'll attribute the full API call to the first action
-      if (actions.length === 0) {
-        const apiCallRecord = createApiCallRecord(
-          'claude-sonnet-4-20250514',
-          message.usage.input_tokens,
-          message.usage.output_tokens,
-          'generate'
-        );
-        await recordApiCall(action.id, apiCallRecord);
-      }
-
-      actions.push({ id: action.id, ...generatedAction });
-    }
-
     // Save agent creation chat history if provided
     if (chatHistory && Array.isArray(chatHistory) && chatHistory.length > 0) {
       const chatId = generateAgentCreationChatId();
@@ -163,13 +72,7 @@ No preamble, no explanation, just the JSON array.`;
       },
       body: JSON.stringify({
         success: true,
-        agent: { id: agent.id, name, goal, success_criteria, timeline, type: type || 'northstar' },
-        actions: actions,
-        usage: {
-          inputTokens: message.usage.input_tokens,
-          outputTokens: message.usage.output_tokens,
-          totalTokens: message.usage.input_tokens + message.usage.output_tokens
-        }
+        agent: { id: agent.id, name, goal, success_criteria, timeline, type: type || 'northstar' }
       })
     };
 
