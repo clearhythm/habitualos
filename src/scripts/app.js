@@ -1183,6 +1183,11 @@ async function loadAgentDetail() {
     loadingEl.style.display = 'none';
     detailEl.style.display = 'block';
 
+    // Dispatch agent loaded event for chat initialization
+    window.dispatchEvent(new CustomEvent('agentLoaded', {
+      detail: agentData.agent
+    }));
+
   } catch (error) {
     console.error('Error loading agent detail:', error);
     loadingEl.style.display = 'none';

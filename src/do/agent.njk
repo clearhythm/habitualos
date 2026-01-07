@@ -33,6 +33,42 @@ permalink: /do/agent/
     </div>
   </div>
 
+  {# Chat Interface #}
+  <div class="card mb-lg">
+    <h2 class="mb-md">💬 Chat with Agent</h2>
+
+    <div id="agent-chat-container" style="display: flex; flex-direction: column; max-height: 400px;">
+      <!-- Messages (scrollable area) -->
+      <div id="agent-chat-messages" style="flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 1rem;">
+        <div id="agent-chat-messages-inner" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+      </div>
+
+      <!-- Input area -->
+      <form id="agent-chat-form">
+        <div style="position: relative;">
+          <textarea
+            name="message"
+            id="agent-message-input"
+            placeholder="Ask about the goal, request actions, or provide context..."
+            required
+            rows="2"
+            style="width: 100%; padding: 0.75rem 3rem 0.75rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: none; max-height: 120px; overflow-y: auto; box-sizing: border-box;"
+          ></textarea>
+          <button
+            type="submit"
+            id="agent-send-button"
+            disabled
+            style="position: absolute; right: 0.5rem; bottom: 0.5rem; width: 32px; height: 32px; background: #ddd; color: white; border: none; border-radius: 50%; cursor: not-allowed; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0;"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+              <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   {# Two-column layout: Settings (left) and Actions (right) #}
   <div class="agent-detail-layout">
     {# Left Column: Settings #}
@@ -106,3 +142,188 @@ permalink: /do/agent/
     </div>
   </div>
 </div>
+
+<script type="module">
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+
+  // Initialize user
+  const userId = initializeUser();
+
+  // Get current agent ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const agentId = urlParams.get('id');
+
+  // Chat elements
+  const chatMessages = document.getElementById('agent-chat-messages-inner');
+  const chatMessagesContainer = document.getElementById('agent-chat-messages');
+  const chatForm = document.getElementById('agent-chat-form');
+  const messageInput = document.getElementById('agent-message-input');
+  const sendButton = document.getElementById('agent-send-button');
+
+  // Chat history (in memory)
+  let chatHistory = [];
+  let loadingMessageElement = null;
+
+  // Update send button state
+  function updateSendButton() {
+    const hasContent = messageInput.value.trim().length > 0;
+    sendButton.disabled = !hasContent;
+
+    if (hasContent) {
+      sendButton.style.background = '#2563eb';
+      sendButton.style.cursor = 'pointer';
+    } else {
+      sendButton.style.background = '#ddd';
+      sendButton.style.cursor = 'not-allowed';
+    }
+  }
+
+  // Show loading message
+  function showLoadingMessage() {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #eff6ff; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
+    loadingDiv.innerHTML = '<span style="color: #999; font-style: italic;">Thinking...</span>';
+    chatMessages.appendChild(loadingDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    loadingMessageElement = loadingDiv;
+  }
+
+  // Hide loading message
+  function hideLoadingMessage() {
+    if (loadingMessageElement) {
+      loadingMessageElement.remove();
+      loadingMessageElement = null;
+    }
+  }
+
+  // Render a message bubble
+  function renderMessage(role, content) {
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5;';
+
+    if (role === 'assistant') {
+      messageDiv.style.cssText += 'background-color: #eff6ff; color: #333; align-self: flex-start; border-left: 3px solid #2563eb; border-bottom-left-radius: 4px;';
+
+      // Render markdown for assistant messages
+      if (window.marked) {
+        messageDiv.innerHTML = marked.parse(content);
+      } else {
+        messageDiv.textContent = content;
+      }
+    } else {
+      messageDiv.style.cssText += 'background-color: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 4px;';
+      messageDiv.textContent = content;
+    }
+
+    chatMessages.appendChild(messageDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
+  // Initialize chat with greeting when agent loads
+  window.addEventListener('agentLoaded', (event) => {
+    const agent = event.detail;
+    const greeting = {
+      role: 'assistant',
+      content: `Ready to break down **${agent.name}**? I'll help you create deliverables to achieve your goal. What context do you need to provide, or should I generate some initial actions?`,
+      timestamp: new Date().toISOString()
+    };
+    chatHistory.push(greeting);
+    renderMessage('assistant', greeting.content);
+  });
+
+  // Handle form submission
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const message = messageInput.value.trim();
+    if (!message) return;
+
+    // Add user message
+    const userMessage = {
+      role: 'user',
+      content: message,
+      timestamp: new Date().toISOString()
+    };
+    renderMessage('user', message);
+    chatHistory.push(userMessage);
+
+    // Clear input
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    sendButton.disabled = true;
+    sendButton.style.background = '#ddd';
+    sendButton.style.cursor = 'not-allowed';
+
+    // Show loading
+    showLoadingMessage();
+
+    try {
+      // Call backend
+      const response = await fetch('/.netlify/functions/agent-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          message,
+          chatHistory: chatHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to get response');
+      }
+
+      hideLoadingMessage();
+
+      // Add assistant response
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+      renderMessage('assistant', data.response);
+      chatHistory.push(assistantMessage);
+
+      // If actions were generated, refresh the actions list
+      if (data.actionsGenerated) {
+        // Trigger a reload of the actions grid
+        window.dispatchEvent(new CustomEvent('reloadActions'));
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      hideLoadingMessage();
+
+      const errorMessage = {
+        role: 'assistant',
+        content: "I'm having trouble connecting right now. Could you try again?",
+        timestamp: new Date().toISOString()
+      };
+      renderMessage('assistant', errorMessage.content);
+      chatHistory.push(errorMessage);
+    }
+  });
+
+  // Handle Enter key
+  messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      chatForm.requestSubmit();
+    }
+  });
+
+  // Auto-resize textarea and toggle send button
+  messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+    updateSendButton();
+  });
+</script>
