@@ -394,7 +394,7 @@
   }
 }
 
-// Actions grid (3-up on desktop, 1-up on mobile)
+// Actions grid (2-up on tablet/desktop, 1-up on mobile)
 .actions-grid {
   display: grid;
   gap: $space-md;
@@ -402,10 +402,6 @@
 
   @media (min-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 

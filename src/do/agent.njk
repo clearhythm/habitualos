@@ -33,13 +33,12 @@ permalink: /do/agent/
     </div>
   </div>
 
-  {# Two-column layout: Agent Detail (left) and Actions (right) #}
+  {# Two-column layout: Settings (left) and Actions (right) #}
   <div class="agent-detail-layout">
-    {# Left Column: Agent Detail #}
+    {# Left Column: Settings #}
     <div class="agent-detail-column">
+      <h2 class="mb-md">⚙️ Settings</h2>
       <div class="card mb-lg">
-        <h2 class="mb-md">Agent Detail</h2>
-
         {# Agent Metrics #}
         <div class="agent-detail-metrics mb-lg">
           <div class="metric-item">
@@ -91,14 +90,16 @@ permalink: /do/agent/
 
     {# Right Column: Actions #}
     <div class="agent-actions-column">
-      <div class="flex flex-between mb-md">
-        <h2>⚡ Actions</h2>
-        <select id="actions-filter" class="actions-filter-select">
-          <option value="all">All Actions</option>
-          <option value="scheduled">Scheduled Only</option>
-          <option value="active">Active Only</option>
-          <option value="completed">Completed Only</option>
-        </select>
+      <div class="mb-md">
+        <div class="flex flex-between">
+          <h2>⚡ Actions</h2>
+          <select id="actions-filter" class="actions-filter-select">
+            <option value="all">All Actions</option>
+            <option value="scheduled">Scheduled Only</option>
+            <option value="active">Active Only</option>
+            <option value="completed">Completed Only</option>
+          </select>
+        </div>
       </div>
 
       <div class="actions-grid" id="agent-actions-grid"></div>
