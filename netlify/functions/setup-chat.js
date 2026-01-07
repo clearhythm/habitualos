@@ -134,12 +134,13 @@ TIMELINE: End of January 2025`;
         body: JSON.stringify({
           success: true,
           ready: true,
-          response: "Great! I have everything I need. Let me create your NorthStar goal and generate your first action cards...",
-          northstarData: {
-            title: title.trim(),
+          response: "Perfect! I have everything I need. Click 'Create My Agent' when you're ready, and I'll set up your agent with initial actions to get started.",
+          agentData: {
+            name: title.trim(),
             goal: goal.trim(),
             success_criteria: successCriteria,
-            timeline: timeline.trim()
+            timeline: timeline.trim(),
+            type: 'northstar'
           }
         })
       };
