@@ -130,6 +130,11 @@ permalink: /practice/chat/
 
 <script type="module">
   import { saveChatHistory, getChatHistory, clearChatHistory, savePracticeChatState, getPracticeChatState, clearPracticeChatState } from '/assets/js/practice-chat-state.js';
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+
+  // Initialize user and get userId
+  initializeUser();
+  const userId = getUserId();
 
   const chatMessages = document.getElementById('chat-messages-inner');
   const chatMessagesContainer = document.getElementById('chat-messages');
@@ -273,7 +278,7 @@ permalink: /practice/chat/
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: 'u-mgpqwa49', // Hardcoded for now
+          userId,
           message,
           timezone: userTimezone,
           chatHistory: chatHistory.map(msg => ({
@@ -407,7 +412,7 @@ permalink: /practice/chat/
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          userId: 'u-mgpqwa49', // Hardcoded for now
+          userId,
           messages: chatHistory,
           suggestedPractice: chatState?.suggestedPractice || null,
           fullSuggestion: chatState?.fullSuggestion || null,

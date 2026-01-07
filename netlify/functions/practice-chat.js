@@ -22,7 +22,18 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId = 'u-mgpqwa49', message, chatHistory = [], timezone = 'America/Los_Angeles' } = JSON.parse(event.body);
+    const { userId, message, chatHistory = [], timezone = 'America/Los_Angeles' } = JSON.parse(event.body);
+
+    // Validate inputs
+    if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          success: false,
+          error: 'Valid userId is required'
+        })
+      };
+    }
 
     if (!message || !message.trim()) {
       return {
