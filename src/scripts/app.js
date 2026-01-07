@@ -1202,6 +1202,12 @@ function displayAgentDetail(agent, actions) {
   // Agent name and status
   document.querySelector('#agent-name').textContent = agent.name || 'Untitled Agent';
 
+  // Update action count in navigation
+  const actionsCountEl = document.querySelector('#actions-count');
+  if (actionsCountEl) {
+    actionsCountEl.textContent = actions.length;
+  }
+
   const statusBadge = document.querySelector('#agent-status-badge');
   statusBadge.textContent = agent.status;
   statusBadge.className = `badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}`;

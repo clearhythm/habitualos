@@ -22,123 +22,144 @@ permalink: /do/agent/
     <a href="/do/" class="text-link">← Back to Dashboard</a>
   </div>
 
-  {# Agent Header with Status #}
-  <div class="flex flex-between mb-lg">
-    <div>
-      <h1 class="mb-xs" id="agent-name">Agent Name</h1>
-      <span class="badge badge-open" id="agent-status-badge">Active</span>
+  {# Agent Header #}
+  <div class="mb-md">
+    <div class="flex flex-between mb-xs">
+      <h1 id="agent-name">Agent Name</h1>
+      <div>
+        <span class="badge badge-open" id="agent-status-badge" style="margin-right: 0.5rem;">Active</span>
+        <button class="btn btn-secondary btn-sm" id="toggle-agent-status-btn">Pause</button>
+      </div>
     </div>
-    <div>
-      <button class="btn btn-secondary" id="toggle-agent-status-btn">Pause</button>
+
+    {# Navigation Links #}
+    <div style="display: flex; gap: 1.5rem; align-items: center; padding-top: 0.5rem;">
+      <a href="#" class="agent-nav-link active" data-view="chat" style="font-size: 0.95rem; text-decoration: none; color: #2563eb; font-weight: 500;">
+        Chat
+      </a>
+      <a href="#" class="agent-nav-link" data-view="actions" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
+        <span id="actions-count">0</span> actions
+      </a>
+      <a href="#" class="agent-nav-link" data-view="assets" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
+        <span id="assets-count">0</span> assets
+      </a>
+      <a href="#" class="agent-nav-link" data-view="settings" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
+        Settings
+      </a>
     </div>
   </div>
 
-  {# Chat Interface #}
-  <div class="card mb-lg">
-    <h2 class="mb-md">💬 Chat with Agent</h2>
-
-    <div id="agent-chat-container" style="display: flex; flex-direction: column; max-height: 400px;">
+  {# Chat Tab #}
+  <div id="tab-chat" class="agent-tab-content" style="display: block;">
+    <div id="agent-chat-container" style="display: flex; flex-direction: column; height: calc(100vh - 280px);">
       <!-- Messages (scrollable area) -->
       <div id="agent-chat-messages" style="flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 1rem;">
-        <div id="agent-chat-messages-inner" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+        <div id="agent-chat-messages-inner" style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 700px; margin: 0 auto; padding: 1rem;"></div>
       </div>
 
-      <!-- Input area -->
-      <form id="agent-chat-form">
-        <div style="position: relative;">
-          <textarea
-            name="message"
-            id="agent-message-input"
-            placeholder="Ask about the goal, request actions, or provide context..."
-            required
-            rows="2"
-            style="width: 100%; padding: 0.75rem 3rem 0.75rem 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: inherit; resize: none; max-height: 120px; overflow-y: auto; box-sizing: border-box;"
-          ></textarea>
-          <button
-            type="submit"
-            id="agent-send-button"
-            disabled
-            style="position: absolute; right: 0.5rem; bottom: 0.5rem; width: 32px; height: 32px; background: #ddd; color: white; border: none; border-radius: 50%; cursor: not-allowed; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0;"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
-              <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
-            </svg>
-          </button>
+      <!-- Input area (fixed at bottom) -->
+      <div style="flex-shrink: 0; padding: 0 1rem 1rem;">
+        <div style="max-width: 700px; margin: 0 auto;">
+          <form id="agent-chat-form">
+            <div style="position: relative;">
+              <textarea
+                name="message"
+                id="agent-message-input"
+                placeholder="Ask about the goal, request actions, or provide context..."
+                required
+                rows="2"
+                style="width: 100%; padding: 0.75rem 3rem 0.75rem 0.75rem; border: 1px solid #ddd; border-radius: 20px; font-size: 1rem; font-family: inherit; resize: none; max-height: 150px; overflow-y: auto; box-sizing: border-box;"
+              ></textarea>
+              <button
+                type="submit"
+                id="agent-send-button"
+                disabled
+                style="position: absolute; right: 0.5rem; bottom: 0.5rem; width: 32px; height: 32px; background: #ddd; color: white; border: none; border-radius: 50%; cursor: not-allowed; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0;"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
-  {# Two-column layout: Settings (left) and Actions (right) #}
-  <div class="agent-detail-layout">
-    {# Left Column: Settings #}
-    <div class="agent-detail-column">
-      <h2 class="mb-md">📡 Settings</h2>
-      <div class="card mb-lg">
-        {# Agent Metrics #}
-        <div class="agent-detail-metrics mb-lg">
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Model</p>
-            <p class="metric-value" id="agent-model">Sonnet 4.5</p>
-          </div>
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Runtime</p>
-            <p class="metric-value" id="agent-runtime">0 days</p>
-          </div>
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Total Cost</p>
-            <p class="metric-value" id="agent-cost">$0.00</p>
-          </div>
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Projected Cost</p>
-            <p class="metric-value text-muted" id="agent-projected">~$0.00/mo</p>
-          </div>
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Total Actions</p>
-            <p class="metric-value" id="agent-total-actions">0</p>
-          </div>
-          <div class="metric-item">
-            <p class="text-muted mb-xs">Completed</p>
-            <p class="metric-value" id="agent-completed-actions">0</p>
-          </div>
-        </div>
-
-        {# Agent Instructions #}
-        <div id="agent-instructions">
-          <h3 class="mb-md">Instructions</h3>
-          <div id="instructions-content">
-            <p class="text-muted mb-xs">Goal:</p>
-            <p class="mb-md" id="agent-goal">Not yet defined</p>
-
-            <div id="success-criteria-section" style="display: none;">
-              <p class="text-muted mb-xs">Success Criteria:</p>
-              <ul class="mb-md" id="agent-success-criteria"></ul>
-            </div>
-
-            <div id="timeline-section" style="display: none;">
-              <p class="text-muted mb-xs">Timeline:</p>
-              <p id="agent-timeline">Not specified</p>
-            </div>
-          </div>
-        </div>
+  {# Actions Tab #}
+  <div id="tab-actions" class="agent-tab-content" style="display: none;">
+    <div class="mb-md">
+      <div class="flex flex-between">
+        <h2>Deliverables</h2>
+        <select id="actions-filter" class="actions-filter-select">
+          <option value="all">All</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+        </select>
       </div>
     </div>
+    <div class="actions-grid" id="agent-actions-grid"></div>
+  </div>
 
-    {# Right Column: Actions #}
-    <div class="agent-actions-column">
-      <div class="mb-md">
-        <div class="flex flex-between">
-          <h2>⚡ Actions</h2>
-          <select id="actions-filter" class="actions-filter-select">
-            <option value="all">All Actions</option>
-            <option value="scheduled">Scheduled Only</option>
-            <option value="active">Active Only</option>
-            <option value="completed">Completed Only</option>
-          </select>
+  {# Assets Tab #}
+  <div id="tab-assets" class="agent-tab-content" style="display: none;">
+    <h2 class="mb-md">Created Assets</h2>
+    <p class="text-muted">Files and artifacts created by this agent will appear here.</p>
+  </div>
+
+  {# Settings Tab #}
+  <div id="tab-settings" class="agent-tab-content" style="display: none;">
+    <div class="card mb-lg">
+      <h2 class="mb-md">Agent Configuration</h2>
+
+      {# Agent Metrics #}
+      <div class="agent-detail-metrics mb-lg">
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Model</p>
+          <p class="metric-value" id="agent-model">Sonnet 4.5</p>
+        </div>
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Runtime</p>
+          <p class="metric-value" id="agent-runtime">0 days</p>
+        </div>
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Total Cost</p>
+          <p class="metric-value" id="agent-cost">$0.00</p>
+        </div>
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Projected Cost</p>
+          <p class="metric-value text-muted" id="agent-projected">~$0.00/mo</p>
+        </div>
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Total Actions</p>
+          <p class="metric-value" id="agent-total-actions">0</p>
+        </div>
+        <div class="metric-item">
+          <p class="text-muted mb-xs">Completed</p>
+          <p class="metric-value" id="agent-completed-actions">0</p>
         </div>
       </div>
 
-      <div class="actions-grid" id="agent-actions-grid"></div>
+      {# Agent Instructions #}
+      <div id="agent-instructions">
+        <h3 class="mb-md">North Star</h3>
+        <div id="instructions-content">
+          <p class="text-muted mb-xs">Goal:</p>
+          <p class="mb-md" id="agent-goal">Not yet defined</p>
+
+          <div id="success-criteria-section" style="display: none;">
+            <p class="text-muted mb-xs">Success Criteria:</p>
+            <ul class="mb-md" id="agent-success-criteria"></ul>
+          </div>
+
+          <div id="timeline-section" style="display: none;">
+            <p class="text-muted mb-xs">Timeline:</p>
+            <p id="agent-timeline">Not specified</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -325,5 +346,43 @@ permalink: /do/agent/
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
     updateSendButton();
+  });
+
+  // Handle view switching
+  document.querySelectorAll('.agent-nav-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const view = link.dataset.view;
+
+      // Update link styles
+      document.querySelectorAll('.agent-nav-link').forEach(l => {
+        if (l.dataset.view === view) {
+          l.style.color = '#2563eb';
+          l.style.fontWeight = '500';
+          l.classList.add('active');
+        } else {
+          l.style.color = '#6b7280';
+          l.style.fontWeight = 'normal';
+          l.classList.remove('active');
+        }
+      });
+
+      // Show/hide content
+      document.querySelectorAll('.agent-tab-content').forEach(content => {
+        content.style.display = 'none';
+      });
+      document.getElementById(`tab-${view}`).style.display = 'block';
+
+      // Focus chat input when switching to chat
+      if (view === 'chat') {
+        messageInput.focus();
+      }
+    });
+  });
+
+  // Update action count when actions are loaded/generated
+  window.addEventListener('reloadActions', () => {
+    // This will be called when actions are generated
+    // The actual count update will happen in the existing loadAgentDetail function
   });
 </script>
