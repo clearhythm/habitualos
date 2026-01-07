@@ -1,22 +1,11 @@
 // HabitualOS Client-Side JavaScript
 // Handles dynamic data loading, chat interface, form submissions, and UI interactions
 
-// ============================================================================
-// User ID Management
-// ============================================================================
+// Import auth utilities to use same hardcoded userId as practice side
+import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
 
-/**
- * Get or create userId from localStorage
- * Temporary solution until proper authentication is implemented
- */
-function getUserId() {
-  let userId = localStorage.getItem('habitualos_userId');
-  if (!userId) {
-    userId = 'u-' + crypto.randomUUID();
-    localStorage.setItem('habitualos_userId', userId);
-  }
-  return userId;
-}
+// Initialize user on page load (sets hardcoded userId)
+initializeUser();
 
 // ============================================================================
 // Dashboard Data Loading
