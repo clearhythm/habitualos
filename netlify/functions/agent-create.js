@@ -1,9 +1,10 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
-const { generateAgentId, generateActionId } = require('./_utils/data-utils.cjs');
+const { generateAgentId, generateActionId, generateAgentCreationChatId } = require('./_utils/data-utils.cjs');
 const { createAgent } = require('./_services/db-agents.cjs');
 const { createAction, recordApiCall } = require('./_services/db-actions.cjs');
 const { createApiCallRecord } = require('./_utils/metrics-calculator.cjs');
+const { createAgentCreationChat } = require('./_services/db-agent-creation-chats.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -24,7 +25,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, name, goal, success_criteria, timeline, type } = JSON.parse(event.body);
+    const { userId, name, goal, success_criteria, timeline, type, chatHistory } = JSON.parse(event.body);
 
     // Validate userId
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -142,6 +143,16 @@ No preamble, no explanation, just the JSON array.`;
       }
 
       actions.push({ id: action.id, ...generatedAction });
+    }
+
+    // Save agent creation chat history if provided
+    if (chatHistory && Array.isArray(chatHistory) && chatHistory.length > 0) {
+      const chatId = generateAgentCreationChatId();
+      await createAgentCreationChat(chatId, {
+        _userId: userId,
+        messages: chatHistory,
+        agentId: agent.id
+      });
     }
 
     // Return success response

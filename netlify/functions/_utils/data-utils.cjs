@@ -43,11 +43,17 @@ function generatePracticeId() {
   return uniqueId('p');
 }
 
+// Generates a unique Agent Creation Chat ID with "acc-" prefix
+function generateAgentCreationChatId() {
+  return uniqueId('acc');
+}
+
 // Export named functions (alphabetically)
 module.exports = {
   generateActionArtifactId,
   generateActionChatId,
   generateActionId,
+  generateAgentCreationChatId,
   generateAgentId,
   generatePracticeId,
   generateUserId,
