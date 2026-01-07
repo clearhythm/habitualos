@@ -313,6 +313,15 @@ permalink: /do/setup/
     chatContainer.style.display = 'none';
     creatingAgentOverlay.style.display = 'flex';
 
+    // Animate dots while creating
+    const creatingMessage = document.getElementById('creating-message');
+    const baseMessage = 'Generating initial actions and setting up your agent workspace';
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4;
+      creatingMessage.textContent = baseMessage + '.'.repeat(dotCount);
+    }, 400);
+
     try {
       // Create agent via backend (includes chat history)
       const response = await fetch('/.netlify/functions/agent-create', {
@@ -337,18 +346,25 @@ permalink: /do/setup/
         throw new Error(data.error || 'Failed to create agent');
       }
 
+      // Stop dot animation
+      clearInterval(dotInterval);
+
       // Update overlay to show success
       document.getElementById('creating-emoji').textContent = '✨';
       document.getElementById('creating-title').textContent = 'Agent Created!';
       document.getElementById('creating-message').textContent = 'Redirecting to your new agent...';
 
-      // Wait 2 seconds before redirecting
+      // Wait 1 second before redirecting
       setTimeout(() => {
         window.location.href = `/do/agent/?id=${data.agent.id}`;
-      }, 2000);
+      }, 1000);
 
     } catch (error) {
       console.error('Error creating agent:', error);
+
+      // Stop dot animation
+      clearInterval(dotInterval);
+
       alert('Failed to create agent. Please try again.');
 
       // Go back to chat
