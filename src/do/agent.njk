@@ -18,39 +18,37 @@ permalink: /do/agent/
 
 <div id="agent-detail" style="display: none;">
   {# Breadcrumb Navigation #}
-  <div class="mb-md">
+  <div style="margin-bottom: 1.5rem;">
     <a href="/do/" style="color: #6b7280; text-decoration: none; font-size: 0.95rem;">← Back to Dashboard</a>
   </div>
 
-  {# Agent Header #}
-  <div class="mb-md">
-    <div class="flex flex-between mb-xs">
-      <h1 id="agent-name">Agent Name</h1>
-      <div>
-        <span class="badge badge-open" id="agent-status-badge" style="margin-right: 0.5rem;">Active</span>
-        <button class="btn btn-secondary btn-sm" id="toggle-agent-status-btn">Pause</button>
-      </div>
-    </div>
-
-    {# Navigation Links #}
-    <div style="display: flex; gap: 1.5rem; align-items: center; padding-top: 0.5rem;">
-      <a href="#" class="agent-nav-link active" data-view="chat" style="font-size: 0.95rem; text-decoration: none; color: #2563eb; font-weight: 500;">
+  {# Centered Header - Always Visible #}
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <div style="font-size: 4rem; margin-bottom: 0.5rem;">🤖</div>
+    <h1 id="agent-name" style="margin: 0 0 0.5rem 0; font-size: 2rem; font-weight: 600;">Agent Name</h1>
+    <p id="agent-goal-short" style="margin: 0 auto; max-width: 600px; color: #666; font-size: 0.95rem; line-height: 1.5; padding: 0 1rem">
+      Loading goal...
+      <a href="#" id="goal-more-link" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;">more</a>
+    </p>
+    <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; align-items: center;">
+      <a href="#" class="view-link" data-view="chat" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
         Chat
       </a>
-      <a href="#" class="agent-nav-link" data-view="actions" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
+      <span style="color: #ddd;">|</span>
+      <a href="#" class="view-link" data-view="actions" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
         <span id="actions-count">0</span> actions
       </a>
-      <a href="#" class="agent-nav-link" data-view="assets" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
+      <span style="color: #ddd;">|</span>
+      <a href="#" class="view-link" data-view="assets" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
         <span id="assets-count">0</span> assets
-      </a>
-      <a href="#" class="agent-nav-link" data-view="settings" style="font-size: 0.95rem; text-decoration: none; color: #6b7280;">
-        Settings
       </a>
     </div>
   </div>
 
-  {# Chat Tab #}
-  <div id="tab-chat" class="agent-tab-content" style="display: block;">
+  {# Chat View (Default) #}
+  <div id="view-chat" class="agent-view" style="display: block;">
+    {# Chat Interface #}
+    <div id="tab-chat" class="agent-tab-content" style="display: block;">
     <div id="agent-chat-container" style="display: flex; flex-direction: column; height: calc(100vh - 280px);">
       <!-- Messages (scrollable area) -->
       <div id="agent-chat-messages" style="flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 1rem;">
@@ -85,13 +83,15 @@ permalink: /do/agent/
         </div>
       </div>
     </div>
+    </div>
   </div>
 
-  {# Actions Tab #}
-  <div id="tab-actions" class="agent-tab-content" style="display: none;">
+  {# Actions View #}
+  <div id="view-actions" class="agent-view" style="display: none;">
+    <div id="tab-actions" class="agent-tab-content" style="display: block;">
     <div class="mb-md">
       <div class="flex flex-between">
-        <h2>Deliverables</h2>
+        <h2>⚡ Actions</h2>
         <select id="actions-filter" class="actions-filter-select">
           <option value="all">All</option>
           <option value="scheduled">Scheduled</option>
@@ -101,71 +101,86 @@ permalink: /do/agent/
       </div>
     </div>
     <div class="actions-grid" id="agent-actions-grid"></div>
+    </div>
   </div>
 
-  {# Assets Tab #}
-  <div id="tab-assets" class="agent-tab-content" style="display: none;">
+  {# Assets View #}
+  <div id="view-assets" class="agent-view" style="display: none;">
+    <div id="tab-assets" class="agent-tab-content" style="display: block;">
     <h2 class="mb-md">Created Assets</h2>
     <p class="text-muted">Files and artifacts created by this agent will appear here.</p>
+    </div>
   </div>
 
-  {# Settings Tab #}
-  <div id="tab-settings" class="agent-tab-content" style="display: none;">
-    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+  {# Settings View #}
+  <div id="view-settings" class="agent-view" style="display: none;">
+    <style>
+      .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 1.5rem;
+      }
 
-      {# Left Card: Agent Overview (1/3) #}
-      <div class="card">
-        <h3 class="mb-md">Overview</h3>
+      @media (max-width: 768px) {
+        .settings-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <div class="settings-grid">
 
-        {# Agent Metrics #}
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <div>
-            <p class="text-muted text-sm mb-xs">Status</p>
-            <p id="agent-status-text">Active</p>
+      {# Left Card: Agent Card (Dashboard Style) #}
+      <div class="agent-card" id="settings-agent-card">
+        <div class="agent-card-header">
+          <h3 class="agent-name">⚙️ Settings</h3>
+          <span class="badge badge-open" id="settings-agent-status-badge">ACTIVE</span>
+        </div>
+
+        <div class="agent-metrics">
+          <div class="metric-row">
+            <span class="metric-label">Model:</span>
+            <span class="metric-value" id="settings-agent-model">Sonnet 4.5</span>
           </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Model</p>
-            <p id="agent-model">Sonnet 4.5</p>
+          <div class="metric-row">
+            <span class="metric-label">Runtime:</span>
+            <span class="metric-value" id="settings-agent-runtime">0 days</span>
           </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Runtime</p>
-            <p id="agent-runtime">0 days</p>
+          <div class="metric-row">
+            <span class="metric-label">Cost:</span>
+            <span class="metric-value" id="settings-agent-cost">$0.00</span>
           </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Total Cost</p>
-            <p id="agent-cost">$0.00</p>
+          <div class="metric-row">
+            <span class="metric-label">Projected:</span>
+            <span class="metric-value text-muted" id="settings-agent-projected">~$0.00/mo</span>
           </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Projected Cost</p>
-            <p class="text-muted" id="agent-projected">~$0.00/mo</p>
+          <div class="metric-row">
+            <span class="metric-label">Actions:</span>
+            <span class="metric-value" id="settings-agent-actions">0/0</span>
           </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Total Actions</p>
-            <p id="agent-total-actions">0</p>
-          </div>
-          <div>
-            <p class="text-muted text-sm mb-xs">Completed</p>
-            <p id="agent-completed-actions">0</p>
-          </div>
+        </div>
+
+        <div class="agent-controls">
+          <button class="btn btn-sm btn-secondary" id="settings-pause-button">
+            Pause
+          </button>
         </div>
       </div>
 
       {# Right Card: North Star (2/3) #}
       <div class="card">
-        <h3 class="mb-md">North Star</h3>
+        <h3 class="mb-md">✨ North Star</h3>
 
         <div id="agent-instructions">
           <div id="instructions-content">
-            <p class="text-muted mb-xs">Goal:</p>
             <p class="mb-md" id="agent-goal">Not yet defined</p>
 
             <div id="success-criteria-section" style="display: none;">
-              <p class="text-muted mb-xs">Success Criteria:</p>
+              <h4 class="text-muted mb-xs">Success Criteria</h4>
               <ul class="mb-md" id="agent-success-criteria"></ul>
             </div>
 
             <div id="timeline-section" style="display: none;">
-              <p class="text-muted mb-xs">Timeline:</p>
+              <h4 class="text-muted mb-xs">Timeline</h4>
               <p id="agent-timeline">Not specified</p>
             </div>
           </div>
@@ -196,6 +211,29 @@ permalink: /do/agent/
   // Chat history (in memory)
   let chatHistory = [];
   let loadingMessageElement = null;
+
+  // Draft actions stored in localStorage
+  const DRAFT_ACTIONS_KEY = `draft-actions-${agentId}`;
+
+  function getDraftActions() {
+    try {
+      const stored = localStorage.getItem(DRAFT_ACTIONS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('Error loading draft actions:', e);
+      return [];
+    }
+  }
+
+  function saveDraftActions(actions) {
+    try {
+      localStorage.setItem(DRAFT_ACTIONS_KEY, JSON.stringify(actions));
+    } catch (e) {
+      console.error('Error saving draft actions:', e);
+    }
+  }
+
+  let draftActions = getDraftActions();
 
   // Update send button state
   function updateSendButton() {
@@ -252,6 +290,38 @@ permalink: /do/agent/
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
 
+  // Render a draft action card inline in chat
+  function renderDraftActionCard(action) {
+    const cardDiv = document.createElement('div');
+    cardDiv.dataset.actionId = action.id;
+    cardDiv.style.cssText = 'align-self: flex-start; max-width: 80%; width: 100%;';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'cursor: pointer; border: 2px dashed #fbbf24; background-color: #fffbeb; padding: 1rem; margin: 0.5rem 0;';
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+        <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #92400e;">${action.title}</h4>
+        <span style="background: #fef3c7; color: #92400e; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Draft</span>
+      </div>
+      ${action.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #78350f;">${action.description}</p>` : ''}
+      <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #a16207;">Click to refine or mark as defined</p>
+    `;
+
+    card.onclick = () => openDraftActionModal(action);
+
+    cardDiv.appendChild(card);
+    chatMessages.appendChild(cardDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
+  // Open modal to view/edit draft action
+  function openDraftActionModal(action) {
+    // TODO: Implement modal for editing draft action
+    alert(`Draft Action: ${action.title}\n\n${action.description || 'No description yet'}\n\nComing soon: Edit and mark as defined!`);
+  }
+
   // Initialize chat with greeting when agent loads
   window.addEventListener('agentLoaded', (event) => {
     const agent = event.detail;
@@ -262,6 +332,13 @@ permalink: /do/agent/
     };
     chatHistory.push(greeting);
     renderMessage('assistant', greeting.content);
+
+    // Render any existing draft actions from localStorage
+    if (draftActions.length > 0) {
+      draftActions.forEach(action => {
+        renderDraftActionCard(action);
+      });
+    }
   });
 
   // Handle form submission
@@ -325,10 +402,16 @@ permalink: /do/agent/
       renderMessage('assistant', data.response);
       chatHistory.push(assistantMessage);
 
-      // If actions were generated, refresh the actions list
-      if (data.actionsGenerated) {
-        // Trigger a reload of the actions grid
-        window.dispatchEvent(new CustomEvent('reloadActions'));
+      // If draft actions were generated, render them inline and save to localStorage
+      if (data.hasDraftActions && data.draftActions) {
+        // Add new draft actions to our list
+        draftActions = [...draftActions, ...data.draftActions];
+        saveDraftActions(draftActions);
+
+        // Render each draft action card inline in chat
+        data.draftActions.forEach(action => {
+          renderDraftActionCard(action);
+        });
       }
 
     } catch (error) {
@@ -361,36 +444,65 @@ permalink: /do/agent/
   });
 
   // Handle view switching
-  document.querySelectorAll('.agent-nav-link').forEach(link => {
+  document.querySelectorAll('.view-link').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
       const view = link.dataset.view;
 
-      // Update link styles
-      document.querySelectorAll('.agent-nav-link').forEach(l => {
-        if (l.dataset.view === view) {
-          l.style.color = '#2563eb';
-          l.style.fontWeight = '500';
-          l.classList.add('active');
-        } else {
-          l.style.color = '#6b7280';
-          l.style.fontWeight = 'normal';
-          l.classList.remove('active');
-        }
+      // Hide all views
+      document.querySelectorAll('.agent-view').forEach(v => {
+        v.style.display = 'none';
       });
 
-      // Show/hide content
-      document.querySelectorAll('.agent-tab-content').forEach(content => {
-        content.style.display = 'none';
+      // Remove active state from all links
+      document.querySelectorAll('.view-link').forEach(l => {
+        l.style.color = '#6b7280';
+        l.style.fontWeight = 'normal';
       });
-      document.getElementById(`tab-${view}`).style.display = 'block';
+
+      // Add active state to clicked link
+      link.style.color = '#2563eb';
+      link.style.fontWeight = '600';
+
+      // Show selected view
+      document.getElementById(`view-${view}`).style.display = 'block';
 
       // Focus chat input when switching to chat
       if (view === 'chat') {
         messageInput.focus();
       }
+
+      // Scroll to top
+      window.scrollTo(0, 0);
     });
   });
+
+  // Handle "more" link to show settings
+  document.getElementById('goal-more-link').addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // Hide all views
+    document.querySelectorAll('.agent-view').forEach(v => {
+      v.style.display = 'none';
+    });
+
+    // Remove active state from all navigation links
+    document.querySelectorAll('.view-link').forEach(l => {
+      l.style.color = '#6b7280';
+      l.style.fontWeight = 'normal';
+    });
+
+    // Show settings view
+    document.getElementById('view-settings').style.display = 'block';
+    window.scrollTo(0, 0);
+  });
+
+  // Set initial active state for chat view
+  const chatLink = document.querySelector('.view-link[data-view="chat"]');
+  if (chatLink) {
+    chatLink.style.color = '#2563eb';
+    chatLink.style.fontWeight = '600';
+  }
 
   // Update action count when actions are loaded/generated
   window.addEventListener('reloadActions', () => {

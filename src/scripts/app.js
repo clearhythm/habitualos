@@ -350,8 +350,6 @@ function createActionCard(action) {
   card.className = 'card card-clickable';
   card.style.textDecoration = 'none';
 
-  const priorityBadge = `<span class="badge badge-${action.priority}">${capitalize(action.priority)}</span>`;
-
   // Show "Scheduled" with time for scheduled tasks
   let stateBadge;
   if (action.taskType === 'scheduled' && action.state === 'open' && action.scheduleTime) {
@@ -361,14 +359,17 @@ function createActionCard(action) {
     stateBadge = `<span class="badge badge-${action.state}">${formatState(action.state)}</span>`;
   }
 
+  // Created date
+  const createdDate = action._createdAt ? formatDate(action._createdAt) : null;
+
   card.innerHTML = `
-    <div class="flex flex-between">
-      <h3 class="card-title">${escapeHtml(action.title)}</h3>
-      ${priorityBadge}
-    </div>
-    <p class="text-muted mb-sm">${escapeHtml(action.description || '')}</p>
-    <div class="card-meta">
+    <div class="flex flex-between" style="margin-bottom: 0.5rem;">
+      <h3 class="card-title" style="margin-bottom: 0;">${escapeHtml(action.title)}</h3>
       ${stateBadge}
+    </div>
+    <div class="card-meta" style="margin-top: 0;">
+      ${createdDate ? `<span style="color: #6b7280;">Created ${createdDate}</span>` : ''}
+      ${action.priority ? `<span class="badge badge-${action.priority}" style="font-size: 0.75rem; padding: 0.125rem 0.375rem;">${capitalize(action.priority)}</span>` : ''}
       <span>&rarr;</span>
     </div>
   `;
@@ -1202,36 +1203,87 @@ function displayAgentDetail(agent, actions) {
   // Agent name and status
   document.querySelector('#agent-name').textContent = agent.name || 'Untitled Agent';
 
+  // Update goal text in chat view header
+  const goalShortEl = document.querySelector('#agent-goal-short');
+  if (goalShortEl && agent.instructions?.goal) {
+    const goalText = agent.instructions.goal;
+    // Create text node with goal and "more" link
+    goalShortEl.innerHTML = `${escapeHtml(goalText)} <a href="#" id="goal-more-link" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;">more</a>`;
+
+    // Re-attach event listener for "more" link
+    const moreLink = document.querySelector('#goal-more-link');
+    if (moreLink) {
+      moreLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.agent-view').forEach(v => v.style.display = 'none');
+        // Remove active state from all navigation links
+        document.querySelectorAll('.view-link').forEach(l => {
+          l.style.color = '#6b7280';
+          l.style.fontWeight = 'normal';
+        });
+        document.getElementById('view-settings').style.display = 'block';
+        window.scrollTo(0, 0);
+      });
+    }
+  }
+
   // Update action count in navigation
   const actionsCountEl = document.querySelector('#actions-count');
   if (actionsCountEl) {
     actionsCountEl.textContent = actions.length;
   }
 
-  const statusBadge = document.querySelector('#agent-status-badge');
-  statusBadge.textContent = agent.status;
-  statusBadge.className = `badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}`;
-
-  // Update status text in settings view
-  const statusTextEl = document.querySelector('#agent-status-text');
-  if (statusTextEl) {
-    statusTextEl.textContent = agent.status.charAt(0).toUpperCase() + agent.status.slice(1);
+  // Update settings agent card (dashboard style)
+  const settingsStatusBadge = document.querySelector('#settings-agent-status-badge');
+  if (settingsStatusBadge) {
+    settingsStatusBadge.textContent = agent.status.toUpperCase();
+    settingsStatusBadge.className = `badge badge-${agent.status === 'active' ? 'open' : agent.status === 'paused' ? 'completed' : 'dismissed'}`;
   }
 
-  // Toggle status button
-  const toggleBtn = document.querySelector('#toggle-agent-status-btn');
-  toggleBtn.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
-  toggleBtn.onclick = async () => {
-    await toggleAgentStatusDetail(agent.id);
-  };
+  const settingsModel = document.querySelector('#settings-agent-model');
+  if (settingsModel) {
+    settingsModel.textContent = agent.model || 'Sonnet 4.5';
+  }
 
-  // Metrics
-  document.querySelector('#agent-model').textContent = agent.model || 'Sonnet 4.5';
-  document.querySelector('#agent-runtime').textContent = formatRuntime(agent._createdAt);
-  document.querySelector('#agent-cost').textContent = `$${(agent.metrics?.totalCost || 0).toFixed(2)}`;
-  document.querySelector('#agent-projected').textContent = `~$${calculateProjectedCost(agent)}/mo`;
-  document.querySelector('#agent-total-actions').textContent = agent.metrics?.totalActions || 0;
-  document.querySelector('#agent-completed-actions').textContent = agent.metrics?.completedActions || 0;
+  const settingsRuntime = document.querySelector('#settings-agent-runtime');
+  if (settingsRuntime) {
+    settingsRuntime.textContent = formatRuntime(agent._createdAt);
+  }
+
+  const settingsCost = document.querySelector('#settings-agent-cost');
+  if (settingsCost) {
+    settingsCost.textContent = `$${(agent.metrics?.totalCost || 0).toFixed(2)}`;
+  }
+
+  const settingsProjected = document.querySelector('#settings-agent-projected');
+  if (settingsProjected) {
+    settingsProjected.textContent = `~$${calculateProjectedCost(agent)}/mo`;
+  }
+
+  const settingsActions = document.querySelector('#settings-agent-actions');
+  if (settingsActions) {
+    const completedCount = agent.metrics?.completedActions || 0;
+    const totalCount = agent.metrics?.totalActions || 0;
+    settingsActions.textContent = `${completedCount}/${totalCount}`;
+  }
+
+  const settingsPauseButton = document.querySelector('#settings-pause-button');
+  if (settingsPauseButton) {
+    settingsPauseButton.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
+    settingsPauseButton.className = `btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}`;
+    // Update click handler
+    settingsPauseButton.onclick = () => toggleAgentStatus(agent.id);
+  }
+
+  // Update settings card styling based on status
+  const settingsAgentCard = document.querySelector('#settings-agent-card');
+  if (settingsAgentCard) {
+    if (agent.status === 'paused') {
+      settingsAgentCard.classList.add('paused');
+    } else {
+      settingsAgentCard.classList.remove('paused');
+    }
+  }
 
   // Instructions
   if (agent.instructions) {

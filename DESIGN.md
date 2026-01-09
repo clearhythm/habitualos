@@ -1,3 +1,9 @@
+---
+last_sync: 2026-01-09T05:04:56Z
+last_commit: 2026-01-09T05:04:56Z
+commits_since_sync: 0
+---
+
 # HabitualOS Design Documentation
 
 ## File Structure
