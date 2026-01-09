@@ -227,11 +227,17 @@ Use this context to have informed design discussions and make architectural reco
       content: message
     });
 
-    // Call Claude API
+    // Call Claude API with prompt caching for documentation context
     const apiResponse = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
-      system: systemPrompt,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" }  // Cache system prompt (includes ARCHITECTURE.md + DESIGN.md)
+        }
+      ],
       messages: conversationHistory
     });
 

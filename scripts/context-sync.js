@@ -127,7 +127,13 @@ Do not include any other text, explanations, or markdown code fences.`;
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 8000,
-      system: systemPrompt,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" }  // Cache synthesis instructions
+        }
+      ],
       messages: [
         {
           role: 'user',
