@@ -31,3 +31,31 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - scripts/context-sync.js
 
 ---
+
+## Commit 1821aa1 - 2026-01-08
+
+**Author:** Erik Burns
+
+**Message:**
+Add prompt caching to reduce API costs by ~90%
+
+- Update agent-chat.js to use prompt caching for system prompt
+- Update context-sync.js to use prompt caching for synthesis instructions
+- System prompts now cached with ephemeral cache_control
+- First call pays full cost, subsequent calls in 5-minute window pay ~10% for cached portion
+- Massive cost reduction for conversational agent chats that include ARCHITECTURE.md + DESIGN.md context (~10k tokens cached)
+
+This enables sustainable design discussions via API without hitting rate limits.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+**Changed files:**
+- ARCHITECTURE.md
+- CHANGELOG_RECENT.md
+- DESIGN.md
+- netlify/functions/agent-chat.js
+- scripts/context-sync.js
+
+---

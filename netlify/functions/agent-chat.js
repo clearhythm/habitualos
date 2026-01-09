@@ -154,6 +154,40 @@ Agent details:
 - Success Criteria: ${JSON.stringify(agent.instructions?.success_criteria || [])}
 - Timeline: ${agent.instructions?.timeline || 'Not specified'}
 
+When to create ACTIONS vs ASSETS:
+
+ASSETS (immediate deliverables) - Use GENERATE_ASSET signal when:
+- User asks you to create something NOW ("create a prompt", "draft an email", "write code for...")
+- The deliverable can be completed in the current conversation
+- Examples: prompts, email drafts, code snippets, document outlines, design specs
+
+ACTIONS (future work) - Use GENERATE_ACTIONS signal when:
+- The deliverable requires scheduled execution or multi-step work
+- It's something you'll create LATER, not right now
+- Examples: "weekly content calendar", "research report with data collection", "build database schema"
+
+If creating an immediate deliverable (ASSET), respond EXACTLY in this format:
+GENERATE_ASSET
+---
+{
+  "title": "2-6 word title",
+  "description": "Brief description of what this is",
+  "type": "markdown|code|text",
+  "content": "[Full content here - the actual prompt/email/code/document]"
+}
+
+Example:
+GENERATE_ASSET
+---
+{
+  "title": "Agent Setup System Prompt",
+  "description": "Conversational prompt for agent creation flow",
+  "type": "markdown",
+  "content": "You are a UX-focused AI assistant helping users define their goals...\\n\\nYour role is to ask clarifying questions..."
+}
+
+The asset card will appear inline. User can click to view full content, copy to clipboard, or save to Assets tab.
+
 When to generate actions:
 - When user asks for actions ("generate actions", "what should we start with", etc.)
 - When you have enough context to create specific deliverables
@@ -325,6 +359,89 @@ Use this context to have informed design discussions and make architectural reco
           response: `I've drafted this deliverable for you. Let me know if you want to refine it, or we can mark it as defined and move on to the next one.`,
           draftActions: [draftAction], // Array of one for consistent frontend handling
           hasDraftActions: true
+        })
+      };
+    }
+
+    // Check if response indicates asset generation
+    if (trimmedResponse.includes('GENERATE_ASSET')) {
+      // Find JSON object (single asset)
+      const lines = assistantResponse.split('\n');
+      let jsonStart = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+        // Look for opening brace (single object, not array)
+        if (trimmed.startsWith('{')) {
+          jsonStart = i;
+          break;
+        }
+      }
+
+      if (jsonStart === -1) {
+        console.error('Could not find JSON object in asset response:', assistantResponse);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: 'Failed to parse asset generation response'
+          })
+        };
+      }
+
+      // Find the end of the JSON object
+      let jsonEnd = jsonStart;
+      let braceCount = 0;
+      for (let i = jsonStart; i < lines.length; i++) {
+        const line = lines[i];
+        for (const char of line) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+        }
+        if (braceCount === 0 && line.includes('}')) {
+          jsonEnd = i;
+          break;
+        }
+      }
+
+      const jsonContent = lines.slice(jsonStart, jsonEnd + 1).join('\n');
+      let generatedAsset = null;
+
+      try {
+        generatedAsset = JSON.parse(jsonContent);
+      } catch (parseError) {
+        console.error('Failed to parse generated asset:', parseError);
+        console.error('JSON content:', jsonContent);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: 'Failed to parse AI asset response'
+          })
+        };
+      }
+
+      // Return proposed asset (NOT persisted - stored in frontend until saved)
+      const proposedAsset = {
+        id: `proposed-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: generatedAsset.title,
+        description: generatedAsset.description,
+        type: generatedAsset.type || 'text',
+        content: generatedAsset.content,
+        state: 'proposed',
+        agentId: agent.id
+      };
+
+      // Return conversational confirmation with proposed asset
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: true,
+          response: `I've created a proposed asset for you. Click the card below to view the full content, copy it to your clipboard, or save it to your Assets.`,
+          proposedAsset: proposedAsset,
+          hasProposedAsset: true
         })
       };
     }

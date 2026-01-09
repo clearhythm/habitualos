@@ -107,8 +107,14 @@ permalink: /do/agent/
   {# Assets View #}
   <div id="view-assets" class="agent-view" style="display: none;">
     <div id="tab-assets" class="agent-tab-content" style="display: block;">
-    <h2 class="mb-md">Created Assets</h2>
-    <p class="text-muted">Files and artifacts created by this agent will appear here.</p>
+    <h2 class="mb-md">📄 Assets</h2>
+
+    <div id="assets-empty-state" style="text-align: center; padding: 3rem 1rem; color: #6b7280;">
+      <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No assets yet</p>
+      <p style="font-size: 0.95rem;">Assets you save from chat will appear here</p>
+    </div>
+
+    <div id="assets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;"></div>
     </div>
   </div>
 
@@ -191,6 +197,91 @@ permalink: /do/agent/
   </div>
 </div>
 
+{# Proposed Asset Modal #}
+<div id="proposed-asset-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+  <div style="max-width: 800px; margin: 2rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: start; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+      <div style="flex: 1;">
+        <h2 id="asset-modal-title" style="margin: 0 0 0.5rem 0; font-size: 1.5rem; font-weight: 600; color: #111;">Asset Title</h2>
+        <p id="asset-modal-description" style="margin: 0; color: #6b7280; font-size: 0.95rem;">Description</p>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span id="asset-modal-type" style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">type</span>
+        <button onclick="closeProposedAssetModal()" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
+      </div>
+    </div>
+
+    <div style="padding: 1.5rem; max-height: 500px; overflow-y: auto;">
+      <pre id="asset-modal-content" style="background: #f9fafb; padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 0; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">Content</pre>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: flex-end;">
+      <button onclick="closeProposedAssetModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        Close
+      </button>
+      <button onclick="copyAssetFromModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        📋 Copy to Clipboard
+      </button>
+      <button onclick="saveAssetFromModal()" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        💾 Save to Assets
+      </button>
+    </div>
+  </div>
+</div>
+
+{# Draft Action Modal #}
+<div id="draft-action-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+  <div style="max-width: 600px; margin: 2rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+      <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #111;">Define Action</h2>
+      <button onclick="closeDraftActionModal()" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
+    </div>
+
+    <div style="padding: 1.5rem;">
+      <div style="margin-bottom: 1rem;">
+        <label for="draft-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Title</label>
+        <input
+          type="text"
+          id="draft-title"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem;"
+          placeholder="2-5 word title"
+        />
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label for="draft-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Description</label>
+        <textarea
+          id="draft-description"
+          rows="4"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical;"
+          placeholder="What you'll create and how"
+        ></textarea>
+      </div>
+
+      <div style="margin-bottom: 1rem;">
+        <label for="draft-priority" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Priority</label>
+        <select
+          id="draft-priority"
+          style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem;"
+        >
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: flex-end;">
+      <button onclick="closeDraftActionModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        Cancel
+      </button>
+      <button onclick="markAsDefinedFromModal()" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        Mark as Defined
+      </button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
 
@@ -234,6 +325,9 @@ permalink: /do/agent/
   }
 
   let draftActions = getDraftActions();
+
+  // Proposed assets stored temporarily (not in localStorage until saved)
+  let proposedAssets = [];
 
   // Update send button state
   function updateSendButton() {
@@ -317,9 +411,334 @@ permalink: /do/agent/
   }
 
   // Open modal to view/edit draft action
+  let currentDraftAction = null;
+
   function openDraftActionModal(action) {
-    // TODO: Implement modal for editing draft action
-    alert(`Draft Action: ${action.title}\n\n${action.description || 'No description yet'}\n\nComing soon: Edit and mark as defined!`);
+    currentDraftAction = action;
+    const modal = document.getElementById('draft-action-modal');
+
+    // Populate form fields
+    document.getElementById('draft-title').value = action.title;
+    document.getElementById('draft-description').value = action.description || '';
+    document.getElementById('draft-priority').value = action.priority || 'medium';
+
+    // Show modal
+    modal.style.display = 'block';
+  }
+
+  function closeDraftActionModal() {
+    const modal = document.getElementById('draft-action-modal');
+    modal.style.display = 'none';
+    currentDraftAction = null;
+  }
+
+  async function markAsDefinedFromModal() {
+    if (!currentDraftAction) return;
+
+    const title = document.getElementById('draft-title').value.trim();
+    const description = document.getElementById('draft-description').value.trim();
+    const priority = document.getElementById('draft-priority').value;
+
+    if (!title || !description) {
+      alert('Title and description are required');
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/action-define', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          title,
+          description,
+          priority
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to define action');
+      }
+
+      // Remove draft from localStorage
+      draftActions = draftActions.filter(a => a.id !== currentDraftAction.id);
+      saveDraftActions(draftActions);
+
+      // Remove draft card from chat
+      const cardElement = document.querySelector(`[data-action-id="${currentDraftAction.id}"]`);
+      if (cardElement) {
+        cardElement.remove();
+      }
+
+      // Close modal
+      closeDraftActionModal();
+
+      // Show success message
+      alert('Action defined! It will appear in your Actions list.');
+
+      // Trigger action list reload if on actions view
+      window.dispatchEvent(new Event('reloadActions'));
+
+    } catch (error) {
+      console.error('Error defining action:', error);
+      alert(`Failed to define action: ${error.message}`);
+    }
+  }
+
+  // Render a proposed asset card inline in chat
+  function renderProposedAssetCard(asset) {
+    const cardDiv = document.createElement('div');
+    cardDiv.dataset.assetId = asset.id;
+    cardDiv.style.cssText = 'align-self: flex-start; max-width: 80%; width: 100%;';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'cursor: pointer; border: 2px dashed #3b82f6; background-color: #eff6ff; padding: 1rem; margin: 0.5rem 0;';
+
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.25rem;">📄</span>
+          <h4 style="margin: 0; font-size: 1rem; font-weight: 600; color: #1e40af;">${escapeHtml(asset.title)}</h4>
+        </div>
+        <span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${asset.type}</span>
+      </div>
+      ${asset.description ? `<p style="margin: 0.5rem 0 0 0; font-size: 0.875rem; color: #1e3a8a;">${escapeHtml(asset.description)}</p>` : ''}
+      <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #2563eb;">Click to view, copy, or save</p>
+    `;
+
+    card.onclick = () => openProposedAssetModal(asset.id);
+
+    cardDiv.appendChild(card);
+    chatMessages.appendChild(cardDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
+  // Open modal to view/copy/save proposed asset
+  let currentProposedAsset = null;
+
+  function openProposedAssetModal(assetId) {
+    const asset = proposedAssets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    currentProposedAsset = asset;
+    const modal = document.getElementById('proposed-asset-modal');
+
+    // Populate modal
+    document.getElementById('asset-modal-title').textContent = asset.title;
+    document.getElementById('asset-modal-description').textContent = asset.description;
+    document.getElementById('asset-modal-type').textContent = asset.type;
+    document.getElementById('asset-modal-content').textContent = asset.content;
+
+    // Show modal
+    modal.style.display = 'block';
+  }
+
+  function closeProposedAssetModal() {
+    const modal = document.getElementById('proposed-asset-modal');
+    modal.style.display = 'none';
+    currentProposedAsset = null;
+  }
+
+  function copyAssetFromModal() {
+    if (!currentProposedAsset) return;
+
+    navigator.clipboard.writeText(currentProposedAsset.content).then(() => {
+      // Provide visual feedback
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      btn.style.background = '#10b981';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#f3f4f6';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
+    });
+  }
+
+  function saveAssetFromModal() {
+    if (!currentProposedAsset) return;
+
+    // Convert proposed asset to saved asset
+    const savedAsset = {
+      ...currentProposedAsset,
+      id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      state: 'saved',
+      agentId: agentId,
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to localStorage
+    const assets = getAssets(agentId);
+    assets.unshift(savedAsset);
+    localStorage.setItem(`assets-${agentId}`, JSON.stringify(assets));
+
+    // Remove from proposed assets
+    proposedAssets = proposedAssets.filter(a => a.id !== currentProposedAsset.id);
+
+    // Update assets count
+    document.getElementById('assets-count').textContent = assets.length;
+
+    // Close modal
+    closeProposedAssetModal();
+
+    // Show success feedback
+    alert('Asset saved to Assets tab!');
+
+    // Render assets if on assets view
+    if (document.getElementById('view-assets').style.display === 'block') {
+      renderAssets(agentId);
+    }
+  }
+
+  function getAssets(agentId) {
+    try {
+      const stored = localStorage.getItem(`assets-${agentId}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('Error loading assets:', e);
+      return [];
+    }
+  }
+
+  // Helper functions
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function truncate(text, maxLength) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  }
+
+  function formatDate(isoString) {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Render assets grid
+  function renderAssets(agentId) {
+    const assets = getAssets(agentId);
+    const container = document.getElementById('assets-grid');
+    const emptyState = document.getElementById('assets-empty-state');
+
+    if (assets.length === 0) {
+      emptyState.style.display = 'block';
+      container.innerHTML = '';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    container.innerHTML = assets.map(asset => `
+      <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+            <span style="font-size: 1.25rem;">📄</span>
+            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(asset.title)}</h3>
+          </div>
+          <span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${asset.type}</span>
+        </div>
+
+        <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">${escapeHtml(asset.description)}</p>
+
+        <div style="margin: 0; font-size: 0.75rem; color: #9ca3af;">
+          ${formatDate(asset.createdAt)}
+        </div>
+
+        <div style="background: #f9fafb; padding: 0.75rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          ${escapeHtml(truncate(asset.content, 100))}
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 0.75rem;">
+          <button onclick="viewSavedAsset('${asset.id}')" style="flex: 1; padding: 0.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
+            View Full
+          </button>
+          <button onclick="copySavedAsset('${asset.id}')" style="padding: 0.5rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
+            📋
+          </button>
+          <button onclick="deleteSavedAsset('${asset.id}')" style="padding: 0.5rem 0.75rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
+            🗑️
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // View saved asset in modal
+  function viewSavedAsset(assetId) {
+    const assets = getAssets(agentId);
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    currentProposedAsset = asset; // Reuse the same modal
+    const modal = document.getElementById('proposed-asset-modal');
+
+    document.getElementById('asset-modal-title').textContent = asset.title;
+    document.getElementById('asset-modal-description').textContent = asset.description;
+    document.getElementById('asset-modal-type').textContent = asset.type;
+    document.getElementById('asset-modal-content').textContent = asset.content;
+
+    modal.style.display = 'block';
+  }
+
+  // Copy saved asset to clipboard
+  function copySavedAsset(assetId) {
+    const assets = getAssets(agentId);
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    navigator.clipboard.writeText(asset.content).then(() => {
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✓';
+      btn.style.background = '#10b981';
+      btn.style.color = 'white';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '#f3f4f6';
+        btn.style.color = '#374151';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
+    });
+  }
+
+  // Delete saved asset
+  function deleteSavedAsset(assetId) {
+    if (!confirm('Delete this asset? This cannot be undone.')) return;
+
+    const assets = getAssets(agentId);
+    const filtered = assets.filter(a => a.id !== assetId);
+    localStorage.setItem(`assets-${agentId}`, JSON.stringify(filtered));
+
+    // Update count
+    document.getElementById('assets-count').textContent = filtered.length;
+
+    // Re-render
+    renderAssets(agentId);
   }
 
   // Initialize chat with greeting when agent loads
@@ -339,6 +758,10 @@ permalink: /do/agent/
         renderDraftActionCard(action);
       });
     }
+
+    // Initialize assets count
+    const assetsCount = getAssets(agentId).length;
+    document.getElementById('assets-count').textContent = assetsCount;
   });
 
   // Handle form submission
@@ -414,6 +837,15 @@ permalink: /do/agent/
         });
       }
 
+      // If proposed asset was generated, render it inline (temporary until saved)
+      if (data.hasProposedAsset && data.proposedAsset) {
+        // Add to proposed assets array (not persisted until user saves)
+        proposedAssets.push(data.proposedAsset);
+
+        // Render proposed asset card inline in chat
+        renderProposedAssetCard(data.proposedAsset);
+      }
+
     } catch (error) {
       console.error('Error sending message:', error);
       hideLoadingMessage();
@@ -470,6 +902,11 @@ permalink: /do/agent/
       // Focus chat input when switching to chat
       if (view === 'chat') {
         messageInput.focus();
+      }
+
+      // Render assets when switching to assets view
+      if (view === 'assets') {
+        renderAssets(agentId);
       }
 
       // Scroll to top
