@@ -101,16 +101,33 @@ exports.handler = async (event) => {
     // Read ARCHITECTURE.md and DESIGN.md for context-aware discussions
     let architectureContext = '';
     let designContext = '';
+    let docStatus = { isDirty: false, commitsSinceSync: 0, lastSync: null, lastCommit: null };
 
     const architecturePath = path.join(__dirname, '..', '..', 'ARCHITECTURE.md');
     const designPath = path.join(__dirname, '..', '..', 'DESIGN.md');
 
     if (fs.existsSync(architecturePath)) {
-      architectureContext = fs.readFileSync(architecturePath, 'utf8');
+      const archContent = fs.readFileSync(architecturePath, 'utf8');
+
+      // Parse frontmatter
+      const frontmatterMatch = archContent.match(/^---\s*\nlast_sync:\s*(.+?)\nlast_commit:\s*(.+?)\ncommits_since_sync:\s*(\d+)\s*\n---/);
+      if (frontmatterMatch) {
+        docStatus.lastSync = frontmatterMatch[1];
+        docStatus.lastCommit = frontmatterMatch[2];
+        docStatus.commitsSinceSync = parseInt(frontmatterMatch[3], 10);
+        docStatus.isDirty = docStatus.commitsSinceSync > 0;
+
+        // Strip frontmatter for context
+        architectureContext = archContent.replace(/^---[\s\S]*?---\n\n/, '');
+      } else {
+        architectureContext = archContent;
+      }
     }
 
     if (fs.existsSync(designPath)) {
-      designContext = fs.readFileSync(designPath, 'utf8');
+      const designContent = fs.readFileSync(designPath, 'utf8');
+      // Strip frontmatter for context
+      designContext = designContent.replace(/^---[\s\S]*?---\n\n/, '');
     }
 
     const hasCodebaseContext = architectureContext || designContext;
@@ -168,7 +185,25 @@ GENERATE_ACTIONS
 
 CRITICAL: Generate ONE action at a time. After they refine or define it, you can suggest another.
 
-Otherwise, respond conversationally to gather context or answer questions.${hasCodebaseContext ? `
+Otherwise, respond conversationally to gather context or answer questions.${docStatus.isDirty ? `
+
+---
+
+## IMPORTANT: Documentation Status
+
+The codebase documentation is OUT OF DATE:
+- Last synced: ${docStatus.lastSync}
+- Last commit: ${docStatus.lastCommit}
+- Commits since sync: ${docStatus.commitsSinceSync}
+
+${docStatus.commitsSinceSync >= 3 ?
+  `This is significant staleness (${docStatus.commitsSinceSync} commits). You SHOULD proactively offer to update the documentation before proceeding with the conversation. Say something like: "Before we continue, I notice the documentation is out of date (${docStatus.commitsSinceSync} commits since last sync). Should I refresh the context first?"` :
+  `Minor staleness (${docStatus.commitsSinceSync} commit${docStatus.commitsSinceSync > 1 ? 's' : ''}). Mention this casually but don't block the conversation unless the user's request seems to require up-to-date architecture knowledge.`
+}
+
+---
+
+` : ''}${hasCodebaseContext ? `
 
 ---
 

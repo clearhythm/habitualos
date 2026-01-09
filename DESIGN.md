@@ -1,6 +1,6 @@
 ---
-last_sync: 2026-01-09T05:04:56Z
-last_commit: 2026-01-09T05:04:56Z
+last_sync: 2026-01-09T05:14:52.052Z
+last_commit: 2026-01-09T05:10:42Z
 commits_since_sync: 0
 ---
 
@@ -25,7 +25,7 @@ habitualos/
 │   ├── agent-*.js               # Agent management endpoints
 │   ├── action-*.js              # Action management endpoints
 │   ├── setup-chat.js            # Agent creation chat flow
-│   ├── agent-chat.js            # Agent conversation interface
+│   ├── agent-chat.js            # Agent conversation interface (includes ARCHITECTURE.md + DESIGN.md)
 │   └── task-outputs.js          # Task execution results
 │
 ├── scheduler/                   # Background task execution
@@ -33,11 +33,12 @@ habitualos/
 │   └── task-executor.js         # Task execution logic
 │
 ├── scripts/                     # Build and automation scripts
-│   └── context-sync.js          # Maintains ARCHITECTURE.md + DESIGN.md
+│   └── context-sync.js          # Maintains ARCHITECTURE.md + DESIGN.md from changelog
 │
 ├── src/                         # Frontend source
 │   ├── _includes/               # Nunjucks templates
-│   │   └── base.njk             # Base layout template
+│   │   ├── base.njk             # Base layout template
+│   │   └── nav.njk              # Navigation component
 │   ├── assets/js/auth/          # Authentication utilities
 │   │   └── auth.js              # Client-side user ID management
 │   ├── scripts/                 # Page-specific JavaScript
@@ -52,7 +53,7 @@ habitualos/
 │   ├── do/                      # "Do" section (agents & actions)
 │   │   ├── index.njk            # Dashboard
 │   │   ├── setup.njk            # Agent creation flow
-│   │   ├── agent.njk            # Agent detail page
+│   │   ├── agent.njk            # Agent detail page (chat, actions, settings)
 │   │   └── action.njk           # Action detail page
 │   └── index.njk                # Homepage
 │
@@ -61,10 +62,11 @@ habitualos/
 │       ├── inputs/              # User-provided inputs
 │       └── outputs/             # Agent-generated outputs
 │
-├── ARCHITECTURE.md              # High-level system design
-├── DESIGN.md                    # This file - implementation details
+├── .context-sync-status.json    # Tracks last sync timestamp
+├── ARCHITECTURE.md              # High-level system design (living doc)
+├── DESIGN.md                    # This file - implementation details (living doc)
 ├── CHANGELOG_RECENT.md          # Rolling buffer of recent commits
-└── SYSTEM.md                    # Legacy context file (deprecated)
+└── SYSTEM.md                    # Legacy context file (deprecated, replaced by ARCHITECTURE + DESIGN)
 ```
 
 ## Frontend Design Patterns
@@ -78,7 +80,7 @@ HabitualOS uses a **hybrid static/SPA approach**:
 
 ### Key Frontend Files
 
-#### `/src/scripts/app.js` (Main Application Logic)
+#### [/src/scripts/app.js](src/scripts/app.js) (Main Application Logic)
 ```javascript
 // Dashboard rendering
 - displayAgents(agents)         // Render agent cards on dashboard
@@ -95,9 +97,9 @@ HabitualOS uses a **hybrid static/SPA approach**:
 - escapeHtml(str)                // XSS prevention
 ```
 
-#### `/src/do/agent.njk` (Agent Detail Page)
+#### [/src/do/agent.njk](src/do/agent.njk) (Agent Detail Page)
 Three main views accessed via navigation tabs:
-- **Chat View** - Conversational interface with agent
+- **Chat View** - Conversational interface with agent (supports "update context" command)
 - **Actions View** - Grid of all actions for this agent
 - **Assets View** - Files/artifacts generated (placeholder)
 - **Settings View** - Agent configuration and metrics
@@ -107,14 +109,21 @@ Key inline scripts:
 - Draft action card rendering (yellow dashed border)
 - Draft action localStorage management
 - View switching logic
+- Context sync command handling ("update context" in chat)
 
-#### `/src/do/setup.njk` (Agent Creation Flow)
+#### [/src/do/setup.njk](src/do/setup.njk) (Agent Creation Flow)
 Full-screen chat interface for creating agents:
 - Opening greeting from AI
 - Conversational extraction of goal, success criteria, timeline
 - `READY_TO_CREATE` signal detection
 - Modal confirmation before agent creation
 - Creation overlay with animated progress
+
+#### [/src/_includes/nav.njk](src/_includes/nav.njk) (Navigation Component)
+Reusable navigation partial included in base layout:
+- Site-wide navigation structure
+- Active page highlighting
+- Mobile-responsive menu
 
 ### Client-Side State Management
 
@@ -216,7 +225,7 @@ exports.handler = async (event) => {
 
 HabitualOS uses **signal-based parsing** to detect when LLMs produce structured output:
 
-**Agent Creation** (`setup-chat.js`):
+**Agent Creation** ([netlify/functions/setup-chat.js](netlify/functions/setup-chat.js)):
 ```
 User: "I want to launch a SaaS product"
 ...conversation...
@@ -226,7 +235,7 @@ TITLE: Launch SaaS MVP
 GOAL: Build and deploy..."
 ```
 
-**Action Generation** (`agent-chat.js`):
+**Action Generation** ([netlify/functions/agent-chat.js](netlify/functions/agent-chat.js)):
 ```
 User: "Generate an action for this"
 Assistant: "GENERATE_ACTIONS
@@ -246,17 +255,24 @@ Parsing logic:
 
 #### Context Injection
 
-Agent chat includes ARCHITECTURE.md in system prompt:
+Agent chat ([netlify/functions/agent-chat.js](netlify/functions/agent-chat.js)) includes both ARCHITECTURE.md and DESIGN.md in system prompt:
+
 ```javascript
-const systemContext = fs.readFileSync('SYSTEM.md', 'utf8');
+const architectureContext = fs.readFileSync('ARCHITECTURE.md', 'utf8');
+const designContext = fs.readFileSync('DESIGN.md', 'utf8');
 
 const systemPrompt = `You're an autonomous agent...
 
-${systemContext ? `
+${architectureContext ? `
 ---
-## Codebase Context
-${systemContext}
-Use this context to have informed design discussions.
+## System Architecture
+${architectureContext}
+` : ''}
+
+${designContext ? `
+---
+## Implementation Design
+${designContext}
 ` : ''}`;
 ```
 
@@ -264,6 +280,7 @@ This enables agents to:
 - Understand project structure when suggesting deliverables
 - Make architecturally-informed recommendations
 - Reference specific files/patterns in responses
+- Have informed design discussions with users
 
 ## Key Workflows
 
@@ -329,33 +346,46 @@ For each scheduled action:
 User sees completed action on dashboard
 ```
 
-### 4. Context Sync Workflow
+### 4. Living Documentation Sync Workflow
 
 ```
 Developer commits code
   ↓
-Git post-commit hook
+Git post-commit hook (.git/hooks/post-commit)
   - Appends commit info to CHANGELOG_RECENT.md
   - Includes: hash, author, message, changed files
   ↓
-User says "update context" in agent chat
-  (or runs: node scripts/context-sync.js)
+User triggers sync:
+  - Via agent chat: "update context"
+  - Or manually: node scripts/context-sync.js
   ↓
-Context sync script:
-  - Reads CHANGELOG_RECENT.md
-  - Reads existing ARCHITECTURE.md + DESIGN.md
-  - Calls LLM with synthesis prompt
-  - Writes updated docs
-  - Clears CHANGELOG_RECENT.md
+Context sync script (scripts/context-sync.js):
+  1. Reads CHANGELOG_RECENT.md
+  2. Reads existing ARCHITECTURE.md + DESIGN.md
+  3. Calls Claude API with comprehensive synthesis prompt
+  4. LLM updates BOTH documents to reflect changes
+  5. Writes updated ARCHITECTURE.md
+  6. Writes updated DESIGN.md
+  7. Updates .context-sync-status.json with timestamp
+  8. Clears CHANGELOG_RECENT.md
   ↓
 Next agent chat includes updated docs in context
+  ↓
+Agent has current understanding of codebase architecture
 ```
+
+**Sync Command in Chat**:
+- User types "update context" in agent chat
+- Frontend sends POST to /agent-chat with special message
+- Backend detects command and triggers context-sync.js
+- Returns confirmation message when complete
+- Subsequent chats use refreshed documentation
 
 ## Styling and UI Patterns
 
 ### Design System
 
-**Colors** (from `_variables.scss`):
+**Colors** (from [src/styles/_variables.scss](src/styles/_variables.scss)):
 ```scss
 $color-primary: #2563eb;     // Blue - primary actions
 $color-success: #10b981;     // Green - completed states
@@ -388,68 +418,53 @@ Desktop enhancements:
 - Side-by-side layouts (settings page)
 - Wider max-width containers (700px for chat, full-width for grids)
 
-## Testing and Debugging
+## Context Sync Implementation Details
 
-### Manual Testing Checklist
+### [scripts/context-sync.js](scripts/context-sync.js)
 
-**Agent Creation**:
-- [ ] Opening message displays
-- [ ] Chat input works (Enter to submit, Shift+Enter for newline)
-- [ ] AI extracts goal, criteria, timeline correctly
-- [ ] READY_TO_CREATE signal appears
-- [ ] Modal shows "Create My Agent" button
-- [ ] Agent is created and redirect happens
+**Purpose**: Maintains living documentation (ARCHITECTURE.md + DESIGN.md) synchronized with codebase changes.
 
-**Agent Chat**:
-- [ ] Greeting message displays on load
-- [ ] Chat history persists during session
-- [ ] Action generation triggers on request
-- [ ] Draft action card appears inline
-- [ ] Draft action saved to localStorage
-- [ ] Context sync command works ("update context")
+**Key Functions**:
+```javascript
+async function syncContext() {
+  // 1. Read changelog of recent commits
+  const changelog = fs.readFileSync('CHANGELOG_RECENT.md', 'utf8');
+  
+  // 2. Read current documentation
+  const architecture = fs.readFileSync('ARCHITECTURE.md', 'utf8');
+  const design = fs.readFileSync('DESIGN.md', 'utf8');
+  
+  // 3. Call Claude with synthesis prompt
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 200000,
+    system: 'You maintain living architecture documentation...',
+    messages: [{
+      role: 'user',
+      content: `Current ARCHITECTURE.md:\n${architecture}\n\n
+                Current DESIGN.md:\n${design}\n\n
+                Recent changes:\n${changelog}`
+    }]
+  });
+  
+  // 4. Parse response (===ARCHITECTURE=== and ===DESIGN=== sections)
+  const { architecture: newArch, design: newDesign } = parseResponse(response);
+  
+  // 5. Write updated files
+  fs.writeFileSync('ARCHITECTURE.md', newArch);
+  fs.writeFileSync('DESIGN.md', newDesign);
+  
+  // 6. Update sync status
+  updateSyncStatus();
+  
+  // 7. Clear changelog
+  fs.writeFileSync('CHANGELOG_RECENT.md', '# Recent Changes\n\n');
+}
+```
 
-**Dashboard**:
-- [ ] Agents render correctly
-- [ ] Actions grouped by agent
-- [ ] Filter by state works (all/scheduled/active/completed)
-- [ ] Click navigation works (agent detail, action detail)
-
-### Common Debugging Patterns
-
-**LLM not generating expected signal**:
-- Check system prompt for clarity
-- Verify signal format in prompt examples
-- Log full LLM response to console
-- Adjust parsing regex to be more flexible
-
-**localStorage issues**:
-- Check browser privacy settings
-- Verify key names match across files
-- Test with sessionStorage fallback
-- Clear storage and retry
-
-**Database query failures**:
-- Verify user ID format (`u-{timestamp}-{random}`)
-- Check SQL syntax in service layer
-- Log query parameters before execution
-- Verify JSONB fields are parsed correctly
-
-## Performance Considerations
-
-### Frontend Optimization
-- Minimal JavaScript bundle (vanilla JS, no frameworks)
-- CSS compiled and minified via Sass
-- Static assets served from CDN
-- No runtime template compilation (Eleventy pre-renders)
-
-### Backend Optimization
-- SQLite for fast local queries
-- Connection pooling (better-sqlite3)
-- No N+1 queries (service layer handles joins)
-- LLM calls are the bottleneck (not database)
-
-### Future Optimizations
-- Implement request caching for agent/action lists
-- Use incremental static regeneration for dashboards
-- Add pagination for large action lists
-- Stream LLM responses for real-time feedback
+**Output Format**: LLM returns both documents in a parseable format:
+```
+===ARCHITECTURE===
+[updated ARCHITECTURE.md content]
+===DESIGN===
+[updated DESIGN.md content]

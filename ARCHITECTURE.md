@@ -1,6 +1,6 @@
 ---
-last_sync: 2026-01-09T05:04:56Z
-last_commit: 2026-01-09T05:04:56Z
+last_sync: 2026-01-09T05:14:52.052Z
+last_commit: 2026-01-09T05:10:42Z
 commits_since_sync: 0
 ---
 
@@ -39,11 +39,25 @@ Specific deliverables the agent will create. Actions have:
 - **Scheduled** state: Queued for autonomous execution at specific time
 - **Completed** state: Work has been done, artifacts created
 
-#### Context Sync System
-Maintains living documentation (ARCHITECTURE.md, DESIGN.md) that stays in sync with code changes:
-- Git post-commit hook appends commits to CHANGELOG_RECENT.md
-- Manual or agent-triggered sync processes changelog via LLM
-- Updated docs are included in agent chat API calls for context-aware design discussions
+#### Living Documentation System
+Maintains synchronized architecture and design documentation that evolves with the codebase:
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: High-level system design, core concepts, technology stack, data flow
+- **[DESIGN.md](DESIGN.md)**: Implementation details, file structure, code patterns, workflows
+- **[CHANGELOG_RECENT.md](CHANGELOG_RECENT.md)**: Rolling buffer of recent commits (cleared after each sync)
+- **[.context-sync-status.json](.context-sync-status.json)**: Tracks last sync timestamp and commit count
+
+**Sync Workflow**:
+1. Git post-commit hook appends commit info to CHANGELOG_RECENT.md
+2. Manual or agent-triggered sync processes changelog via LLM ([scripts/context-sync.js](scripts/context-sync.js))
+3. LLM updates both ARCHITECTURE.md and DESIGN.md based on changes
+4. Updated docs included in agent chat API calls for context-aware design discussions
+5. Agents can request context updates via "update context" command in chat
+
+This enables agents to:
+- Understand current system architecture when suggesting deliverables
+- Make architecturally-informed recommendations
+- Reference specific files and patterns in responses
+- Maintain accurate mental model of codebase as it evolves
 
 ## Technology Stack
 
@@ -80,16 +94,17 @@ User → Browser (Eleventy SPA) → Netlify Functions → SQLite Database
 ### Key Subsystems
 
 #### 1. Agent Creation Flow
-- Chat-based onboarding (setup-chat.js)
+- Chat-based onboarding ([src/do/setup.njk](src/do/setup.njk))
 - Conversational extraction of goal, success criteria, timeline
 - Signal-based readiness detection (READY_TO_CREATE)
 - Automatic persistence of creation chat history
 
 #### 2. Agent Chat Interface
-- Persistent chat with agent about the goal
+- Persistent chat with agent about the goal ([src/do/agent.njk](src/do/agent.njk))
 - Action generation via structured LLM output (GENERATE_ACTIONS)
 - Draft action cards rendered inline in chat
-- Context-aware discussions using SYSTEM.md/ARCHITECTURE.md
+- Context-aware discussions using ARCHITECTURE.md + DESIGN.md
+- In-chat context sync command ("update context")
 
 #### 3. Draft Action Lifecycle
 - Agent generates single action at a time
@@ -103,10 +118,11 @@ User → Browser (Eleventy SPA) → Netlify Functions → SQLite Database
 - Saves outputs to `data/tasks/{task_id}/outputs/`
 - Updates action state to completed
 
-#### 5. Context Sync System
+#### 5. Living Documentation System
 - Post-commit hook: git changes → CHANGELOG_RECENT.md
 - Sync command: changelog → LLM synthesis → ARCHITECTURE.md + DESIGN.md
-- Agent integration: docs included in system prompt for context
+- Agent integration: both docs included in system prompt for context
+- Tracks sync status in .context-sync-status.json
 
 ## Database Schema
 
@@ -181,7 +197,7 @@ task_outputs (
 
 ### Agent Chat
 - `POST /setup-chat` - Agent creation conversation
-- `POST /agent-chat` - Chat with existing agent (context + action generation)
+- `POST /agent-chat` - Chat with existing agent (includes ARCHITECTURE.md + DESIGN.md context)
 
 ### Action Management
 - `POST /action-generate` - Generate new action for agent

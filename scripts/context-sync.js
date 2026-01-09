@@ -153,11 +153,32 @@ Do not include any other text, explanations, or markdown code fences.`;
     const updatedArchitecture = archMatch[1].trim();
     const updatedDesign = designMatch[1].trim();
 
+    // Extract current last_commit from existing frontmatter (or use now if missing)
+    const lastCommitMatch = existingArchitecture.match(/^---\s*\nlast_sync:.*?\nlast_commit:\s*(.+?)\n/s);
+    const lastCommit = lastCommitMatch ? lastCommitMatch[1].trim() : new Date().toISOString();
+
+    const currentTime = new Date().toISOString();
+
+    const frontmatter = `---
+last_sync: ${currentTime}
+last_commit: ${lastCommit}
+commits_since_sync: 0
+---
+
+`;
+
+    // Prepend frontmatter to updated content (strip old frontmatter if exists)
+    const cleanArchitecture = updatedArchitecture.replace(/^---[\s\S]*?---\n\n/, '');
+    const cleanDesign = updatedDesign.replace(/^---[\s\S]*?---\n\n/, '');
+
+    const finalArchitecture = frontmatter + cleanArchitecture;
+    const finalDesign = frontmatter + cleanDesign;
+
     // Write updated files
-    fs.writeFileSync(ARCHITECTURE_PATH, updatedArchitecture, 'utf8');
+    fs.writeFileSync(ARCHITECTURE_PATH, finalArchitecture, 'utf8');
     console.log('✅ Updated ARCHITECTURE.md');
 
-    fs.writeFileSync(DESIGN_PATH, updatedDesign, 'utf8');
+    fs.writeFileSync(DESIGN_PATH, finalDesign, 'utf8');
     console.log('✅ Updated DESIGN.md');
 
     // Clear CHANGELOG_RECENT.md
