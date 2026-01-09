@@ -3,7 +3,8 @@
 /**
  * Context Sync Script
  *
- * Reads CHANGELOG_RECENT.md, uses Claude API to synthesize changes into SYSTEM.md update.
+ * Reads CHANGELOG_RECENT.md, uses Claude API to synthesize changes into
+ * ARCHITECTURE.md and DESIGN.md updates.
  * This script is triggered manually by the user via agent chat or CLI.
  *
  * Usage:
@@ -20,7 +21,8 @@ const anthropic = new Anthropic({
 });
 
 const CHANGELOG_PATH = path.join(__dirname, '..', 'CHANGELOG_RECENT.md');
-const SYSTEM_PATH = path.join(__dirname, '..', 'SYSTEM.md');
+const ARCHITECTURE_PATH = path.join(__dirname, '..', 'ARCHITECTURE.md');
+const DESIGN_PATH = path.join(__dirname, '..', 'DESIGN.md');
 
 async function syncContext() {
   console.log('🔄 Starting context sync...');
@@ -45,44 +47,62 @@ async function syncContext() {
     };
   }
 
-  // Read existing SYSTEM.md (or create if doesn't exist)
-  let existingSystem = '';
-  if (fs.existsSync(SYSTEM_PATH)) {
-    existingSystem = fs.readFileSync(SYSTEM_PATH, 'utf8');
+  // Read existing ARCHITECTURE.md and DESIGN.md
+  let existingArchitecture = '';
+  let existingDesign = '';
+
+  if (fs.existsSync(ARCHITECTURE_PATH)) {
+    existingArchitecture = fs.readFileSync(ARCHITECTURE_PATH, 'utf8');
   } else {
-    console.log('📝 No SYSTEM.md found. Creating new one...');
-    existingSystem = '# HabitualOS System Overview\n\nThis document provides an up-to-date overview of the HabitualOS codebase.\n\n## Architecture\n\nTo be populated...\n';
+    console.log('📝 No ARCHITECTURE.md found. Will create new one...');
   }
 
-  // Call Claude API to synthesize changes into SYSTEM.md update
+  if (fs.existsSync(DESIGN_PATH)) {
+    existingDesign = fs.readFileSync(DESIGN_PATH, 'utf8');
+  } else {
+    console.log('📝 No DESIGN.md found. Will create new one...');
+  }
+
+  // Call Claude API to synthesize changes into documentation updates
   console.log('🤖 Calling Claude API to synthesize changes...');
 
-  const systemPrompt = `You are a technical documentation assistant. Your job is to update the SYSTEM.md file based on recent code changes.
+  const systemPrompt = `You are a technical documentation assistant maintaining living architecture documentation for a codebase.
 
-SYSTEM.md is a living architecture document that helps developers (and AI assistants) quickly understand the codebase structure, key patterns, and current state.
+You maintain two complementary documents:
+- **ARCHITECTURE.md**: High-level system design, core concepts, technology stack, data flow, deployment
+- **DESIGN.md**: Implementation details, file structure, code patterns, workflows, debugging
 
 You will receive:
-1. The current SYSTEM.md content
-2. A changelog of recent commits
+1. Current ARCHITECTURE.md content
+2. Current DESIGN.md content
+3. A changelog of recent commits
 
 Your task:
-- Update SYSTEM.md to reflect the recent changes
-- Keep it concise and scannable (developers should be able to read it in 2-3 minutes)
-- Focus on architecture, file structure, key patterns, and important technical decisions
-- Remove outdated information that's been superseded by changes
-- Use clear headings and bullet points
-- Include file paths in markdown link format when referencing specific files
+- Update BOTH documents to reflect recent changes
+- ARCHITECTURE.md: Focus on system design, architecture patterns, high-level decisions
+- DESIGN.md: Focus on file structure, code patterns, implementation details, workflows
+- Keep both concise and scannable (2-3 minutes read time each)
+- Remove outdated information superseded by changes
+- Use clear headings, bullet points, code examples
+- Include file paths in markdown link format when referencing files
 
 Guidelines:
-- Don't just append the changelog - integrate the changes meaningfully
-- Preserve the overall structure of SYSTEM.md
-- Be accurate and technical (this is for developers, not marketing)
-- Focus on "what" and "how", not "why" (unless the why is architecturally important)`;
+- Don't just append changelog - integrate changes meaningfully
+- Preserve overall structure where it makes sense
+- Be accurate and technical (for developers and AI assistants)
+- Focus on "what" and "how", not "why" (unless architecturally important)
+- If a change only affects one file, only update that file`;
 
-  const userPrompt = `Here's the current SYSTEM.md:
+  const userPrompt = `Here's the current ARCHITECTURE.md:
 
 \`\`\`markdown
-${existingSystem}
+${existingArchitecture || 'No content yet.'}
+\`\`\`
+
+Here's the current DESIGN.md:
+
+\`\`\`markdown
+${existingDesign || 'No content yet.'}
 \`\`\`
 
 Here are the recent changes:
@@ -91,12 +111,22 @@ Here are the recent changes:
 ${recentChanges}
 \`\`\`
 
-Please update SYSTEM.md to reflect these recent changes. Return ONLY the updated SYSTEM.md content (no explanations, no markdown code fences around it).`;
+Please update ARCHITECTURE.md and DESIGN.md to reflect these recent changes.
+
+Return your response in this EXACT format:
+
+===ARCHITECTURE===
+[updated ARCHITECTURE.md content here]
+===DESIGN===
+[updated DESIGN.md content here]
+===END===
+
+Do not include any other text, explanations, or markdown code fences.`;
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: systemPrompt,
       messages: [
         {
@@ -106,11 +136,29 @@ Please update SYSTEM.md to reflect these recent changes. Return ONLY the updated
       ]
     });
 
-    const updatedSystem = response.content[0].text.trim();
+    const fullResponse = response.content[0].text.trim();
 
-    // Write updated SYSTEM.md
-    fs.writeFileSync(SYSTEM_PATH, updatedSystem, 'utf8');
-    console.log('✅ Updated SYSTEM.md');
+    // Parse response to extract ARCHITECTURE.md and DESIGN.md
+    const archMatch = fullResponse.match(/===ARCHITECTURE===([\s\S]*?)===DESIGN===/);
+    const designMatch = fullResponse.match(/===DESIGN===([\s\S]*?)===END===/);
+
+    if (!archMatch || !designMatch) {
+      console.error('Failed to parse LLM response. Expected ===ARCHITECTURE=== and ===DESIGN=== markers.');
+      return {
+        success: false,
+        error: 'Failed to parse documentation update from LLM'
+      };
+    }
+
+    const updatedArchitecture = archMatch[1].trim();
+    const updatedDesign = designMatch[1].trim();
+
+    // Write updated files
+    fs.writeFileSync(ARCHITECTURE_PATH, updatedArchitecture, 'utf8');
+    console.log('✅ Updated ARCHITECTURE.md');
+
+    fs.writeFileSync(DESIGN_PATH, updatedDesign, 'utf8');
+    console.log('✅ Updated DESIGN.md');
 
     // Clear CHANGELOG_RECENT.md
     fs.writeFileSync(CHANGELOG_PATH, '# Recent Changes\n\nNo changes yet.\n', 'utf8');
@@ -118,7 +166,7 @@ Please update SYSTEM.md to reflect these recent changes. Return ONLY the updated
 
     return {
       success: true,
-      message: 'Successfully updated SYSTEM.md with recent changes'
+      message: 'Successfully updated ARCHITECTURE.md and DESIGN.md with recent changes'
     };
 
   } catch (error) {

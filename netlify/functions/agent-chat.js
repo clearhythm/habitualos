@@ -98,12 +98,22 @@ exports.handler = async (event) => {
       }
     }
 
-    // Read SYSTEM.md if it exists for context-aware discussions
-    let systemContext = '';
-    const systemPath = path.join(__dirname, '..', '..', 'SYSTEM.md');
-    if (fs.existsSync(systemPath)) {
-      systemContext = fs.readFileSync(systemPath, 'utf8');
+    // Read ARCHITECTURE.md and DESIGN.md for context-aware discussions
+    let architectureContext = '';
+    let designContext = '';
+
+    const architecturePath = path.join(__dirname, '..', '..', 'ARCHITECTURE.md');
+    const designPath = path.join(__dirname, '..', '..', 'DESIGN.md');
+
+    if (fs.existsSync(architecturePath)) {
+      architectureContext = fs.readFileSync(architecturePath, 'utf8');
     }
+
+    if (fs.existsSync(designPath)) {
+      designContext = fs.readFileSync(designPath, 'utf8');
+    }
+
+    const hasCodebaseContext = architectureContext || designContext;
 
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
@@ -158,15 +168,15 @@ GENERATE_ACTIONS
 
 CRITICAL: Generate ONE action at a time. After they refine or define it, you can suggest another.
 
-Otherwise, respond conversationally to gather context or answer questions.${systemContext ? `
+Otherwise, respond conversationally to gather context or answer questions.${hasCodebaseContext ? `
 
 ---
 
 ## Codebase Context
 
-You have access to the current codebase architecture and structure:
+You have access to the current codebase documentation:
 
-${systemContext}
+${architectureContext ? `### ARCHITECTURE.md\n\n${architectureContext}\n\n` : ''}${designContext ? `### DESIGN.md\n\n${designContext}` : ''}
 
 Use this context to have informed design discussions and make architectural recommendations.` : ''}`;
 
