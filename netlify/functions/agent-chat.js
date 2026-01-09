@@ -1,8 +1,9 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent } = require('./_services/db-agents.cjs');
-const { generateActionId } = require('./_utils/data-utils.cjs');
-const { createAction } = require('./_services/db-actions.cjs');
+const { syncContext } = require('../../scripts/context-sync.js');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -58,12 +59,59 @@ exports.handler = async (event) => {
       };
     }
 
+    // Check if user is requesting context sync
+    const lowerMessage = message.toLowerCase().trim();
+    const isContextSyncRequest =
+      lowerMessage.includes('update context') ||
+      lowerMessage.includes('sync context') ||
+      lowerMessage.includes('update system') ||
+      lowerMessage.includes('refresh context');
+
+    if (isContextSyncRequest) {
+      console.log('Context sync requested by user');
+      const syncResult = await syncContext();
+
+      if (syncResult.success) {
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            response: '✅ I\'ve updated the system context with recent code changes. The latest architecture is now loaded and ready for our design discussion.',
+            contextSynced: true
+          })
+        };
+      } else {
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            response: `I tried to update the context but encountered an issue: ${syncResult.error}. You might need to check the CHANGELOG_RECENT.md file or try again.`,
+            contextSynced: false
+          })
+        };
+      }
+    }
+
+    // Read SYSTEM.md if it exists for context-aware discussions
+    let systemContext = '';
+    const systemPath = path.join(__dirname, '..', '..', 'SYSTEM.md');
+    if (fs.existsSync(systemPath)) {
+      systemContext = fs.readFileSync(systemPath, 'utf8');
+    }
+
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
 
 Your role:
 - Gather context needed to create deliverables
 - Generate actionable deliverables you will create (not tasks for them to do)
+- Refine draft deliverables through conversation until they're well-defined
 - Suggest scheduling for when you'll do the work
 - Eventually: proactively suggest embodiment practices that support their goal
 
@@ -83,19 +131,44 @@ When to generate actions:
 - When user asks for actions ("generate actions", "what should we start with", etc.)
 - When you have enough context to create specific deliverables
 - IMPORTANT: Actions are deliverables YOU will create, not todos for the user
+- Generate ONE action at a time - let the user refine it before creating more
 
-If generating actions, respond with:
+Action format:
+- Title: 2-5 words ONLY - concise and scannable
+- Description: Brief description of what you'll create and how
+- Priority: high|medium|low
+
+If generating an action, respond EXACTLY in this format (no markdown, no code blocks):
 GENERATE_ACTIONS
 ---
-[
-  {
-    "title": "Deliverable title",
-    "description": "What you'll create and how",
-    "priority": "high|medium|low"
-  }
-]
+{
+  "title": "2-5 word title",
+  "description": "What you'll create (be specific about the output)",
+  "priority": "high|medium|low"
+}
 
-Otherwise, respond conversationally to gather context or answer questions.`;
+Example:
+GENERATE_ACTIONS
+---
+{
+  "title": "LinkedIn Profile Draft",
+  "description": "Create optimized LinkedIn profile copy highlighting product leadership experience",
+  "priority": "high"
+}
+
+CRITICAL: Generate ONE action at a time. After they refine or define it, you can suggest another.
+
+Otherwise, respond conversationally to gather context or answer questions.${systemContext ? `
+
+---
+
+## Codebase Context
+
+You have access to the current codebase architecture and structure:
+
+${systemContext}
+
+Use this context to have informed design discussions and make architectural recommendations.` : ''}`;
 
     // Build conversation history for Claude
     const conversationHistory = chatHistory.map(msg => ({
@@ -121,18 +194,23 @@ Otherwise, respond conversationally to gather context or answer questions.`;
     const assistantResponse = apiResponse.content[0].text;
 
     // Check if response indicates action generation
-    if (assistantResponse.startsWith('GENERATE_ACTIONS')) {
-      // Parse the generated actions
+    // Be flexible with whitespace and markdown code blocks
+    const trimmedResponse = assistantResponse.trim();
+    if (trimmedResponse.includes('GENERATE_ACTIONS')) {
+      // Find JSON object (single action)
       const lines = assistantResponse.split('\n');
       let jsonStart = -1;
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].trim().startsWith('[')) {
+        const trimmed = lines[i].trim();
+        // Look for opening brace (single object, not array)
+        if (trimmed.startsWith('{')) {
           jsonStart = i;
           break;
         }
       }
 
       if (jsonStart === -1) {
+        console.error('Could not find JSON object in response:', assistantResponse);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -142,13 +220,29 @@ Otherwise, respond conversationally to gather context or answer questions.`;
         };
       }
 
-      const jsonContent = lines.slice(jsonStart).join('\n');
-      let generatedActions = [];
+      // Find the end of the JSON object
+      let jsonEnd = jsonStart;
+      let braceCount = 0;
+      for (let i = jsonStart; i < lines.length; i++) {
+        const line = lines[i];
+        for (const char of line) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+        }
+        if (braceCount === 0 && line.includes('}')) {
+          jsonEnd = i;
+          break;
+        }
+      }
+
+      const jsonContent = lines.slice(jsonStart, jsonEnd + 1).join('\n');
+      let generatedAction = null;
 
       try {
-        generatedActions = JSON.parse(jsonContent);
+        generatedAction = JSON.parse(jsonContent);
       } catch (parseError) {
-        console.error('Failed to parse generated actions:', parseError);
+        console.error('Failed to parse generated action:', parseError);
+        console.error('JSON content:', jsonContent);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -158,23 +252,18 @@ Otherwise, respond conversationally to gather context or answer questions.`;
         };
       }
 
-      // Create actions in Firestore
-      for (const generatedAction of generatedActions) {
-        const actionId = generateActionId();
-        await createAction(actionId, {
-          _userId: userId,
-          agentId: agent.id,
-          title: generatedAction.title,
-          description: generatedAction.description,
-          priority: generatedAction.priority || 'medium',
-          state: 'open',
-          taskType: 'interactive',
-          scheduleTime: null,
-          taskConfig: {}
-        });
-      }
+      // Return draft action (NOT persisted to DB yet)
+      // Frontend will store this in localStorage until it's "defined"
+      const draftAction = {
+        id: `draft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: generatedAction.title,
+        description: generatedAction.description,
+        priority: generatedAction.priority || 'medium',
+        state: 'draft', // Special state for unpersisted actions
+        agentId: agent.id
+      };
 
-      // Return conversational confirmation
+      // Return conversational confirmation with draft action
       return {
         statusCode: 200,
         headers: {
@@ -182,8 +271,9 @@ Otherwise, respond conversationally to gather context or answer questions.`;
         },
         body: JSON.stringify({
           success: true,
-          response: `I've created ${generatedActions.length} deliverable${generatedActions.length > 1 ? 's' : ''} for you to review. I'll work on these to create the actual content. Want me to schedule when I should tackle each one?`,
-          actionsGenerated: true
+          response: `I've drafted this deliverable for you. Let me know if you want to refine it, or we can mark it as defined and move on to the next one.`,
+          draftActions: [draftAction], // Array of one for consistent frontend handling
+          hasDraftActions: true
         })
       };
     }
