@@ -207,7 +207,7 @@ permalink: /do/agent/
       </div>
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <span id="asset-modal-type" style="background: #dbeafe; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 600; text-transform: uppercase;">type</span>
-        <button onclick="closeProposedAssetModal()" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
+        <button id="close-asset-modal-header" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
       </div>
     </div>
 
@@ -215,16 +215,21 @@ permalink: /do/agent/
       <pre id="asset-modal-content" style="background: #f9fafb; padding: 1rem; border-radius: 4px; overflow-x: auto; margin: 0; font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;">Content</pre>
     </div>
 
-    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: flex-end;">
-      <button onclick="closeProposedAssetModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-        Close
+    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: space-between;">
+      <button id="delete-asset-btn" style="padding: 0.5rem 1rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        🗑️ Delete
       </button>
-      <button onclick="copyAssetFromModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-        📋 Copy to Clipboard
-      </button>
-      <button onclick="saveAssetFromModal()" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-        💾 Save to Assets
-      </button>
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="close-asset-modal-footer" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          Close
+        </button>
+        <button id="copy-asset-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          📋 Copy to Clipboard
+        </button>
+        <button id="save-asset-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          💾 Save to Assets
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -234,7 +239,7 @@ permalink: /do/agent/
   <div style="max-width: 600px; margin: 2rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
       <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #111;">Define Action</h2>
-      <button onclick="closeDraftActionModal()" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
+      <button id="close-draft-modal-header" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
     </div>
 
     <div style="padding: 1.5rem;">
@@ -271,13 +276,18 @@ permalink: /do/agent/
       </div>
     </div>
 
-    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: flex-end;">
-      <button onclick="closeDraftActionModal()" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-        Cancel
+    <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: space-between;">
+      <button id="delete-draft-btn" style="padding: 0.5rem 1rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        🗑️ Delete
       </button>
-      <button onclick="markAsDefinedFromModal()" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-        Mark as Defined
-      </button>
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="cancel-draft-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          Cancel
+        </button>
+        <button id="define-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          Mark as Defined
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -432,6 +442,27 @@ permalink: /do/agent/
     currentDraftAction = null;
   }
 
+  function deleteDraftAction() {
+    if (!currentDraftAction) return;
+
+    if (!confirm('Are you sure you want to delete this draft action? This cannot be undone.')) {
+      return;
+    }
+
+    // Remove draft from localStorage
+    draftActions = draftActions.filter(a => a.id !== currentDraftAction.id);
+    saveDraftActions(draftActions);
+
+    // Remove draft card from chat
+    const cardElement = document.querySelector(`[data-action-id="${currentDraftAction.id}"]`);
+    if (cardElement) {
+      cardElement.remove();
+    }
+
+    // Close modal
+    closeDraftActionModal();
+  }
+
   async function markAsDefinedFromModal() {
     if (!currentDraftAction) return;
 
@@ -543,6 +574,26 @@ permalink: /do/agent/
     const modal = document.getElementById('proposed-asset-modal');
     modal.style.display = 'none';
     currentProposedAsset = null;
+  }
+
+  function deleteProposedAsset() {
+    if (!currentProposedAsset) return;
+
+    if (!confirm('Are you sure you want to delete this proposed asset? This cannot be undone.')) {
+      return;
+    }
+
+    // Remove from proposed assets array
+    proposedAssets = proposedAssets.filter(a => a.id !== currentProposedAsset.id);
+
+    // Remove asset card from chat
+    const cardElement = document.querySelector(`[data-asset-id="${currentProposedAsset.id}"]`);
+    if (cardElement) {
+      cardElement.remove();
+    }
+
+    // Close modal
+    closeProposedAssetModal();
   }
 
   function copyAssetFromModal() {
@@ -672,13 +723,13 @@ permalink: /do/agent/
         </div>
 
         <div style="display: flex; gap: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 0.75rem;">
-          <button onclick="viewSavedAsset('${asset.id}')" style="flex: 1; padding: 0.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
+          <button data-action="view" data-asset-id="${asset.id}" style="flex: 1; padding: 0.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
             View Full
           </button>
-          <button onclick="copySavedAsset('${asset.id}')" style="padding: 0.5rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
+          <button data-action="copy" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
             📋
           </button>
-          <button onclick="deleteSavedAsset('${asset.id}')" style="padding: 0.5rem 0.75rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
+          <button data-action="delete" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
             🗑️
           </button>
         </div>
@@ -746,7 +797,7 @@ permalink: /do/agent/
     const agent = event.detail;
     const greeting = {
       role: 'assistant',
-      content: `Ready to break down **${agent.name}**? I'll help you create deliverables to achieve your goal. What context do you need to provide, or should I generate some initial actions?`,
+      content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete on my own at a scheduled time. How would you like to begin?`,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(greeting);
@@ -762,6 +813,35 @@ permalink: /do/agent/
     // Initialize assets count
     const assetsCount = getAssets(agentId).length;
     document.getElementById('assets-count').textContent = assetsCount;
+  });
+
+  // Initialize modal event listeners
+  document.getElementById('close-draft-modal-header').addEventListener('click', closeDraftActionModal);
+  document.getElementById('cancel-draft-btn').addEventListener('click', closeDraftActionModal);
+  document.getElementById('delete-draft-btn').addEventListener('click', deleteDraftAction);
+  document.getElementById('define-action-btn').addEventListener('click', markAsDefinedFromModal);
+
+  document.getElementById('close-asset-modal-header').addEventListener('click', closeProposedAssetModal);
+  document.getElementById('close-asset-modal-footer').addEventListener('click', closeProposedAssetModal);
+  document.getElementById('delete-asset-btn').addEventListener('click', deleteProposedAsset);
+  document.getElementById('copy-asset-btn').addEventListener('click', copyAssetFromModal);
+  document.getElementById('save-asset-btn').addEventListener('click', saveAssetFromModal);
+
+  // Event delegation for dynamically created asset buttons
+  document.getElementById('assets-grid').addEventListener('click', (e) => {
+    const button = e.target.closest('button[data-action]');
+    if (!button) return;
+
+    const action = button.dataset.action;
+    const assetId = button.dataset.assetId;
+
+    if (action === 'view') {
+      viewSavedAsset(assetId);
+    } else if (action === 'copy') {
+      copySavedAsset(assetId);
+    } else if (action === 'delete') {
+      deleteSavedAsset(assetId);
+    }
   });
 
   // Handle form submission
