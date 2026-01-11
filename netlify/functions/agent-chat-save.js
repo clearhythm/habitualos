@@ -15,7 +15,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, agentId, messages, generatedAssets, generatedActions } = JSON.parse(event.body);
+    const { userId, agentId, messages, generatedAssets, generatedActions, chatId, mode } = JSON.parse(event.body);
 
     // Validate required fields
     if (!userId || !agentId || !messages || !Array.isArray(messages)) {
@@ -28,20 +28,30 @@ exports.handler = async (event) => {
       };
     }
 
-    // Generate chat ID
-    const chatId = `agc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    let result;
 
-    // Prepare chat data
-    const chatData = {
-      _userId: userId,
-      agentId,
-      messages,
-      generatedAssets: generatedAssets || [],
-      generatedActions: generatedActions || []
-    };
+    if (mode === 'append' && chatId) {
+      // APPEND mode: Update existing chat with new messages
+      result = await dbAgentChats.appendToAgentChat(
+        chatId,
+        messages,
+        generatedAssets || [],
+        generatedActions || []
+      );
+    } else {
+      // CREATE mode: Create new chat
+      const newChatId = `agc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Save to Firestore
-    const result = await dbAgentChats.createAgentChat(chatId, chatData);
+      const chatData = {
+        _userId: userId,
+        agentId,
+        messages,
+        generatedAssets: generatedAssets || [],
+        generatedActions: generatedActions || []
+      };
+
+      result = await dbAgentChats.createAgentChat(newChatId, chatData);
+    }
 
     return {
       statusCode: 200,

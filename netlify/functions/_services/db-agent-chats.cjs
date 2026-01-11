@@ -85,3 +85,34 @@ exports.createAgentChat = async (id, data) => {
 
   return { id: formattedId };
 };
+
+/**
+ * Append messages to existing agent work chat
+ * @param {string} id - Agent chat ID
+ * @param {Array} newMessages - New messages to append
+ * @param {Array} generatedAssets - New asset IDs to add
+ * @param {Array} generatedActions - New action IDs to add
+ * @returns {Promise<Object>} Result with id
+ */
+exports.appendToAgentChat = async (id, newMessages, generatedAssets = [], generatedActions = []) => {
+  const { db, FieldValue } = require('../_utils/firestore.cjs');
+  const chatRef = db.collection('agent-chats').doc(id);
+
+  // Get current document to append to arrays
+  const chatDoc = await chatRef.get();
+  if (!chatDoc.exists) {
+    throw new Error(`Chat ${id} not found`);
+  }
+
+  const currentData = chatDoc.data();
+  const updates = {
+    messages: [...(currentData.messages || []), ...newMessages],
+    generatedAssets: [...(currentData.generatedAssets || []), ...generatedAssets],
+    generatedActions: [...(currentData.generatedActions || []), ...generatedActions],
+    _updatedAt: FieldValue.serverTimestamp()
+  };
+
+  await chatRef.update(updates);
+
+  return { id };
+};

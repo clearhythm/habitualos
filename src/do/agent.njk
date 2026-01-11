@@ -312,7 +312,7 @@ permalink: /do/agent/
   // Chat history (in memory)
   let chatHistory = [];
   let loadingMessageElement = null;
-  let chatSavedToFirestore = false; // Track if current chat session has been saved
+  let currentChatId = null; // Track Firestore chatId for appending refinements
 
   // Draft actions stored in localStorage
   const DRAFT_ACTIONS_KEY = `draft-actions-${agentId}`;
@@ -342,17 +342,14 @@ permalink: /do/agent/
 
   // Save chat history to Firestore when assets/actions are generated
   async function saveChatToFirestore(generatedAssets = [], generatedActions = []) {
-    // Only save once per chat session
-    if (chatSavedToFirestore) {
-      return;
-    }
-
     // Don't save if there's no meaningful chat history
     if (chatHistory.length === 0) {
       return;
     }
 
     try {
+      const isNewChat = currentChatId === null;
+
       const response = await fetch('/.netlify/functions/agent-chat-save', {
         method: 'POST',
         headers: {
@@ -363,21 +360,46 @@ permalink: /do/agent/
           agentId,
           messages: chatHistory,
           generatedAssets,
-          generatedActions
+          generatedActions,
+          chatId: currentChatId, // null for new, existing ID for append
+          mode: isNewChat ? 'create' : 'append'
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        console.log('Chat saved to Firestore:', data.chatId);
-        chatSavedToFirestore = true;
+        if (isNewChat) {
+          // Store chatId for future appends
+          currentChatId = data.chatId;
+          console.log('New chat created in Firestore:', data.chatId);
+        } else {
+          console.log('Chat appended to Firestore:', currentChatId);
+        }
       } else {
         console.error('Failed to save chat:', data.error);
       }
     } catch (error) {
       console.error('Error saving chat to Firestore:', error);
     }
+  }
+
+  // Clear chat history after approval (when action defined or asset saved)
+  function clearChatHistory() {
+    chatHistory = [];
+    currentChatId = null;
+
+    // Clear chat UI
+    chatMessages.innerHTML = '';
+
+    // Re-render greeting
+    const greeting = {
+      role: 'assistant',
+      content: `Ready for the next task? What would you like to work on?`,
+      timestamp: new Date().toISOString()
+    };
+    chatHistory.push(greeting);
+    renderMessage('assistant', greeting.content);
   }
 
   // Update send button state
@@ -550,6 +572,9 @@ permalink: /do/agent/
       // Close modal
       closeDraftActionModal();
 
+      // Clear chat history for next conversation
+      clearChatHistory();
+
       // Show success message
       alert('Action defined! It will appear in your Actions list.');
 
@@ -681,6 +706,9 @@ permalink: /do/agent/
 
     // Close modal
     closeProposedAssetModal();
+
+    // Clear chat history for next conversation
+    clearChatHistory();
 
     // Show success feedback
     alert('Asset saved to Assets tab!');
@@ -838,7 +866,7 @@ permalink: /do/agent/
     const agent = event.detail;
     const greeting = {
       role: 'assistant',
-      content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete on my own at a scheduled time. How would you like to begin?`,
+      content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete at a scheduled time. How would you like to begin?`,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(greeting);
