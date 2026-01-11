@@ -312,6 +312,7 @@ permalink: /do/agent/
   // Chat history (in memory)
   let chatHistory = [];
   let loadingMessageElement = null;
+  let chatSavedToFirestore = false; // Track if current chat session has been saved
 
   // Draft actions stored in localStorage
   const DRAFT_ACTIONS_KEY = `draft-actions-${agentId}`;
@@ -338,6 +339,46 @@ permalink: /do/agent/
 
   // Proposed assets stored temporarily (not in localStorage until saved)
   let proposedAssets = [];
+
+  // Save chat history to Firestore when assets/actions are generated
+  async function saveChatToFirestore(generatedAssets = [], generatedActions = []) {
+    // Only save once per chat session
+    if (chatSavedToFirestore) {
+      return;
+    }
+
+    // Don't save if there's no meaningful chat history
+    if (chatHistory.length === 0) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/.netlify/functions/agent-chat-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          messages: chatHistory,
+          generatedAssets,
+          generatedActions
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log('Chat saved to Firestore:', data.chatId);
+        chatSavedToFirestore = true;
+      } else {
+        console.error('Failed to save chat:', data.error);
+      }
+    } catch (error) {
+      console.error('Error saving chat to Firestore:', error);
+    }
+  }
 
   // Update send button state
   function updateSendButton() {
@@ -915,6 +956,10 @@ permalink: /do/agent/
         data.draftActions.forEach(action => {
           renderDraftActionCard(action);
         });
+
+        // Save chat to Firestore (first time a deliverable is generated)
+        const actionIds = data.draftActions.map(a => a.id);
+        saveChatToFirestore([], actionIds);
       }
 
       // If proposed asset was generated, render it inline (temporary until saved)
@@ -924,6 +969,9 @@ permalink: /do/agent/
 
         // Render proposed asset card inline in chat
         renderProposedAssetCard(data.proposedAsset);
+
+        // Save chat to Firestore (first time a deliverable is generated)
+        saveChatToFirestore([data.proposedAsset.id], []);
       }
 
     } catch (error) {
