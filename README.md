@@ -117,8 +117,8 @@ When all actions complete, the agent congratulates you and suggests coming back 
 ## 🛠️ Tech Stack
 
 - **Frontend:** 11ty (static site generator) + Nunjucks templating
-- **Backend:** Serverless functions (Netlify/Vercel/Cloudflare Workers)
-- **Database:** Turso (edge SQLite) or Supabase (Postgres) - TBD
+- **Backend:** Serverless functions (Netlify)
+- **Database:** Firestore (Firebase NoSQL database)
 - **AI:** Claude API (Anthropic) - configurable and swappable
 - **Memory:** mem0 integration for cross-session learning
 - **Integrations:** MCP servers for GitHub, filesystem, Substack, LinkedIn, etc.

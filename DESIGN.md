@@ -1,7 +1,7 @@
 ---
 last_sync: 2026-01-09T05:14:52.052Z
-last_commit: 2026-01-09T05:30:15Z
-commits_since_sync: 2
+last_commit: 2026-01-11T00:03:53Z
+commits_since_sync: 4
 ---
 
 # HabitualOS Design Documentation
@@ -10,9 +10,9 @@ commits_since_sync: 2
 
 ```
 habitualos/
-├── db/                          # Database layer
-│   ├── init.js                  # DB initialization and migrations
-│   └── schema.sql               # SQLite schema definitions
+├── db/                          # Database layer (deprecated - now using Firestore)
+│   ├── init.js                  # Legacy DB initialization
+│   └── schema.sql               # Legacy schema definitions
 │
 ├── netlify/functions/           # Serverless API endpoints
 │   ├── _services/               # Database service layer

@@ -12,7 +12,7 @@ A minimal practice tracking system with:
 - Thumbs up/down feedback on Obi-Wan's messages
 - Simple success message when Obi-Wan doesn't appear
 - **Practice history list view** - see all your past check-ins
-- All data stored in SQLite (no data loss!)
+- All data stored in Firestore (no data loss!)
 
 ## Files Created/Modified
 
@@ -89,7 +89,7 @@ CREATE TABLE practices (
 
 ## Notes
 
-- **Data is persistent** - stored in SQLite, never lost
+- **Data is persistent** - stored in Firestore, never lost
 - **No authentication** - single user (you)
 - **No gamification** - intentionally simple and non-demanding
 - **Obi-Wan is rare** - appears ~14% of the time (1 in 7), making it special

@@ -1,7 +1,7 @@
 ---
 last_sync: 2026-01-09T05:14:52.052Z
-last_commit: 2026-01-09T05:30:15Z
-commits_since_sync: 2
+last_commit: 2026-01-11T00:03:53Z
+commits_since_sync: 4
 ---
 
 # HabitualOS Architecture
@@ -70,7 +70,7 @@ This enables agents to:
 
 ### Backend
 - **Netlify Functions**: Serverless API endpoints (Node.js)
-- **SQLite (better-sqlite3)**: Embedded database for agents, actions, chat history
+- **Firestore**: Cloud NoSQL database for agents, actions, chat history
 - **Anthropic Claude API**: Conversational AI (claude-sonnet-4-5)
 - **node-cron**: Task scheduling for autonomous execution
 
@@ -84,7 +84,7 @@ This enables agents to:
 ### Data Flow
 
 ```
-User → Browser (Eleventy SPA) → Netlify Functions → SQLite Database
+User → Browser (Eleventy SPA) → Netlify Functions → Firestore Database
                                 ↓
                          Anthropic Claude API
                                 ↓
@@ -237,16 +237,15 @@ npm start  # Runs Sass, Eleventy, Netlify Dev, Scheduler in parallel
 
 ### Production (Netlify)
 - Automatic deploys from `main` branch
-- Environment variables: `ANTHROPIC_API_KEY`, `DATABASE_URL`
+- Environment variables: `ANTHROPIC_API_KEY`, `FIREBASE_ADMIN_CREDENTIALS`
 - Functions deployed as serverless endpoints
 - Static assets served from global CDN
-- SQLite database stored on Netlify filesystem (ephemeral on redeploy)
+- Firestore database (persistent cloud storage)
 
 ## Future Considerations
 
 ### Planned Enhancements
 - **Multi-user auth** - Proper login/signup with Netlify Identity
-- **Persistent database** - Move from SQLite to Postgres/PlanetScale
 - **Cloud storage** - S3/R2 for task outputs and artifacts
 - **MCP integrations** - Publish deliverables to external tools (Linear, Notion, etc.)
 - **Embodiment practices** - Agent suggests somatic/physical practices aligned with goals
