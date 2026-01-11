@@ -283,6 +283,18 @@ permalink: /do/agent/
           <option value="high">High</option>
         </select>
       </div>
+
+      <div id="task-config-section" style="display: none;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Execution Instructions</label>
+          <div id="draft-instructions" style="padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; color: #4b5563; white-space: pre-wrap;"></div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Expected Output</label>
+          <div id="draft-expected-output" style="padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; color: #4b5563; white-space: pre-wrap;"></div>
+        </div>
+      </div>
     </div>
 
     <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: space-between;">
@@ -504,6 +516,16 @@ permalink: /do/agent/
     document.getElementById('draft-description').value = action.description || '';
     document.getElementById('draft-priority').value = action.priority || 'medium';
 
+    // Show taskConfig section if present
+    const taskConfigSection = document.getElementById('task-config-section');
+    if (action.taskConfig && (action.taskConfig.instructions || action.taskConfig.expectedOutput)) {
+      taskConfigSection.style.display = 'block';
+      document.getElementById('draft-instructions').textContent = action.taskConfig.instructions || 'No instructions provided';
+      document.getElementById('draft-expected-output').textContent = action.taskConfig.expectedOutput || 'No expected output specified';
+    } else {
+      taskConfigSection.style.display = 'none';
+    }
+
     // Show modal
     modal.style.display = 'block';
   }
@@ -558,7 +580,9 @@ permalink: /do/agent/
           agentId,
           title,
           description,
-          priority
+          priority,
+          taskType: currentDraftAction.taskType || 'scheduled',
+          taskConfig: currentDraftAction.taskConfig || {}
         })
       });
 

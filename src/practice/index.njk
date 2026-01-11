@@ -95,11 +95,19 @@ permalink: /practice/
 
   // Calculate rank based on check-ins
   function getRank(checkins) {
-    if (checkins === 0) return { name: 'Seed', emoji: '🌱' };
-    if (checkins < 5) return { name: 'Sprout', emoji: '🌿' };
-    if (checkins < 20) return { name: 'Sapling', emoji: '🌳' };
-    if (checkins < 50) return { name: 'Tree', emoji: '🌲' };
-    return { name: 'Grove', emoji: '🏞️' };
+    if (checkins <= 2) {
+      return { emoji: '🌱', name: 'Seedling' };
+    } else if (checkins <= 5) {
+      return { emoji: '🌿', name: 'Sprout' };
+    } else if (checkins <= 10) {
+      return { emoji: '🌺', name: 'Budding' };
+    } else if (checkins <= 20) {
+      return { emoji: '🌸', name: 'Blooming' };
+    } else if (checkins <= 50) {
+      return { emoji: '🌻', name: 'Full Bloom' };
+    } else {
+      return { emoji: '🌼', name: 'Garden' };
+    }
   }
 
   // Load stats

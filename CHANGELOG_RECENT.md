@@ -253,3 +253,293 @@ the new framing pattern introduced in the setup-chat improvements.
 - scripts/update-design-agent.js
 
 ---
+
+## Commit 8001c45 - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Update documentation frontmatter after recent commits
+
+**Changed files:**
+- ARCHITECTURE.md
+- CHANGELOG_RECENT.md
+- DESIGN.md
+
+---
+
+## Commit 0212671 - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Implement agent chat history persistence to Firestore
+
+Agent work chats are now automatically saved to Firestore when
+a deliverable (action or asset) is generated, preserving the
+conversation context that led to creating each deliverable.
+
+## Architecture
+
+### Database Service (netlify/functions/_services/db-agent-chats.cjs)
+- Collection: 'agent-chats'
+- Schema: userId, agentId, messages[], generatedAssets[], generatedActions[]
+- Methods: getAgentChatsByUserId(), getAgentChatsByAgentId(), createAgentChat()
+- ID format: agc-{timestamp}-{random}
+
+### Save Endpoint (netlify/functions/agent-chat-save.js)
+- POST /api/agent-chat-save
+- Validates required fields (userId, agentId, messages array)
+- Saves chat with references to generated deliverables
+- Returns chatId on success
+
+### Frontend Integration (src/do/agent.njk)
+- Added chatSavedToFirestore flag to prevent duplicate saves
+- saveChatToFirestore() function handles async save operation
+- Triggered when draft action is generated (passes action IDs)
+- Triggered when proposed asset is generated (passes asset IDs)
+- Only saves once per chat session (ephemeral until deliverable created)
+
+## Behavior
+
+1. Chat History Lifecycle:
+   - Starts in memory only (ephemeral)
+   - Saved to Firestore when first asset/action is generated
+   - Subsequent messages in same session don't trigger new saves
+   - Each new chat session (page reload) creates new potential save
+
+2. What Gets Persisted:
+   - Full message history (user + assistant)
+   - IDs of assets generated in that session
+   - IDs of actions generated in that session
+   - User and agent context
+
+3. Benefits:
+   - Record of conversation context leading to deliverables
+   - Debugging and refinement of agent behavior
+   - Audit trail of work done
+   - No chat history loss
+
+This follows the pattern established by agent-creation-chats
+but captures the ongoing work sessions rather than just the
+initial setup conversation.
+
+**Changed files:**
+- netlify/functions/_services/db-agent-chats.cjs
+- netlify/functions/agent-chat-save.js
+- src/do/agent.njk
+
+---
+
+## Commit ac8696a - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Fix agent chat persistence flow to support refinement cycles
+
+Implements proper chat lifecycle: CREATE on first deliverable,
+APPEND on refinements, CLEAR on approval.
+
+## Previous Behavior (Bug)
+- Chat saved once with chatSavedToFirestore flag
+- Refinements not captured
+- Chat history never cleared
+
+## New Behavior (Correct)
+
+### Chat Lifecycle
+1. User chats → Agent generates deliverable
+   - CREATE new chat in Firestore
+   - Store chatId in memory
+   - Keep chat in localStorage for refinements
+
+2. User reviews → Closes without approving → Continues chatting
+   - Agent refines deliverable
+   - APPEND new messages to same chatId
+   - Full conversation history preserved
+
+3. User approves (Mark as Defined / Save to Assets)
+   - Chat history cleared
+   - UI reset with fresh greeting
+   - currentChatId reset to null
+   - Next deliverable creates new chat session
+
+### Implementation Details
+
+#### Frontend (src/do/agent.njk)
+- Replaced chatSavedToFirestore flag with currentChatId tracking
+- saveChatToFirestore() checks if currentChatId exists:
+  - null → CREATE mode (new chat)
+  - exists → APPEND mode (refinement)
+- Added clearChatHistory() function:
+  - Clears chatHistory array
+  - Resets currentChatId to null
+  - Clears chat UI
+  - Renders fresh greeting
+- Integrated clearChatHistory() in:
+  - markAsDefinedFromModal() after success
+  - saveAssetFromModal() after success
+
+#### Service Layer (db-agent-chats.cjs)
+- Added appendToAgentChat() function
+- Fetches existing chat document
+- Appends new messages to messages array
+- Merges generatedAssets and generatedActions arrays
+- Updates _updatedAt timestamp
+
+#### Endpoint (agent-chat-save.js)
+- Accepts mode parameter: 'create' or 'append'
+- CREATE mode: Generates new chatId, creates document
+- APPEND mode: Requires existing chatId, appends to document
+- Returns chatId in both cases
+
+This ensures complete conversation context is preserved through
+multiple refinement cycles until the user approves the deliverable.
+
+**Changed files:**
+- netlify/functions/_services/db-agent-chats.cjs
+- netlify/functions/agent-chat-save.js
+- src/do/agent.njk
+
+---
+
+## Commit 897f353 - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Clarify ASSET vs ACTION distinction in agent system prompt
+
+Fix issue where agent incorrectly used GENERATE_ACTIONS for immediate
+deliverables like specification documents that should be GENERATE_ASSET.
+
+## Problem
+Agent generated ACTION (future work) instead of ASSET (immediate deliverable)
+when user requested "create a specification document". This resulted in:
+- Only getting title/description instead of full content
+- Wrong workflow (schedule later vs deliver now)
+
+## Changes
+
+### Before
+- Vague distinction: "immediate" vs "future work"
+- Examples didn't cover all common cases
+- Not explicit about NOW vs LATER timing
+
+### After
+- Explicit: "deliver FULL CONTENT immediately" vs "done LATER at scheduled time"
+- Added specific examples:
+  * "Create a specification document" → ASSET (full spec content)
+  * "Draft an email" → ASSET (full email text)
+  * "Write code" → ASSET (complete code)
+  * vs "Generate weekly posts" → ACTION (scheduled recurring)
+- KEY RULE box emphasizing the distinction
+
+## Expected Behavior
+When user asks agent to create a spec doc, prompt, code snippet, etc.:
+- Agent sends GENERATE_ASSET signal
+- Asset includes full content in the response
+- User can review/copy/save immediately
+
+When user asks for scheduled/recurring work:
+- Agent sends GENERATE_ACTIONS signal
+- Action includes title/description/schedule
+- Work executes at scheduled time
+
+**Changed files:**
+- netlify/functions/agent-chat.js
+
+---
+
+## Commit c50e624 - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Add reset conversation button to agent chat interface
+
+Adds manual reset button beneath chat input to allow users to
+clear conversation history and start fresh.
+
+## UI Change
+- Added 'Reset Conversation' button below chat form
+- Centered positioning with gray styling
+- 🔄 icon for visual clarity
+
+## Functionality
+- Click button → Confirmation dialog
+- Confirm → Calls clearChatHistory():
+  * Clears chatHistory array
+  * Resets currentChatId to null
+  * Clears chat UI
+  * Renders fresh greeting
+- Next deliverable creates new chat session in Firestore
+
+## Use Case
+User wants to manually reset the conversation without approving
+a deliverable. They can:
+1. Delete draft actions/assets manually if needed
+2. Click Reset Conversation
+3. Confirm dialog
+4. Start fresh conversation
+
+Reuses existing clearChatHistory() function that was created
+for the approval flow (Mark as Defined / Save to Assets).
+
+**Changed files:**
+- src/do/agent.njk
+
+---
+
+## Commit b50e374 - 2026-01-10
+
+**Author:** Erik Burns
+
+**Message:**
+Fix signal parsing to prevent false matches in agent responses
+
+Fixes bug where mentioning signal names in explanatory text would
+trigger the wrong parser, causing 500 errors and empty deliverables.
+
+## Problem
+Agent responses like:
+"I'll use GENERATE_ASSET instead of GENERATE_ACTIONS because..."
+
+Would trigger GENERATE_ACTIONS parser first (includes() match), fail
+to parse JSON, return 500 error before checking GENERATE_ASSET.
+
+Result: Empty assets created, 500 errors in console.
+
+## Root Cause
+Signal detection used broad string matching:
+- trimmedResponse.includes('GENERATE_ACTIONS')
+- trimmedResponse.includes('GENERATE_ASSET')
+- trimmedResponse.includes('USE_TOOL:')
+
+This matched signal names ANYWHERE in the response, not just the
+actual signal position.
+
+## Fix
+Changed to strict regex matching at start of line:
+- /^GENERATE_ACTIONS\s*\n---/m - Matches only actual signal format
+- /^GENERATE_ASSET\s*\n---/m - Requires newline + separator
+- /^USE_TOOL:\s*(\w+)/m - Only at line start
+
+Now only matches proper signal format:
+```
+GENERATE_ASSET
+---
+{json}
+```
+
+Not casual mentions in explanatory text.
+
+## Testing
+Agent can now safely explain signals without triggering parsers.
+Only actual signal formats trigger parsing.
+
+**Changed files:**
+- netlify/functions/agent-chat.js
+
+---

@@ -199,36 +199,53 @@ GENERATE_ASSET
 
 The asset card will appear inline. User can click to view full content, copy to clipboard, or save to Assets tab.
 
-When to generate actions:
-- When user asks for actions ("generate actions", "what should we start with", etc.)
-- When you have enough context to create specific deliverables
-- IMPORTANT: Actions are deliverables YOU will create, not todos for the user
-- Generate ONE action at a time - let the user refine it before creating more
+When to generate scheduled actions:
+- The work will be done LATER at a scheduled time (not now)
+- It requires autonomous execution outside the chat
+- You have ALL the context needed to execute it without human intervention
+- IMPORTANT: Actions must include complete instructions for autonomous execution
 
-Action format:
-- Title: 2-5 words ONLY - concise and scannable
-- Description: Brief description of what you'll create and how
+Action format requirements:
+- Title: 2-5 words - what will be created
+- Description: Brief overview of what you'll do
 - Priority: high|medium|low
+- taskType: "scheduled" (for scheduled autonomous execution)
+- taskConfig: CRITICAL - detailed execution instructions
+  * instructions: Step-by-step instructions for autonomous execution
+  * expectedOutput: What you'll produce when this runs
 
 If generating an action, respond EXACTLY in this format (no markdown, no code blocks):
 GENERATE_ACTIONS
 ---
 {
   "title": "2-5 word title",
-  "description": "What you'll create (be specific about the output)",
-  "priority": "high|medium|low"
+  "description": "Brief overview of what you'll do",
+  "priority": "high|medium|low",
+  "taskType": "scheduled",
+  "taskConfig": {
+    "instructions": "Detailed step-by-step instructions for autonomous execution. Be specific about what to create, how to create it, what sources/data to use, etc.",
+    "expectedOutput": "Clear description of what will be produced (e.g., 'A markdown document with 3 LinkedIn posts formatted with hashtags')"
+  }
 }
 
 Example:
 GENERATE_ACTIONS
 ---
 {
-  "title": "LinkedIn Profile Draft",
-  "description": "Create optimized LinkedIn profile copy highlighting product leadership experience",
-  "priority": "high"
+  "title": "Weekly LinkedIn Posts",
+  "description": "Generate 3 LinkedIn posts about product launches every Monday",
+  "priority": "high",
+  "taskType": "scheduled",
+  "taskConfig": {
+    "instructions": "1. Review recent product updates from the past week\n2. Create 3 LinkedIn posts (300-500 words each)\n3. Focus on: product benefits, user stories, technical highlights\n4. Use professional but approachable tone\n5. Include relevant hashtags: #ProductDevelopment #TechLeadership",
+    "expectedOutput": "Three formatted LinkedIn posts ready to publish, each with headline, body text, and hashtags"
+  }
 }
 
-CRITICAL: Generate ONE action at a time. After they refine or define it, you can suggest another.
+CRITICAL:
+- Generate ONE action at a time
+- taskConfig.instructions must be detailed enough for autonomous execution
+- Don't create actions that just say "Create X" without full execution instructions
 
 ## Available Tools
 
@@ -406,6 +423,8 @@ Use this context to have informed design discussions and make architectural reco
         title: generatedAction.title,
         description: generatedAction.description,
         priority: generatedAction.priority || 'medium',
+        taskType: generatedAction.taskType || 'scheduled',
+        taskConfig: generatedAction.taskConfig || {},
         state: 'draft', // Special state for unpersisted actions
         agentId: agent.id
       };

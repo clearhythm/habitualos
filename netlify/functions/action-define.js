@@ -1,14 +1,10 @@
 require('dotenv').config();
 const { getAgent } = require('./_services/db-agents.cjs');
-const Database = require('better-sqlite3');
-const path = require('path');
-
-const dbPath = path.join(__dirname, '..', '..', 'db', 'habitualos.db');
-const db = new Database(dbPath);
+const { createAction, getAction } = require('./_services/db-actions.cjs');
 
 /**
  * POST /api/action-define
- * Convert a draft action to a defined action (persist to database)
+ * Convert a draft action to a defined action (persist to Firestore)
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -21,7 +17,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, agentId, title, description, priority } = JSON.parse(event.body);
+    const { userId, agentId, title, description, priority, taskType, taskConfig } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -56,31 +52,30 @@ exports.handler = async (event) => {
       };
     }
 
-    // Create action in database
+    // Create action in Firestore
     const actionId = `action-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const now = new Date().toISOString();
 
-    const stmt = db.prepare(`
-      INSERT INTO actions (
-        id, _userId, agentId, title, description, state, priority, taskType, _createdAt, _updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-      actionId,
-      userId,
+    const actionData = {
+      _userId: userId,
       agentId,
       title,
       description,
-      'defined',  // State is 'defined' - ready for scheduling
-      priority || 'medium',
-      'scheduled',  // Default task type
-      now,
-      now
-    );
+      state: 'defined',  // State is 'defined' - ready for scheduling
+      priority: priority || 'medium',
+      taskType: taskType || 'scheduled',
+      taskConfig: taskConfig || {},
+      scheduleTime: null,
+      startedAt: null,
+      completedAt: null,
+      dismissedAt: null,
+      dismissedReason: null,
+      errorMessage: null
+    };
+
+    await createAction(actionId, actionData);
 
     // Fetch the created action
-    const createdAction = db.prepare('SELECT * FROM actions WHERE id = ?').get(actionId);
+    const createdAction = await getAction(actionId);
 
     return {
       statusCode: 200,
