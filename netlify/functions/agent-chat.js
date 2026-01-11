@@ -306,23 +306,10 @@ Use this context to have informed design discussions and make architectural reco
     // Be flexible with whitespace and markdown code blocks
     const trimmedResponse = assistantResponse.trim();
 
-    // Check if response indicates tool usage
-    if (trimmedResponse.includes('USE_TOOL:')) {
+    // Check if response indicates tool usage (at start of line)
+    const toolMatch = trimmedResponse.match(/^USE_TOOL:\s*(\w+)/m);
+    if (toolMatch) {
       const toolRegistry = require('./_tools/registry.cjs');
-
-      // Extract tool name
-      const toolMatch = trimmedResponse.match(/USE_TOOL:\s*(\w+)/);
-      if (!toolMatch) {
-        console.error('Could not parse tool name from:', assistantResponse);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({
-            success: false,
-            error: 'Failed to parse tool call'
-          })
-        };
-      }
-
       const toolName = toolMatch[1];
 
       try {
@@ -355,7 +342,8 @@ Use this context to have informed design discussions and make architectural reco
       }
     }
 
-    if (trimmedResponse.includes('GENERATE_ACTIONS')) {
+    // Check for GENERATE_ACTIONS at start of line followed by --- separator
+    if (/^GENERATE_ACTIONS\s*\n---/m.test(trimmedResponse)) {
       // Find JSON object (single action)
       const lines = assistantResponse.split('\n');
       let jsonStart = -1;
@@ -437,8 +425,8 @@ Use this context to have informed design discussions and make architectural reco
       };
     }
 
-    // Check if response indicates asset generation
-    if (trimmedResponse.includes('GENERATE_ASSET')) {
+    // Check for GENERATE_ASSET at start of line followed by --- separator
+    if (/^GENERATE_ASSET\s*\n---/m.test(trimmedResponse)) {
       // Find JSON object (single asset)
       const lines = assistantResponse.split('\n');
       let jsonStart = -1;
