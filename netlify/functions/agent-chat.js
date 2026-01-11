@@ -219,6 +219,19 @@ GENERATE_ACTIONS
 
 CRITICAL: Generate ONE action at a time. After they refine or define it, you can suggest another.
 
+## Available Tools
+
+You have access to tools for performing operations:
+
+**sync_documentation** - Updates project documentation by syncing with recent git commits
+- Use when: Documentation is out of date, user asks to refresh context, or before architectural discussions
+- Format: USE_TOOL: sync_documentation
+
+When you use a tool, respond EXACTLY in this format:
+USE_TOOL: sync_documentation
+
+The tool will execute and results will be added to the conversation. You'll see the output and can continue naturally.
+
 Otherwise, respond conversationally to gather context or answer questions.${docStatus.isDirty ? `
 
 ---
@@ -281,6 +294,56 @@ Use this context to have informed design discussions and make architectural reco
     // Check if response indicates action generation
     // Be flexible with whitespace and markdown code blocks
     const trimmedResponse = assistantResponse.trim();
+
+    // Check if response indicates tool usage
+    if (trimmedResponse.includes('USE_TOOL:')) {
+      const toolRegistry = require('./_tools/registry.cjs');
+
+      // Extract tool name
+      const toolMatch = trimmedResponse.match(/USE_TOOL:\s*(\w+)/);
+      if (!toolMatch) {
+        console.error('Could not parse tool name from:', assistantResponse);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: 'Failed to parse tool call'
+          })
+        };
+      }
+
+      const toolName = toolMatch[1];
+
+      try {
+        // Execute the tool
+        const result = await toolRegistry.executeTool(toolName, {});
+
+        // Return result to be added to conversation
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            response: result.success
+              ? `Tool executed: ${result.message}\n\n${result.output ? '```\n' + result.output + '\n```' : ''}`
+              : `Tool failed: ${result.message}\n\n${result.output ? '```\n' + result.output + '\n```' : ''}`,
+            toolResult: result
+          })
+        };
+      } catch (error) {
+        console.error('Tool execution error:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: `Tool execution failed: ${error.message}`
+          })
+        };
+      }
+    }
+
     if (trimmedResponse.includes('GENERATE_ACTIONS')) {
       // Find JSON object (single action)
       const lines = assistantResponse.split('\n');
