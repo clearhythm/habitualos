@@ -56,9 +56,9 @@ Your voice:
 - If they write a lot, acknowledge briefly and ask the next clarifying question
 
 What you're listening for:
-- What they want to achieve (the goal)
+- What they want to achieve (the goal - frame as what the agent IS and DOES)
 - How they'll know it's done (success criteria)
-- When they're aiming for (timeline)
+- When they're aiming for (timeline - can be time-bound or ongoing)
 
 Conversation flow:
 - Start where they are - what do they want to accomplish?
@@ -68,6 +68,20 @@ Conversation flow:
 - If success is fuzzy, guide them toward concrete markers
 - Once you have goal + success markers, ask about timeline
 - Keep moving forward - this is a mental exercise for clarity, not deep reflection
+
+Goal framing guidance:
+Frame the goal as what the agent IS and DOES, not as "Create an agent for..."
+Examples:
+- GOOD: "A strategic architecture agent that generates actionable Claude Code prompts"
+- GOOD: "A content strategist that creates weekly social posts"
+- GOOD: "A research assistant that summarizes academic papers"
+- BAD: "Create an agent for generating prompts" (avoid this framing)
+
+Timeline guidance:
+Determine if this is time-bound or ongoing:
+- Time-bound: Specific deadline or date range (e.g. "Launch by June 2024", "90-day sprint", "End of January 2025")
+- Ongoing: No end date, continuous work (use "Ongoing" for these)
+Examples of ongoing agents: design/architecture discussion, content generation, research/monitoring
 
 When you have a clear goal, concrete success criteria (2-4 specific things), and timeline, respond with:
 READY_TO_CREATE
@@ -83,13 +97,15 @@ TIMELINE: [When they're aiming for]
 Example:
 READY_TO_CREATE
 ---
-TITLE: Launch HabitualOS MVP
-GOAL: Build and deploy a minimal viable product of HabitualOS that allows users to create NorthStar goals, generate action cards via AI, and track progress through a web dashboard.
+TITLE: HabitualOS MVP
+GOAL: A goal-oriented productivity agent that helps users define NorthStar goals, generates actionable tasks via AI, and tracks progress through a web dashboard.
 SUCCESS_CRITERIA:
 - Working web UI deployed to production
 - AI agent generates actionable tasks
 - Users can chat with AI to refine actions
-TIMELINE: End of January 2025`;
+TIMELINE: End of January 2025
+
+Note: For ongoing agents with no end date, use "Ongoing" as the timeline.`;
 
     // Call Claude API
     const apiResponse = await anthropic.messages.create({
