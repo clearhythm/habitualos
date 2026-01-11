@@ -80,6 +80,15 @@ permalink: /do/agent/
               </button>
             </div>
           </form>
+          <div style="text-align: center; margin-top: 0.5rem;">
+            <button
+              id="reset-conversation-btn"
+              type="button"
+              style="padding: 0.5rem 1rem; background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500; transition: all 0.2s;"
+            >
+              🔄 Reset Conversation
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -910,6 +919,13 @@ permalink: /do/agent/
       copySavedAsset(assetId);
     } else if (action === 'delete') {
       deleteSavedAsset(assetId);
+    }
+  });
+
+  // Handle reset conversation button
+  document.getElementById('reset-conversation-btn').addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset the conversation? This will clear the chat history.')) {
+      clearChatHistory();
     }
   });
 
