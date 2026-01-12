@@ -62,37 +62,26 @@ exports.handler = async (event) => {
 
     // Read architecture docs for context-aware discussions
     let architectureContext = '';
-    let designContext = '';
-    let docStatus = { isDirty: false, commitsSinceSync: 0, lastSync: null, lastCommit: null };
+    let agentsContext = '';
+    let databaseContext = '';
 
-    const architecturePath = path.join(__dirname, '..', '..', 'ARCHITECTURE.md');
-    const designPath = path.join(__dirname, '..', '..', 'DESIGN.md');
+    const overviewPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'overview.md');
+    const agentsPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'agents.md');
+    const databasePath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'database.md');
 
-    if (fs.existsSync(architecturePath)) {
-      const archContent = fs.readFileSync(architecturePath, 'utf8');
-
-      // Parse frontmatter
-      const frontmatterMatch = archContent.match(/^---\s*\nlast_sync:\s*(.+?)\nlast_commit:\s*(.+?)\ncommits_since_sync:\s*(\d+)\s*\n---/);
-      if (frontmatterMatch) {
-        docStatus.lastSync = frontmatterMatch[1];
-        docStatus.lastCommit = frontmatterMatch[2];
-        docStatus.commitsSinceSync = parseInt(frontmatterMatch[3], 10);
-        docStatus.isDirty = docStatus.commitsSinceSync > 0;
-
-        // Strip frontmatter for context
-        architectureContext = archContent.replace(/^---[\s\S]*?---\n\n/, '');
-      } else {
-        architectureContext = archContent;
-      }
+    if (fs.existsSync(overviewPath)) {
+      architectureContext = fs.readFileSync(overviewPath, 'utf8');
     }
 
-    if (fs.existsSync(designPath)) {
-      const designContent = fs.readFileSync(designPath, 'utf8');
-      // Strip frontmatter for context
-      designContext = designContent.replace(/^---[\s\S]*?---\n\n/, '');
+    if (fs.existsSync(agentsPath)) {
+      agentsContext = fs.readFileSync(agentsPath, 'utf8');
     }
 
-    const hasCodebaseContext = architectureContext || designContext;
+    if (fs.existsSync(databasePath)) {
+      databaseContext = fs.readFileSync(databasePath, 'utf8');
+    }
+
+    const hasCodebaseContext = architectureContext || agentsContext || databaseContext;
 
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
@@ -207,40 +196,7 @@ GENERATE_ACTIONS
 CRITICAL:
 - Generate ONE action at a time
 - taskConfig.instructions must be detailed enough for autonomous execution
-- Don't create actions that just say "Create X" without full execution instructions
-
-## Available Tools
-
-You have access to tools for performing operations:
-
-**sync_documentation** - Updates project documentation by syncing with recent git commits
-- Use when: Documentation is out of date, user asks to refresh context, or before architectural discussions
-- Format: USE_TOOL: sync_documentation
-
-When you use a tool, respond EXACTLY in this format:
-USE_TOOL: sync_documentation
-
-The tool will execute and results will be added to the conversation. You'll see the output and can continue naturally.
-
-Otherwise, respond conversationally to gather context or answer questions.${docStatus.isDirty ? `
-
----
-
-## IMPORTANT: Documentation Status
-
-The codebase documentation is OUT OF DATE:
-- Last synced: ${docStatus.lastSync}
-- Last commit: ${docStatus.lastCommit}
-- Commits since sync: ${docStatus.commitsSinceSync}
-
-${docStatus.commitsSinceSync >= 3 ?
-  `This is significant staleness (${docStatus.commitsSinceSync} commits). You SHOULD proactively offer to update the documentation before proceeding with the conversation. Say something like: "Before we continue, I notice the documentation is out of date (${docStatus.commitsSinceSync} commits since last sync). Should I refresh the context first?"` :
-  `Minor staleness (${docStatus.commitsSinceSync} commit${docStatus.commitsSinceSync > 1 ? 's' : ''}). Mention this casually but don't block the conversation unless the user's request seems to require up-to-date architecture knowledge.`
-}
-
----
-
-` : ''}${hasCodebaseContext ? `
+- Don't create actions that just say "Create X" without full execution instructions${hasCodebaseContext ? `
 
 ---
 
@@ -248,7 +204,7 @@ ${docStatus.commitsSinceSync >= 3 ?
 
 You have access to the current codebase documentation:
 
-${architectureContext ? `### ARCHITECTURE.md\n\n${architectureContext}\n\n` : ''}${designContext ? `### DESIGN.md\n\n${designContext}` : ''}
+${architectureContext ? `### System Overview\n\n${architectureContext}\n\n` : ''}${agentsContext ? `### Agent System\n\n${agentsContext}\n\n` : ''}${databaseContext ? `### Database Schema\n\n${databaseContext}` : ''}
 
 Use this context to have informed design discussions and make architectural recommendations.` : ''}`;
 
@@ -272,7 +228,7 @@ Use this context to have informed design discussions and make architectural reco
         {
           type: "text",
           text: systemPrompt,
-          cache_control: { type: "ephemeral" }  // Cache system prompt (includes ARCHITECTURE.md + DESIGN.md)
+          cache_control: { type: "ephemeral" }  // Cache system prompt (includes architecture docs)
         }
       ],
       messages: conversationHistory
@@ -284,42 +240,6 @@ Use this context to have informed design discussions and make architectural reco
     // Check if response indicates action generation
     // Be flexible with whitespace and markdown code blocks
     const trimmedResponse = assistantResponse.trim();
-
-    // Check if response indicates tool usage (at start of line)
-    const toolMatch = trimmedResponse.match(/^USE_TOOL:\s*(\w+)/m);
-    if (toolMatch) {
-      const toolRegistry = require('./_tools/registry.cjs');
-      const toolName = toolMatch[1];
-
-      try {
-        // Execute the tool
-        const result = await toolRegistry.executeTool(toolName, {});
-
-        // Return result to be added to conversation
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            response: result.success
-              ? `Tool executed: ${result.message}\n\n${result.output ? '```\n' + result.output + '\n```' : ''}`
-              : `Tool failed: ${result.message}\n\n${result.output ? '```\n' + result.output + '\n```' : ''}`,
-            toolResult: result
-          })
-        };
-      } catch (error) {
-        console.error('Tool execution error:', error);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({
-            success: false,
-            error: `Tool execution failed: ${error.message}`
-          })
-        };
-      }
-    }
 
     // Check for GENERATE_ACTIONS at start of line followed by --- separator
     if (/^GENERATE_ACTIONS\s*\n---/m.test(trimmedResponse)) {
