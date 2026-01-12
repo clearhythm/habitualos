@@ -1,7 +1,7 @@
 ---
 last_sync: 2026-01-12T19:04:42.011Z
-last_commit: 2026-01-11T06:19:18Z
-commits_since_sync: 0
+last_commit: 2026-01-12T19:05:43Z
+commits_since_sync: 1
 ---
 
 # HabitualOS Design Documentation
@@ -75,8 +75,7 @@ habitualos/
 │
 ├── ARCHITECTURE.md              # High-level system design (living doc with frontmatter)
 ├── DESIGN.md                    # This file - implementation details (living doc with frontmatter)
-├── CHANGELOG_RECENT.md          # Rolling buffer of recent commits
-└── .context-sync-status.json    # Deprecated - replaced by frontmatter tracking
+└── CHANGELOG_RECENT.md          # Rolling buffer of recent commits
 ```
 
 ## Frontend Design Patterns
@@ -840,8 +839,8 @@ async function syncContext() {
 ```yaml
 ---
 last_sync: 2026-01-11T06:19:18Z      # When docs were last synced
-last_commit: 2026-01-11T06:19:18Z    # Most recent commit timestamp
-commits_since_sync: 0                # Number of commits since last sync
+last_commit: 2026-01-12T19:05:43Z
+commits_since_sync: 1
 ---
 ```
 
