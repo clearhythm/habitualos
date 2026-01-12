@@ -17,12 +17,14 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 300000  // 5 minute timeout
 });
 
 const CHANGELOG_PATH = path.join(__dirname, '..', 'CHANGELOG_RECENT.md');
 const ARCHITECTURE_PATH = path.join(__dirname, '..', 'ARCHITECTURE.md');
 const DESIGN_PATH = path.join(__dirname, '..', 'DESIGN.md');
+const PRACTICE_PATH = path.join(__dirname, '..', 'PRACTICE.md');
 
 async function syncContext() {
   console.log('🔄 Starting context sync...');
@@ -47,9 +49,10 @@ async function syncContext() {
     };
   }
 
-  // Read existing ARCHITECTURE.md and DESIGN.md
+  // Read existing ARCHITECTURE.md, DESIGN.md, and PRACTICE.md
   let existingArchitecture = '';
   let existingDesign = '';
+  let existingPractice = '';
 
   if (fs.existsSync(ARCHITECTURE_PATH)) {
     existingArchitecture = fs.readFileSync(ARCHITECTURE_PATH, 'utf8');
@@ -63,25 +66,34 @@ async function syncContext() {
     console.log('📝 No DESIGN.md found. Will create new one...');
   }
 
+  if (fs.existsSync(PRACTICE_PATH)) {
+    existingPractice = fs.readFileSync(PRACTICE_PATH, 'utf8');
+  } else {
+    console.log('📝 No PRACTICE.md found. Will create new one...');
+  }
+
   // Call Claude API to synthesize changes into documentation updates
   console.log('🤖 Calling Claude API to synthesize changes...');
 
   const systemPrompt = `You are a technical documentation assistant maintaining living architecture documentation for a codebase.
 
-You maintain two complementary documents:
-- **ARCHITECTURE.md**: High-level system design, core concepts, technology stack, data flow, deployment
-- **DESIGN.md**: Implementation details, file structure, code patterns, workflows, debugging
+You maintain three complementary documents:
+- **ARCHITECTURE.md**: Agent system architecture - high-level design, core concepts, technology stack, data flow
+- **DESIGN.md**: Agent system implementation - file structure, code patterns, workflows, debugging
+- **PRACTICE.md**: Practice tracker system - Obi-Wai habit tracking, separate from agent system
 
 You will receive:
-1. Current ARCHITECTURE.md content
-2. Current DESIGN.md content
-3. A changelog of recent commits
+1. Current ARCHITECTURE.md content (Agent system)
+2. Current DESIGN.md content (Agent system)
+3. Current PRACTICE.md content (Practice tracker)
+4. A changelog of recent commits
 
 Your task:
-- Update BOTH documents to reflect recent changes
-- ARCHITECTURE.md: Focus on system design, architecture patterns, high-level decisions
-- DESIGN.md: Focus on file structure, code patterns, implementation details, workflows
-- Keep both concise and scannable (2-3 minutes read time each)
+- Update ALL THREE documents to reflect recent changes
+- ARCHITECTURE.md: Focus on agent system design, architecture patterns, high-level decisions
+- DESIGN.md: Focus on agent system file structure, code patterns, implementation details
+- PRACTICE.md: Focus on practice tracker system (Obi-Wai), completely separate from agents
+- Keep each concise and scannable (2-3 minutes read time each)
 - Remove outdated information superseded by changes
 - Use clear headings, bullet points, code examples
 - Include file paths in markdown link format when referencing files
@@ -91,7 +103,9 @@ Guidelines:
 - Preserve overall structure where it makes sense
 - Be accurate and technical (for developers and AI assistants)
 - Focus on "what" and "how", not "why" (unless architecturally important)
-- If a change only affects one file, only update that file`;
+- If a change only affects one subsystem, only update the relevant doc(s)
+- Practice changes (src/practice/, practice-* endpoints) → PRACTICE.md
+- Agent changes (src/do/, agent-* endpoints) → ARCHITECTURE.md + DESIGN.md`;
 
   const userPrompt = `Here's the current ARCHITECTURE.md:
 
@@ -105,13 +119,19 @@ Here's the current DESIGN.md:
 ${existingDesign || 'No content yet.'}
 \`\`\`
 
+Here's the current PRACTICE.md:
+
+\`\`\`markdown
+${existingPractice || 'No content yet.'}
+\`\`\`
+
 Here are the recent changes:
 
 \`\`\`markdown
 ${recentChanges}
 \`\`\`
 
-Please update ARCHITECTURE.md and DESIGN.md to reflect these recent changes.
+Please update ARCHITECTURE.md, DESIGN.md, and PRACTICE.md to reflect these recent changes.
 
 Return your response in this EXACT format:
 
@@ -119,11 +139,16 @@ Return your response in this EXACT format:
 [updated ARCHITECTURE.md content here]
 ===DESIGN===
 [updated DESIGN.md content here]
+===PRACTICE===
+[updated PRACTICE.md content here]
 ===END===
 
 Do not include any other text, explanations, or markdown code fences.`;
 
   try {
+    console.log('📤 Sending request to Claude API...');
+    console.log(`📊 Request size: ~${Math.round(userPrompt.length / 1000)}K characters`);
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 16000,
@@ -142,14 +167,17 @@ Do not include any other text, explanations, or markdown code fences.`;
       ]
     });
 
+    console.log('📥 Received response from Claude API');
     const fullResponse = response.content[0].text.trim();
+    console.log(`📊 Response size: ~${Math.round(fullResponse.length / 1000)}K characters`);
 
-    // Parse response to extract ARCHITECTURE.md and DESIGN.md
+    // Parse response to extract ARCHITECTURE.md, DESIGN.md, and PRACTICE.md
     const archMatch = fullResponse.match(/===ARCHITECTURE===([\s\S]*?)===DESIGN===/);
-    const designMatch = fullResponse.match(/===DESIGN===([\s\S]*?)===END===/);
+    const designMatch = fullResponse.match(/===DESIGN===([\s\S]*?)===PRACTICE===/);
+    const practiceMatch = fullResponse.match(/===PRACTICE===([\s\S]*?)===END===/);
 
-    if (!archMatch || !designMatch) {
-      console.error('Failed to parse LLM response. Expected ===ARCHITECTURE=== and ===DESIGN=== markers.');
+    if (!archMatch || !designMatch || !practiceMatch) {
+      console.error('Failed to parse LLM response. Expected ===ARCHITECTURE===, ===DESIGN===, and ===PRACTICE=== markers.');
       console.error('Received response (first 500 chars):');
       console.error(fullResponse.substring(0, 500));
       console.error('\n...and last 500 chars:');
@@ -162,6 +190,7 @@ Do not include any other text, explanations, or markdown code fences.`;
 
     const updatedArchitecture = archMatch[1].trim();
     const updatedDesign = designMatch[1].trim();
+    const updatedPractice = practiceMatch[1].trim();
 
     // Extract current last_commit from existing frontmatter (or use now if missing)
     const lastCommitMatch = existingArchitecture.match(/^---\s*\nlast_sync:.*?\nlast_commit:\s*(.+?)\n/s);
@@ -180,9 +209,11 @@ commits_since_sync: 0
     // Prepend frontmatter to updated content (strip old frontmatter if exists)
     const cleanArchitecture = updatedArchitecture.replace(/^---[\s\S]*?---\n\n/, '');
     const cleanDesign = updatedDesign.replace(/^---[\s\S]*?---\n\n/, '');
+    const cleanPractice = updatedPractice.replace(/^---[\s\S]*?---\n\n/, '');
 
     const finalArchitecture = frontmatter + cleanArchitecture;
     const finalDesign = frontmatter + cleanDesign;
+    const finalPractice = frontmatter + cleanPractice;
 
     // Write updated files
     fs.writeFileSync(ARCHITECTURE_PATH, finalArchitecture, 'utf8');
@@ -191,13 +222,16 @@ commits_since_sync: 0
     fs.writeFileSync(DESIGN_PATH, finalDesign, 'utf8');
     console.log('✅ Updated DESIGN.md');
 
+    fs.writeFileSync(PRACTICE_PATH, finalPractice, 'utf8');
+    console.log('✅ Updated PRACTICE.md');
+
     // Clear CHANGELOG_RECENT.md
     fs.writeFileSync(CHANGELOG_PATH, '# Recent Changes\n\nNo changes yet.\n', 'utf8');
     console.log('✅ Cleared CHANGELOG_RECENT.md');
 
     return {
       success: true,
-      message: 'Successfully updated ARCHITECTURE.md and DESIGN.md with recent changes'
+      message: 'Successfully updated ARCHITECTURE.md, DESIGN.md, and PRACTICE.md with recent changes'
     };
 
   } catch (error) {

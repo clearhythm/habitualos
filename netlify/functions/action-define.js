@@ -4,7 +4,9 @@ const { createAction, getAction } = require('./_services/db-actions.cjs');
 
 /**
  * POST /api/action-define
- * Convert a draft action to a defined action (persist to Firestore)
+ *
+ * Persist a draft action to Firestore (transition from "draft" to "defined" state).
+ * See: docs/endpoints/action-define.md
  */
 exports.handler = async (event) => {
   // Only allow POST

@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent } = require('./_services/db-agents.cjs');
-const { syncContext } = require('../../scripts/context-sync.js');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -11,7 +10,9 @@ const anthropic = new Anthropic({
 
 /**
  * POST /api/agent-chat
- * Conversational interface for agent to gather context and generate deliverables
+ *
+ * Conversational interface for agents to generate deliverables (assets and actions).
+ * See: docs/endpoints/agent-chat.md
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -59,46 +60,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Check if user is requesting context sync
-    const lowerMessage = message.toLowerCase().trim();
-    const isContextSyncRequest =
-      lowerMessage.includes('update context') ||
-      lowerMessage.includes('sync context') ||
-      lowerMessage.includes('update system') ||
-      lowerMessage.includes('refresh context');
-
-    if (isContextSyncRequest) {
-      console.log('Context sync requested by user');
-      const syncResult = await syncContext();
-
-      if (syncResult.success) {
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            response: '✅ I\'ve updated the system context with recent code changes. The latest architecture is now loaded and ready for our design discussion.',
-            contextSynced: true
-          })
-        };
-      } else {
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            response: `I tried to update the context but encountered an issue: ${syncResult.error}. You might need to check the CHANGELOG_RECENT.md file or try again.`,
-            contextSynced: false
-          })
-        };
-      }
-    }
-
-    // Read ARCHITECTURE.md and DESIGN.md for context-aware discussions
+    // Read architecture docs for context-aware discussions
     let architectureContext = '';
     let designContext = '';
     let docStatus = { isDirty: false, commitsSinceSync: 0, lastSync: null, lastCommit: null };
