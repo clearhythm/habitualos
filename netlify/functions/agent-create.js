@@ -5,7 +5,9 @@ const { createAgentCreationChat } = require('./_services/db-agent-creation-chats
 
 /**
  * POST /api/agent-create
- * Create agent and save creation chat history
+ *
+ * Create agent and save creation chat history.
+ * See: docs/endpoints/agent-create.md
  */
 exports.handler = async (event) => {
   // Only allow POST
