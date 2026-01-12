@@ -39,3 +39,36 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - scripts/context-sync.js
 
 ---
+
+## Commit 900bd29 - 2026-01-12
+
+**Author:** Erik Burns
+
+**Message:**
+Fix post-commit hook to only update frontmatter in first 10 lines
+
+The hook was incorrectly matching example frontmatter blocks that appear
+later in DESIGN.md documentation (around line 840), causing it to extract
+the wrong commits_since_sync value and fail to update DESIGN.md properly.
+
+Changes to post-commit hook logic:
+- Use `head -10` when extracting current commits_since_sync value
+- Use `sed "1,10s/..."` to only replace in first 10 lines (real frontmatter)
+- Prevents touching example frontmatter in documentation body
+
+This ensures only the actual YAML frontmatter at the top of each file
+gets updated, not code examples or documentation snippets.
+
+Note: The hook file itself cannot be committed (lives in .git/hooks/),
+but this commit updates the docs and includes the hook changes in message.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+**Changed files:**
+- ARCHITECTURE.md
+- CHANGELOG_RECENT.md
+- DESIGN.md
+
+---
