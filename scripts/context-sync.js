@@ -126,7 +126,7 @@ Do not include any other text, explanations, or markdown code fences.`;
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 8000,
+      max_tokens: 16000,
       system: [
         {
           type: "text",
@@ -150,6 +150,10 @@ Do not include any other text, explanations, or markdown code fences.`;
 
     if (!archMatch || !designMatch) {
       console.error('Failed to parse LLM response. Expected ===ARCHITECTURE=== and ===DESIGN=== markers.');
+      console.error('Received response (first 500 chars):');
+      console.error(fullResponse.substring(0, 500));
+      console.error('\n...and last 500 chars:');
+      console.error(fullResponse.substring(fullResponse.length - 500));
       return {
         success: false,
         error: 'Failed to parse documentation update from LLM'
