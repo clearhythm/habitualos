@@ -5,7 +5,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent } = require('./_services/db-agents.cjs');
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  timeout: 25000 // 25 second timeout for all API calls
 });
 
 /**
@@ -249,11 +250,12 @@ Use this context to have informed design discussions and make architectural reco
 
     // Call Claude API with prompt caching for documentation context
     console.log('[agent-chat] Calling Claude API');
+    console.log(`[agent-chat] System prompt size: ${systemPrompt.length} characters`);
     const apiCallStart = Date.now();
 
     const apiResponse = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 2000,
+      max_tokens: 1500, // Reduced from 2000 for faster responses
       system: [
         {
           type: "text",
