@@ -92,20 +92,23 @@ exports.handler = async (event) => {
     }
 
     if (architectureDocsPath) {
+      // Only load essential docs to keep system prompt manageable
+      // Other docs available but not loaded by default to prevent timeout
+      const essentialDocs = ['overview.md', 'agents.md', 'database.md'];
       const files = fs.readdirSync(architectureDocsPath);
       console.log(`[agent-chat] Found files:`, files);
 
-      files.forEach(file => {
-        if (file.endsWith('.md')) {
-          const filePath = path.join(architectureDocsPath, file);
+      essentialDocs.forEach(fileName => {
+        if (files.includes(fileName)) {
+          const filePath = path.join(architectureDocsPath, fileName);
           const content = fs.readFileSync(filePath, 'utf8');
-          const docName = file.replace('.md', '');
+          const docName = fileName.replace('.md', '');
           architectureDocs[docName] = content;
           hasCodebaseContext = true;
         }
       });
 
-      console.log(`[agent-chat] Loaded ${Object.keys(architectureDocs).length} architecture docs`);
+      console.log(`[agent-chat] Loaded ${Object.keys(architectureDocs).length}/${files.filter(f => f.endsWith('.md')).length} architecture docs (essential only)`);
     } else {
       console.error(`[agent-chat] Architecture docs NOT FOUND in any of these paths:`, possiblePaths);
       console.error(`[agent-chat] This means the agent has NO codebase context!`);
