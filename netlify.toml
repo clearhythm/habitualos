@@ -3,6 +3,13 @@
   publish = "_site"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
+[functions."agent-chat"]
+  # Increase timeout for Claude API calls (max 26 seconds on Pro plan)
+  timeout = 26
+
 # Browser API - gateway for all /api/* requests
 [[redirects]]
   from = "/api/*"

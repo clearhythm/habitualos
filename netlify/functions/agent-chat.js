@@ -24,6 +24,9 @@ exports.handler = async (event) => {
   }
 
   try {
+    const startTime = Date.now();
+    console.log('[agent-chat] Request started');
+
     // Parse request body
     const { userId, agentId, message, chatHistory = [] } = JSON.parse(event.body);
 
@@ -49,7 +52,10 @@ exports.handler = async (event) => {
     }
 
     // Fetch agent details
+    console.log('[agent-chat] Fetching agent from Firestore');
     const agent = await getAgent(agentId);
+    console.log(`[agent-chat] Agent fetched in ${Date.now() - startTime}ms`);
+
     if (!agent || agent._userId !== userId) {
       return {
         statusCode: 404,
@@ -221,6 +227,9 @@ Use this context to have informed design discussions and make architectural reco
     });
 
     // Call Claude API with prompt caching for documentation context
+    console.log('[agent-chat] Calling Claude API');
+    const apiCallStart = Date.now();
+
     const apiResponse = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2000,
@@ -233,6 +242,9 @@ Use this context to have informed design discussions and make architectural reco
       ],
       messages: conversationHistory
     });
+
+    console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
+    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
 
     // Extract assistant response
     const assistantResponse = apiResponse.content[0].text;
@@ -423,12 +435,34 @@ Use this context to have informed design discussions and make architectural reco
     };
 
   } catch (error) {
-    console.error('Error in agent-chat:', error);
+    console.error('[agent-chat] ERROR:', error);
+    console.error('[agent-chat] Error type:', error.constructor.name);
+    console.error('[agent-chat] Error message:', error.message);
+
+    // Log specific error types for better debugging
+    if (error.status) {
+      console.error('[agent-chat] HTTP Status:', error.status);
+    }
+    if (error.code) {
+      console.error('[agent-chat] Error code:', error.code);
+    }
+
+    // Provide more specific error messages
+    let errorMessage = 'Internal server error';
+
+    if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
+      errorMessage = 'Request timed out - please try again';
+    } else if (error.status === 429) {
+      errorMessage = 'Rate limit exceeded - please wait a moment';
+    } else if (error.status >= 500) {
+      errorMessage = 'Service temporarily unavailable';
+    }
+
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
-        error: error.message || 'Internal server error'
+        error: errorMessage
       })
     };
   }
