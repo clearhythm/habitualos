@@ -327,8 +327,37 @@ permalink: /do/agent/
   const messageInput = document.getElementById('agent-message-input');
   const sendButton = document.getElementById('agent-send-button');
 
-  // Chat history (in memory)
-  let chatHistory = [];
+  // Chat history localStorage management
+  const AGENT_CHAT_KEY = `agent-chat-${agentId}`;
+
+  function getAgentChatHistory() {
+    try {
+      const stored = localStorage.getItem(AGENT_CHAT_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.error('Error loading agent chat history:', e);
+      return [];
+    }
+  }
+
+  function saveAgentChatHistory(history) {
+    try {
+      localStorage.setItem(AGENT_CHAT_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.error('Error saving agent chat history:', e);
+    }
+  }
+
+  function clearAgentChatFromLocalStorage() {
+    try {
+      localStorage.removeItem(AGENT_CHAT_KEY);
+    } catch (e) {
+      console.error('Error clearing agent chat history:', e);
+    }
+  }
+
+  // Chat history (load from localStorage or initialize empty)
+  let chatHistory = getAgentChatHistory();
   let loadingMessageElement = null;
   let currentChatId = null; // Track Firestore chatId for appending refinements
 
@@ -394,6 +423,8 @@ permalink: /do/agent/
         } else {
           console.log('Chat appended to Firestore:', currentChatId);
         }
+        // Note: localStorage is NOT cleared here - chat continues in localStorage
+        // until user explicitly resets via clearChatHistory()
       } else {
         console.error('Failed to save chat:', data.error);
       }
@@ -407,6 +438,9 @@ permalink: /do/agent/
     chatHistory = [];
     currentChatId = null;
 
+    // Clear localStorage
+    clearAgentChatFromLocalStorage();
+
     // Clear chat UI
     chatMessages.innerHTML = '';
 
@@ -417,6 +451,7 @@ permalink: /do/agent/
       timestamp: new Date().toISOString()
     };
     chatHistory.push(greeting);
+    saveAgentChatHistory(chatHistory);
     renderMessage('assistant', greeting.content);
   }
 
@@ -894,13 +929,23 @@ permalink: /do/agent/
   // Initialize chat with greeting when agent loads
   window.addEventListener('agentLoaded', (event) => {
     const agent = event.detail;
-    const greeting = {
-      role: 'assistant',
-      content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete at a scheduled time. How would you like to begin?`,
-      timestamp: new Date().toISOString()
-    };
-    chatHistory.push(greeting);
-    renderMessage('assistant', greeting.content);
+
+    // If we have chat history from localStorage, render it
+    if (chatHistory.length > 0) {
+      chatHistory.forEach(msg => {
+        renderMessage(msg.role, msg.content);
+      });
+    } else {
+      // No existing history, start with greeting
+      const greeting = {
+        role: 'assistant',
+        content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete at a scheduled time. How would you like to begin?`,
+        timestamp: new Date().toISOString()
+      };
+      chatHistory.push(greeting);
+      saveAgentChatHistory(chatHistory);
+      renderMessage('assistant', greeting.content);
+    }
 
     // Render any existing draft actions from localStorage
     if (draftActions.length > 0) {
@@ -964,6 +1009,7 @@ permalink: /do/agent/
     };
     renderMessage('user', message);
     chatHistory.push(userMessage);
+    saveAgentChatHistory(chatHistory);
 
     // Clear input
     messageInput.value = '';
@@ -1009,6 +1055,7 @@ permalink: /do/agent/
       };
       renderMessage('assistant', data.response);
       chatHistory.push(assistantMessage);
+      saveAgentChatHistory(chatHistory);
 
       // If draft actions were generated, render them inline and save to localStorage
       if (data.hasDraftActions && data.draftActions) {
@@ -1049,6 +1096,7 @@ permalink: /do/agent/
       };
       renderMessage('assistant', errorMessage.content);
       chatHistory.push(errorMessage);
+      saveAgentChatHistory(chatHistory);
     }
   });
 
