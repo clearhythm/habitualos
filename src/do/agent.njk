@@ -229,9 +229,6 @@ permalink: /do/agent/
         🗑️ Delete
       </button>
       <div style="display: flex; gap: 0.75rem;">
-        <button id="close-asset-modal-footer" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
-          Close
-        </button>
         <button id="copy-asset-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
           📋 Copy to Clipboard
         </button>
@@ -695,7 +692,7 @@ permalink: /do/agent/
     closeProposedAssetModal();
   }
 
-  function copyAssetFromModal() {
+  function copyAssetFromModal(event) {
     if (!currentProposedAsset) return;
 
     navigator.clipboard.writeText(currentProposedAsset.content).then(() => {
@@ -924,7 +921,6 @@ permalink: /do/agent/
   document.getElementById('define-action-btn').addEventListener('click', markAsDefinedFromModal);
 
   document.getElementById('close-asset-modal-header').addEventListener('click', closeProposedAssetModal);
-  document.getElementById('close-asset-modal-footer').addEventListener('click', closeProposedAssetModal);
   document.getElementById('delete-asset-btn').addEventListener('click', deleteProposedAsset);
   document.getElementById('copy-asset-btn').addEventListener('click', copyAssetFromModal);
   document.getElementById('save-asset-btn').addEventListener('click', saveAssetFromModal);
