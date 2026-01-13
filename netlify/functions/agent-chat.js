@@ -275,7 +275,7 @@ IMPORTANT:
 
       const requestParams = {
         model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 1000,  // Reduced to ensure faster responses even with doc content
+        max_tokens: 2048,  // Enough for full asset/action generation with content
         system: [
           {
             type: "text",
