@@ -66,28 +66,26 @@ exports.handler = async (event) => {
       };
     }
 
-    // Read architecture docs for context-aware discussions
-    let architectureContext = '';
-    let agentsContext = '';
-    let databaseContext = '';
+    // Read all architecture docs for context-aware discussions
+    const architectureDocsPath = path.join(__dirname, '..', '..', 'docs', 'architecture');
+    const architectureDocs = {};
+    let hasCodebaseContext = false;
 
-    const overviewPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'overview.md');
-    const agentsPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'agents.md');
-    const databasePath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'database.md');
+    if (fs.existsSync(architectureDocsPath)) {
+      const files = fs.readdirSync(architectureDocsPath);
 
-    if (fs.existsSync(overviewPath)) {
-      architectureContext = fs.readFileSync(overviewPath, 'utf8');
+      files.forEach(file => {
+        if (file.endsWith('.md')) {
+          const filePath = path.join(architectureDocsPath, file);
+          const content = fs.readFileSync(filePath, 'utf8');
+          const docName = file.replace('.md', '');
+          architectureDocs[docName] = content;
+          hasCodebaseContext = true;
+        }
+      });
+
+      console.log(`[agent-chat] Loaded ${Object.keys(architectureDocs).length} architecture docs`);
     }
-
-    if (fs.existsSync(agentsPath)) {
-      agentsContext = fs.readFileSync(agentsPath, 'utf8');
-    }
-
-    if (fs.existsSync(databasePath)) {
-      databaseContext = fs.readFileSync(databasePath, 'utf8');
-    }
-
-    const hasCodebaseContext = architectureContext || agentsContext || databaseContext;
 
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
@@ -210,7 +208,7 @@ CRITICAL:
 
 You have access to the current codebase documentation:
 
-${architectureContext ? `### System Overview\n\n${architectureContext}\n\n` : ''}${agentsContext ? `### Agent System\n\n${agentsContext}\n\n` : ''}${databaseContext ? `### Database Schema\n\n${databaseContext}` : ''}
+${Object.entries(architectureDocs).map(([name, content]) => `### ${name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}\n\n${content}`).join('\n\n')}
 
 Use this context to have informed design discussions and make architectural recommendations.` : ''}`;
 
