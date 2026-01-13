@@ -6,7 +6,7 @@ const { getAgent } = require('./_services/db-agents.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  timeout: 25000 // 25 second timeout for all API calls
+  timeout: 24000 // 24 second timeout - must complete before Netlify's 26s limit
 });
 
 /**
@@ -67,7 +67,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Read all architecture docs for context-aware discussions
+    // Find architecture docs path for tool use
     // Try multiple possible paths for docs (local vs deployed)
     const possiblePaths = [
       path.join(__dirname, '..', '..', 'docs', 'architecture'),
@@ -75,8 +75,6 @@ exports.handler = async (event) => {
       path.join(__dirname, 'docs', 'architecture')
     ];
 
-    const architectureDocs = {};
-    let hasCodebaseContext = false;
     let architectureDocsPath = null;
 
     console.log(`[agent-chat] __dirname: ${__dirname}`);
@@ -91,28 +89,16 @@ exports.handler = async (event) => {
       }
     }
 
-    if (architectureDocsPath) {
-      // Only load essential docs to keep system prompt manageable
-      // Other docs available but not loaded by default to prevent timeout
-      const essentialDocs = ['overview.md', 'agents.md', 'database.md'];
-      const files = fs.readdirSync(architectureDocsPath);
-      console.log(`[agent-chat] Found files:`, files);
-
-      essentialDocs.forEach(fileName => {
-        if (files.includes(fileName)) {
-          const filePath = path.join(architectureDocsPath, fileName);
-          const content = fs.readFileSync(filePath, 'utf8');
-          const docName = fileName.replace('.md', '');
-          architectureDocs[docName] = content;
-          hasCodebaseContext = true;
-        }
-      });
-
-      console.log(`[agent-chat] Loaded ${Object.keys(architectureDocs).length}/${files.filter(f => f.endsWith('.md')).length} architecture docs (essential only)`);
-    } else {
+    if (!architectureDocsPath) {
       console.error(`[agent-chat] Architecture docs NOT FOUND in any of these paths:`, possiblePaths);
-      console.error(`[agent-chat] This means the agent has NO codebase context!`);
     }
+
+    // Get available docs for tool definition
+    const availableDocs = architectureDocsPath && fs.existsSync(architectureDocsPath)
+      ? fs.readdirSync(architectureDocsPath).filter(f => f.endsWith('.md')).map(f => f.replace('.md', ''))
+      : [];
+
+    console.log(`[agent-chat] Available docs for on-demand access:`, availableDocs);
 
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
@@ -227,17 +213,17 @@ GENERATE_ACTIONS
 CRITICAL:
 - Generate ONE action at a time
 - taskConfig.instructions must be detailed enough for autonomous execution
-- Don't create actions that just say "Create X" without full execution instructions${hasCodebaseContext ? `
+- Don't create actions that just say "Create X" without full execution instructions${availableDocs.length > 0 ? `
 
 ---
 
 ## Codebase Context
 
-You have access to the current codebase documentation:
+You have access to architecture documentation through the get_architecture_doc tool.
+Available docs: ${availableDocs.join(', ')}
 
-${Object.entries(architectureDocs).map(([name, content]) => `### ${name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}\n\n${content}`).join('\n\n')}
-
-Use this context to have informed design discussions and make architectural recommendations.` : ''}`;
+Use this tool when you need specific architectural context for design discussions or recommendations.
+Only request docs when you actually need them - don't fetch all docs preemptively.` : ''}`;
 
     // Build conversation history for Claude
     const conversationHistory = chatHistory.map(msg => ({
@@ -251,45 +237,132 @@ Use this context to have informed design discussions and make architectural reco
       content: message
     });
 
-    // Call Claude API with prompt caching for documentation context
+    // Define tool for fetching architecture docs on-demand
+    const tools = availableDocs.length > 0 ? [{
+      name: "get_architecture_doc",
+      description: "Retrieve a specific architecture documentation file. Use this when you need detailed information about system architecture, database schema, or implementation patterns. Only fetch docs when you actually need them for the current discussion.",
+      input_schema: {
+        type: "object",
+        properties: {
+          doc_name: {
+            type: "string",
+            enum: availableDocs,
+            description: `The name of the documentation file to retrieve. Available: ${availableDocs.join(', ')}`
+          }
+        },
+        required: ["doc_name"]
+      }
+    }] : [];
+
+    // Call Claude API with tool support (loop to handle tool use)
     console.log('[agent-chat] Calling Claude API');
     console.log(`[agent-chat] System prompt size: ${systemPrompt.length} characters`);
+    console.log(`[agent-chat] Tools available: ${tools.length > 0 ? tools[0].name : 'none'}`);
     const apiCallStart = Date.now();
 
-    const apiResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 1500, // Reduced from 2000 for faster responses
-      system: [
-        {
-          type: "text",
-          text: systemPrompt,
-          cache_control: { type: "ephemeral" }  // Cache system prompt (includes architecture docs)
-        }
-      ],
-      messages: conversationHistory
-    });
+    let apiResponse;
+    let assistantResponse;
+    const maxToolRounds = 3; // Prevent infinite loops
+    let toolRound = 0;
 
-    console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
-    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
+    while (toolRound < maxToolRounds) {
+      toolRound++;
+      console.log(`[agent-chat] API call round ${toolRound}`);
 
-    // Log cache usage
-    if (apiResponse.usage) {
-      console.log(`[agent-chat] Token usage:`, {
-        input_tokens: apiResponse.usage.input_tokens,
-        cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
-        cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
-        output_tokens: apiResponse.usage.output_tokens
-      });
+      const requestParams = {
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 2000,
+        system: [
+          {
+            type: "text",
+            text: systemPrompt,
+            cache_control: { type: "ephemeral" }  // Cache system prompt
+          }
+        ],
+        messages: conversationHistory
+      };
 
-      if (apiResponse.usage.cache_read_input_tokens > 0) {
-        console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
-      } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
-        console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
+      // Add tools if available
+      if (tools.length > 0) {
+        requestParams.tools = tools;
       }
+
+      apiResponse = await anthropic.messages.create(requestParams);
+
+      console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
+
+      // Log cache usage
+      if (apiResponse.usage) {
+        console.log(`[agent-chat] Token usage:`, {
+          input_tokens: apiResponse.usage.input_tokens,
+          cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
+          cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
+          output_tokens: apiResponse.usage.output_tokens
+        });
+
+        if (apiResponse.usage.cache_read_input_tokens > 0) {
+          console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
+        } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
+          console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
+        }
+      }
+
+      // Check if assistant wants to use a tool
+      const toolUseBlock = apiResponse.content.find(block => block.type === 'tool_use');
+
+      if (!toolUseBlock) {
+        // No tool use - we're done
+        break;
+      }
+
+      console.log(`[agent-chat] Tool use requested: ${toolUseBlock.name} with input:`, toolUseBlock.input);
+
+      // Handle tool call
+      if (toolUseBlock.name === 'get_architecture_doc') {
+        const docName = toolUseBlock.input.doc_name;
+        const docPath = path.join(architectureDocsPath, `${docName}.md`);
+
+        let docContent;
+        try {
+          docContent = fs.readFileSync(docPath, 'utf-8');
+          console.log(`[agent-chat] Loaded doc ${docName} (${docContent.length} chars)`);
+        } catch (readError) {
+          console.error(`[agent-chat] Failed to read doc ${docName}:`, readError);
+          docContent = `Error: Could not read documentation file ${docName}`;
+        }
+
+        // Add assistant's message with tool use to conversation
+        conversationHistory.push({
+          role: 'assistant',
+          content: apiResponse.content
+        });
+
+        // Add tool result to conversation
+        conversationHistory.push({
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: toolUseBlock.id,
+              content: docContent
+            }
+          ]
+        });
+
+        // Continue loop to get next response
+        continue;
+      }
+
+      // Unknown tool - should not happen
+      console.error(`[agent-chat] Unknown tool requested: ${toolUseBlock.name}`);
+      break;
     }
 
-    // Extract assistant response
-    const assistantResponse = apiResponse.content[0].text;
+    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
+
+    // Extract assistant's final text response
+    const textBlock = apiResponse.content.find(block => block.type === 'text');
+    assistantResponse = textBlock ? textBlock.text : '';
 
     // Check if response indicates action generation
     // Be flexible with whitespace and markdown code blocks
