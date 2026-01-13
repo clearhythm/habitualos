@@ -222,8 +222,9 @@ CRITICAL:
 You have access to architecture documentation through the get_architecture_doc tool.
 Available docs: ${availableDocs.join(', ')}
 
-Use this tool when you need specific architectural context for design discussions or recommendations.
-Only request docs when you actually need them - don't fetch all docs preemptively.` : ''}`;
+IMPORTANT: You can only request ONE doc per conversation turn. Choose the most relevant doc for the current discussion.
+If you need additional docs, respond to the user first, then request another doc in the next turn.
+Only request docs when you actually need specific architectural details - don't fetch docs preemptively.` : ''}`;
 
     // Build conversation history for Claude
     const conversationHistory = chatHistory.map(msg => ({
@@ -262,7 +263,7 @@ Only request docs when you actually need them - don't fetch all docs preemptivel
 
     let apiResponse;
     let assistantResponse;
-    const maxToolRounds = 3; // Prevent infinite loops
+    const maxToolRounds = 2; // Allow 1 tool use + 1 final response (ONE doc per turn to prevent timeout)
     let toolRound = 0;
 
     while (toolRound < maxToolRounds) {
