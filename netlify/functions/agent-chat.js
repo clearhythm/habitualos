@@ -67,12 +67,32 @@ exports.handler = async (event) => {
     }
 
     // Read all architecture docs for context-aware discussions
-    const architectureDocsPath = path.join(__dirname, '..', '..', 'docs', 'architecture');
+    // Try multiple possible paths for docs (local vs deployed)
+    const possiblePaths = [
+      path.join(__dirname, '..', '..', 'docs', 'architecture'),
+      path.join(process.cwd(), 'docs', 'architecture'),
+      path.join(__dirname, 'docs', 'architecture')
+    ];
+
     const architectureDocs = {};
     let hasCodebaseContext = false;
+    let architectureDocsPath = null;
 
-    if (fs.existsSync(architectureDocsPath)) {
+    console.log(`[agent-chat] __dirname: ${__dirname}`);
+    console.log(`[agent-chat] process.cwd(): ${process.cwd()}`);
+
+    // Try each possible path
+    for (const tryPath of possiblePaths) {
+      if (fs.existsSync(tryPath)) {
+        architectureDocsPath = tryPath;
+        console.log(`[agent-chat] Found docs at: ${architectureDocsPath}`);
+        break;
+      }
+    }
+
+    if (architectureDocsPath) {
       const files = fs.readdirSync(architectureDocsPath);
+      console.log(`[agent-chat] Found files:`, files);
 
       files.forEach(file => {
         if (file.endsWith('.md')) {
@@ -85,6 +105,9 @@ exports.handler = async (event) => {
       });
 
       console.log(`[agent-chat] Loaded ${Object.keys(architectureDocs).length} architecture docs`);
+    } else {
+      console.error(`[agent-chat] Architecture docs NOT FOUND in any of these paths:`, possiblePaths);
+      console.error(`[agent-chat] This means the agent has NO codebase context!`);
     }
 
     // Build system prompt

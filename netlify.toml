@@ -5,6 +5,8 @@
 
 [functions]
   node_bundler = "esbuild"
+  # Include docs directory in function bundle
+  included_files = ["docs/**/*.md"]
 
 [functions."agent-chat"]
   # Increase timeout for Claude API calls (max 26 seconds on Pro plan)
