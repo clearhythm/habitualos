@@ -116,7 +116,13 @@ permalink: /do/agent/
   {# Assets View #}
   <div id="view-assets" class="agent-view" style="display: none;">
     <div id="tab-assets" class="agent-tab-content" style="display: block;">
-    <h2 class="mb-md">📄 Assets</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2 style="margin: 0;">📄 Assets</h2>
+      <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+        <input type="checkbox" id="show-completed-assets" style="cursor: pointer;">
+        Show completed
+      </label>
+    </div>
 
     <div id="assets-empty-state" style="text-align: center; padding: 3rem 1rem; color: #6b7280;">
       <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No assets yet</p>
@@ -767,7 +773,7 @@ permalink: /do/agent/
     proposedAssets = proposedAssets.filter(a => a.id !== currentProposedAsset.id);
 
     // Update assets count
-    document.getElementById('assets-count').textContent = assets.length;
+    updateAssetsCount(agentId);
 
     // Close modal
     closeProposedAssetModal();
@@ -792,6 +798,12 @@ permalink: /do/agent/
       console.error('Error loading assets:', e);
       return [];
     }
+  }
+
+  function updateAssetsCount(agentId) {
+    const assets = getAssets(agentId);
+    const activeCount = assets.filter(a => !a.completedAt).length;
+    document.getElementById('assets-count').textContent = activeCount;
   }
 
   // Helper functions
@@ -827,8 +839,12 @@ permalink: /do/agent/
     const assets = getAssets(agentId);
     const container = document.getElementById('assets-grid');
     const emptyState = document.getElementById('assets-empty-state');
+    const showCompleted = document.getElementById('show-completed-assets')?.checked || false;
 
-    if (assets.length === 0) {
+    // Filter assets based on completion status
+    const filteredAssets = showCompleted ? assets : assets.filter(a => !a.completedAt);
+
+    if (filteredAssets.length === 0) {
       emptyState.style.display = 'block';
       container.innerHTML = '';
       return;
@@ -836,8 +852,12 @@ permalink: /do/agent/
 
     emptyState.style.display = 'none';
 
-    container.innerHTML = assets.map(asset => `
-      <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+    container.innerHTML = filteredAssets.map(asset => {
+      const isCompleted = !!asset.completedAt;
+      const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
+
+      return `
+      <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity}">
         <div style="display: flex; justify-content: space-between; align-items: start;">
           <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
             <span style="font-size: 1.25rem;">📄</span>
@@ -852,6 +872,13 @@ permalink: /do/agent/
           ${formatDate(asset.createdAt)}
         </div>
 
+        ${isCompleted ? `
+          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
+            <span style="color: #22c55e; font-size: 1rem;">✓</span>
+            <span style="color: #16a34a; font-weight: 500; font-size: 0.875rem;">Completed ${formatDate(asset.completedAt)}</span>
+          </div>
+        ` : ''}
+
         <div style="background: #f9fafb; padding: 0.75rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           ${escapeHtml(truncate(asset.content, 100))}
         </div>
@@ -863,12 +890,18 @@ permalink: /do/agent/
           <button data-action="copy" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
             📋
           </button>
+          ${!isCompleted ? `
+            <button data-action="complete" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #dcfce7; color: #16a34a; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
+              ✓
+            </button>
+          ` : ''}
           <button data-action="delete" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
             🗑️
           </button>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   // View saved asset in modal
@@ -911,6 +944,25 @@ permalink: /do/agent/
     });
   }
 
+  // Mark asset as complete
+  function completeAsset(assetId) {
+    const assets = getAssets(agentId);
+    const asset = assets.find(a => a.id === assetId);
+    if (!asset) return;
+
+    // Add completion timestamp
+    asset.completedAt = new Date().toISOString();
+
+    // Save updated assets
+    localStorage.setItem(`assets-${agentId}`, JSON.stringify(assets));
+
+    // Update count
+    updateAssetsCount(agentId);
+
+    // Re-render
+    renderAssets(agentId);
+  }
+
   // Delete saved asset
   function deleteSavedAsset(assetId) {
     if (!confirm('Delete this asset? This cannot be undone.')) return;
@@ -920,7 +972,7 @@ permalink: /do/agent/
     localStorage.setItem(`assets-${agentId}`, JSON.stringify(filtered));
 
     // Update count
-    document.getElementById('assets-count').textContent = filtered.length;
+    updateAssetsCount(agentId);
 
     // Re-render
     renderAssets(agentId);
@@ -955,8 +1007,7 @@ permalink: /do/agent/
     }
 
     // Initialize assets count
-    const assetsCount = getAssets(agentId).length;
-    document.getElementById('assets-count').textContent = assetsCount;
+    updateAssetsCount(agentId);
   });
 
   // Initialize modal event listeners
@@ -982,9 +1033,16 @@ permalink: /do/agent/
       viewSavedAsset(assetId);
     } else if (action === 'copy') {
       copySavedAsset(assetId);
+    } else if (action === 'complete') {
+      completeAsset(assetId);
     } else if (action === 'delete') {
       deleteSavedAsset(assetId);
     }
+  });
+
+  // Handle show completed checkbox
+  document.getElementById('show-completed-assets').addEventListener('change', () => {
+    renderAssets(agentId);
   });
 
   // Handle reset conversation button
