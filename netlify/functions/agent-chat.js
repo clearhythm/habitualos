@@ -473,8 +473,9 @@ Use this context to have informed design discussions and make architectural reco
     // Provide more specific error messages
     let errorMessage = 'Internal server error';
 
-    if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
-      errorMessage = 'Request timed out - please try again';
+    if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT' || error.name === 'APIConnectionTimeoutError') {
+      errorMessage = 'The AI is taking too long to respond. Try a simpler request or try again';
+      console.error('[agent-chat] TIMEOUT - Consider reducing system prompt size or max_tokens');
     } else if (error.status === 429) {
       errorMessage = 'Rate limit exceeded - please wait a moment';
     } else if (error.status >= 500) {
