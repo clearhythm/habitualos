@@ -6,7 +6,7 @@ const { getAgent } = require('./_services/db-agents.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-  timeout: 24000 // 24 second timeout - must complete before Netlify's 26s limit
+  timeout: 20000 // 20 second timeout - must complete before Netlify's 26s limit
 });
 
 /**
@@ -222,9 +222,12 @@ CRITICAL:
 You have access to architecture documentation through the get_architecture_doc tool.
 Available docs: ${availableDocs.join(', ')}
 
-IMPORTANT: You can only request ONE doc per conversation turn. Choose the most relevant doc for the current discussion.
-If you need additional docs, respond to the user first, then request another doc in the next turn.
-Only request docs when you actually need specific architectural details - don't fetch docs preemptively.` : ''}`;
+IMPORTANT:
+- Only request docs when you need SPECIFIC architectural details to answer a question or create a deliverable
+- DO NOT fetch docs just to confirm they exist or for general questions
+- You can only request ONE doc per conversation turn
+- If you need additional docs, respond to the user first, then request another doc in the next turn
+- Don't fetch docs preemptively or speculatively` : ''}`;
 
     // Build conversation history for Claude
     const conversationHistory = chatHistory.map(msg => ({
@@ -272,7 +275,7 @@ Only request docs when you actually need specific architectural details - don't 
 
       const requestParams = {
         model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 2000,
+        max_tokens: 1000,  // Reduced to ensure faster responses even with doc content
         system: [
           {
             type: "text",
@@ -332,28 +335,28 @@ Only request docs when you actually need specific architectural details - don't 
           docContent = `Error: Could not read documentation file ${docName}`;
         }
 
-        // Add assistant's message with tool use to conversation
-        conversationHistory.push({
-          role: 'assistant',
-          content: apiResponse.content
-        });
+        // Return immediately after loading doc to prevent timeout
+        // Next user message will include the doc in chat history via chatHistory parameter
+        // This prevents timeout from doing 2 sequential API calls (can total 40s+) in one invocation
+        console.log(`[agent-chat] Doc loaded, returning to prevent timeout. Next message will have doc in context.`);
 
-        // Add tool result to conversation with cache control
-        // This caches the entire conversation including the doc content
-        conversationHistory.push({
-          role: 'user',
-          content: [
-            {
-              type: 'tool_result',
-              tool_use_id: toolUseBlock.id,
-              content: docContent,
-              cache_control: { type: "ephemeral" }  // Cache doc content for subsequent turns
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            success: true,
+            response: `I've loaded the ${docName} documentation. What would you like to know about it?`,
+            docLoaded: {
+              doc_name: docName,
+              doc_content: docContent,
+              // Return these so frontend can add them to chat history
+              assistant_tool_use: apiResponse.content,
+              tool_use_id: toolUseBlock.id
             }
-          ]
-        });
-
-        // Continue loop to get next response
-        continue;
+          })
+        };
       }
 
       // Unknown tool - should not happen

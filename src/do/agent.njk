@@ -1105,6 +1105,34 @@ permalink: /do/agent/
 
       hideLoadingMessage();
 
+      // If doc was loaded via tool use, add tool messages to history
+      if (data.docLoaded) {
+        // Add assistant's tool use message to history
+        const assistantToolUse = {
+          role: 'assistant',
+          content: data.docLoaded.assistant_tool_use,
+          timestamp: new Date().toISOString()
+        };
+        chatHistory.push(assistantToolUse);
+
+        // Add tool result to history (this will be cached on next request)
+        const toolResult = {
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: data.docLoaded.tool_use_id,
+              content: data.docLoaded.doc_content
+            }
+          ],
+          timestamp: new Date().toISOString()
+        };
+        chatHistory.push(toolResult);
+        saveAgentChatHistory(chatHistory);
+
+        console.log(`[agent] Loaded ${data.docLoaded.doc_name} documentation into chat history`);
+      }
+
       // Add assistant response
       const assistantMessage = {
         role: 'assistant',

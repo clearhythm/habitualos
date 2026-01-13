@@ -8,12 +8,8 @@
   # Include docs directory in function bundle
   included_files = ["docs/**/*.md"]
 
-[dev]
-  # Increase local dev timeout to allow for initial cache population
-  functionsTimeout = 60
-
 [functions."agent-chat"]
-  # Increase timeout for Claude API calls (max 26 seconds on Pro plan)
+  # Max timeout for Claude API calls (26 seconds on Pro plan)
   timeout = 26
 
 # Browser API - gateway for all /api/* requests
