@@ -230,10 +230,28 @@ IMPORTANT:
 - Don't fetch docs preemptively or speculatively` : ''}`;
 
     // Build conversation history for Claude
-    const conversationHistory = chatHistory.map(msg => ({
-      role: msg.role === 'assistant' ? 'assistant' : 'user',
-      content: msg.content
-    }));
+    // Add cache_control to tool_result messages for efficient caching
+    const conversationHistory = chatHistory.map(msg => {
+      const mappedMsg = {
+        role: msg.role === 'assistant' ? 'assistant' : 'user',
+        content: msg.content
+      };
+
+      // If this is a tool_result message, add cache_control to cache the doc content
+      if (Array.isArray(msg.content) && msg.content.some(c => c.type === 'tool_result')) {
+        mappedMsg.content = msg.content.map(c => {
+          if (c.type === 'tool_result') {
+            return {
+              ...c,
+              cache_control: { type: "ephemeral" }
+            };
+          }
+          return c;
+        });
+      }
+
+      return mappedMsg;
+    });
 
     // Add current user message
     conversationHistory.push({
