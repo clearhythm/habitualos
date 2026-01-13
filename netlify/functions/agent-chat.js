@@ -338,14 +338,16 @@ Only request docs when you actually need specific architectural details - don't 
           content: apiResponse.content
         });
 
-        // Add tool result to conversation
+        // Add tool result to conversation with cache control
+        // This caches the entire conversation including the doc content
         conversationHistory.push({
           role: 'user',
           content: [
             {
               type: 'tool_result',
               tool_use_id: toolUseBlock.id,
-              content: docContent
+              content: docContent,
+              cache_control: { type: "ephemeral" }  // Cache doc content for subsequent turns
             }
           ]
         });
