@@ -1110,7 +1110,7 @@ permalink: /do/agent/
 
       hideLoadingMessage();
 
-      // If doc was loaded via tool use, add tool messages to history
+      // If doc was loaded via tool use, add tool messages to history and auto-continue
       if (data.docLoaded) {
         // Add assistant's tool use message to history
         const assistantToolUse = {
@@ -1135,10 +1135,88 @@ permalink: /do/agent/
         chatHistory.push(toolResult);
         saveAgentChatHistory(chatHistory);
 
-        console.log(`[agent] Loaded ${data.docLoaded.doc_name} documentation into chat history`);
+        console.log(`[agent] Loaded ${data.docLoaded.doc_name} documentation, auto-continuing with original message`);
+
+        // Show a brief loading message indicating we're processing with the doc
+        renderMessage('assistant', `Loading ${data.docLoaded.doc_name} documentation...`);
+
+        // Auto-continue: Send the same message again, now with doc in context
+        // Agent can now actually answer the original question
+        try {
+          const continueResponse = await fetch('/.netlify/functions/agent-chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              userId,
+              agentId,
+              message, // Same original message
+              chatHistory: chatHistory.map(msg => ({
+                role: msg.role,
+                content: msg.content
+              }))
+            })
+          });
+
+          const continueData = await continueResponse.json();
+
+          if (!continueData.success) {
+            throw new Error(continueData.error || 'Failed to continue after loading doc');
+          }
+
+          // Remove the loading message
+          if (chatMessages.lastChild && chatMessages.lastChild.textContent.includes('Loading')) {
+            chatMessages.lastChild.remove();
+          }
+
+          // Add the actual assistant response
+          const assistantMessage = {
+            role: 'assistant',
+            content: continueData.response,
+            timestamp: new Date().toISOString()
+          };
+          renderMessage('assistant', continueData.response);
+          chatHistory.push(assistantMessage);
+          saveAgentChatHistory(chatHistory);
+
+          // Handle any draft actions or assets from the continued response
+          if (continueData.hasDraftActions && continueData.draftActions) {
+            draftActions = [...draftActions, ...continueData.draftActions];
+            saveDraftActions(draftActions);
+            continueData.draftActions.forEach(action => {
+              renderDraftActionCard(action);
+            });
+            const actionIds = continueData.draftActions.map(a => a.id);
+            saveChatToFirestore([], actionIds);
+          }
+
+          if (continueData.hasProposedAsset && continueData.proposedAsset) {
+            proposedAssets.push(continueData.proposedAsset);
+            renderProposedAssetCard(continueData.proposedAsset);
+            saveChatToFirestore([continueData.proposedAsset.id], []);
+          }
+
+          return; // Exit early, we've handled everything
+        } catch (continueError) {
+          console.error('Error continuing after doc load:', continueError);
+          // Remove loading message and show error
+          if (chatMessages.lastChild && chatMessages.lastChild.textContent.includes('Loading')) {
+            chatMessages.lastChild.remove();
+          }
+          const errorMessage = {
+            role: 'assistant',
+            content: "I loaded the documentation but had trouble processing your request. Could you try asking again?",
+            timestamp: new Date().toISOString()
+          };
+          renderMessage('assistant', errorMessage.content);
+          chatHistory.push(errorMessage);
+          saveAgentChatHistory(chatHistory);
+          return;
+        }
       }
 
-      // Add assistant response
+      // Add assistant response (only if not a doc load, which returns early above)
       const assistantMessage = {
         role: 'assistant',
         content: data.response,
