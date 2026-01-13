@@ -269,6 +269,22 @@ Use this context to have informed design discussions and make architectural reco
     console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
     console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
 
+    // Log cache usage
+    if (apiResponse.usage) {
+      console.log(`[agent-chat] Token usage:`, {
+        input_tokens: apiResponse.usage.input_tokens,
+        cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
+        cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
+        output_tokens: apiResponse.usage.output_tokens
+      });
+
+      if (apiResponse.usage.cache_read_input_tokens > 0) {
+        console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
+      } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
+        console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
+      }
+    }
+
     // Extract assistant response
     const assistantResponse = apiResponse.content[0].text;
 
