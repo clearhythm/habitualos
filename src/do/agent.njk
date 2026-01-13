@@ -985,6 +985,11 @@ permalink: /do/agent/
     // If we have chat history from localStorage, render it
     if (chatHistory.length > 0) {
       chatHistory.forEach(msg => {
+        // Skip tool_use and tool_result messages (internal implementation details)
+        // These are needed for API context but don't need to be rendered
+        if (typeof msg.content !== 'string') {
+          return; // Skip non-string content (tool_use/tool_result)
+        }
         renderMessage(msg.role, msg.content);
       });
     } else {
