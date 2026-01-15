@@ -72,7 +72,7 @@ Conversation history for deliverable generation and refinement.
 - Cleared when deliverable approved/persisted
 
 ### actions
-Future deliverables to be done later (scheduled or interactive).
+Deliverables including scheduled work, interactive tasks, and immediate content (formerly assets).
 
 ```javascript
 {
@@ -83,22 +83,29 @@ Future deliverables to be done later (scheduled or interactive).
   description: string,
   state: "draft" | "defined" | "scheduled" | "in_progress" | "completed" | "dismissed",
   priority: "high" | "medium" | "low",
-  taskType: "interactive" | "scheduled",
+  taskType: "interactive" | "scheduled" | "manual",
   scheduleTime: string | null,       // ISO timestamp
   startedAt: string | null,
   completedAt: string | null,
   dismissedAt: string | null,
   dismissedReason: string | null,
   errorMessage: string | null,
-  taskConfig: {                      // For autonomous execution
+  taskConfig: {                      // For autonomous execution (scheduled/interactive only)
     instructions: string,            // Detailed steps
     expectedOutput: string,          // What artifacts to produce
     context: object                  // Additional data
   },
+  type: string | null,               // For manual tasks: "prompt", "code", "document", etc.
+  content: string | null,            // For manual tasks: full deliverable content
   _createdAt: Timestamp,
   _updatedAt: Timestamp
 }
 ```
+
+**Task Types:**
+- `interactive`: Tasks requiring human interaction
+- `scheduled`: Autonomous tasks executed at scheduled time
+- `manual`: Immediate deliverables with full content (formerly assets)
 
 **State transitions:**
 ```
@@ -111,27 +118,9 @@ scheduled → in_progress → completed
                 dismissed
 ```
 
-### assets
-Immediate deliverables with full content delivered NOW.
-
-```javascript
-{
-  id: "asset-{timestamp}-{random}",  // Primary key
-  _userId: "u-{timestamp}-{random}",
-  agentId: "agent-{random}",
-  title: string,
-  description: string,
-  content: string,                   // Full deliverable content
-  assetType: "document" | "code" | "prompt" | "email" | string,
-  _createdAt: Timestamp,
-  _updatedAt: Timestamp
-}
-```
-
-**Lifecycle:**
-- Proposed state in localStorage until saved
-- User can refine via chat before saving
-- "Save to Assets" persists to database
+### assets (DEPRECATED - now part of actions)
+Assets have been merged into the actions collection as taskType: "manual".
+See actions schema above for the unified model.
 
 ### task_outputs
 Results from scheduled task execution.

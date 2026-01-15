@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getAgent } = require('./_services/db-agents.cjs');
 const { createAction, getAction } = require('./_services/db-actions.cjs');
+const { generateActionId } = require('./_utils/data-utils.cjs');
 
 /**
  * POST /api/action-define
@@ -19,7 +20,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, agentId, title, description, priority, taskType, taskConfig } = JSON.parse(event.body);
+    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -55,7 +56,7 @@ exports.handler = async (event) => {
     }
 
     // Create action in Firestore
-    const actionId = `action-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const actionId = generateActionId();
 
     const actionData = {
       _userId: userId,
@@ -71,7 +72,10 @@ exports.handler = async (event) => {
       completedAt: null,
       dismissedAt: null,
       dismissedReason: null,
-      errorMessage: null
+      errorMessage: null,
+      // For manual actions (formerly assets): type and content
+      type: type || null,
+      content: content || null
     };
 
     await createAction(actionId, actionData);

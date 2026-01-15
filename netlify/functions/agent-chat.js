@@ -67,38 +67,16 @@ exports.handler = async (event) => {
       };
     }
 
-    // Find architecture docs path for tool use
-    // Try multiple possible paths for docs (local vs deployed)
-    const possiblePaths = [
-      path.join(__dirname, '..', '..', 'docs', 'architecture'),
-      path.join(process.cwd(), 'docs', 'architecture'),
-      path.join(__dirname, 'docs', 'architecture')
-    ];
+    // Load agent overview doc for strategic context
+    const agentOverviewPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'agent-overview.md');
 
-    let architectureDocsPath = null;
-
-    console.log(`[agent-chat] __dirname: ${__dirname}`);
-    console.log(`[agent-chat] process.cwd(): ${process.cwd()}`);
-
-    // Try each possible path
-    for (const tryPath of possiblePaths) {
-      if (fs.existsSync(tryPath)) {
-        architectureDocsPath = tryPath;
-        console.log(`[agent-chat] Found docs at: ${architectureDocsPath}`);
-        break;
-      }
+    let agentOverview = '';
+    if (fs.existsSync(agentOverviewPath)) {
+      agentOverview = fs.readFileSync(agentOverviewPath, 'utf-8');
+      console.log(`[agent-chat] Loaded agent-overview.md (${agentOverview.length} chars)`);
+    } else {
+      console.error(`[agent-chat] agent-overview.md NOT FOUND at: ${agentOverviewPath}`);
     }
-
-    if (!architectureDocsPath) {
-      console.error(`[agent-chat] Architecture docs NOT FOUND in any of these paths:`, possiblePaths);
-    }
-
-    // Get available docs for tool definition
-    const availableDocs = architectureDocsPath && fs.existsSync(architectureDocsPath)
-      ? fs.readdirSync(architectureDocsPath).filter(f => f.endsWith('.md')).map(f => f.replace('.md', ''))
-      : [];
-
-    console.log(`[agent-chat] Available docs for on-demand access:`, availableDocs);
 
     // Build system prompt
     const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
@@ -131,7 +109,7 @@ ASSETS (immediate deliverables) - Use GENERATE_ASSET signal when:
   * "Create a specification document" → Generate the full spec as an ASSET
   * "Draft an email to..." → Full email text as ASSET
   * "Write code for..." → Complete code as ASSET
-  * "Create a prompt for..." → Full prompt text as ASSET
+  * "Create a Claude Code prompt for..." → Full prompt as ASSET with type "prompt"
   * "Design a schema" → Full schema definition as ASSET
 
 ACTIONS (future scheduled work) - Use GENERATE_ACTIONS signal when:
@@ -155,14 +133,14 @@ GENERATE_ASSET
   "content": "[Full content here - the actual prompt/email/code/document]"
 }
 
-Example:
+Example (Claude Code Prompt):
 GENERATE_ASSET
 ---
 {
-  "title": "Agent Setup System Prompt",
-  "description": "Conversational prompt for agent creation flow",
-  "type": "markdown",
-  "content": "You are a UX-focused AI assistant helping users define their goals...\\n\\nYour role is to ask clarifying questions..."
+  "title": "Add Action Filtering Prompt",
+  "description": "Claude Code prompt to add status filtering to actions list",
+  "type": "prompt",
+  "content": "Add filtering by action status to the actions list page.\\n\\nResearch the existing query patterns in netlify/functions/_services/db-actions.cjs to understand how actions are retrieved. Follow the same service layer pattern used in db-agents.cjs for reference.\\n\\nImplementation steps:\\n1. Update getAllActions() in db-actions.cjs to accept optional status filter\\n2. Modify Firestore query to filter by state field when status provided\\n3. Update netlify/functions/actions-list.js to accept and pass status parameter\\n4. Add filter UI controls to src/do/actions.njk following pattern in agents.njk\\n5. Test with status values: draft, defined, scheduled, completed\\n\\nEnsure proper userId validation following patterns in docs/architecture/security.md."
 }
 
 The asset card will appear inline. User can click to view full content, copy to clipboard, or save to Assets tab.
@@ -213,45 +191,13 @@ GENERATE_ACTIONS
 CRITICAL:
 - Generate ONE action at a time
 - taskConfig.instructions must be detailed enough for autonomous execution
-- Don't create actions that just say "Create X" without full execution instructions${availableDocs.length > 0 ? `
-
----
-
-## Codebase Context
-
-You have access to architecture documentation through the get_architecture_doc tool.
-Available docs: ${availableDocs.join(', ')}
-
-IMPORTANT:
-- Only request docs when you need SPECIFIC architectural details to answer a question or create a deliverable
-- DO NOT fetch docs just to confirm they exist or for general questions
-- You can only request ONE doc per conversation turn
-- If you need additional docs, respond to the user first, then request another doc in the next turn
-- Don't fetch docs preemptively or speculatively` : ''}`;
+- Don't create actions that just say "Create X" without full execution instructions`;
 
     // Build conversation history for Claude
-    // Add cache_control to tool_result messages for efficient caching
-    const conversationHistory = chatHistory.map(msg => {
-      const mappedMsg = {
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: msg.content
-      };
-
-      // If this is a tool_result message, add cache_control to cache the doc content
-      if (Array.isArray(msg.content) && msg.content.some(c => c.type === 'tool_result')) {
-        mappedMsg.content = msg.content.map(c => {
-          if (c.type === 'tool_result') {
-            return {
-              ...c,
-              cache_control: { type: "ephemeral" }
-            };
-          }
-          return c;
-        });
-      }
-
-      return mappedMsg;
-    });
+    const conversationHistory = chatHistory.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content
+    }));
 
     // Add current user message
     conversationHistory.push({
@@ -259,127 +205,53 @@ IMPORTANT:
       content: message
     });
 
-    // Define tool for fetching architecture docs on-demand
-    const tools = availableDocs.length > 0 ? [{
-      name: "get_architecture_doc",
-      description: "Retrieve a specific architecture documentation file. Use this when you need detailed information about system architecture, database schema, or implementation patterns. Only fetch docs when you actually need them for the current discussion.",
-      input_schema: {
-        type: "object",
-        properties: {
-          doc_name: {
-            type: "string",
-            enum: availableDocs,
-            description: `The name of the documentation file to retrieve. Available: ${availableDocs.join(', ')}`
-          }
-        },
-        required: ["doc_name"]
-      }
-    }] : [];
-
-    // Call Claude API with tool support (loop to handle tool use)
+    // Call Claude API with agent overview in system prompt (cached)
     console.log('[agent-chat] Calling Claude API');
     console.log(`[agent-chat] System prompt size: ${systemPrompt.length} characters`);
-    console.log(`[agent-chat] Tools available: ${tools.length > 0 ? tools[0].name : 'none'}`);
+    console.log(`[agent-chat] Agent overview size: ${agentOverview.length} characters`);
     const apiCallStart = Date.now();
 
-    let apiResponse;
-    let assistantResponse;
-    const maxToolRounds = 2; // Allow 1 tool use + 1 final response (ONE doc per turn to prevent timeout)
-    let toolRound = 0;
-
-    while (toolRound < maxToolRounds) {
-      toolRound++;
-      console.log(`[agent-chat] API call round ${toolRound}`);
-
-      const requestParams = {
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 2048,  // Enough for full asset/action generation with content
-        system: [
-          {
-            type: "text",
-            text: systemPrompt,
-            cache_control: { type: "ephemeral" }  // Cache system prompt
-          }
-        ],
-        messages: conversationHistory
-      };
-
-      // Add tools if available
-      if (tools.length > 0) {
-        requestParams.tools = tools;
+    const systemMessages = [
+      {
+        type: "text",
+        text: systemPrompt
       }
+    ];
 
-      apiResponse = await anthropic.messages.create(requestParams);
+    // Add agent overview with cache control
+    if (agentOverview) {
+      systemMessages.push({
+        type: "text",
+        text: agentOverview,
+        cache_control: { type: "ephemeral" }  // Cache the agent overview doc
+      });
+    }
 
-      console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
+    const requestParams = {
+      model: 'claude-sonnet-4-5-20250929',
+      max_tokens: 2048,
+      system: systemMessages,
+      messages: conversationHistory
+    };
 
-      // Log cache usage
-      if (apiResponse.usage) {
-        console.log(`[agent-chat] Token usage:`, {
-          input_tokens: apiResponse.usage.input_tokens,
-          cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
-          cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
-          output_tokens: apiResponse.usage.output_tokens
-        });
+    const apiResponse = await anthropic.messages.create(requestParams);
 
-        if (apiResponse.usage.cache_read_input_tokens > 0) {
-          console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
-        } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
-          console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
-        }
+    console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
+
+    // Log cache usage
+    if (apiResponse.usage) {
+      console.log(`[agent-chat] Token usage:`, {
+        input_tokens: apiResponse.usage.input_tokens,
+        cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
+        cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
+        output_tokens: apiResponse.usage.output_tokens
+      });
+
+      if (apiResponse.usage.cache_read_input_tokens > 0) {
+        console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
+      } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
+        console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
       }
-
-      // Check if assistant wants to use a tool
-      const toolUseBlock = apiResponse.content.find(block => block.type === 'tool_use');
-
-      if (!toolUseBlock) {
-        // No tool use - we're done
-        break;
-      }
-
-      console.log(`[agent-chat] Tool use requested: ${toolUseBlock.name} with input:`, toolUseBlock.input);
-
-      // Handle tool call
-      if (toolUseBlock.name === 'get_architecture_doc') {
-        const docName = toolUseBlock.input.doc_name;
-        const docPath = path.join(architectureDocsPath, `${docName}.md`);
-
-        let docContent;
-        try {
-          docContent = fs.readFileSync(docPath, 'utf-8');
-          console.log(`[agent-chat] Loaded doc ${docName} (${docContent.length} chars)`);
-        } catch (readError) {
-          console.error(`[agent-chat] Failed to read doc ${docName}:`, readError);
-          docContent = `Error: Could not read documentation file ${docName}`;
-        }
-
-        // Return immediately after loading doc to prevent timeout
-        // Next user message will include the doc in chat history via chatHistory parameter
-        // This prevents timeout from doing 2 sequential API calls (can total 40s+) in one invocation
-        console.log(`[agent-chat] Doc loaded, returning to prevent timeout. Next message will have doc in context.`);
-
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            success: true,
-            response: `I've loaded the ${docName} documentation. What would you like to know about it?`,
-            docLoaded: {
-              doc_name: docName,
-              doc_content: docContent,
-              // Return these so frontend can add them to chat history
-              assistant_tool_use: apiResponse.content,
-              tool_use_id: toolUseBlock.id
-            }
-          })
-        };
-      }
-
-      // Unknown tool - should not happen
-      console.error(`[agent-chat] Unknown tool requested: ${toolUseBlock.name}`);
-      break;
     }
 
     console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
@@ -534,18 +406,20 @@ IMPORTANT:
         };
       }
 
-      // Return proposed asset (NOT persisted - stored in frontend until saved)
-      const proposedAsset = {
-        id: `proposed-asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      // Create draft action with taskType: "manual" (formerly assets)
+      const draftAction = {
+        id: `draft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         title: generatedAsset.title,
         description: generatedAsset.description,
+        taskType: 'manual',
         type: generatedAsset.type || 'text',
         content: generatedAsset.content,
-        state: 'proposed',
+        priority: 'medium',
+        state: 'draft',
         agentId: agent.id
       };
 
-      // Return conversational confirmation with proposed asset
+      // Return conversational confirmation with draft action
       return {
         statusCode: 200,
         headers: {
@@ -553,9 +427,9 @@ IMPORTANT:
         },
         body: JSON.stringify({
           success: true,
-          response: `I've created a proposed asset for you. Click the card below to view the full content, copy it to your clipboard, or save it to your Assets.`,
-          proposedAsset: proposedAsset,
-          hasProposedAsset: true
+          response: `I've created this deliverable for you. Let me know if you want to refine it, or we can mark it as defined.`,
+          draftActions: [draftAction],
+          hasDraftActions: true
         })
       };
     }
