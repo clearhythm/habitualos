@@ -31,16 +31,16 @@ permalink: /do/agent/
       <a href="#" id="goal-more-link" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;">more</a>
     </p>
     <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center; align-items: center;">
-      <a href="#" class="view-link" data-view="chat" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+      <a href="#chat" class="view-link" data-view="chat" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
         Chat
       </a>
       <span style="color: #ddd;">|</span>
-      <a href="#" class="view-link" data-view="actions" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+      <a href="#actions" class="view-link" data-view="actions" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
         <span id="actions-count">0</span> actions
       </a>
       <span style="color: #ddd;">|</span>
-      <a href="#" class="view-link" data-view="assets" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
-        <span id="assets-count">0</span> assets
+      <a href="#feed" class="view-link" data-view="feed" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+        Feed
       </a>
     </div>
   </div>
@@ -113,23 +113,23 @@ permalink: /do/agent/
     </div>
   </div>
 
-  {# Assets View #}
-  <div id="view-assets" class="agent-view" style="display: none;">
-    <div id="tab-assets" class="agent-tab-content" style="display: block;">
+  {# Feed View #}
+  <div id="view-feed" class="agent-view" style="display: none;">
+    <div id="tab-feed" class="agent-tab-content" style="display: block;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h2 style="margin: 0;">📄 Assets</h2>
+      <h2 style="margin: 0;">📋 Feed</h2>
       <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
-        <input type="checkbox" id="show-completed-assets" style="cursor: pointer;">
-        Show completed
+        <input type="checkbox" id="show-completed-feed" style="cursor: pointer;">
+        Show completed only
       </label>
     </div>
 
-    <div id="assets-empty-state" style="text-align: center; padding: 3rem 1rem; color: #6b7280;">
-      <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No assets yet</p>
-      <p style="font-size: 0.95rem;">Assets you save from chat will appear here</p>
+    <div id="feed-empty-state" style="text-align: center; padding: 3rem 1rem; color: #6b7280;">
+      <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No activity yet</p>
+      <p style="font-size: 0.95rem;">Your interactions and completed actions will appear here</p>
     </div>
 
-    <div id="assets-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;"></div>
+    <div id="feed-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
     </div>
   </div>
 
@@ -250,7 +250,7 @@ permalink: /do/agent/
 <div id="draft-action-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
   <div style="max-width: 600px; margin: 2rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
-      <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #111;">Define Action</h2>
+      <h2 id="draft-modal-title" style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #111;">Define Action</h2>
       <button id="close-draft-modal-header" style="background: none; border: none; font-size: 1.5rem; color: #6b7280; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">×</button>
     </div>
 
@@ -298,18 +298,44 @@ permalink: /do/agent/
           <div id="draft-expected-output" style="padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; color: #4b5563; white-space: pre-wrap;"></div>
         </div>
       </div>
+
+      <div id="manual-content-section" style="display: none;">
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Content <span id="manual-type-badge" style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin-left: 0.5rem;"></span></label>
+          <pre id="draft-content" style="padding: 0.75rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 0.875rem; color: #4b5563; white-space: pre-wrap; font-family: 'Courier New', monospace; max-height: 300px; overflow-y: auto;"></pre>
+        </div>
+      </div>
     </div>
 
     <div style="display: flex; gap: 0.75rem; padding: 1.5rem; border-top: 1px solid #e5e7eb; justify-content: space-between;">
+      {# Draft mode buttons (left side) #}
       <button id="delete-draft-btn" style="padding: 0.5rem 1rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
         🗑️ Delete
       </button>
+
+      {# View mode buttons (left side) #}
+      <button id="delete-action-btn" style="display: none; padding: 0.5rem 1rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+        🗑️ Delete
+      </button>
+
       <div style="display: flex; gap: 0.75rem;">
+        {# Draft mode buttons (right side) #}
         <button id="cancel-draft-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
           Cancel
         </button>
         <button id="define-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
           Mark as Defined
+        </button>
+
+        {# View mode buttons (right side) #}
+        <button id="copy-action-btn" style="display: none; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          📋 Copy
+        </button>
+        <button id="complete-action-btn" style="display: none; padding: 0.5rem 1rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          ✓ Complete
+        </button>
+        <button id="close-action-btn" style="display: none; padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.95rem; cursor: pointer; font-weight: 500;">
+          Close
         </button>
       </div>
     </div>
@@ -549,20 +575,49 @@ permalink: /do/agent/
     currentDraftAction = action;
     const modal = document.getElementById('draft-action-modal');
 
+    // Reset modal title to draft mode
+    document.getElementById('draft-modal-title').textContent = 'Define Action';
+
     // Populate form fields
     document.getElementById('draft-title').value = action.title;
     document.getElementById('draft-description').value = action.description || '';
     document.getElementById('draft-priority').value = action.priority || 'medium';
 
-    // Show taskConfig section if present
+    // Enable fields for editing drafts
+    document.getElementById('draft-title').disabled = false;
+    document.getElementById('draft-description').disabled = false;
+    document.getElementById('draft-priority').disabled = false;
+
+    // Show taskConfig section for scheduled/interactive actions
     const taskConfigSection = document.getElementById('task-config-section');
-    if (action.taskConfig && (action.taskConfig.instructions || action.taskConfig.expectedOutput)) {
+    const manualContentSection = document.getElementById('manual-content-section');
+
+    if (action.taskType === 'manual' && action.content) {
+      // Show content for manual actions (formerly assets)
+      taskConfigSection.style.display = 'none';
+      manualContentSection.style.display = 'block';
+      document.getElementById('draft-content').textContent = action.content;
+      document.getElementById('manual-type-badge').textContent = action.type || 'text';
+    } else if (action.taskConfig && (action.taskConfig.instructions || action.taskConfig.expectedOutput)) {
+      // Show taskConfig for scheduled/interactive actions
+      manualContentSection.style.display = 'none';
       taskConfigSection.style.display = 'block';
       document.getElementById('draft-instructions').textContent = action.taskConfig.instructions || 'No instructions provided';
       document.getElementById('draft-expected-output').textContent = action.taskConfig.expectedOutput || 'No expected output specified';
     } else {
+      // Hide both if neither present
       taskConfigSection.style.display = 'none';
+      manualContentSection.style.display = 'none';
     }
+
+    // Show draft mode buttons, hide view mode buttons
+    document.getElementById('delete-draft-btn').style.display = 'block';
+    document.getElementById('define-action-btn').style.display = 'block';
+    document.getElementById('cancel-draft-btn').style.display = 'block';
+    document.getElementById('delete-action-btn').style.display = 'none';
+    document.getElementById('copy-action-btn').style.display = 'none';
+    document.getElementById('complete-action-btn').style.display = 'none';
+    document.getElementById('close-action-btn').style.display = 'none';
 
     // Show modal
     modal.style.display = 'block';
@@ -572,6 +627,17 @@ permalink: /do/agent/
     const modal = document.getElementById('draft-action-modal');
     modal.style.display = 'none';
     currentDraftAction = null;
+    delete modal.dataset.actionId;
+
+    // Reset fields to editable state (in case we were viewing a defined action)
+    document.getElementById('draft-title').disabled = false;
+    document.getElementById('draft-description').disabled = false;
+    document.getElementById('draft-priority').disabled = false;
+
+    // Reset button visibility and text
+    document.getElementById('delete-draft-btn').style.display = 'block';
+    document.getElementById('define-action-btn').style.display = 'block';
+    document.getElementById('cancel-draft-btn').textContent = 'Cancel';
   }
 
   function deleteDraftAction() {
@@ -608,20 +674,28 @@ permalink: /do/agent/
     }
 
     try {
+      const payload = {
+        userId,
+        agentId,
+        title,
+        description,
+        priority,
+        taskType: currentDraftAction.taskType || 'scheduled',
+        taskConfig: currentDraftAction.taskConfig || {}
+      };
+
+      // Include type and content for manual actions (formerly assets)
+      if (currentDraftAction.taskType === 'manual') {
+        payload.type = currentDraftAction.type;
+        payload.content = currentDraftAction.content;
+      }
+
       const response = await fetch('/.netlify/functions/action-define', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          userId,
-          agentId,
-          title,
-          description,
-          priority,
-          taskType: currentDraftAction.taskType || 'scheduled',
-          taskConfig: currentDraftAction.taskConfig || {}
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -752,7 +826,7 @@ permalink: /do/agent/
     });
   }
 
-  function saveAssetFromModal() {
+  async function saveAssetFromModal() {
     if (!currentProposedAsset) return;
 
     // Convert proposed asset to saved asset
@@ -782,11 +856,16 @@ permalink: /do/agent/
     clearChatHistory();
 
     // Show success feedback
-    alert('Asset saved to Assets tab!');
+    alert('Asset saved!');
 
-    // Render assets if on assets view
-    if (document.getElementById('view-assets').style.display === 'block') {
-      renderAssets(agentId);
+    // Render feed if on feed view
+    if (document.getElementById('view-feed')?.style.display === 'block') {
+      renderFeed();
+    }
+
+    // Reload actions view if visible
+    if (document.getElementById('view-actions')?.style.display === 'block') {
+      await loadActions();
     }
   }
 
@@ -801,9 +880,8 @@ permalink: /do/agent/
   }
 
   function updateAssetsCount(agentId) {
-    const assets = getAssets(agentId);
-    const activeCount = assets.filter(a => !a.completedAt).length;
-    document.getElementById('assets-count').textContent = activeCount;
+    // No-op: assets-count element no longer exists (replaced with Feed view)
+    // Keeping function to avoid breaking existing calls
   }
 
   // Helper functions
@@ -834,17 +912,21 @@ permalink: /do/agent/
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  // Render assets grid
-  function renderAssets(agentId) {
-    const assets = getAssets(agentId);
-    const container = document.getElementById('assets-grid');
-    const emptyState = document.getElementById('assets-empty-state');
-    const showCompleted = document.getElementById('show-completed-assets')?.checked || false;
+  // Render feed
+  async function renderFeed() {
+    const container = document.getElementById('feed-list');
+    const emptyState = document.getElementById('feed-empty-state');
+    const showCompletedOnly = document.getElementById('show-completed-feed')?.checked || false;
 
-    // Filter assets based on completion status
-    const filteredAssets = showCompleted ? assets : assets.filter(a => !a.completedAt);
+    // Load actions from Firestore
+    const actions = actionsCache;
 
-    if (filteredAssets.length === 0) {
+    // Filter by completion if needed
+    const filteredActions = showCompletedOnly ?
+      actions.filter(a => a.state === 'completed') :
+      actions;
+
+    if (filteredActions.length === 0) {
       emptyState.style.display = 'block';
       container.innerHTML = '';
       return;
@@ -852,55 +934,42 @@ permalink: /do/agent/
 
     emptyState.style.display = 'none';
 
-    container.innerHTML = filteredAssets.map(asset => {
-      const isCompleted = !!asset.completedAt;
-      const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
+    // Sort chronologically (newest first)
+    const sortedActions = [...filteredActions].sort((a, b) => {
+      const aTime = new Date(a.completedAt || a._createdAt);
+      const bTime = new Date(b.completedAt || b._createdAt);
+      return bTime - aTime;
+    });
+
+    container.innerHTML = sortedActions.map(action => {
+      const isCompleted = action.state === 'completed';
+      const icon = action.taskType === 'manual' ? '🧑' :
+                   action.taskType === 'scheduled' ? '🤖' : '⚡';
+      const timestamp = isCompleted ? action.completedAt : action._createdAt;
+      const eventText = isCompleted ?
+        `You completed action <strong>${escapeHtml(action.title)}</strong>` :
+        `You created action <strong>${escapeHtml(action.title)}</strong>`;
 
       return `
-      <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity}">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
-            <span style="font-size: 1.25rem;">📄</span>
-            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(asset.title)}</h3>
+        <div class="card" style="padding: 0.75rem 1rem; display: flex; align-items: center; gap: 1rem; ${isCompleted ? '' : 'opacity: 0.6;'}">
+          <div style="font-size: 1.5rem;">${icon}</div>
+          <div style="flex: 1;">
+            <div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.25rem;">
+              ${formatDate(timestamp)}
+            </div>
+            <div style="font-size: 0.95rem; color: #374151;">
+              ${eventText}
+            </div>
           </div>
-          <span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${asset.type}</span>
-        </div>
-
-        <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">${escapeHtml(asset.description)}</p>
-
-        <div style="margin: 0; font-size: 0.75rem; color: #9ca3af;">
-          ${formatDate(asset.createdAt)}
-        </div>
-
-        ${isCompleted ? `
-          <div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #f0fdf4; border-left: 3px solid #22c55e; border-radius: 4px;">
-            <span style="color: #22c55e; font-size: 1rem;">✓</span>
-            <span style="color: #16a34a; font-weight: 500; font-size: 0.875rem;">Completed ${formatDate(asset.completedAt)}</span>
+          <div style="display: flex; gap: 0.5rem;">
+            ${action.taskType === 'manual' && action.content ? `
+              <button onclick="viewActionModal('${action.id}')" style="padding: 0.375rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
+                View
+              </button>
+            ` : ''}
           </div>
-        ` : ''}
-
-        <div style="background: #f9fafb; padding: 0.75rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          ${escapeHtml(truncate(asset.content, 100))}
         </div>
-
-        <div style="display: flex; gap: 0.5rem; border-top: 1px solid #e5e7eb; padding-top: 0.75rem;">
-          <button data-action="view" data-asset-id="${asset.id}" style="flex: 1; padding: 0.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
-            View Full
-          </button>
-          <button data-action="copy" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
-            📋
-          </button>
-          ${!isCompleted ? `
-            <button data-action="complete" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #dcfce7; color: #16a34a; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
-              ✓
-            </button>
-          ` : ''}
-          <button data-action="delete" data-asset-id="${asset.id}" style="padding: 0.5rem 0.75rem; background: #fee2e2; color: #991b1b; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer;">
-            🗑️
-          </button>
-        </div>
-      </div>
-    `;
+      `;
     }).join('');
   }
 
@@ -979,7 +1048,7 @@ permalink: /do/agent/
   }
 
   // Initialize chat with greeting when agent loads
-  window.addEventListener('agentLoaded', (event) => {
+  window.addEventListener('agentLoaded', async (event) => {
     const agent = event.detail;
 
     // If we have chat history from localStorage, render it
@@ -1013,52 +1082,81 @@ permalink: /do/agent/
 
     // Initialize assets count
     updateAssetsCount(agentId);
+
+    // Initialize view from hash after agent is loaded
+    await initializeViewFromHash();
   });
 
   // Initialize modal event listeners
-  document.getElementById('close-draft-modal-header').addEventListener('click', closeDraftActionModal);
-  document.getElementById('cancel-draft-btn').addEventListener('click', closeDraftActionModal);
-  document.getElementById('delete-draft-btn').addEventListener('click', deleteDraftAction);
-  document.getElementById('define-action-btn').addEventListener('click', markAsDefinedFromModal);
+  document.getElementById('close-draft-modal-header')?.addEventListener('click', closeDraftActionModal);
+  document.getElementById('cancel-draft-btn')?.addEventListener('click', closeDraftActionModal);
+  document.getElementById('delete-draft-btn')?.addEventListener('click', deleteDraftAction);
+  document.getElementById('define-action-btn')?.addEventListener('click', markAsDefinedFromModal);
 
-  document.getElementById('close-asset-modal-header').addEventListener('click', closeProposedAssetModal);
-  document.getElementById('delete-asset-btn').addEventListener('click', deleteProposedAsset);
-  document.getElementById('copy-asset-btn').addEventListener('click', copyAssetFromModal);
-  document.getElementById('save-asset-btn').addEventListener('click', saveAssetFromModal);
+  document.getElementById('close-asset-modal-header')?.addEventListener('click', closeProposedAssetModal);
+  document.getElementById('delete-asset-btn')?.addEventListener('click', deleteProposedAsset);
+  document.getElementById('copy-asset-btn')?.addEventListener('click', copyAssetFromModal);
+  document.getElementById('save-asset-btn')?.addEventListener('click', saveAssetFromModal);
 
-  // Event delegation for dynamically created asset buttons
-  document.getElementById('assets-grid').addEventListener('click', (e) => {
-    const button = e.target.closest('button[data-action]');
-    if (!button) return;
-
-    const action = button.dataset.action;
-    const assetId = button.dataset.assetId;
-
-    if (action === 'view') {
-      viewSavedAsset(assetId);
-    } else if (action === 'copy') {
-      copySavedAsset(assetId);
-    } else if (action === 'complete') {
-      completeAsset(assetId);
-    } else if (action === 'delete') {
-      deleteSavedAsset(assetId);
+  // View mode action buttons
+  document.getElementById('close-action-btn')?.addEventListener('click', closeDraftActionModal);
+  document.getElementById('copy-action-btn')?.addEventListener('click', () => {
+    const modal = document.getElementById('draft-action-modal');
+    const actionId = modal.dataset.actionId;
+    if (actionId) copyActionContent(actionId);
+  });
+  document.getElementById('complete-action-btn')?.addEventListener('click', async () => {
+    const modal = document.getElementById('draft-action-modal');
+    const actionId = modal.dataset.actionId;
+    if (actionId) {
+      await completeAction(actionId);
+      closeDraftActionModal();
+    }
+  });
+  document.getElementById('delete-action-btn')?.addEventListener('click', async () => {
+    const modal = document.getElementById('draft-action-modal');
+    const actionId = modal.dataset.actionId;
+    if (actionId && confirm('Are you sure you want to delete this action?')) {
+      await deleteAction(actionId);
+      closeDraftActionModal();
     }
   });
 
-  // Handle show completed checkbox
-  document.getElementById('show-completed-assets').addEventListener('change', () => {
-    renderAssets(agentId);
+  // Event delegation for dynamically created asset buttons
+  // Note: assets-grid element no longer exists (replaced with Feed view)
+  // Commenting out to prevent errors
+  // document.getElementById('assets-grid')?.addEventListener('click', (e) => {
+  //   const button = e.target.closest('button[data-action]');
+  //   if (!button) return;
+  //
+  //   const action = button.dataset.action;
+  //   const assetId = button.dataset.assetId;
+  //
+  //   if (action === 'view') {
+  //     viewSavedAsset(assetId);
+  //   } else if (action === 'copy') {
+  //     copySavedAsset(assetId);
+  //   } else if (action === 'complete') {
+  //     completeAsset(assetId);
+  //   } else if (action === 'delete') {
+  //     deleteSavedAsset(assetId);
+  //   }
+  // });
+
+  // Handle show completed checkbox in Feed
+  document.getElementById('show-completed-feed')?.addEventListener('change', () => {
+    renderFeed();
   });
 
   // Handle reset conversation button
-  document.getElementById('reset-conversation-btn').addEventListener('click', () => {
+  document.getElementById('reset-conversation-btn')?.addEventListener('click', () => {
     if (confirm('Are you sure you want to reset the conversation? This will clear the chat history.')) {
       clearChatHistory();
     }
   });
 
   // Handle form submission
-  chatForm.addEventListener('submit', async (e) => {
+  chatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const message = messageInput.value.trim();
@@ -1110,113 +1208,7 @@ permalink: /do/agent/
 
       hideLoadingMessage();
 
-      // If doc was loaded via tool use, add tool messages to history and auto-continue
-      if (data.docLoaded) {
-        // Add assistant's tool use message to history
-        const assistantToolUse = {
-          role: 'assistant',
-          content: data.docLoaded.assistant_tool_use,
-          timestamp: new Date().toISOString()
-        };
-        chatHistory.push(assistantToolUse);
-
-        // Add tool result to history (this will be cached on next request)
-        const toolResult = {
-          role: 'user',
-          content: [
-            {
-              type: 'tool_result',
-              tool_use_id: data.docLoaded.tool_use_id,
-              content: data.docLoaded.doc_content
-            }
-          ],
-          timestamp: new Date().toISOString()
-        };
-        chatHistory.push(toolResult);
-        saveAgentChatHistory(chatHistory);
-
-        console.log(`[agent] Loaded ${data.docLoaded.doc_name} documentation, auto-continuing with original message`);
-
-        // Show a brief loading message indicating we're processing with the doc
-        renderMessage('assistant', `Loading ${data.docLoaded.doc_name} documentation...`);
-
-        // Auto-continue: Send the same message again, now with doc in context
-        // Agent can now actually answer the original question
-        try {
-          const continueResponse = await fetch('/.netlify/functions/agent-chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              userId,
-              agentId,
-              message, // Same original message
-              chatHistory: chatHistory.map(msg => ({
-                role: msg.role,
-                content: msg.content
-              }))
-            })
-          });
-
-          const continueData = await continueResponse.json();
-
-          if (!continueData.success) {
-            throw new Error(continueData.error || 'Failed to continue after loading doc');
-          }
-
-          // Remove the loading message
-          if (chatMessages.lastChild && chatMessages.lastChild.textContent.includes('Loading')) {
-            chatMessages.lastChild.remove();
-          }
-
-          // Add the actual assistant response
-          const assistantMessage = {
-            role: 'assistant',
-            content: continueData.response,
-            timestamp: new Date().toISOString()
-          };
-          renderMessage('assistant', continueData.response);
-          chatHistory.push(assistantMessage);
-          saveAgentChatHistory(chatHistory);
-
-          // Handle any draft actions or assets from the continued response
-          if (continueData.hasDraftActions && continueData.draftActions) {
-            draftActions = [...draftActions, ...continueData.draftActions];
-            saveDraftActions(draftActions);
-            continueData.draftActions.forEach(action => {
-              renderDraftActionCard(action);
-            });
-            const actionIds = continueData.draftActions.map(a => a.id);
-            saveChatToFirestore([], actionIds);
-          }
-
-          if (continueData.hasProposedAsset && continueData.proposedAsset) {
-            proposedAssets.push(continueData.proposedAsset);
-            renderProposedAssetCard(continueData.proposedAsset);
-            saveChatToFirestore([continueData.proposedAsset.id], []);
-          }
-
-          return; // Exit early, we've handled everything
-        } catch (continueError) {
-          console.error('Error continuing after doc load:', continueError);
-          // Remove loading message and show error
-          if (chatMessages.lastChild && chatMessages.lastChild.textContent.includes('Loading')) {
-            chatMessages.lastChild.remove();
-          }
-          const errorMessage = {
-            role: 'assistant',
-            content: "I loaded the documentation but had trouble processing your request. Could you try asking again?",
-            timestamp: new Date().toISOString()
-          };
-          renderMessage('assistant', errorMessage.content);
-          chatHistory.push(errorMessage);
-          saveAgentChatHistory(chatHistory);
-          return;
-        }
-      }
-
-      // Add assistant response (only if not a doc load, which returns early above)
+      // Add assistant response
       const assistantMessage = {
         role: 'assistant',
         content: data.response,
@@ -1270,89 +1262,378 @@ permalink: /do/agent/
   });
 
   // Handle Enter key
-  messageInput.addEventListener('keydown', function(e) {
+  messageInput?.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      chatForm.requestSubmit();
+      chatForm?.requestSubmit();
     }
   });
 
   // Auto-resize textarea and toggle send button
-  messageInput.addEventListener('input', function() {
+  messageInput?.addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = (this.scrollHeight) + 'px';
     updateSendButton();
   });
 
+  // Track if actions have been loaded
+  let actionsLoaded = false;
+
+  // Lazy-load actions only when needed
+  async function ensureActionsLoaded() {
+    console.log('[ensureActionsLoaded] Called, actionsLoaded:', actionsLoaded);
+    if (actionsLoaded) return;
+    console.log('[ensureActionsLoaded] Loading actions...');
+    await loadActions();
+    actionsLoaded = true;
+  }
+
   // Handle view switching
-  document.querySelectorAll('.view-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const view = link.dataset.view;
-
-      // Hide all views
-      document.querySelectorAll('.agent-view').forEach(v => {
-        v.style.display = 'none';
-      });
-
-      // Remove active state from all links
-      document.querySelectorAll('.view-link').forEach(l => {
-        l.style.color = '#6b7280';
-        l.style.fontWeight = 'normal';
-      });
-
-      // Add active state to clicked link
-      link.style.color = '#2563eb';
-      link.style.fontWeight = '600';
-
-      // Show selected view
-      document.getElementById(`view-${view}`).style.display = 'block';
-
-      // Focus chat input when switching to chat
-      if (view === 'chat') {
-        messageInput.focus();
-      }
-
-      // Render assets when switching to assets view
-      if (view === 'assets') {
-        renderAssets(agentId);
-      }
-
-      // Scroll to top
-      window.scrollTo(0, 0);
-    });
-  });
-
-  // Handle "more" link to show settings
-  document.getElementById('goal-more-link').addEventListener('click', (e) => {
-    e.preventDefault();
+  async function switchToView(view) {
+    console.log('[switchToView] Switching to view:', view);
 
     // Hide all views
     document.querySelectorAll('.agent-view').forEach(v => {
       v.style.display = 'none';
     });
 
-    // Remove active state from all navigation links
+    // Remove active state from all links
     document.querySelectorAll('.view-link').forEach(l => {
       l.style.color = '#6b7280';
       l.style.fontWeight = 'normal';
     });
 
-    // Show settings view
-    document.getElementById('view-settings').style.display = 'block';
-    window.scrollTo(0, 0);
-  });
+    // Add active state to current view link
+    const activeLink = document.querySelector(`.view-link[data-view="${view}"]`);
+    if (activeLink) {
+      activeLink.style.color = '#2563eb';
+      activeLink.style.fontWeight = '600';
+    }
 
-  // Set initial active state for chat view
-  const chatLink = document.querySelector('.view-link[data-view="chat"]');
-  if (chatLink) {
-    chatLink.style.color = '#2563eb';
-    chatLink.style.fontWeight = '600';
+    // Show selected view
+    const viewElement = document.getElementById(`view-${view}`);
+    if (viewElement) {
+      viewElement.style.display = 'block';
+    }
+
+    // Load data and render based on view
+    if (view === 'chat') {
+      messageInput?.focus();
+    } else if (view === 'actions') {
+      console.log('[switchToView] Calling ensureActionsLoaded for actions view');
+      await ensureActionsLoaded();
+      renderActions();
+    } else if (view === 'feed') {
+      console.log('[switchToView] Calling ensureActionsLoaded for feed view');
+      await ensureActionsLoaded();
+      renderFeed();
+    }
+
+    // Scroll to top
+    window.scrollTo(0, 0);
   }
 
-  // Update action count when actions are loaded/generated
-  window.addEventListener('reloadActions', () => {
-    // This will be called when actions are generated
-    // The actual count update will happen in the existing loadAgentDetail function
+  document.querySelectorAll('.view-link').forEach(link => {
+    link.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const view = link.dataset.view;
+      console.log('[view-link click] View clicked:', view);
+
+      // Update URL hash
+      window.location.hash = view;
+
+      // Switch to view immediately (don't wait for hashchange event)
+      await switchToView(view);
+    });
+  });
+
+  // Handle "more" link to show settings
+  document.getElementById('goal-more-link')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    // Update URL hash and switch to settings view
+    window.location.hash = 'settings';
+    await switchToView('settings');
+  });
+
+  // Handle hash-based routing for tab persistence
+  async function initializeViewFromHash() {
+    // Get hash from URL (remove the # prefix)
+    const hash = window.location.hash.substring(1);
+
+    // Valid views
+    const validViews = ['chat', 'actions', 'feed', 'settings'];
+
+    // Default to chat if no hash or invalid hash
+    const view = validViews.includes(hash) ? hash : 'chat';
+
+    // Switch to the view
+    await switchToView(view);
+  }
+
+  // Handle hash changes (e.g., browser back/forward)
+  window.addEventListener('hashchange', initializeViewFromHash);
+
+  // ==================================================
+  // Actions Management (Firestore-backed)
+  // ==================================================
+
+  let actionsCache = [];
+
+  // Load actions from Firestore
+  async function loadActions() {
+    console.log('[loadActions] Fetching actions for userId:', userId, 'agentId:', agentId);
+    try {
+      const response = await fetch(`/.netlify/functions/actions-list?userId=${userId}&agentId=${agentId}`);
+      console.log('[loadActions] Response received:', response.status);
+      const data = await response.json();
+      console.log('[loadActions] Data:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load actions');
+      }
+
+      actionsCache = data.actions || [];
+      console.log('[loadActions] Loaded', actionsCache.length, 'actions');
+      renderActions();
+      updateActionsCount();
+
+    } catch (error) {
+      console.error('[actions] Error loading actions:', error);
+    }
+  }
+
+  // Render actions grid based on filter
+  function renderActions() {
+    const grid = document.getElementById('agent-actions-grid');
+    const filter = document.getElementById('actions-filter').value;
+
+    // Filter actions
+    let filteredActions = actionsCache.filter(action => {
+      if (filter === 'scheduled') return action.state === 'scheduled';
+      if (filter === 'active') return action.state === 'in_progress';
+      if (filter === 'completed') return action.state === 'completed';
+      return true; // 'all'
+    });
+
+    // Sort: in_progress first, then by priority, then by date
+    filteredActions.sort((a, b) => {
+      if (a.state === 'in_progress' && b.state !== 'in_progress') return -1;
+      if (a.state !== 'in_progress' && b.state === 'in_progress') return 1;
+
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      const aPriority = priorityOrder[a.priority] ?? 1;
+      const bPriority = priorityOrder[b.priority] ?? 1;
+      if (aPriority !== bPriority) return aPriority - bPriority;
+
+      return new Date(b._createdAt) - new Date(a._createdAt);
+    });
+
+    if (filteredActions.length === 0) {
+      grid.innerHTML = '<div style="text-align: center; padding: 3rem 1rem; color: #6b7280;"><p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No actions yet</p><p style="font-size: 0.875rem;">Actions you define will appear here</p></div>';
+      return;
+    }
+
+    grid.innerHTML = filteredActions.map(action => {
+      const isManual = action.taskType === 'manual';
+      const isCompleted = action.state === 'completed';
+      const priorityColors = {
+        high: '#fee2e2',
+        medium: '#fef3c7',
+        low: '#dbeafe'
+      };
+
+      const icon = isManual ? '🧑' : (action.taskType === 'scheduled' ? '🤖' : '⚡');
+      const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
+
+      return `
+        <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity} cursor: pointer;" onclick="viewActionModal('${action.id}')">
+          <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+              <span style="font-size: 1.25rem;">${icon}</span>
+              <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(action.title)}</h3>
+            </div>
+            <span style="background: ${priorityColors[action.priority] || priorityColors.medium}; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${action.priority}</span>
+          </div>
+
+          <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">${escapeHtml(action.description)}</p>
+
+          ${isManual && action.type ? `<span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; align-self: flex-start;">${action.type}</span>` : ''}
+
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            ${isManual && action.content ? `
+              <button onclick="event.stopPropagation(); copyActionContent('${action.id}')" style="padding: 0.375rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
+                📋 Copy
+              </button>
+            ` : ''}
+            ${!isCompleted ? `
+              <button onclick="event.stopPropagation(); completeAction('${action.id}')" style="padding: 0.375rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
+                ✓ Complete
+              </button>
+            ` : ''}
+          </div>
+
+          <div style="font-size: 0.75rem; color: #9ca3af;">
+            Created ${formatDate(action._createdAt)}
+            ${isCompleted ? ` • Completed ${formatDate(action.completedAt)}` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // View action in draft modal (read-only mode for defined actions)
+  window.viewActionModal = function(actionId) {
+    const action = actionsCache.find(a => a.id === actionId);
+    if (!action) return;
+
+    const modal = document.getElementById('draft-action-modal');
+    const taskConfigSection = document.getElementById('task-config-section');
+    const manualContentSection = document.getElementById('manual-content-section');
+
+    // Populate fields (make read-only)
+    const titleField = document.getElementById('draft-title');
+    const descField = document.getElementById('draft-description');
+    const priorityField = document.getElementById('draft-priority');
+
+    titleField.value = action.title;
+    descField.value = action.description || '';
+    priorityField.value = action.priority || 'medium';
+
+    // Make fields read-only for defined actions
+    titleField.disabled = true;
+    descField.disabled = true;
+    priorityField.disabled = true;
+
+    // Show appropriate section based on taskType
+    if (action.taskType === 'manual' && action.content) {
+      // Show content for manual actions
+      taskConfigSection.style.display = 'none';
+      manualContentSection.style.display = 'block';
+      document.getElementById('draft-content').textContent = action.content;
+      document.getElementById('manual-type-badge').textContent = action.type || 'text';
+    } else if (action.taskConfig) {
+      // Show taskConfig for scheduled/interactive actions
+      manualContentSection.style.display = 'none';
+      taskConfigSection.style.display = 'block';
+      document.getElementById('draft-instructions').textContent = action.taskConfig.instructions || 'No instructions provided';
+      document.getElementById('draft-expected-output').textContent = action.taskConfig.expectedOutput || 'No expected output specified';
+    } else {
+      // Hide both sections if no content
+      taskConfigSection.style.display = 'none';
+      manualContentSection.style.display = 'none';
+    }
+
+    // Update modal title for view mode
+    document.getElementById('draft-modal-title').textContent = 'View Action';
+
+    // Update buttons for view mode
+    // Hide draft mode buttons
+    document.getElementById('delete-draft-btn').style.display = 'none';
+    document.getElementById('define-action-btn').style.display = 'none';
+    document.getElementById('cancel-draft-btn').style.display = 'none';
+
+    // Show view mode buttons
+    document.getElementById('delete-action-btn').style.display = 'block';
+    document.getElementById('copy-action-btn').style.display = action.content ? 'block' : 'none'; // Only show if has content
+    document.getElementById('complete-action-btn').style.display = action.state === 'completed' ? 'none' : 'block'; // Hide if already completed
+    document.getElementById('close-action-btn').style.display = 'block';
+
+    // Store action ID for button handlers
+    modal.dataset.actionId = actionId;
+
+    modal.style.display = 'block';
+  };
+
+  // Copy action content to clipboard
+  window.copyActionContent = function(actionId) {
+    const action = actionsCache.find(a => a.id === actionId);
+    if (!action || !action.content) return;
+
+    navigator.clipboard.writeText(action.content).then(() => {
+      alert('Copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
+    });
+  };
+
+  // Complete an action
+  window.completeAction = async function(actionId) {
+    try {
+      const response = await fetch(`/.netlify/functions/action-complete/${actionId}?userId=${userId}`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to complete action');
+      }
+
+      // Reload actions
+      await loadActions();
+
+      // Refresh Feed view if visible
+      if (document.getElementById('view-feed')?.style.display === 'block') {
+        renderFeed();
+      }
+
+      alert('Action completed!');
+
+    } catch (error) {
+      console.error('[actions] Error completing action:', error);
+      alert(`Failed to complete action: ${error.message}`);
+    }
+  };
+
+  // Delete (dismiss) an action
+  window.deleteAction = async function(actionId) {
+    try {
+      const response = await fetch(`/.netlify/functions/action-dismiss/${actionId}?userId=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: 'User deleted from UI'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete action');
+      }
+
+      // Reload actions
+      await loadActions();
+
+      // Refresh Feed view if visible
+      if (document.getElementById('view-feed')?.style.display === 'block') {
+        renderFeed();
+      }
+
+      alert('Action deleted!');
+
+    } catch (error) {
+      console.error('[actions] Error deleting action:', error);
+      alert(`Failed to delete action: ${error.message}`);
+    }
+  };
+
+  // Update actions count
+  function updateActionsCount() {
+    const activeCount = actionsCache.filter(a => a.state !== 'completed' && a.state !== 'dismissed').length;
+    document.getElementById('actions-count').textContent = activeCount;
+  }
+
+  // Handle filter change
+  document.getElementById('actions-filter')?.addEventListener('change', renderActions);
+
+  // Handle reload actions event
+  window.addEventListener('reloadActions', async () => {
+    await loadActions();
+    actionsLoaded = true;
   });
 </script>

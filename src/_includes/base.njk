@@ -11,6 +11,19 @@
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
     })();
+
+    // TEMPORARY: Unregister any existing service workers (remove this code after it runs once)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let registration of registrations) {
+          registration.unregister().then(function(success) {
+            if (success) {
+              console.log('[CLEANUP] Successfully unregistered service worker');
+            }
+          });
+        }
+      });
+    }
   </script>
 </head>
 <body>
