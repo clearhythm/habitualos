@@ -1,0 +1,197 @@
+---
+title: Practice Entry - HabitualOS
+layout: base.njk
+permalink: /practice/entry/
+---
+
+<div class="container-narrow" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+  <div id="loading" style="text-align: center; padding: 3rem; color: #999;">
+    Loading...
+  </div>
+
+  <div id="entry-not-found" style="display: none; text-align: center; padding: 3rem; color: #999;">
+    <p>Entry not found.</p>
+    <a href="/practice/history/" style="color: #0066cc; text-decoration: underline;">Back to History</a>
+  </div>
+
+  <!-- Obi-Wai Quote View -->
+  <div id="obi-wan-response" style="display: none;">
+    <!-- Practice title section (unique to entry page) -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <div id="practice-name" style="font-weight: 600; color: #333; font-size: 1.1rem;"></div>
+        <div id="practice-date" style="font-size: 0.9rem; color: #666;"></div>
+      </div>
+      <a
+        href="/practice/history/"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+      >
+        ← Back
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+      <div style="font-size: 1rem; font-weight: 600; color: #9b59b6; margin-bottom: 1rem;">Obi-Wai</div>
+      <p id="obi-wan-message" style="font-size: 1.25rem; line-height: 1.6; font-style: italic; color: #333; margin-bottom: 1rem;"></p>
+
+      <!-- Expandable wisdom -->
+      <div id="obi-wan-expand-container" style="margin-bottom: 2rem;">
+        <button
+          id="expandWisdom"
+          style="background: none; border: none; color: #9b59b6; cursor: pointer; font-size: 0.9rem; text-decoration: underline; padding: 0;"
+        >
+          Read more...
+        </button>
+        <div id="obi-wan-expanded" style="display: none; margin-top: 1rem;">
+          <!-- Expanded wisdom text -->
+          <div id="obi-wan-expanded-text" style="padding: 1rem; background: rgba(155, 89, 182, 0.05); border-radius: 4px; line-height: 1.6; color: #555; text-align: left; margin-bottom: 1.5rem;"></div>
+
+          <!-- Feedback buttons (inside expanded) -->
+          <div id="feedback-section" style="display: flex; gap: 1rem; justify-content: center;">
+            <button
+              id="thumbsUp"
+              style="padding: 0.75rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;"
+              onmouseover="this.style.background='#e0e0e0'"
+              onmouseout="if (!this.classList.contains('selected')) this.style.background='#f0f0f0'"
+              title="This felt supportive"
+            >
+              👍
+            </button>
+            <button
+              id="thumbsDown"
+              style="padding: 0.75rem 1.5rem; background: #f0f0f0; border: 2px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;"
+              onmouseover="this.style.background='#e0e0e0'"
+              onmouseout="if (!this.classList.contains('selected')) this.style.background='#f0f0f0'"
+              title="This didn't land well"
+            >
+              👎
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a
+      href="/practice/history/"
+      style="display: block; width: 100%; padding: 1rem; background: #9b59b6; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; transition: all 0.2s;"
+      onmouseover="this.style.background='#8b4a96'"
+      onmouseout="this.style.background='#9b59b6'"
+    >
+      Back to History
+    </a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+  import { initExpandWisdom, displayObiWaiQuote, initFeedbackButtons } from '/assets/js/obi-wai-quote.js';
+
+  const userId = initializeUser();
+
+  const loadingEl = document.getElementById('loading');
+  const notFoundEl = document.getElementById('entry-not-found');
+  const responseEl = document.getElementById('obi-wan-response');
+  const obiWanMessage = document.getElementById('obi-wan-message');
+  const obiWanExpanded = document.getElementById('obi-wan-expanded');
+  const obiWanExpandedText = document.getElementById('obi-wan-expanded-text');
+  const expandButton = document.getElementById('expandWisdom');
+  const expandContainer = document.getElementById('obi-wan-expand-container');
+
+  let currentPracticeId = null;
+
+  // Initialize expand/collapse functionality
+  initExpandWisdom({
+    expandButton,
+    expandedContent: obiWanExpanded,
+    expandContainer
+  });
+
+  // Initialize feedback buttons
+  initFeedbackButtons({
+    thumbsUp: document.getElementById('thumbsUp'),
+    thumbsDown: document.getElementById('thumbsDown'),
+    getPracticeId: () => currentPracticeId
+  });
+
+  // Load the practice entry
+  async function loadEntry() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const practiceId = urlParams.get('id');
+
+    if (!practiceId) {
+      loadingEl.style.display = 'none';
+      notFoundEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      const response = await fetch(`/.netlify/functions/practice-logs-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const practice = data.practices.find(p => p.id === practiceId);
+
+        if (practice && practice.obi_wan_message) {
+          currentPracticeId = practice.id;
+
+          // Set practice name and date
+          document.getElementById('practice-name').textContent = practice.practice_name || 'Practice';
+          const date = new Date(practice.timestamp);
+          document.getElementById('practice-date').textContent = date.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+
+          // Display Obi-Wai quote using shared module
+          // Entry page uses expandedTextEl since feedback is inside expandedEl
+          displayObiWaiQuote({
+            message: practice.obi_wan_message,
+            expanded: practice.obi_wan_expanded,
+            messageEl: obiWanMessage,
+            expandedEl: obiWanExpanded,
+            expandedTextEl: obiWanExpandedText,
+            expandButton,
+            expandContainer
+          });
+
+          // Show existing feedback state
+          if (practice.obi_wan_feedback) {
+            const thumbsUp = document.getElementById('thumbsUp');
+            const thumbsDown = document.getElementById('thumbsDown');
+            if (practice.obi_wan_feedback === 'thumbs_up') {
+              thumbsUp.style.background = '#d4edda';
+              thumbsUp.classList.add('selected');
+              thumbsDown.style.opacity = '0.3';
+            } else if (practice.obi_wan_feedback === 'thumbs_down') {
+              thumbsDown.style.background = '#f8d7da';
+              thumbsDown.classList.add('selected');
+              thumbsUp.style.opacity = '0.3';
+            }
+          }
+
+          loadingEl.style.display = 'none';
+          responseEl.style.display = 'block';
+        } else {
+          loadingEl.style.display = 'none';
+          notFoundEl.style.display = 'block';
+        }
+      } else {
+        loadingEl.style.display = 'none';
+        notFoundEl.style.display = 'block';
+      }
+    } catch (error) {
+      console.error('Error loading entry:', error);
+      loadingEl.style.display = 'none';
+      notFoundEl.style.display = 'block';
+    }
+  }
+
+  // Load on page load
+  loadEntry();
+</script>

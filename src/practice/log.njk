@@ -91,7 +91,7 @@ permalink: /practice/log/
         style="flex: 1; padding: 1rem; background: white; border: 2px solid #0066cc; color: #0066cc; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
         onmouseover="this.style.background='#f0f8ff'"
         onmouseout="this.style.background='white'"
-        onclick="window.location.href='/practices/'"
+        onclick="window.location.href='/practice/history/'"
       >
         View History
       </button>
@@ -160,6 +160,7 @@ permalink: /practice/log/
 <script type="module">
   import { initializeUser } from '/assets/js/auth/auth.js';
   import { getPracticeChatState, clearPracticeChatState } from '/assets/js/practice-chat-state.js';
+  import { initExpandWisdom, displayObiWaiQuote, initFeedbackButtons } from '/assets/js/obi-wai-quote.js';
 
   const form = document.getElementById('practiceForm');
   const formContainer = document.getElementById('practice-form');
@@ -167,6 +168,7 @@ permalink: /practice/log/
   const obiWanMessage = document.getElementById('obi-wan-message');
   const obiWanExpanded = document.getElementById('obi-wan-expanded');
   const expandButton = document.getElementById('expandWisdom');
+  const expandContainer = document.getElementById('obi-wan-expand-container');
   const submitBtn = document.getElementById('submitBtn');
 
   // Initialize userId (creates one if doesn't exist)
@@ -248,15 +250,18 @@ permalink: /practice/log/
     flowerLabel.textContent = `${stage.label} • ${actualCount} ${actualCount === 1 ? 'practice' : 'practices'}`;
   }
 
-  // Handle expand/collapse wisdom
-  expandButton.addEventListener('click', () => {
-    if (obiWanExpanded.style.display === 'none') {
-      obiWanExpanded.style.display = 'block';
-      expandButton.textContent = 'Show less';
-    } else {
-      obiWanExpanded.style.display = 'none';
-      expandButton.textContent = 'Read more...';
-    }
+  // Initialize expand/collapse wisdom using shared module
+  initExpandWisdom({
+    expandButton,
+    expandedContent: obiWanExpanded,
+    expandContainer
+  });
+
+  // Initialize feedback buttons using shared module
+  initFeedbackButtons({
+    thumbsUp: document.getElementById('thumbsUp'),
+    thumbsDown: document.getElementById('thumbsDown'),
+    getPracticeId: () => currentPracticeId
   });
 
   // Check if viewing a specific practice (from history)
@@ -280,14 +285,18 @@ permalink: /practice/log/
           const practice = data.practices.find(p => p.id === practiceId);
 
           if (practice && practice.obi_wan_message) {
-            // Show the Obi-Wai message
+            // Show the Obi-Wai message using shared module
             currentPracticeId = practice.id;
             practiceCount = data.practices.length;
 
-            obiWanMessage.textContent = practice.obi_wan_message;
-            obiWanExpanded.textContent = practice.obi_wan_expanded || '';
-            obiWanExpanded.style.display = 'none';
-            expandButton.textContent = 'Read more...';
+            displayObiWaiQuote({
+              message: practice.obi_wan_message,
+              expanded: practice.obi_wan_expanded,
+              messageEl: obiWanMessage,
+              expandedEl: obiWanExpanded,
+              expandButton,
+              expandContainer
+            });
 
             // Show "back to history" instead of "continue"
             const continueBtn = document.getElementById('obiWanContinue');
@@ -350,10 +359,14 @@ permalink: /practice/log/
 
         // Show either Obi-Wai or system success
         if (data.obi_wan_appeared) {
-          obiWanMessage.textContent = data.obi_wan_message;
-          obiWanExpanded.textContent = data.obi_wan_expanded;
-          obiWanExpanded.style.display = 'none';
-          expandButton.textContent = 'Read more...';
+          displayObiWaiQuote({
+            message: data.obi_wan_message,
+            expanded: data.obi_wan_expanded,
+            messageEl: obiWanMessage,
+            expandedEl: obiWanExpanded,
+            expandButton,
+            expandContainer
+          });
           responseContainer.style.display = 'block';
         } else {
           // Render flower growth visual
@@ -400,50 +413,5 @@ permalink: /practice/log/
     formContainer.style.display = 'block';
   }
 
-  // Handle thumbs up/down feedback
-  document.getElementById('thumbsUp').addEventListener('click', async () => {
-    if (!currentPracticeId) return;
-
-    try {
-      await fetch('/.netlify/functions/practice-feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id: currentPracticeId,
-          feedback: 'thumbs_up'
-        })
-      });
-
-      // Visual feedback
-      document.getElementById('thumbsUp').style.background = '#d4edda';
-      document.getElementById('thumbsDown').style.opacity = '0.3';
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-    }
-  });
-
-  document.getElementById('thumbsDown').addEventListener('click', async () => {
-    if (!currentPracticeId) return;
-
-    try {
-      await fetch('/.netlify/functions/practice-feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id: currentPracticeId,
-          feedback: 'thumbs_down'
-        })
-      });
-
-      // Visual feedback
-      document.getElementById('thumbsDown').style.background = '#f8d7da';
-      document.getElementById('thumbsUp').style.opacity = '0.3';
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-    }
-  });
+  // Feedback buttons are now handled by initFeedbackButtons from shared module
 </script>

@@ -29,7 +29,7 @@ permalink: /practice/history/
 
 <script type="module">
   import { initializeUser } from '/assets/js/auth/auth.js';
-  import { renderPracticeEntryContent } from '/assets/js/practice-entry-renderer.js';
+  import { renderPracticeEntryContent, initObiWaiEntries } from '/assets/js/practice-entry-renderer.js';
 
   async function loadPractices() {
     // Get userId from localStorage
@@ -100,7 +100,7 @@ permalink: /practice/history/
             </div>
 
             ${renderPracticeEntryContent(practice, {
-              makeObiWaiClickable: true,
+              expandableInline: true,
               showFeedbackIcon: true
             })}
           </div>
@@ -108,6 +108,9 @@ permalink: /practice/history/
       }).join('');
 
       listEl.innerHTML = practicesHtml;
+
+      // Initialize expand/collapse and feedback for inline Obi-Wai entries
+      initObiWaiEntries();
 
     } catch (error) {
       console.error('Error loading practices:', error);
