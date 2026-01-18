@@ -1410,6 +1410,31 @@ permalink: /do/agent/
     // Valid views
     const validViews = ['chat', 'actions', 'feed', 'settings'];
 
+    // Check for measurement context from dashboard redirect
+    const measurementContextStr = sessionStorage.getItem('measurementActionContext');
+    if (measurementContextStr && hash === 'chat') {
+      try {
+        const actionContext = JSON.parse(measurementContextStr);
+        sessionStorage.removeItem('measurementActionContext');
+
+        // Set measurement context and trigger check-in
+        currentMeasurementActionId = actionContext.actionId;
+        currentMeasurementActionContext = actionContext;
+
+        // Switch to chat first, then start measurement
+        await switchToView('chat');
+
+        // Start the measurement check-in after a brief delay for UI
+        setTimeout(() => {
+          startMeasurementCheckIn(actionContext);
+        }, 100);
+        return;
+      } catch (e) {
+        console.error('Error parsing measurement context:', e);
+        sessionStorage.removeItem('measurementActionContext');
+      }
+    }
+
     // Default to chat if no hash or invalid hash
     const view = validViews.includes(hash) ? hash : 'chat';
 
@@ -1603,6 +1628,64 @@ permalink: /do/agent/
       hideLoadingMessage();
     }
   };
+
+  // Start measurement check-in with pre-loaded context (from dashboard redirect)
+  async function startMeasurementCheckIn(actionContext) {
+    // Clear existing chat history for fresh check-in
+    chatHistory = [];
+    clearAgentChatFromLocalStorage();
+    chatMessages.innerHTML = '';
+
+    // Send initial message to start the check-in
+    const initialMessage = `I'm ready for my ${actionContext.title} check-in.`;
+
+    // Add user message
+    const userMessage = {
+      role: 'user',
+      content: initialMessage,
+      timestamp: new Date().toISOString()
+    };
+    renderMessage('user', initialMessage);
+    chatHistory.push(userMessage);
+    saveAgentChatHistory(chatHistory);
+
+    // Show loading
+    showLoadingMessage();
+
+    try {
+      // Call backend with action context
+      const response = await fetch('/.netlify/functions/agent-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          message: initialMessage,
+          chatHistory: [],
+          actionContext: actionContext
+        })
+      });
+
+      const data = await response.json();
+      hideLoadingMessage();
+
+      if (data.success) {
+        const assistantMessage = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date().toISOString()
+        };
+        renderMessage('assistant', data.response);
+        chatHistory.push(assistantMessage);
+        saveAgentChatHistory(chatHistory);
+      } else {
+        console.error('Error starting measurement chat:', data.error);
+      }
+    } catch (error) {
+      console.error('Error starting measurement chat:', error);
+      hideLoadingMessage();
+    }
+  }
 
   // View action in draft modal (read-only mode for defined actions)
   window.viewActionModal = function(actionId) {

@@ -349,11 +349,29 @@ function createActionCard(action) {
   card.className = 'card card-clickable';
   card.style.cursor = 'pointer';
 
-  // Add click handler to open modal
-  card.onclick = () => viewActionInModal(action);
+  // Add click handler - measurement actions open agent chat, others open modal
+  const isMeasurement = action.taskType === 'measurement';
+  const isCompleted = action.state === 'completed' || action.state === 'dismissed';
+
+  if (isMeasurement && !isCompleted && action.agentId) {
+    // Redirect to agent chat with measurement context
+    card.onclick = () => {
+      // Store action context in sessionStorage for the agent page to pick up
+      sessionStorage.setItem('measurementActionContext', JSON.stringify({
+        actionId: action.id,
+        title: action.title,
+        taskType: action.taskType,
+        taskConfig: action.taskConfig
+      }));
+      window.location.href = `/do/agent/?id=${action.agentId}#chat`;
+    };
+  } else {
+    card.onclick = () => viewActionInModal(action);
+  }
 
   // Icon based on taskType
-  const icon = action.taskType === 'manual' ? '🧑' :
+  const icon = action.taskType === 'measurement' ? '📊' :
+               action.taskType === 'manual' ? '🧑' :
                action.taskType === 'scheduled' ? '🤖' : '⚡';
 
   // Show "Scheduled" with time for scheduled tasks
