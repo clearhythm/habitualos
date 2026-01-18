@@ -419,6 +419,10 @@ permalink: /do/agent/
   // Proposed assets stored temporarily (not in localStorage until saved)
   let proposedAssets = [];
 
+  // Track current measurement action for context
+  let currentMeasurementActionId = null;
+  let currentMeasurementActionContext = null;
+
   // Save chat history to Firestore when assets/actions are generated
   async function saveChatToFirestore(generatedAssets = [], generatedActions = []) {
     // Don't save if there's no meaningful chat history
@@ -1196,7 +1200,8 @@ permalink: /do/agent/
           chatHistory: chatHistory.map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          actionContext: currentMeasurementActionContext
         })
       });
 
@@ -1244,6 +1249,47 @@ permalink: /do/agent/
 
         // Save chat to Firestore (first time a deliverable is generated)
         saveChatToFirestore([data.proposedAsset.id], []);
+      }
+
+      // Handle measurement check-in completion
+      if (data.hasMeasurement && data.measurementData && currentMeasurementActionId) {
+        try {
+          // Store the measurement
+          const measurementResponse = await fetch('/.netlify/functions/measurement-create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId,
+              agentId,
+              actionId: currentMeasurementActionId,
+              dimensions: data.measurementData.dimensions,
+              notes: data.measurementData.notes || null
+            })
+          });
+
+          const measurementResult = await measurementResponse.json();
+
+          if (measurementResult.success) {
+            // Complete the action (triggers recurrence)
+            await completeAction(currentMeasurementActionId);
+
+            // Show completion message
+            const completionMessage = {
+              role: 'system',
+              content: '✓ Check-in recorded',
+              timestamp: new Date().toISOString()
+            };
+            renderMessage('system', completionMessage.content);
+          } else {
+            console.error('Failed to store measurement:', measurementResult.error);
+          }
+        } catch (err) {
+          console.error('Error storing measurement:', err);
+        } finally {
+          // Clear measurement context
+          currentMeasurementActionId = null;
+          currentMeasurementActionContext = null;
+        }
       }
 
     } catch (error) {
@@ -1436,6 +1482,7 @@ permalink: /do/agent/
 
     grid.innerHTML = filteredActions.map(action => {
       const isManual = action.taskType === 'manual';
+      const isMeasurement = action.taskType === 'measurement';
       const isCompleted = action.state === 'completed';
       const priorityColors = {
         high: '#fee2e2',
@@ -1443,11 +1490,12 @@ permalink: /do/agent/
         low: '#dbeafe'
       };
 
-      const icon = isManual ? '🧑' : (action.taskType === 'scheduled' ? '🤖' : '⚡');
+      const icon = isMeasurement ? '📊' : (isManual ? '🧑' : (action.taskType === 'scheduled' ? '🤖' : '⚡'));
       const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
+      const clickHandler = isMeasurement && !isCompleted ? `openMeasurementChat('${action.id}')` : `viewActionModal('${action.id}')`;
 
       return `
-        <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity} cursor: pointer;" onclick="viewActionModal('${action.id}')">
+        <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity} cursor: pointer;" onclick="${clickHandler}">
           <div style="display: flex; justify-content: space-between; align-items: start;">
             <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
               <span style="font-size: 1.25rem;">${icon}</span>
@@ -1481,6 +1529,80 @@ permalink: /do/agent/
       `;
     }).join('');
   }
+
+  // Open measurement check-in in chat with context
+  window.openMeasurementChat = async function(actionId) {
+    const action = actionsCache.find(a => a.id === actionId);
+    if (!action || action.taskType !== 'measurement') return;
+
+    // Store action context for measurement creation
+    currentMeasurementActionId = actionId;
+    currentMeasurementActionContext = {
+      actionId: action.id,
+      title: action.title,
+      taskType: action.taskType,
+      taskConfig: action.taskConfig
+    };
+
+    // Switch to chat view
+    const chatLink = document.querySelector('a[data-view="chat"]');
+    if (chatLink) chatLink.click();
+
+    // Clear existing chat history for fresh check-in
+    chatHistory = [];
+    clearAgentChatFromLocalStorage();
+    chatMessages.innerHTML = '';
+
+    // Send initial message to start the check-in
+    const initialMessage = `I'm ready for my ${action.title} check-in.`;
+
+    // Add user message
+    const userMessage = {
+      role: 'user',
+      content: initialMessage,
+      timestamp: new Date().toISOString()
+    };
+    renderMessage('user', initialMessage);
+    chatHistory.push(userMessage);
+    saveAgentChatHistory(chatHistory);
+
+    // Show loading
+    showLoadingMessage();
+
+    try {
+      // Call backend with action context
+      const response = await fetch('/.netlify/functions/agent-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          message: initialMessage,
+          chatHistory: [],
+          actionContext: currentMeasurementActionContext
+        })
+      });
+
+      const data = await response.json();
+      hideLoadingMessage();
+
+      if (data.success) {
+        const assistantMessage = {
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date().toISOString()
+        };
+        renderMessage('assistant', data.response);
+        chatHistory.push(assistantMessage);
+        saveAgentChatHistory(chatHistory);
+      } else {
+        console.error('Error starting measurement chat:', data.error);
+      }
+    } catch (error) {
+      console.error('Error starting measurement chat:', error);
+      hideLoadingMessage();
+    }
+  };
 
   // View action in draft modal (read-only mode for defined actions)
   window.viewActionModal = function(actionId) {

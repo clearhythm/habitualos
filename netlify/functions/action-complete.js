@@ -1,6 +1,7 @@
 require('dotenv').config();
-const { getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { getAction, updateActionState, createAction } = require('./_services/db-actions.cjs');
 const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
+const { generateActionId } = require('./_utils/data-utils.cjs');
 
 /**
  * POST /api/action/:id/complete?userId=u-abc123
@@ -75,6 +76,45 @@ exports.handler = async (event) => {
       if (action.state === 'in_progress') {
         await incrementAgentActionCount(action.agentId, 'inProgressActions', -1);
       }
+    }
+
+    // Check for recurrence configuration and create next instance
+    if (action.taskConfig?.recurrence?.type === 'daily') {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Preserve time from original scheduleTime or use configured time
+      if (action.scheduleTime) {
+        const orig = new Date(action.scheduleTime);
+        tomorrow.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
+      } else if (action.taskConfig.recurrence.time) {
+        const [h, m] = action.taskConfig.recurrence.time.split(':').map(Number);
+        tomorrow.setHours(h, m, 0, 0);
+      }
+
+      // Create new action with same config
+      const newActionId = generateActionId();
+      const newActionData = {
+        _userId: action._userId,
+        agentId: action.agentId,
+        title: action.title,
+        description: action.description,
+        state: 'scheduled',
+        priority: action.priority || 'medium',
+        taskType: action.taskType,
+        taskConfig: action.taskConfig,
+        scheduleTime: tomorrow.toISOString(),
+        startedAt: null,
+        completedAt: null,
+        dismissedAt: null,
+        dismissedReason: null,
+        errorMessage: null,
+        type: action.type || null,
+        content: action.content || null
+      };
+
+      await createAction(newActionId, newActionData);
+      console.log(`[action-complete] Created recurring action ${newActionId} scheduled for ${tomorrow.toISOString()}`);
     }
 
     // Get updated action

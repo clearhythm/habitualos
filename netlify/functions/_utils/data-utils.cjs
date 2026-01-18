@@ -48,6 +48,11 @@ function generateAgentCreationChatId() {
   return uniqueId('acc');
 }
 
+// Generates a unique Measurement ID with "m-" prefix
+function generateMeasurementId() {
+  return uniqueId('m');
+}
+
 // Export named functions (alphabetically)
 module.exports = {
   generateActionArtifactId,
@@ -55,6 +60,7 @@ module.exports = {
   generateActionId,
   generateAgentCreationChatId,
   generateAgentId,
+  generateMeasurementId,
   generatePracticeId,
   generateUserId,
   // Also export uniqueId for any custom prefixes

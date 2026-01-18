@@ -29,7 +29,7 @@ exports.handler = async (event) => {
     console.log('[agent-chat] Request started');
 
     // Parse request body
-    const { userId, agentId, message, chatHistory = [] } = JSON.parse(event.body);
+    const { userId, agentId, message, chatHistory = [], actionContext = null } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -191,7 +191,39 @@ GENERATE_ACTIONS
 CRITICAL:
 - Generate ONE action at a time
 - taskConfig.instructions must be detailed enough for autonomous execution
-- Don't create actions that just say "Create X" without full execution instructions`;
+- Don't create actions that just say "Create X" without full execution instructions
+
+MEASUREMENT CHECK-INS - Use STORE_MEASUREMENT signal when:
+- The current action is a measurement/check-in type (taskType: "measurement")
+- You have collected scores (1-10) for all the dimensions
+- The conversation has gathered sufficient context
+
+If storing a measurement check-in, respond EXACTLY in this format:
+STORE_MEASUREMENT
+---
+{
+  "dimensions": [
+    { "name": "energy", "score": 7, "notes": "Optional context for this dimension" },
+    { "name": "focus", "score": 8, "notes": null }
+  ],
+  "notes": "General observations about the whole check-in (optional)"
+}
+
+IMPORTANT for measurement actions:
+- The dimensions to ask about are provided in the action context
+- Ask about each dimension conversationally (don't list them all at once)
+- Accept scores on a 1-10 scale
+- Probe for context when scores are notable (very high, very low, or different from usual)
+- After collecting all scores and any general observations, emit STORE_MEASUREMENT
+- Be warm but not excessive`;
+
+    // Add measurement action context if provided
+    let contextualPrompt = systemPrompt;
+    if (actionContext && actionContext.taskType === 'measurement') {
+      const dimensions = actionContext.taskConfig?.dimensions || [];
+      contextualPrompt += `\n\n---\nCURRENT MEASUREMENT CHECK-IN:\nAction: ${actionContext.title}\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, use STORE_MEASUREMENT to record the check-in.`;
+      console.log(`[agent-chat] Added measurement context for action: ${actionContext.actionId}`);
+    }
 
     // Build conversation history for Claude
     const conversationHistory = chatHistory.map(msg => ({
@@ -214,7 +246,7 @@ CRITICAL:
     const systemMessages = [
       {
         type: "text",
-        text: systemPrompt
+        text: contextualPrompt
       }
     ];
 
@@ -430,6 +462,82 @@ CRITICAL:
           response: `I've created this deliverable for you. Let me know if you want to refine it, or we can mark it as defined.`,
           draftActions: [draftAction],
           hasDraftActions: true
+        })
+      };
+    }
+
+    // Check for STORE_MEASUREMENT signal
+    if (/^STORE_MEASUREMENT\s*\n---/m.test(trimmedResponse)) {
+      // Find JSON object
+      const lines = assistantResponse.split('\n');
+      let jsonStart = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
+        if (trimmed.startsWith('{')) {
+          jsonStart = i;
+          break;
+        }
+      }
+
+      if (jsonStart === -1) {
+        console.error('[agent-chat] Could not find JSON in STORE_MEASUREMENT response');
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: 'Failed to parse measurement response'
+          })
+        };
+      }
+
+      // Find the end of the JSON object
+      let jsonEnd = jsonStart;
+      let braceCount = 0;
+      for (let i = jsonStart; i < lines.length; i++) {
+        const line = lines[i];
+        for (const char of line) {
+          if (char === '{') braceCount++;
+          if (char === '}') braceCount--;
+        }
+        if (braceCount === 0 && line.includes('}')) {
+          jsonEnd = i;
+          break;
+        }
+      }
+
+      const jsonContent = lines.slice(jsonStart, jsonEnd + 1).join('\n');
+      let measurementData = null;
+
+      try {
+        measurementData = JSON.parse(jsonContent);
+      } catch (parseError) {
+        console.error('[agent-chat] Failed to parse measurement JSON:', parseError);
+        console.error('[agent-chat] JSON content:', jsonContent);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({
+            success: false,
+            error: 'Failed to parse measurement data'
+          })
+        };
+      }
+
+      console.log(`[agent-chat] STORE_MEASUREMENT signal detected with ${measurementData.dimensions?.length || 0} dimensions`);
+
+      // Return measurement signal for frontend to handle
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          success: true,
+          response: `Got it! I've recorded your check-in. Keep up the great work!`,
+          hasMeasurement: true,
+          measurementData: {
+            dimensions: measurementData.dimensions || [],
+            notes: measurementData.notes || null
+          }
         })
       };
     }
