@@ -66,13 +66,15 @@ export async function completeAction(actionId, userId) {
  * Dismiss an action
  * @param {string} actionId
  * @param {string} userId
+ * @param {string} [reason] - Optional reason for dismissal
  * @returns {Promise<{success: boolean}>}
  */
-export async function dismissAction(actionId, userId) {
+export async function dismissAction(actionId, userId, reason = null) {
   const url = `${API_ACTION_DISMISS}/${actionId}?userId=${userId}`;
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    body: reason ? JSON.stringify({ reason }) : undefined
   });
   return response.json();
 }
