@@ -5,6 +5,8 @@
 
 const CHAT_HISTORY_KEY = 'practice-chat-history';
 const CHAT_STATE_KEY = 'practice-chat-state';
+const CHAT_ID_KEY = 'practice-chat-id';
+const LAST_SAVED_INDEX_KEY = 'practice-chat-last-saved-index';
 const EXPIRY_HOURS = 24;
 
 /**
@@ -109,8 +111,81 @@ export function getChatHistory() {
 export function clearChatHistory() {
   try {
     localStorage.removeItem(CHAT_HISTORY_KEY);
+    // Also clear chatId and lastSavedIndex when clearing history
+    localStorage.removeItem(CHAT_ID_KEY);
+    localStorage.removeItem(LAST_SAVED_INDEX_KEY);
   } catch (error) {
     console.error('Error clearing chat history:', error);
+  }
+}
+
+// ============================================
+// Chat ID Management (for append mode)
+// ============================================
+
+/**
+ * Save chat ID to localStorage
+ * @param {string} chatId - The chat ID returned from the server
+ */
+export function saveChatId(chatId) {
+  try {
+    localStorage.setItem(CHAT_ID_KEY, chatId);
+  } catch (error) {
+    console.error('Error saving chat ID:', error);
+  }
+}
+
+/**
+ * Get chat ID from localStorage
+ * @returns {string|null} Chat ID or null if not found
+ */
+export function getChatId() {
+  try {
+    return localStorage.getItem(CHAT_ID_KEY);
+  } catch (error) {
+    console.error('Error getting chat ID:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear chat ID from localStorage
+ */
+export function clearChatId() {
+  try {
+    localStorage.removeItem(CHAT_ID_KEY);
+  } catch (error) {
+    console.error('Error clearing chat ID:', error);
+  }
+}
+
+// ============================================
+// Last Saved Index Management (for append mode)
+// ============================================
+
+/**
+ * Save last saved index to localStorage
+ * @param {number} index - The index up to which messages have been saved
+ */
+export function saveLastSavedIndex(index) {
+  try {
+    localStorage.setItem(LAST_SAVED_INDEX_KEY, String(index));
+  } catch (error) {
+    console.error('Error saving last saved index:', error);
+  }
+}
+
+/**
+ * Get last saved index from localStorage
+ * @returns {number} Last saved index (0 if not found)
+ */
+export function getLastSavedIndex() {
+  try {
+    const value = localStorage.getItem(LAST_SAVED_INDEX_KEY);
+    return value ? parseInt(value, 10) : 0;
+  } catch (error) {
+    console.error('Error getting last saved index:', error);
+    return 0;
   }
 }
 

@@ -70,3 +70,42 @@ exports.getPracticeChatCount = async (userId) => {
   const chats = await exports.getPracticeChatsByUserId(userId);
   return chats.length;
 };
+
+/**
+ * Append messages to existing practice chat
+ * @param {string} id - Practice chat ID
+ * @param {Array} newMessages - New messages to append
+ * @param {Object} updates - Optional fields to update (suggestedPractice, fullSuggestion, completed)
+ * @returns {Promise<Object>} Result with id
+ */
+exports.appendToPracticeChat = async (id, newMessages, updates = {}) => {
+  const { db, FieldValue } = require('../_utils/firestore.cjs');
+  const chatRef = db.collection('practice-chats').doc(id);
+
+  const chatDoc = await chatRef.get();
+  if (!chatDoc.exists) {
+    throw new Error(`Practice chat ${id} not found`);
+  }
+
+  const currentData = chatDoc.data();
+  const updateData = {
+    messages: [...(currentData.messages || []), ...newMessages],
+    savedAt: new Date().toISOString(),
+    _updatedAt: FieldValue.serverTimestamp()
+  };
+
+  // Merge optional updates
+  if (updates.suggestedPractice !== undefined) {
+    updateData.suggestedPractice = updates.suggestedPractice;
+  }
+  if (updates.fullSuggestion !== undefined) {
+    updateData.fullSuggestion = updates.fullSuggestion;
+  }
+  if (updates.completed !== undefined) {
+    updateData.completed = updates.completed;
+  }
+
+  await chatRef.update(updateData);
+
+  return { id };
+};

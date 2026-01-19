@@ -10,11 +10,15 @@ import { log } from '/assets/js/utils/log.js';
 import { formatDate, escapeHtml, formatRuntime } from '/assets/js/utils/utils.js';
 import { listActions, completeAction as apiCompleteAction, dismissAction as apiDismissAction } from '/assets/js/api/actions.js';
 import { getAgent } from '/assets/js/api/agents.js';
+import { createActionCard, filterActions, sortActions, isMeasurementAction } from '/assets/js/components/action-card.js';
+import { showActionModal } from '/assets/js/components/action-modal.js';
+import { showToast } from '/assets/js/components/chat-toast.js';
 
 // -----------------------------
 // State
 // -----------------------------
 let agentId = null;
+let currentAgent = null;
 let chatHistory = [];
 let loadingMessageElement = null;
 let currentChatId = null;
@@ -41,6 +45,14 @@ let sendButton = null;
 // -----------------------------
 function getAgentChatKey() {
   return `agent-chat-${agentId}`;
+}
+
+function getAgentChatIdKey() {
+  return `agent-chat-id-${agentId}`;
+}
+
+function getLastSavedIndexKey() {
+  return `agent-chat-last-saved-${agentId}`;
 }
 
 function getDraftActionsKey() {
@@ -71,8 +83,51 @@ function saveAgentChatHistory(history) {
 function clearAgentChatFromLocalStorage() {
   try {
     localStorage.removeItem(getAgentChatKey());
+    localStorage.removeItem(getAgentChatIdKey());
+    localStorage.removeItem(getLastSavedIndexKey());
   } catch (e) {
     log('error', 'Error clearing agent chat history:', e);
+  }
+}
+
+// -----------------------------
+// Chat ID Management (for append mode)
+// -----------------------------
+function getAgentChatId() {
+  try {
+    return localStorage.getItem(getAgentChatIdKey());
+  } catch (e) {
+    log('error', 'Error loading agent chat ID:', e);
+    return null;
+  }
+}
+
+function saveAgentChatId(chatId) {
+  try {
+    localStorage.setItem(getAgentChatIdKey(), chatId);
+  } catch (e) {
+    log('error', 'Error saving agent chat ID:', e);
+  }
+}
+
+// -----------------------------
+// Last Saved Index Management (for append mode)
+// -----------------------------
+function getLastSavedIndex() {
+  try {
+    const value = localStorage.getItem(getLastSavedIndexKey());
+    return value ? parseInt(value, 10) : 0;
+  } catch (e) {
+    log('error', 'Error loading last saved index:', e);
+    return 0;
+  }
+}
+
+function saveLastSavedIndex(index) {
+  try {
+    localStorage.setItem(getLastSavedIndexKey(), String(index));
+  } catch (e) {
+    log('error', 'Error saving last saved index:', e);
   }
 }
 
@@ -146,6 +201,27 @@ function hideLoadingMessage() {
   }
 }
 
+function showActionContextIndicator(actionTitle) {
+  // Remove existing indicator if any
+  const existing = document.getElementById('action-context-indicator');
+  if (existing) existing.remove();
+
+  const indicator = document.createElement('div');
+  indicator.id = 'action-context-indicator';
+  indicator.style.cssText = 'align-self: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;';
+  indicator.innerHTML = `
+    <span>💬 Discussing: <strong>${escapeHtml(actionTitle)}</strong></span>
+    <button id="clear-action-context" style="background: none; border: none; color: #6b7280; cursor: pointer; padding: 0 0.25rem; font-size: 1rem;">×</button>
+  `;
+
+  chatMessages.insertBefore(indicator, chatMessages.firstChild);
+
+  document.getElementById('clear-action-context').onclick = () => {
+    indicator.remove();
+    currentMeasurementActionContext = null;
+  };
+}
+
 function renderMessage(role, content) {
   const messageDiv = document.createElement('div');
   messageDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5;';
@@ -175,7 +251,16 @@ async function saveChatToFirestore(generatedAssets = [], generatedActions = []) 
   if (chatHistory.length === 0) return;
 
   try {
-    const isNewChat = currentChatId === null;
+    const lastSavedIdx = getLastSavedIndex();
+    const newMessages = chatHistory.slice(lastSavedIdx);
+
+    // Nothing new to save
+    if (newMessages.length === 0 && generatedAssets.length === 0 && generatedActions.length === 0) {
+      return;
+    }
+
+    const existingChatId = getAgentChatId();
+    const isAppend = existingChatId && lastSavedIdx > 0;
     const userId = getUserId();
 
     const response = await fetch('/.netlify/functions/agent-chat-save', {
@@ -184,23 +269,26 @@ async function saveChatToFirestore(generatedAssets = [], generatedActions = []) 
       body: JSON.stringify({
         userId,
         agentId,
-        messages: chatHistory,
+        messages: isAppend ? newMessages : chatHistory,
         generatedAssets,
         generatedActions,
-        chatId: currentChatId,
-        mode: isNewChat ? 'create' : 'append'
+        chatId: existingChatId,
+        mode: isAppend ? 'append' : 'create'
       })
     });
 
     const data = await response.json();
 
     if (data.success) {
-      if (isNewChat) {
+      if (!existingChatId && data.chatId) {
         currentChatId = data.chatId;
+        saveAgentChatId(data.chatId); // Persist to localStorage
         log('debug', 'New chat created in Firestore:', data.chatId);
       } else {
-        log('debug', 'Chat appended to Firestore:', currentChatId);
+        log('debug', 'Chat appended to Firestore:', existingChatId);
       }
+      // Update last saved index
+      saveLastSavedIndex(chatHistory.length);
     } else {
       log('error', 'Failed to save chat:', data.error);
     }
@@ -212,7 +300,7 @@ async function saveChatToFirestore(generatedAssets = [], generatedActions = []) 
 function clearChatHistory() {
   chatHistory = [];
   currentChatId = null;
-  clearAgentChatFromLocalStorage();
+  clearAgentChatFromLocalStorage(); // Also clears chatId from localStorage
   chatMessages.innerHTML = '';
 
   // Re-render greeting
@@ -594,81 +682,46 @@ function renderActions() {
   const grid = document.getElementById('agent-actions-grid');
   const filter = document.getElementById('actions-filter').value;
 
-  let filteredActions = actionsCache.filter(action => {
-    if (filter === 'scheduled') return action.state === 'scheduled';
-    if (filter === 'active') return action.state === 'in_progress';
-    if (filter === 'completed') return action.state === 'completed';
-    return true;
-  });
+  // Apply filter (open/all/completed)
+  let filteredActions = filterActions(actionsCache, filter);
 
-  filteredActions.sort((a, b) => {
-    if (a.state === 'in_progress' && b.state !== 'in_progress') return -1;
-    if (a.state !== 'in_progress' && b.state === 'in_progress') return 1;
+  // Apply sorting (blue first, then purple, each newest first)
+  filteredActions = sortActions(filteredActions);
 
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    const aPriority = priorityOrder[a.priority] ?? 1;
-    const bPriority = priorityOrder[b.priority] ?? 1;
-    if (aPriority !== bPriority) return aPriority - bPriority;
-
-    return new Date(b._createdAt) - new Date(a._createdAt);
-  });
+  // Clear grid
+  grid.innerHTML = '';
 
   if (filteredActions.length === 0) {
-    grid.innerHTML = '<div style="text-align: center; padding: 3rem 1rem; color: #6b7280;"><p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No actions yet</p><p style="font-size: 0.875rem;">Actions you define will appear here</p></div>';
+    grid.innerHTML = '<div style="text-align: center; padding: 3rem 1rem; color: #6b7280; grid-column: 1 / -1;"><p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No actions yet</p><p style="font-size: 0.875rem;">Actions you define will appear here</p></div>';
     return;
   }
 
-  grid.innerHTML = filteredActions.map(action => {
-    const isManual = action.taskType === 'manual';
-    const isMeasurement = action.taskType === 'measurement';
-    const isCompleted = action.state === 'completed';
-    const priorityColors = {
-      high: '#fee2e2',
-      medium: '#fef3c7',
-      low: '#dbeafe'
-    };
+  // Click handler for actions
+  const handleActionClick = (action) => {
+    if (isMeasurementAction(action)) {
+      openMeasurementChat(action.id);
+    } else {
+      showActionModal(action, {
+        agentName: currentAgent?.name,
+        onComplete: async () => {
+          await loadActions();
+        }
+      });
+    }
+  };
 
-    const icon = isMeasurement ? '📊' : (isManual ? '🧑' : (action.taskType === 'scheduled' ? '🤖' : '⚡'));
-    const cardOpacity = isCompleted ? 'opacity: 0.6;' : '';
-    const clickHandler = isMeasurement && !isCompleted ? `openMeasurementChat('${action.id}')` : `viewActionModal('${action.id}')`;
-
-    return `
-      <div class="card" style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; ${cardOpacity} cursor: pointer;" onclick="${clickHandler}">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
-            <span style="font-size: 1.25rem;">${icon}</span>
-            <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(action.title)}</h3>
-          </div>
-          <span style="background: ${priorityColors[action.priority] || priorityColors.medium}; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">${action.priority}</span>
-        </div>
-
-        <p style="margin: 0; font-size: 0.875rem; color: #6b7280;">${escapeHtml(action.description)}</p>
-
-        ${isManual && action.type ? `<span style="background: #dbeafe; color: #1e40af; padding: 0.125rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; align-self: flex-start;">${action.type}</span>` : ''}
-
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          ${isManual && action.content ? `
-            <button onclick="event.stopPropagation(); copyActionContent('${action.id}')" style="padding: 0.375rem 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
-              📋 Copy
-            </button>
-          ` : ''}
-          ${!isCompleted ? `
-            <button onclick="event.stopPropagation(); completeAction('${action.id}')" style="padding: 0.375rem 0.75rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">
-              ✓ Complete
-            </button>
-          ` : ''}
-        </div>
-
-        <div style="font-size: 0.75rem; color: #9ca3af;">
-          Created ${formatDate(action._createdAt)}
-          ${isCompleted ? ` • Completed ${formatDate(action.completedAt)}` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
+  // Add all filtered and sorted actions using the shared card component
+  filteredActions.forEach(action => {
+    const card = createActionCard(action, handleActionClick);
+    const isCompleted = action.state === 'completed' || action.state === 'dismissed';
+    if (isCompleted) {
+      card.style.opacity = '0.7';
+    }
+    grid.appendChild(card);
+  });
 }
 
-function updateActionsCountDisplay() {
+function updateActionsCount() {
   const activeCount = actionsCache.filter(a => a.state !== 'completed' && a.state !== 'dismissed').length;
   document.getElementById('actions-count').textContent = activeCount;
 }
@@ -941,7 +994,8 @@ async function switchToView(view) {
 
   const viewElement = document.getElementById(`view-${view}`);
   if (viewElement) {
-    viewElement.style.display = 'block';
+    // Chat view needs flex display for scrollable layout
+    viewElement.style.display = view === 'chat' ? 'flex' : 'block';
   }
 
   if (view === 'chat') {
@@ -963,6 +1017,7 @@ async function initializeViewFromHash() {
   const hash = window.location.hash.substring(1);
   const validViews = ['chat', 'actions', 'feed', 'settings'];
 
+  // Handle measurement action context (auto-starts check-in)
   const measurementContextStr = sessionStorage.getItem('measurementActionContext');
   if (measurementContextStr && hash === 'chat') {
     try {
@@ -981,6 +1036,27 @@ async function initializeViewFromHash() {
     } catch (e) {
       log('error', 'Error parsing measurement context:', e);
       sessionStorage.removeItem('measurementActionContext');
+    }
+  }
+
+  // Handle general action chat context (from modal Chat button)
+  const actionChatContextStr = sessionStorage.getItem('actionChatContext');
+  if (actionChatContextStr && hash === 'chat') {
+    try {
+      const actionContext = JSON.parse(actionChatContextStr);
+      sessionStorage.removeItem('actionChatContext');
+
+      // Store context so it can be passed to agent-chat API
+      currentMeasurementActionContext = actionContext;
+
+      await switchToView('chat');
+
+      // Show context indicator (user can type whatever they want)
+      showActionContextIndicator(actionContext.title);
+      return;
+    } catch (e) {
+      log('error', 'Error parsing action chat context:', e);
+      sessionStorage.removeItem('actionChatContext');
     }
   }
 
@@ -1139,12 +1215,13 @@ async function loadAgentData() {
     }
 
     const agent = data.agent;
+    currentAgent = agent;
 
     // Populate header
     document.getElementById('agent-name').textContent = agent.name || 'Untitled Agent';
 
     // Truncate goal for header
-    const goalText = agent.northStar?.goal || 'No goal defined';
+    const goalText = agent.instructions?.goal || 'No goal defined';
     const maxLength = 120;
     if (goalText.length > maxLength) {
       document.getElementById('agent-goal-short').innerHTML =
@@ -1158,15 +1235,15 @@ async function loadAgentData() {
     // Populate settings view
     document.getElementById('agent-goal').textContent = goalText;
 
-    if (agent.northStar?.successCriteria?.length > 0) {
+    if (agent.instructions?.success_criteria?.length > 0) {
       document.getElementById('success-criteria-section').style.display = 'block';
       const ul = document.getElementById('agent-success-criteria');
-      ul.innerHTML = agent.northStar.successCriteria.map(c => `<li>${escapeHtml(c)}</li>`).join('');
+      ul.innerHTML = agent.instructions.success_criteria.map(c => `<li>${escapeHtml(c)}</li>`).join('');
     }
 
-    if (agent.northStar?.timeline) {
+    if (agent.instructions?.timeline) {
       document.getElementById('timeline-section').style.display = 'block';
-      document.getElementById('agent-timeline').textContent = agent.northStar.timeline;
+      document.getElementById('agent-timeline').textContent = agent.instructions.timeline;
     }
 
     // Settings card metrics
@@ -1184,6 +1261,11 @@ async function loadAgentData() {
     document.getElementById('settings-agent-actions').textContent =
       `${agent.metrics?.completedActions || 0}/${agent.metrics?.totalActions || 0}`;
 
+    // Set header actions count from agent metrics (before actions are lazy-loaded)
+    const totalActions = agent.metrics?.totalActions || 0;
+    const completedActions = agent.metrics?.completedActions || 0;
+    document.getElementById('actions-count').textContent = totalActions - completedActions;
+
     // Status badge
     const statusBadge = document.getElementById('settings-agent-status-badge');
     statusBadge.textContent = agent.status?.toUpperCase() || 'ACTIVE';
@@ -1194,9 +1276,9 @@ async function loadAgentData() {
     pauseBtn.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
     pauseBtn.className = `btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}`;
 
-    // Show detail view
+    // Show detail view (use flex for proper layout)
     loadingEl.style.display = 'none';
-    detailEl.style.display = 'block';
+    detailEl.style.display = 'flex';
 
     // Dispatch event for chat initialization
     window.dispatchEvent(new CustomEvent('agentLoaded', { detail: agent }));
@@ -1253,6 +1335,75 @@ function setupEventListeners() {
     renderFeed();
   });
 
+  // Save chat button
+  document.getElementById('save-chat-btn')?.addEventListener('click', async () => {
+    if (chatHistory.length === 0) {
+      showToast('No conversation to save.', { type: 'info' });
+      return;
+    }
+
+    const saveBtn = document.getElementById('save-chat-btn');
+    const originalText = saveBtn.textContent;
+
+    // Determine which messages are new (not yet saved)
+    const lastSavedIdx = getLastSavedIndex();
+    const newMessages = chatHistory.slice(lastSavedIdx);
+
+    if (newMessages.length === 0) {
+      showToast('Already saved.', { type: 'info' });
+      return;
+    }
+
+    const existingChatId = getAgentChatId();
+    const isAppend = existingChatId && lastSavedIdx > 0;
+
+    try {
+      saveBtn.textContent = 'Saving...';
+      saveBtn.disabled = true;
+
+      const userId = getUserId();
+
+      const response = await fetch('/.netlify/functions/agent-chat-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          messages: isAppend ? newMessages : chatHistory,
+          generatedAssets: [],
+          generatedActions: [],
+          chatId: existingChatId,
+          mode: isAppend ? 'append' : 'create'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save chat');
+      }
+
+      // Track the chat ID for future appends (persist to localStorage)
+      if (!existingChatId && data.chatId) {
+        saveAgentChatId(data.chatId);
+        currentChatId = data.chatId;
+      }
+
+      // Update last saved index to current length
+      saveLastSavedIndex(chatHistory.length);
+
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+      showToast('Saved!');
+
+    } catch (error) {
+      log('error', 'Error saving chat:', error);
+      showToast('Failed to save. Please try again.', { type: 'error' });
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
+  });
+
   // Reset conversation button
   document.getElementById('reset-conversation-btn')?.addEventListener('click', () => {
     if (confirm('Are you sure you want to reset the conversation? This will clear the chat history.')) {
@@ -1263,11 +1414,14 @@ function setupEventListeners() {
   // Chat form
   chatForm?.addEventListener('submit', handleChatSubmit);
 
-  // Enter key handler
+  // Enter key handler - auto-submit on desktop only, newline on mobile
   messageInput?.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      chatForm?.requestSubmit();
+      const isMobile = window.matchMedia('(pointer: coarse)').matches;
+      if (!isMobile) {
+        e.preventDefault();
+        chatForm?.requestSubmit();
+      }
     }
   });
 
@@ -1298,6 +1452,23 @@ function setupEventListeners() {
 
   // Hash change
   window.addEventListener('hashchange', initializeViewFromHash);
+
+  // Action chat context ready (when Chat button clicked while already on agent page)
+  window.addEventListener('actionChatContextReady', async () => {
+    const actionChatContextStr = sessionStorage.getItem('actionChatContext');
+    if (actionChatContextStr) {
+      try {
+        const actionContext = JSON.parse(actionChatContextStr);
+        sessionStorage.removeItem('actionChatContext');
+        currentMeasurementActionContext = actionContext;
+        await switchToView('chat');
+        showActionContextIndicator(actionContext.title);
+      } catch (e) {
+        log('error', 'Error parsing action chat context:', e);
+        sessionStorage.removeItem('actionChatContext');
+      }
+    }
+  });
 
   // Filter change
   document.getElementById('actions-filter')?.addEventListener('change', renderActions);
@@ -1378,6 +1549,7 @@ function init() {
   // Load state from localStorage
   chatHistory = getAgentChatHistory();
   draftActions = getDraftActions();
+  currentChatId = getAgentChatId();
 
   // Setup event listeners
   setupEventListeners();

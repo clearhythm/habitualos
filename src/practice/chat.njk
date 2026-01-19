@@ -59,7 +59,7 @@ permalink: /practice/chat/
       </form>
 
       <!-- Actions below input -->
-      <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 0.75rem; padding-top: 0.75rem;">
+      <div style="display: flex; justify-content: center; gap: 1.5rem; padding-top: 0.75rem;">
         <button
           id="save-chat-btn"
           type="button"
@@ -129,8 +129,9 @@ permalink: /practice/chat/
 </div>
 
 <script type="module">
-  import { saveChatHistory, getChatHistory, clearChatHistory, savePracticeChatState, getPracticeChatState, clearPracticeChatState } from '/assets/js/practice-chat-state.js';
+  import { saveChatHistory, getChatHistory, clearChatHistory, savePracticeChatState, getPracticeChatState, clearPracticeChatState, saveChatId, getChatId, saveLastSavedIndex, getLastSavedIndex } from '/assets/js/practice-chat-state.js';
   import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { showToast } from '/assets/js/components/chat-toast.js';
 
   // Initialize user and get userId
   initializeUser();
@@ -373,11 +374,14 @@ permalink: /practice/chat/
     window.location.href = '/practice/log';
   });
 
-  // Handle Enter key to submit, Shift+Enter for new line
+  // Handle Enter key - auto-submit on desktop only, newline on mobile
   messageInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      chatForm.requestSubmit();
+      const isMobile = window.matchMedia('(pointer: coarse)').matches;
+      if (!isMobile) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
     }
   });
 
@@ -391,21 +395,34 @@ permalink: /practice/chat/
   // Handle save chat button
   document.getElementById('save-chat-btn').addEventListener('click', async () => {
     if (chatHistory.length === 0) {
-      alert('No conversation to save.');
+      showToast('No conversation to save.', { type: 'info' });
       return;
     }
 
+    const saveBtn = document.getElementById('save-chat-btn');
+    const originalText = saveBtn.innerHTML;
+
+    // Determine which messages are new (not yet saved)
+    const lastSavedIndex = getLastSavedIndex();
+    const newMessages = chatHistory.slice(lastSavedIndex);
+
+    if (newMessages.length === 0) {
+      showToast('Already saved.', { type: 'info' });
+      return;
+    }
+
+    const existingChatId = getChatId();
+    const isAppend = existingChatId && lastSavedIndex > 0;
+
     try {
       // Show loading state
-      const saveBtn = document.getElementById('save-chat-btn');
-      const originalText = saveBtn.innerHTML;
-      saveBtn.innerHTML = 'Saving... <span style="font-size: 1.1rem;">⏳</span>';
+      saveBtn.textContent = 'Saving...';
       saveBtn.disabled = true;
 
       // Get current practice chat state (if any)
       const chatState = getPracticeChatState();
 
-      // Save practice chat to backend
+      // Save practice chat to backend (only new messages for append)
       const response = await fetch('/.netlify/functions/practice-chat-save', {
         method: 'POST',
         headers: {
@@ -413,10 +430,12 @@ permalink: /practice/chat/
         },
         body: JSON.stringify({
           userId,
-          messages: chatHistory,
+          messages: isAppend ? newMessages : chatHistory,
           suggestedPractice: chatState?.suggestedPractice || null,
           fullSuggestion: chatState?.fullSuggestion || null,
-          completed: chatState?.suggestedPractice ? true : false
+          completed: chatState?.suggestedPractice ? true : false,
+          chatId: existingChatId,
+          mode: isAppend ? 'append' : 'create'
         })
       });
 
@@ -426,17 +445,24 @@ permalink: /practice/chat/
         throw new Error(data.error || 'Failed to save practice chat');
       }
 
+      // Track the chat ID for future appends
+      if (!existingChatId && data.chatId) {
+        saveChatId(data.chatId);
+      }
+
+      // Update last saved index to current length
+      saveLastSavedIndex(chatHistory.length);
+
       // Restore button and show success
       saveBtn.innerHTML = originalText;
       saveBtn.disabled = false;
-      alert('Conversation saved!');
+      showToast('Saved!');
 
     } catch (error) {
       console.error('Error saving practice chat:', error);
-      alert('Failed to save. Please try again.');
+      showToast('Failed to save. Please try again.', { type: 'error' });
 
       // Restore button state
-      const saveBtn = document.getElementById('save-chat-btn');
       saveBtn.innerHTML = originalText;
       saveBtn.disabled = false;
     }

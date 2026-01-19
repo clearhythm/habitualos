@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { createPracticeChat } = require('./_services/db-practice-chats.cjs');
+const { createPracticeChat, appendToPracticeChat } = require('./_services/db-practice-chats.cjs');
 const { getPracticeByName, createPractice, updatePractice } = require('./_services/db-practices.cjs');
 
 // Helper to generate practice chat ID (pc- prefix + timestamp-based unique ID)
@@ -23,7 +23,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, messages, suggestedPractice, fullSuggestion, completed } = JSON.parse(event.body);
+    const { userId, messages, suggestedPractice, fullSuggestion, completed, chatId: existingChatId, mode } = JSON.parse(event.body);
 
     if (!userId) {
       return {
@@ -45,20 +45,31 @@ exports.handler = async (event) => {
       };
     }
 
-    // Generate practice chat ID
-    const chatId = generatePracticeChatId();
+    let chatId;
 
-    // Save to Firestore
-    const chatData = {
-      _userId: userId,
-      messages: messages,
-      suggestedPractice: suggestedPractice || null,
-      fullSuggestion: fullSuggestion || null,
-      completed: completed || false,
-      savedAt: new Date().toISOString()
-    };
+    if (mode === 'append' && existingChatId) {
+      // APPEND mode: Update existing chat with new messages
+      await appendToPracticeChat(existingChatId, messages, {
+        suggestedPractice: suggestedPractice || null,
+        fullSuggestion: fullSuggestion || null,
+        completed: completed || false
+      });
+      chatId = existingChatId;
+    } else {
+      // CREATE mode: Create new chat
+      chatId = generatePracticeChatId();
 
-    await createPracticeChat(chatId, chatData);
+      const chatData = {
+        _userId: userId,
+        messages: messages,
+        suggestedPractice: suggestedPractice || null,
+        fullSuggestion: fullSuggestion || null,
+        completed: completed || false,
+        savedAt: new Date().toISOString()
+      };
+
+      await createPracticeChat(chatId, chatData);
+    }
 
     // Create or update practice definition if we have a suggested practice
     if (suggestedPractice && fullSuggestion) {
