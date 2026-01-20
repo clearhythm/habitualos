@@ -31,7 +31,7 @@ permalink: /practice/detail/
 
 <script type="module">
   import { initializeUser } from '/assets/js/auth/auth.js';
-  import { renderPracticeEntryContent } from '/assets/js/practice-entry-renderer.js';
+  import { renderPracticeEntryContent, initObiWaiEntries } from '/assets/js/practice-entry-renderer.js';
 
   const userId = initializeUser();
   const loadingEl = document.getElementById('loading');
@@ -114,8 +114,8 @@ permalink: /practice/detail/
             </div>
 
             ${renderPracticeEntryContent(practice, {
-              makeObiWaiClickable: false,
-              showFeedbackIcon: false
+              expandableInline: true,
+              showFeedbackIcon: true
             })}
           </div>
         `;
@@ -123,6 +123,9 @@ permalink: /practice/detail/
 
       document.getElementById('checkins-list').innerHTML = checkinsHtml;
       detailEl.style.display = 'block';
+
+      // Initialize expand/collapse and feedback for inline Obi-Wai entries
+      initObiWaiEntries();
 
     } catch (error) {
       console.error('Error loading practice detail:', error);

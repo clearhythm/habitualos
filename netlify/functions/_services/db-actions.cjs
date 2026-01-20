@@ -21,7 +21,8 @@
 //     description: "Design and implement...",
 //     state: "open",  // "open", "in_progress", "completed", "dismissed"
 //     priority: "high",  // "high", "medium", "low"
-//     taskType: "interactive",  // "interactive", "scheduled"
+//     taskType: "interactive",  // "interactive", "scheduled", "measurement", "manual"
+//     assignedTo: "user",  // "user" (blue bar) or "agent" (purple bar)
 //     scheduleTime: null,
 //     taskConfig: {},
 //     metrics: {

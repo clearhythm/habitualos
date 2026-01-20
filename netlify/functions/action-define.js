@@ -66,6 +66,7 @@ exports.handler = async (event) => {
       state: 'defined',  // State is 'defined' - ready for scheduling
       priority: priority || 'medium',
       taskType: taskType || 'scheduled',
+      assignedTo: 'user',  // default to user assignment
       taskConfig: taskConfig || {},
       scheduleTime: null,
       startedAt: null,

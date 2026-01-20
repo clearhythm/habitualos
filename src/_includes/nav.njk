@@ -9,22 +9,22 @@
     <div class="sidemenu-main">
       <div class="sidemenu-left">
         <ul>
-          {% if page.url.startsWith('/practice/') %}
-            {# Practice section navigation #}
-            <li><h3><a href="/practice/">Home</a></h3></li>
-            <li><h3><a href="/practice/chat/">Motivate</a></h3></li>
-            <li><h3><a href="/practice/log/">Log Practice</a></h3></li>
-            <li><h3><a href="/practice/history/">History</a></h3></li>
-            <li><h3><a href="/practice/garden/">Garden</a></h3></li>
-          {% elif page.url.startsWith('/do/') %}
-            {# North Star section navigation #}
-            <li><h3><a href="/do/">Dashboard</a></h3></li>
-            <li><h3><a href="/do/setup/">New Agent</a></h3></li>
-          {% else %}
-            {# Landing page navigation #}
-            <li><h3><a href="/practice/">Practice</a></h3></li>
-            <li><h3><a href="/do/">Agents</a></h3></li>
-          {% endif %}
+          <li><h3><a href="/">Home</a></h3></li>
+          <li>
+            <h3><a href="/practice/">Practice</a></h3>
+            <ul class="nav-secondary">
+              <li><a href="/practice/chat/">Motivate</a></li>
+              <li><a href="/practice/log/">Log Practice</a></li>
+              <li><a href="/practice/history/">History</a></li>
+              <li><a href="/practice/garden/">Garden</a></li>
+            </ul>
+          </li>
+          <li>
+            <h3><a href="/do/">Agentify</a></h3>
+            <ul class="nav-secondary">
+              <li><a href="/do/setup/">New Agent</a></li>
+            </ul>
+          </li>
         </ul>
         <footer>
           <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
@@ -41,6 +41,12 @@
   </div>
 
   <div class="mx-auto">
-    <a class="navbar-brand" href="/">{{ navtitle | default("HabitualOS") }}</a>
+    {% if page.url.startsWith('/practice/') %}
+      <a class="navbar-brand" href="/practice/">{{ navtitle | default("HabitualOS") }}</a>
+    {% elif page.url.startsWith('/do/') %}
+      <a class="navbar-brand" href="/do/">{{ navtitle | default("HabitualOS") }}</a>
+    {% else %}
+      <a class="navbar-brand" href="/">{{ navtitle | default("HabitualOS") }}</a>
+    {% endif %}
   </div>
 </nav>

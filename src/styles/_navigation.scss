@@ -182,6 +182,28 @@
   opacity: 0.8;
 }
 
+// Secondary navigation (nested links)
+.sidemenu-left ul.nav-secondary {
+  list-style: none;
+  padding: 1rem 0 0 1.5rem;
+  margin: 0;
+
+  li {
+    padding: 0.25rem 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 1.25rem;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
 .sidemenu-left footer {
   padding: 2rem 0;
 }

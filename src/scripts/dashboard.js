@@ -10,13 +10,15 @@ import { log } from '/assets/js/utils/log.js';
 import { formatRuntime } from '/assets/js/utils/utils.js';
 import { listAgents, getAgent, updateAgent } from '/assets/js/api/agents.js';
 import { listActions } from '/assets/js/api/actions.js';
-import { createActionCard, isMeasurementAction, handleMeasurementClick } from '/assets/js/components/action-card.js';
+import { createActionCard, isMeasurementAction, handleMeasurementClick, filterActions, sortActions } from '/assets/js/components/action-card.js';
 import { showActionModal } from '/assets/js/components/action-modal.js';
 
 // -----------------------------
 // State
 // -----------------------------
 let selectedAgentId = null;
+let actionsCache = [];
+let agentNameMap = {};  // agentId -> name lookup
 
 // -----------------------------
 // Dashboard Loading
@@ -44,6 +46,12 @@ async function loadDashboard() {
       return;
     }
 
+    // Build agent name lookup map
+    agentNameMap = {};
+    agentsData.agents.forEach(agent => {
+      agentNameMap[agent.id] = agent.name || 'Untitled Agent';
+    });
+
     // Fetch all actions
     const actionsData = await listActions(userId);
 
@@ -51,11 +59,14 @@ async function loadDashboard() {
       throw new Error('Failed to load actions');
     }
 
+    // Cache actions for re-filtering
+    actionsCache = actionsData.actions || [];
+
     // Display Agents grid
-    renderAgentsGrid(agentsData.agents, actionsData.actions || []);
+    renderAgentsGrid(agentsData.agents, actionsCache);
 
     // Display Actions (filtered by selected agent if applicable)
-    displayActions(actionsData.actions || [], selectedAgentId);
+    displayActions(actionsCache, selectedAgentId);
 
     // Initialize dashboard controls
     initDashboardControls();
@@ -142,29 +153,29 @@ function createAgentCard(agent, agentActions) {
     </div>
 
     <div class="agent-controls">
-      <button class="btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}" data-toggle-agent="${agent.id}">
-        ${agent.status === 'paused' ? 'Resume' : 'Pause'}
+      <button class="btn btn-sm btn-ghost" data-chat-agent="${agent.id}">
+        Chat
       </button>
-      <button class="btn btn-sm btn-ghost" data-view-agent="${agent.id}">
-        View Details
+      <button class="btn btn-sm btn-secondary" data-settings-agent="${agent.id}">
+        Settings
       </button>
     </div>
   `;
 
   // Add click handlers
-  card.querySelector(`[data-toggle-agent="${agent.id}"]`).onclick = (e) => {
+  card.querySelector(`[data-chat-agent="${agent.id}"]`).onclick = (e) => {
     e.stopPropagation();
-    toggleAgentStatus(agent.id);
+    window.location.href = `/do/agent/?id=${agent.id}#chat`;
   };
 
-  card.querySelector(`[data-view-agent="${agent.id}"]`).onclick = (e) => {
+  card.querySelector(`[data-settings-agent="${agent.id}"]`).onclick = (e) => {
     e.stopPropagation();
-    window.location.href = `/do/agent/?id=${agent.id}`;
+    window.location.href = `/do/agent/?id=${agent.id}#settings`;
   };
 
-  // Make the whole card clickable to go to agent detail page
+  // Make the whole card clickable to go to agent chat
   card.onclick = () => {
-    window.location.href = `/do/agent/?id=${agent.id}`;
+    window.location.href = `/do/agent/?id=${agent.id}#chat`;
   };
 
   return card;
@@ -285,7 +296,8 @@ async function showAllAgents() {
  */
 function displayActions(actions, filterByAgentId = null) {
   const actionsGridEl = document.querySelector('#actions-grid');
-  const toggleBtn = document.querySelector('#toggle-completed');
+  const filterSelect = document.querySelector('#actions-filter');
+  const currentFilter = filterSelect?.value || 'open';
 
   // Filter actions by agent if specified
   let filteredActions = actions;
@@ -293,9 +305,11 @@ function displayActions(actions, filterByAgentId = null) {
     filteredActions = actions.filter(a => a.agentId === filterByAgentId);
   }
 
-  // Separate active and completed actions
-  const activeActions = filteredActions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
-  const completedActions = filteredActions.filter(a => a.state === 'completed' || a.state === 'dismissed');
+  // Apply filter (open/all/completed)
+  filteredActions = filterActions(filteredActions, currentFilter);
+
+  // Apply sorting (blue first, then purple, each newest first)
+  filteredActions = sortActions(filteredActions);
 
   // Clear grid
   actionsGridEl.innerHTML = '';
@@ -305,33 +319,28 @@ function displayActions(actions, filterByAgentId = null) {
     if (isMeasurementAction(action)) {
       handleMeasurementClick(action);
     } else {
-      showActionModal(action, () => loadDashboard());
+      showActionModal(action, {
+        agentName: agentNameMap[action.agentId],
+        onComplete: () => loadDashboard()
+      });
     }
   };
 
-  // Add all active actions
-  activeActions.forEach(action => {
-    const card = createActionCard(action, handleActionClick);
-    card.dataset.cardType = 'active';
-    actionsGridEl.appendChild(card);
-  });
-
-  // Add all completed actions
-  completedActions.forEach(action => {
-    const card = createActionCard(action, handleActionClick);
-    card.dataset.cardType = 'completed';
-    card.style.opacity = '0.7';
-    actionsGridEl.appendChild(card);
-  });
-
-  // Update toggle button
-  if (completedActions.length > 0) {
-    toggleBtn.textContent = `Show Completed (${completedActions.length})`;
-    toggleBtn.style.display = 'inline-block';
+  // Show empty state if no actions
+  if (filteredActions.length === 0) {
+    actionsGridEl.innerHTML = '<div style="text-align: center; padding: 3rem 1rem; color: #6b7280; grid-column: 1 / -1;"><p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No actions</p><p style="font-size: 0.875rem;">Actions will appear here when created</p></div>';
+    return;
   }
 
-  // Store completed count for nav.js
-  window.completedActionsCount = completedActions.length;
+  // Add all filtered and sorted actions
+  filteredActions.forEach(action => {
+    const card = createActionCard(action, handleActionClick);
+    const isCompleted = action.state === 'completed' || action.state === 'dismissed';
+    if (isCompleted) {
+      card.style.opacity = '0.7';
+    }
+    actionsGridEl.appendChild(card);
+  });
 }
 
 // -----------------------------
@@ -346,6 +355,14 @@ function initDashboardControls() {
   const showAllBtn = document.querySelector('#show-all-agents-btn');
   if (showAllBtn) {
     showAllBtn.onclick = showAllAgents;
+  }
+
+  // Filter dropdown
+  const filterSelect = document.querySelector('#actions-filter');
+  if (filterSelect) {
+    filterSelect.onchange = () => {
+      displayActions(actionsCache, selectedAgentId);
+    };
   }
 }
 

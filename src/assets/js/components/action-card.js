@@ -5,7 +5,7 @@
 // Creates a card DOM element for displaying an action
 // ------------------------------------------------------
 
-import { formatDate, formatState, escapeHtml, capitalize } from "/assets/js/utils/utils.js";
+import { formatDate, escapeHtml } from "/assets/js/utils/utils.js";
 
 /**
  * Get icon for action taskType
@@ -13,10 +13,26 @@ import { formatDate, formatState, escapeHtml, capitalize } from "/assets/js/util
 function getActionIcon(taskType) {
   const icons = {
     measurement: '📊',
-    manual: '🧑',
-    scheduled: '🤖'
+    manual: '📄',
+    interactive: '💬',
   };
-  return icons[taskType] || '⚡';
+  return icons[taskType] || '📥';
+}
+
+/**
+ * Get color based on assignedTo field
+ */
+function getAssignedToColor(assignedTo) {
+  return assignedTo === 'agent' ? '#8b5cf6' : '#3b82f6';
+}
+
+/**
+ * Truncate description to a max length
+ */
+function truncateDescription(text, maxLength = 100) {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
 }
 
 /**
@@ -28,7 +44,7 @@ function getActionIcon(taskType) {
 export function createActionCard(action, onClick) {
   const card = document.createElement('div');
   card.className = 'card card-clickable';
-  card.style.cursor = 'pointer';
+  card.style.cssText = 'cursor: pointer; position: relative; padding-left: 1.25rem;';
 
   // Add click handler
   if (onClick) {
@@ -38,30 +54,23 @@ export function createActionCard(action, onClick) {
   // Icon based on taskType
   const icon = getActionIcon(action.taskType);
 
-  // Show "Scheduled" with time for scheduled tasks
-  let stateBadge;
-  if (action.taskType === 'scheduled' && action.state === 'open' && action.scheduleTime) {
-    const scheduledTime = formatDate(action.scheduleTime);
-    stateBadge = `<span class="badge badge-scheduled">Scheduled: ${scheduledTime}</span>`;
-  } else {
-    stateBadge = `<span class="badge badge-${action.state}">${formatState(action.state)}</span>`;
-  }
+  // Colored left bar based on assignedTo
+  const barColor = getAssignedToColor(action.assignedTo);
 
   // Created date
-  const createdDate = action._createdAt ? formatDate(action._createdAt) : null;
+  const createdDate = action._createdAt ? formatDate(action._createdAt) : '';
+
+  // Truncated description
+  const truncatedDesc = truncateDescription(action.description);
 
   card.innerHTML = `
-    <div class="flex flex-between" style="margin-bottom: 0.5rem;">
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <span style="font-size: 1.25rem;">${icon}</span>
-        <h3 class="card-title" style="margin-bottom: 0;">${escapeHtml(action.title)}</h3>
-      </div>
-      ${stateBadge}
+    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: ${barColor}; border-radius: 12px 0 0 12px;"></div>
+    <div style="display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem;">
+      <span style="font-size: 1.25rem;">${icon}</span>
+      <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">${escapeHtml(action.title)}</h3>
     </div>
-    <div class="card-meta" style="margin-top: 0;">
-      ${createdDate ? `<span style="color: #6b7280;">Created ${createdDate}</span>` : ''}
-      ${action.priority ? `<span class="badge badge-${action.priority}" style="font-size: 0.75rem; padding: 0.125rem 0.375rem;">${capitalize(action.priority)}</span>` : ''}
-    </div>
+    <p style="margin: 0 0 0.5rem; font-size: 0.875rem; color: #6b7280;">${escapeHtml(truncatedDesc)}</p>
+    <span style="font-size: 0.75rem; color: #9ca3af;">${createdDate}</span>
   `;
 
   return card;
@@ -87,4 +96,35 @@ export function handleMeasurementClick(action) {
     taskConfig: action.taskConfig
   }));
   window.location.href = `/do/agent/?id=${action.agentId}#chat`;
+}
+
+/**
+ * Filter actions by filter type
+ */
+export function filterActions(actions, filter) {
+  switch (filter) {
+    case 'open':
+      return actions.filter(a => a.state !== 'completed' && a.state !== 'dismissed');
+    case 'completed':
+      return actions.filter(a => a.state === 'completed' || a.state === 'dismissed');
+    default:
+      return actions;
+  }
+}
+
+/**
+ * Sort actions: blue (user) first, then purple (agent), each group by newest first
+ */
+export function sortActions(actions) {
+  return [...actions].sort((a, b) => {
+    const aIsAgent = (a.assignedTo || 'user') === 'agent';
+    const bIsAgent = (b.assignedTo || 'user') === 'agent';
+
+    // Blue (user) items first
+    if (!aIsAgent && bIsAgent) return -1;
+    if (aIsAgent && !bIsAgent) return 1;
+
+    // Within same group, sort by newest first
+    return new Date(b._createdAt) - new Date(a._createdAt);
+  });
 }

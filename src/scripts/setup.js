@@ -259,11 +259,14 @@ function setupEventListeners() {
     updateSendButton();
   });
 
-  // Enter key handler
+  // Enter key handler - auto-submit on desktop only, newline on mobile
   messageInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      chatForm.requestSubmit();
+      const isMobile = window.matchMedia('(pointer: coarse)').matches;
+      if (!isMobile) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
     }
   });
 
