@@ -72,9 +72,14 @@
 
 **Agent Signals**
 Agents communicate intent via structured responses:
-- `CREATE_ACTION` - Agent wants to create an action
-- `GENERATE_ASSET` - Agent wants to create a draft asset card
-- `GENERATE_ACTIONS` - Agent wants to create multiple action suggestions
+- `GENERATE_ACTIONS` - Agent wants to create a scheduled action
+- `GENERATE_ASSET` - Agent wants to create an immediate deliverable (manual action)
+- `STORE_MEASUREMENT` - Agent has collected measurement check-in data
+
+**Agent Tools**
+Agents have access to tools for action management:
+- `get_action_details` - Retrieve full action record
+- `update_action` - Update title, description, priority, taskConfig
 
 ## Code Style Principles
 
@@ -106,6 +111,8 @@ Agents communicate intent via structured responses:
 - Use Claude Code co-author footer
 - Docs updated in same commit as code changes (for significant changes)
 - Standard commit workflow - no hooks or automation
+- **Always commit work at end of session** - prevents losing context and tracks progress
+- Rough commit messages are fine if precise description would take too long
 
 **Deployment**
 - Git push triggers Netlify deploy

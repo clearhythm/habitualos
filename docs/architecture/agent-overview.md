@@ -56,11 +56,29 @@ When generating Claude Code prompts, provide strategic direction while deferring
 **Agent System:**
 - Service: _services/db-agents.cjs
 - Chat endpoint: netlify/functions/agent-chat.js
-- UI: src/do/agent.njk
+- UI: src/do/agent.njk, src/scripts/agent.js
 
 **Actions System:**
 - Service: _services/db-actions.cjs
 - Endpoints: netlify/functions/action-*.js
+- Modal: src/assets/js/components/action-modal.js
+
+## Agent Chat Action Context
+
+The agent chat system has full action awareness:
+
+**System Prompt Includes:**
+- Open actions list (states: defined, scheduled, in_progress) cached per session
+- Current action context when navigating from Chat button
+
+**Available Tools:**
+- `get_action_details(action_id)` - Retrieve full action record
+- `update_action(action_id, updates)` - Update title, description, priority, taskConfig
+
+**Caching Strategy:**
+- Block 1: Per-message action context (uncached)
+- Block 2: System prompt + agent overview (cached)
+- Block 3: Actions list snapshot (cached per session)
 
 **Practice System:**
 - Service: _services/db-practice-logs.cjs
