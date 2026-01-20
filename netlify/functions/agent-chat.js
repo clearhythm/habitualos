@@ -3,11 +3,112 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent } = require('./_services/db-agents.cjs');
+const { getActionsByAgent, getAction, updateActionState } = require('./_services/db-actions.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
   timeout: 20000 // 20 second timeout - must complete before Netlify's 26s limit
 });
+
+/**
+ * Handle tool calls from Claude
+ * @param {Object} toolBlock - The tool_use block from Claude's response
+ * @param {string} userId - User ID for ownership validation
+ * @param {string} agentId - Agent ID for context
+ * @returns {Promise<Object>} Tool result
+ */
+async function handleToolCall(toolBlock, userId, agentId) {
+  const { name, input } = toolBlock;
+
+  if (name === 'get_action_details') {
+    const actionId = input.action_id;
+
+    // Validate action ID format
+    if (!actionId || !actionId.startsWith('action-')) {
+      return { error: 'Invalid action ID format. Expected format: action-{timestamp}-{random}' };
+    }
+
+    const action = await getAction(actionId);
+
+    if (!action) {
+      return { error: 'Action not found' };
+    }
+
+    // Verify ownership
+    if (action._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    // Return full action record
+    return {
+      success: true,
+      action: {
+        id: action.id,
+        title: action.title,
+        description: action.description,
+        state: action.state,
+        priority: action.priority,
+        taskType: action.taskType,
+        taskConfig: action.taskConfig,
+        content: action.content || null,
+        type: action.type || null,
+        _createdAt: action._createdAt,
+        _updatedAt: action._updatedAt
+      }
+    };
+  }
+
+  if (name === 'update_action') {
+    const { action_id, updates } = input;
+
+    // Validate action ID
+    if (!action_id || !action_id.startsWith('action-')) {
+      return { error: 'Invalid action ID format. Expected format: action-{timestamp}-{random}' };
+    }
+
+    const action = await getAction(action_id);
+
+    if (!action) {
+      return { error: 'Action not found' };
+    }
+
+    if (action._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    // Build safe updates (whitelist allowed fields)
+    const safeUpdates = {};
+    if (updates.title) safeUpdates.title = updates.title;
+    if (updates.description) safeUpdates.description = updates.description;
+    if (updates.priority && ['low', 'medium', 'high'].includes(updates.priority)) {
+      safeUpdates.priority = updates.priority;
+    }
+    if (updates.taskConfig) {
+      safeUpdates.taskConfig = { ...action.taskConfig };
+      if (updates.taskConfig.instructions) {
+        safeUpdates.taskConfig.instructions = updates.taskConfig.instructions;
+      }
+      if (updates.taskConfig.expectedOutput) {
+        safeUpdates.taskConfig.expectedOutput = updates.taskConfig.expectedOutput;
+      }
+    }
+
+    if (Object.keys(safeUpdates).length === 0) {
+      return { error: 'No valid updates provided' };
+    }
+
+    // Use updateActionState with current state to trigger _updatedAt
+    await updateActionState(action_id, action.state, safeUpdates);
+
+    return {
+      success: true,
+      message: `Updated action: ${Object.keys(safeUpdates).join(', ')}`,
+      updatedFields: Object.keys(safeUpdates)
+    };
+  }
+
+  return { error: `Unknown tool: ${name}` };
+}
 
 /**
  * POST /api/agent-chat
@@ -66,6 +167,14 @@ exports.handler = async (event) => {
         })
       };
     }
+
+    // Fetch active actions for this agent (to include in system prompt)
+    console.log('[agent-chat] Fetching active actions');
+    const allAgentActions = await getActionsByAgent(agentId, userId);
+    const openActions = allAgentActions.filter(a =>
+      ['defined', 'scheduled', 'in_progress'].includes(a.state)
+    );
+    console.log(`[agent-chat] Found ${openActions.length} open actions for agent`);
 
     // Load agent overview doc for strategic context
     const agentOverviewPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'agent-overview.md');
@@ -215,14 +324,56 @@ IMPORTANT for measurement actions:
 - Accept scores on a 1-10 scale
 - Probe for context when scores are notable (very high, very low, or different from usual)
 - After collecting all scores and any general observations, emit STORE_MEASUREMENT
-- Be warm but not excessive`;
+- Be warm but not excessive
 
-    // Add measurement action context if provided
-    let contextualPrompt = systemPrompt;
-    if (actionContext && actionContext.taskType === 'measurement') {
-      const dimensions = actionContext.taskConfig?.dimensions || [];
-      contextualPrompt += `\n\n---\nCURRENT MEASUREMENT CHECK-IN:\nAction: ${actionContext.title}\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, use STORE_MEASUREMENT to record the check-in.`;
-      console.log(`[agent-chat] Added measurement context for action: ${actionContext.actionId}`);
+AVAILABLE TOOLS:
+You have access to these tools for working with actions:
+
+1. get_action_details(action_id) - Retrieve full details of a specific action
+   - Use when user wants to work on, discuss, or see details of an action
+   - Returns complete content for manual actions, full taskConfig for scheduled
+
+2. update_action(action_id, updates) - Update an action's metadata
+   - Can update: title, description, priority, taskConfig.instructions, taskConfig.expectedOutput
+   - Cannot change: state, taskType, agentId
+   - Use when user wants to refine or modify an existing action
+
+When using tools, wait for the tool result before responding to the user.`;
+
+    // Build per-message action context (uncached - changes per conversation)
+    let actionContextPrompt = '';
+    if (actionContext) {
+      actionContextPrompt = `CURRENT ACTION CONTEXT:\nAction ID: ${actionContext.actionId}\nTitle: ${actionContext.title}\nDescription: ${actionContext.description || 'None'}\nType: ${actionContext.taskType}\nPriority: ${actionContext.priority || 'medium'}\nState: ${actionContext.state || 'unknown'}`;
+
+      if (actionContext.taskType === 'manual' && actionContext.content) {
+        actionContextPrompt += `\nContent:\n${actionContext.content}`;
+      }
+      if (actionContext.taskConfig?.instructions) {
+        actionContextPrompt += `\nInstructions:\n${actionContext.taskConfig.instructions}`;
+      }
+      if (actionContext.taskConfig?.expectedOutput) {
+        actionContextPrompt += `\nExpected Output:\n${actionContext.taskConfig.expectedOutput}`;
+      }
+      if (actionContext.taskType === 'measurement') {
+        const dimensions = actionContext.taskConfig?.dimensions || [];
+        actionContextPrompt += `\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, use STORE_MEASUREMENT to record the check-in.`;
+      }
+      console.log(`[agent-chat] Added action context for: ${actionContext.actionId} (${actionContext.taskType})`);
+    }
+
+    // Build actions list for system prompt (cached per session)
+    let actionsListPrompt = '';
+    if (openActions.length > 0) {
+      const actionsSummary = openActions.map(a => ({
+        id: a.id,
+        title: a.title,
+        description: a.description,
+        priority: a.priority,
+        state: a.state,
+        taskType: a.taskType,
+        updatedAt: a._updatedAt
+      }));
+      actionsListPrompt = `OPEN ACTIONS (${openActions.length}):\n${JSON.stringify(actionsSummary, null, 2)}\n\nYou can reference these actions when the user asks about their work, priorities, or what's pending. Use the get_action_details tool to retrieve full details when working on a specific action.`;
     }
 
     // Build conversation history for Claude
@@ -241,32 +392,105 @@ IMPORTANT for measurement actions:
     console.log('[agent-chat] Calling Claude API');
     console.log(`[agent-chat] System prompt size: ${systemPrompt.length} characters`);
     console.log(`[agent-chat] Agent overview size: ${agentOverview.length} characters`);
+    console.log(`[agent-chat] Actions list size: ${actionsListPrompt.length} characters`);
     const apiCallStart = Date.now();
 
-    const systemMessages = [
-      {
-        type: "text",
-        text: contextualPrompt
-      }
-    ];
+    // Build system messages with caching strategy:
+    // - Block 1: Per-message action context (uncached - changes per conversation)
+    // - Block 2: Static agent overview + instructions (cached)
+    // - Block 3: Actions snapshot for this session (cached)
+    const systemMessages = [];
 
-    // Add agent overview with cache control
+    // Block 1: Per-message action context (uncached)
+    if (actionContextPrompt) {
+      systemMessages.push({
+        type: "text",
+        text: actionContextPrompt
+      });
+    }
+
+    // Block 2: System prompt + agent overview (cached)
     if (agentOverview) {
       systemMessages.push({
         type: "text",
-        text: agentOverview,
-        cache_control: { type: "ephemeral" }  // Cache the agent overview doc
+        text: systemPrompt + '\n\n---\nAGENT REFERENCE DOCUMENTATION:\n' + agentOverview,
+        cache_control: { type: "ephemeral" }
+      });
+    } else {
+      systemMessages.push({
+        type: "text",
+        text: systemPrompt,
+        cache_control: { type: "ephemeral" }
       });
     }
+
+    // Block 3: Actions list (cached - snapshot for this session)
+    if (actionsListPrompt) {
+      systemMessages.push({
+        type: "text",
+        text: actionsListPrompt,
+        cache_control: { type: "ephemeral" }
+      });
+    }
+
+    // Define tools for action management
+    const tools = [
+      {
+        name: "get_action_details",
+        description: "Retrieve the full details of a specific action, including complete content for manual actions and full taskConfig for scheduled actions. Use when the user wants to work on, discuss, or modify a specific action.",
+        input_schema: {
+          type: "object",
+          properties: {
+            action_id: {
+              type: "string",
+              description: "The action ID (format: action-{timestamp}-{random})"
+            }
+          },
+          required: ["action_id"]
+        }
+      },
+      {
+        name: "update_action",
+        description: "Update an existing action's metadata. Can modify title, description, priority, or taskConfig fields (instructions, expectedOutput). Cannot change state (use complete/dismiss actions) or taskType.",
+        input_schema: {
+          type: "object",
+          properties: {
+            action_id: {
+              type: "string",
+              description: "The action ID to update"
+            },
+            updates: {
+              type: "object",
+              description: "Fields to update",
+              properties: {
+                title: { type: "string", description: "New title for the action" },
+                description: { type: "string", description: "New description" },
+                priority: { type: "string", enum: ["low", "medium", "high"], description: "Priority level" },
+                taskConfig: {
+                  type: "object",
+                  description: "Task configuration updates",
+                  properties: {
+                    instructions: { type: "string", description: "Updated execution instructions" },
+                    expectedOutput: { type: "string", description: "Updated expected output description" }
+                  }
+                }
+              }
+            }
+          },
+          required: ["action_id", "updates"]
+        }
+      }
+    ];
 
     const requestParams = {
       model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2048,
       system: systemMessages,
-      messages: conversationHistory
+      messages: conversationHistory,
+      tools: tools
     };
 
-    const apiResponse = await anthropic.messages.create(requestParams);
+    let apiResponse = await anthropic.messages.create(requestParams);
 
     console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
 
@@ -286,11 +510,66 @@ IMPORTANT for measurement actions:
       }
     }
 
-    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
+    // Handle tool calls if present
+    let assistantResponse = '';
+    const toolUseBlocks = apiResponse.content.filter(block => block.type === 'tool_use');
 
-    // Extract assistant's final text response
-    const textBlock = apiResponse.content.find(block => block.type === 'text');
-    assistantResponse = textBlock ? textBlock.text : '';
+    if (toolUseBlocks.length > 0) {
+      console.log(`[agent-chat] Processing ${toolUseBlocks.length} tool call(s)`);
+
+      // Execute tool calls and collect results
+      const toolResults = [];
+      for (const toolBlock of toolUseBlocks) {
+        const toolResult = await handleToolCall(toolBlock, userId, agentId);
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolBlock.id,
+          content: JSON.stringify(toolResult)
+        });
+        console.log(`[agent-chat] Tool ${toolBlock.name} result:`, toolResult.success ? 'success' : toolResult.error);
+      }
+
+      // Add assistant's tool use to conversation
+      conversationHistory.push({
+        role: 'assistant',
+        content: apiResponse.content
+      });
+
+      // Add tool results to conversation
+      conversationHistory.push({
+        role: 'user',
+        content: toolResults
+      });
+
+      // Make follow-up call to get final response
+      console.log('[agent-chat] Making follow-up API call after tool use');
+      const followUpResponse = await anthropic.messages.create({
+        ...requestParams,
+        messages: conversationHistory
+      });
+
+      // Extract text from follow-up response
+      const followUpText = followUpResponse.content.find(b => b.type === 'text');
+      assistantResponse = followUpText ? followUpText.text : '';
+
+      // Log follow-up usage
+      if (followUpResponse.usage) {
+        console.log(`[agent-chat] Follow-up token usage:`, {
+          input_tokens: followUpResponse.usage.input_tokens,
+          cache_read_input_tokens: followUpResponse.usage.cache_read_input_tokens || 0,
+          output_tokens: followUpResponse.usage.output_tokens
+        });
+      }
+
+      // Use follow-up response for signal detection
+      apiResponse = followUpResponse;
+    } else {
+      // No tool calls - extract text directly
+      const textBlock = apiResponse.content.find(block => block.type === 'text');
+      assistantResponse = textBlock ? textBlock.text : '';
+    }
+
+    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
 
     // Check if response indicates action generation
     // Be flexible with whitespace and markdown code blocks
