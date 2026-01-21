@@ -9,7 +9,7 @@ import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
 import { log } from '/assets/js/utils/log.js';
 import { formatDate, escapeHtml, formatRuntime } from '/assets/js/utils/utils.js';
 import { listActions, completeAction as apiCompleteAction, dismissAction as apiDismissAction } from '/assets/js/api/actions.js';
-import { getAgent } from '/assets/js/api/agents.js';
+import { getAgent, updateAgent } from '/assets/js/api/agents.js';
 import { createActionCard, filterActions, sortActions, isMeasurementAction } from '/assets/js/components/action-card.js';
 import { showActionModal } from '/assets/js/components/action-modal.js';
 import { showToast } from '/assets/js/components/chat-toast.js';
@@ -1207,6 +1207,97 @@ async function handleChatSubmit(e) {
 }
 
 // -----------------------------
+// Filesystem Helpers
+// -----------------------------
+function generateDefaultLocalDataPath(agent) {
+  // Generate path like "my-agent-name-abc123" from agent name and ID
+  const nameSlug = (agent.name || 'agent')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 30);
+  const idSuffix = agent.id.replace('agent-', '').substring(0, 8);
+  return `${nameSlug}-${idSuffix}`;
+}
+
+async function handleFilesystemToggle(enabled) {
+  const userId = getUserId();
+  const filesystemToggle = document.getElementById('filesystem-toggle');
+  const filesystemStatus = document.getElementById('filesystem-status');
+  const filesystemDetails = document.getElementById('filesystem-details');
+  const filesystemDisabledNote = document.getElementById('filesystem-disabled-note');
+  const filesystemPath = document.getElementById('filesystem-path');
+
+  // Optimistic UI update
+  if (filesystemStatus) {
+    filesystemStatus.textContent = enabled ? 'Enabled' : 'Disabled';
+    filesystemStatus.style.color = enabled ? '#059669' : '#6b7280';
+  }
+  if (filesystemDetails) {
+    filesystemDetails.style.display = enabled ? 'block' : 'none';
+  }
+  if (filesystemDisabledNote) {
+    filesystemDisabledNote.style.display = enabled ? 'none' : 'block';
+  }
+
+  try {
+    const localDataPath = enabled
+      ? (currentAgent.localDataPath || generateDefaultLocalDataPath(currentAgent))
+      : currentAgent.localDataPath; // Keep existing path when disabling
+
+    const updates = {
+      capabilities: {
+        ...currentAgent.capabilities,
+        filesystem: enabled
+      }
+    };
+
+    // Set localDataPath when enabling (if not already set)
+    if (enabled && !currentAgent.localDataPath) {
+      updates.localDataPath = localDataPath;
+    }
+
+    const result = await updateAgent(agentId, userId, updates);
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update agent');
+    }
+
+    // Update local state
+    currentAgent.capabilities = { ...currentAgent.capabilities, filesystem: enabled };
+    if (updates.localDataPath) {
+      currentAgent.localDataPath = updates.localDataPath;
+    }
+
+    // Update path display
+    if (filesystemPath && enabled) {
+      filesystemPath.textContent = `data/${currentAgent.localDataPath}/`;
+    }
+
+    showToast(enabled ? 'Local files enabled' : 'Local files disabled');
+
+  } catch (error) {
+    log('error', 'Error updating filesystem setting:', error);
+    showToast('Failed to update setting', { type: 'error' });
+
+    // Revert UI on error
+    if (filesystemToggle) {
+      filesystemToggle.checked = !enabled;
+    }
+    if (filesystemStatus) {
+      filesystemStatus.textContent = !enabled ? 'Enabled' : 'Disabled';
+      filesystemStatus.style.color = !enabled ? '#059669' : '#6b7280';
+    }
+    if (filesystemDetails) {
+      filesystemDetails.style.display = !enabled ? 'block' : 'none';
+    }
+    if (filesystemDisabledNote) {
+      filesystemDisabledNote.style.display = !enabled ? 'none' : 'block';
+    }
+  }
+}
+
+// -----------------------------
 // Agent Data Loading
 // -----------------------------
 async function loadAgentData() {
@@ -1284,6 +1375,41 @@ async function loadAgentData() {
     const pauseBtn = document.getElementById('settings-pause-button');
     pauseBtn.textContent = agent.status === 'paused' ? 'Resume' : 'Pause';
     pauseBtn.className = `btn btn-sm ${agent.status === 'paused' ? 'btn-primary' : 'btn-secondary'}`;
+
+    // Filesystem toggle
+    const filesystemToggle = document.getElementById('filesystem-toggle');
+    const filesystemStatus = document.getElementById('filesystem-status');
+    const filesystemDetails = document.getElementById('filesystem-details');
+    const filesystemDisabledNote = document.getElementById('filesystem-disabled-note');
+    const filesystemPath = document.getElementById('filesystem-path');
+    const filesystemEnvBadge = document.getElementById('filesystem-env-badge');
+
+    const isFilesystemEnabled = agent.capabilities?.filesystem === true;
+    const localDataPath = agent.localDataPath || generateDefaultLocalDataPath(agent);
+
+    if (filesystemToggle) {
+      filesystemToggle.checked = isFilesystemEnabled;
+    }
+    if (filesystemStatus) {
+      filesystemStatus.textContent = isFilesystemEnabled ? 'Enabled' : 'Disabled';
+      filesystemStatus.style.color = isFilesystemEnabled ? '#059669' : '#6b7280';
+    }
+    if (filesystemDetails) {
+      filesystemDetails.style.display = isFilesystemEnabled ? 'block' : 'none';
+    }
+    if (filesystemDisabledNote) {
+      filesystemDisabledNote.style.display = isFilesystemEnabled ? 'none' : 'block';
+    }
+    if (filesystemPath) {
+      filesystemPath.textContent = `data/${localDataPath}/`;
+    }
+    if (filesystemEnvBadge) {
+      // Check if we're on localhost (simplified check)
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      filesystemEnvBadge.textContent = isLocalhost ? 'LOCAL' : 'REMOTE';
+      filesystemEnvBadge.style.background = isLocalhost ? '#d1fae5' : '#fee2e2';
+      filesystemEnvBadge.style.color = isLocalhost ? '#065f46' : '#991b1b';
+    }
 
     // Show detail view (use flex for proper layout)
     loadingEl.style.display = 'none';
@@ -1481,6 +1607,11 @@ function setupEventListeners() {
 
   // Filter change
   document.getElementById('actions-filter')?.addEventListener('change', renderActions);
+
+  // Filesystem toggle
+  document.getElementById('filesystem-toggle')?.addEventListener('change', (e) => {
+    handleFilesystemToggle(e.target.checked);
+  });
 
   // Reload actions event
   window.addEventListener('reloadActions', async () => {

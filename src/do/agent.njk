@@ -250,6 +250,37 @@ pageScript: /scripts/agent.js
       </div>
 
       </div>
+
+      {# Local Files Card (Full Width) #}
+      <div class="card" style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3 style="margin: 0;">📁 Local Files</h3>
+          <label class="toggle-switch" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="filesystem-toggle" style="width: 18px; height: 18px; cursor: pointer;">
+            <span id="filesystem-status" style="font-size: 0.9rem; color: #6b7280;">Disabled</span>
+          </label>
+        </div>
+
+        <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1rem;">
+          Enable local file storage for this agent. When enabled (localhost only), the agent can read and write files to a dedicated directory.
+        </p>
+
+        <div id="filesystem-details" style="display: none;">
+          <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 0.85rem; color: #6b7280; margin-bottom: 0.25rem;">Directory</div>
+                <code id="filesystem-path" style="font-size: 0.95rem; color: #111; background: #e5e7eb; padding: 0.25rem 0.5rem; border-radius: 4px;">data/...</code>
+              </div>
+              <span id="filesystem-env-badge" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 500;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="filesystem-disabled-note" style="color: #9ca3af; font-size: 0.85rem; font-style: italic;">
+          Toggle on to enable local file access for this agent.
+        </div>
+      </div>
     </div>
   </div>
 </div>
