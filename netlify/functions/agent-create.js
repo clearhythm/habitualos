@@ -20,7 +20,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, name, goal, success_criteria, timeline, type, chatHistory } = JSON.parse(event.body);
+    const { userId, name, goal, success_criteria, timeline, type, chatHistory, localDataPath } = JSON.parse(event.body);
 
     // Validate userId
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -53,6 +53,11 @@ exports.handler = async (event) => {
         success_criteria: success_criteria || [],
         timeline: timeline || null,
         format: 'northstar'
+      },
+      localDataPath: localDataPath || null,
+      capabilities: {
+        filesystem: !!localDataPath, // Enable if localDataPath provided
+        noteCapture: true
       }
     });
 

@@ -2,8 +2,10 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
-const { getAgent } = require('./_services/db-agents.cjs');
+const { getAgent, incrementAgentActionCount } = require('./_services/db-agents.cjs');
 const { getActionsByAgent, getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { createNote, getNotesByAgent, getNoteById, updateNote } = require('./_services/db-agent-notes.cjs');
+const agentFilesystem = require('./_utils/agent-filesystem.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -15,9 +17,10 @@ const anthropic = new Anthropic({
  * @param {Object} toolBlock - The tool_use block from Claude's response
  * @param {string} userId - User ID for ownership validation
  * @param {string} agentId - Agent ID for context
+ * @param {Object} agent - Full agent object (for localDataPath access)
  * @returns {Promise<Object>} Tool result
  */
-async function handleToolCall(toolBlock, userId, agentId) {
+async function handleToolCall(toolBlock, userId, agentId, agent) {
   const { name, input } = toolBlock;
 
   if (name === 'get_action_details') {
@@ -107,6 +110,198 @@ async function handleToolCall(toolBlock, userId, agentId) {
     };
   }
 
+  if (name === 'complete_action') {
+    const actionId = input.action_id;
+
+    // Validate action ID format
+    if (!actionId || !actionId.startsWith('action-')) {
+      return { error: 'Invalid action ID format. Expected format: action-{timestamp}-{random}' };
+    }
+
+    const action = await getAction(actionId);
+
+    if (!action) {
+      return { error: 'Action not found' };
+    }
+
+    // Verify ownership
+    if (action._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    // Check if already completed
+    if (action.state === 'completed') {
+      return { error: 'Action is already completed' };
+    }
+
+    // Check if dismissed
+    if (action.state === 'dismissed') {
+      return { error: 'Cannot complete a dismissed action' };
+    }
+
+    // Update action state to completed
+    await updateActionState(actionId, 'completed', {
+      completedAt: new Date().toISOString()
+    });
+
+    // Increment agent's completedActions counter
+    if (action.agentId) {
+      await incrementAgentActionCount(action.agentId, 'completedActions', 1);
+
+      // Decrement inProgressActions if it was in progress
+      if (action.state === 'in_progress') {
+        await incrementAgentActionCount(action.agentId, 'inProgressActions', -1);
+      }
+    }
+
+    return {
+      success: true,
+      message: `Action "${action.title}" marked as complete`,
+      actionId: actionId,
+      title: action.title
+    };
+  }
+
+  // Note tools
+  if (name === 'create_note') {
+    const { type, title, content, metadata } = input;
+
+    if (!type || !title || !content) {
+      return { error: 'Missing required fields: type, title, and content are required' };
+    }
+
+    const note = await createNote({
+      _userId: userId,
+      agentId: agentId,
+      type,
+      title,
+      content,
+      metadata: metadata || {}
+    });
+
+    return {
+      success: true,
+      message: `Note saved: "${title}"`,
+      note: {
+        id: note.id,
+        type: note.type,
+        title: note.title
+      }
+    };
+  }
+
+  if (name === 'get_notes') {
+    const { status, type, limit } = input;
+
+    const filters = {};
+    if (status) filters.status = status;
+    if (type) filters.type = type;
+    if (limit && typeof limit === 'number' && limit > 0) {
+      filters.limit = limit;
+    } else {
+      filters.limit = 20; // Default limit
+    }
+
+    const notes = await getNotesByAgent(agentId, userId, filters);
+
+    return {
+      success: true,
+      count: notes.length,
+      notes: notes.map(n => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        content: n.content,
+        metadata: n.metadata,
+        status: n.status,
+        createdAt: n._createdAt
+      }))
+    };
+  }
+
+  if (name === 'update_note') {
+    const { note_id, updates } = input;
+
+    if (!note_id || !note_id.startsWith('note-')) {
+      return { error: 'Invalid note ID format. Expected format: note-{timestamp}-{random}' };
+    }
+
+    const note = await getNoteById(note_id);
+
+    if (!note) {
+      return { error: 'Note not found' };
+    }
+
+    if (note._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    const result = await updateNote(note_id, updates);
+
+    return {
+      success: true,
+      message: `Updated note: ${result.updated.join(', ')}`,
+      updatedFields: result.updated
+    };
+  }
+
+  // Filesystem tools (only available when APP_ENV=local and agent has filesystem capability)
+  if (name === 'read_file') {
+    if (!agentFilesystem.isFilesystemAvailable()) {
+      return { error: 'Filesystem tools not available in this environment' };
+    }
+    if (!agent?.localDataPath || !agent?.capabilities?.filesystem) {
+      return { error: 'Agent does not have filesystem access configured' };
+    }
+
+    const agentDataPath = agentFilesystem.getAgentDataPath(agent.localDataPath);
+    if (!agentDataPath) {
+      return { error: 'Invalid agent data path configuration' };
+    }
+
+    const result = await agentFilesystem.readFile(agentDataPath, input.path);
+    return result;
+  }
+
+  if (name === 'write_file') {
+    if (!agentFilesystem.isFilesystemAvailable()) {
+      return { error: 'Filesystem tools not available in this environment' };
+    }
+    if (!agent?.localDataPath || !agent?.capabilities?.filesystem) {
+      return { error: 'Agent does not have filesystem access configured' };
+    }
+
+    const agentDataPath = agentFilesystem.getAgentDataPath(agent.localDataPath);
+    if (!agentDataPath) {
+      return { error: 'Invalid agent data path configuration' };
+    }
+
+    const result = await agentFilesystem.writeFile(
+      agentDataPath,
+      input.path,
+      input.content,
+      input.mode || 'overwrite'
+    );
+    return result;
+  }
+
+  if (name === 'list_files') {
+    if (!agentFilesystem.isFilesystemAvailable()) {
+      return { error: 'Filesystem tools not available in this environment' };
+    }
+    if (!agent?.localDataPath || !agent?.capabilities?.filesystem) {
+      return { error: 'Agent does not have filesystem access configured' };
+    }
+
+    const agentDataPath = agentFilesystem.getAgentDataPath(agent.localDataPath);
+    if (!agentDataPath) {
+      return { error: 'Invalid agent data path configuration' };
+    }
+
+    const result = await agentFilesystem.listFiles(agentDataPath, input.path || '');
+    return result;
+  }
+
   return { error: `Unknown tool: ${name}` };
 }
 
@@ -188,7 +383,7 @@ exports.handler = async (event) => {
     }
 
     // Build system prompt
-    const systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
+    let systemPrompt = `You're an autonomous agent helping someone achieve their goal. You do ALL the work - they just provide context.
 
 Your role:
 - Gather context needed to create deliverables
@@ -338,7 +533,57 @@ You have access to these tools for working with actions:
    - Cannot change: state, taskType, agentId
    - Use when user wants to refine or modify an existing action
 
+3. complete_action(action_id) - Mark an action as complete
+   - Use when user asks to complete, finish, or mark done an action
+   - Cannot complete actions that are already completed or dismissed
+   - Use this for measurement check-ins or any action the user wants to mark done
+
+NOTE CAPTURE TOOLS:
+4. create_note(type, title, content, metadata?) - Save a quick capture
+   - Use to save URLs, ideas, references, bookmarks for later
+   - Type is freeform (e.g., "url", "idea", "bookmark", "reference")
+   - Metadata can include url, tags, source
+
+5. get_notes(status?, type?, limit?) - Retrieve saved notes
+   - Use to review captured notes or find information
+   - Defaults to active notes, limit 20
+
+6. update_note(note_id, updates) - Update an existing note
+   - Can update title, content, type, status, metadata
+   - Use to refine or archive notes
+
+Use notes for lightweight captures. These are ideal for quick saves during conversation.
+
 When using tools, wait for the tool result before responding to the user.`;
+
+    // Add filesystem tool guidance if available (will be checked again later for actual tool inclusion)
+    const isLocalhostForPrompt = process.env.APP_ENV === 'local';
+    if (isLocalhostForPrompt && agent.capabilities?.filesystem && agent.localDataPath) {
+      const filesystemGuidance = `
+
+FILESYSTEM TOOLS (Local Mode Only):
+7. read_file(path) - Read a file from your local data directory
+8. write_file(path, content, mode?) - Write content to a file (mode: "overwrite" or "append")
+9. list_files(path?) - List files in your data directory
+
+Your local data directory: ${agent.localDataPath}
+
+Use filesystem tools for:
+- Deep research and strategy documents
+- Long-form notes and drafts
+- Documents that evolve over time
+- Anything that benefits from rich Markdown formatting
+
+Use notes database for:
+- Quick captures and bookmarks
+- Links and URLs to triage later
+- Items that need mobile access
+
+When both are available, prefer local files for substantial documents and notes for quick captures.`;
+
+      // Append filesystem guidance to system prompt
+      systemPrompt += filesystemGuidance;
+    }
 
     // Build per-message action context (uncached - changes per conversation)
     let actionContextPrompt = '';
@@ -451,7 +696,7 @@ When using tools, wait for the tool result before responding to the user.`;
       },
       {
         name: "update_action",
-        description: "Update an existing action's metadata. Can modify title, description, priority, or taskConfig fields (instructions, expectedOutput). Cannot change state (use complete/dismiss actions) or taskType.",
+        description: "Update an existing action's metadata. Can modify title, description, priority, or taskConfig fields (instructions, expectedOutput). Cannot change state (use complete_action instead) or taskType.",
         input_schema: {
           type: "object",
           properties: {
@@ -479,8 +724,121 @@ When using tools, wait for the tool result before responding to the user.`;
           },
           required: ["action_id", "updates"]
         }
+      },
+      {
+        name: "complete_action",
+        description: "Mark an action as complete. Use when the user asks to complete, finish, or mark done an action. Cannot complete actions that are already completed or dismissed.",
+        input_schema: {
+          type: "object",
+          properties: {
+            action_id: {
+              type: "string",
+              description: "The action ID to complete (format: action-{timestamp}-{random})"
+            }
+          },
+          required: ["action_id"]
+        }
+      },
+      // Note capture tools
+      {
+        name: "create_note",
+        description: "Save a note, link, or idea for later reference. Use this for quick captures during conversation.",
+        input_schema: {
+          type: "object",
+          properties: {
+            type: { type: "string", description: "Note type (e.g., url, idea, bookmark, reference)" },
+            title: { type: "string", description: "Brief title" },
+            content: { type: "string", description: "Note content or description" },
+            metadata: {
+              type: "object",
+              description: "Optional metadata",
+              properties: {
+                url: { type: "string" },
+                tags: { type: "array", items: { type: "string" } },
+                source: { type: "string" }
+              }
+            }
+          },
+          required: ["type", "title", "content"]
+        }
+      },
+      {
+        name: "get_notes",
+        description: "Retrieve saved notes for this agent. Use to review captures or find information to reference.",
+        input_schema: {
+          type: "object",
+          properties: {
+            status: { type: "string", enum: ["active", "archived", "merged"], description: "Filter by status (default: active)" },
+            type: { type: "string", description: "Filter by note type" },
+            limit: { type: "number", description: "Max notes to return (default: 20)" }
+          }
+        }
+      },
+      {
+        name: "update_note",
+        description: "Update an existing note's content or metadata.",
+        input_schema: {
+          type: "object",
+          properties: {
+            note_id: { type: "string", description: "The note ID to update" },
+            updates: {
+              type: "object",
+              description: "Fields to update",
+              properties: {
+                title: { type: "string" },
+                content: { type: "string" },
+                type: { type: "string" },
+                status: { type: "string", enum: ["active", "archived", "merged"] },
+                metadata: { type: "object" }
+              }
+            }
+          },
+          required: ["note_id", "updates"]
+        }
       }
     ];
+
+    // Add filesystem tools if available (localhost + agent has filesystem capability)
+    const isLocalhost = agentFilesystem.isFilesystemAvailable();
+    if (isLocalhost && agent.capabilities?.filesystem && agent.localDataPath) {
+      console.log(`[agent-chat] Adding filesystem tools for agent with localDataPath: ${agent.localDataPath}`);
+      tools.push(
+        {
+          name: "read_file",
+          description: "Read a file from this agent's local data directory.",
+          input_schema: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Relative path within agent's data directory" }
+            },
+            required: ["path"]
+          }
+        },
+        {
+          name: "write_file",
+          description: "Write content to a file in this agent's local data directory. Creates directories as needed.",
+          input_schema: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Relative path within agent's data directory" },
+              content: { type: "string", description: "File content to write" },
+              mode: { type: "string", enum: ["overwrite", "append"], description: "Write mode (default: overwrite)" }
+            },
+            required: ["path", "content"]
+          }
+        },
+        {
+          name: "list_files",
+          description: "List files in this agent's local data directory.",
+          input_schema: {
+            type: "object",
+            properties: {
+              path: { type: "string", description: "Relative subdirectory path (default: root)" }
+            }
+          }
+        }
+      );
+    }
 
     const requestParams = {
       model: 'claude-sonnet-4-5-20250929',
@@ -520,7 +878,7 @@ When using tools, wait for the tool result before responding to the user.`;
       // Execute tool calls and collect results
       const toolResults = [];
       for (const toolBlock of toolUseBlocks) {
-        const toolResult = await handleToolCall(toolBlock, userId, agentId);
+        const toolResult = await handleToolCall(toolBlock, userId, agentId, agent);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolBlock.id,

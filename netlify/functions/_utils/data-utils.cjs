@@ -53,6 +53,11 @@ function generateMeasurementId() {
   return uniqueId('m');
 }
 
+// Generates a unique Agent Note ID with "note-" prefix
+function generateAgentNoteId() {
+  return uniqueId('note');
+}
+
 // Export named functions (alphabetically)
 module.exports = {
   generateActionArtifactId,
@@ -60,6 +65,7 @@ module.exports = {
   generateActionId,
   generateAgentCreationChatId,
   generateAgentId,
+  generateAgentNoteId,
   generateMeasurementId,
   generatePracticeId,
   generateUserId,

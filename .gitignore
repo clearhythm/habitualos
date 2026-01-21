@@ -1,6 +1,5 @@
 # User data - NEVER commit
-data/habitualos.db
-data/tasks/
+data/
 db/habitualos.db
 .env
 

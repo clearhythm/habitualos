@@ -16,7 +16,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { agentId, status, model, instructions } = JSON.parse(event.body);
+    const { agentId, status, model, instructions, localDataPath, capabilities } = JSON.parse(event.body);
 
     if (!agentId) {
       return {
@@ -65,6 +65,8 @@ exports.handler = async (event) => {
     if (status !== undefined) updates.status = status;
     if (model !== undefined) updates.model = model;
     if (instructions !== undefined) updates.instructions = instructions;
+    if (localDataPath !== undefined) updates.localDataPath = localDataPath;
+    if (capabilities !== undefined) updates.capabilities = capabilities;
 
     // Update agent
     await updateAgent(agentId, updates);
