@@ -624,7 +624,7 @@ function renderFeed() {
 
   container.innerHTML = sortedActions.map(action => {
     const isCompleted = action.state === 'completed';
-    const icon = action.taskType === 'manual' ? '🧑' :
+    const icon = action.taskType === 'manual' ? '✅' :
                  action.taskType === 'scheduled' ? '🤖' : '⚡';
     const timestamp = isCompleted ? action.completedAt : action._createdAt;
     const eventText = isCompleted ?
@@ -723,7 +723,17 @@ function renderActions() {
 
 function updateActionsCount() {
   const activeCount = actionsCache.filter(a => a.state !== 'completed' && a.state !== 'dismissed').length;
+  const completedCount = actionsCache.filter(a => a.state === 'completed').length;
+  const totalCount = actionsCache.filter(a => a.state !== 'dismissed').length;
+
+  // Update header count (open actions)
   document.getElementById('actions-count').textContent = activeCount;
+
+  // Update settings card count (completed/total)
+  const settingsActions = document.getElementById('settings-agent-actions');
+  if (settingsActions) {
+    settingsActions.textContent = `${completedCount}/${totalCount}`;
+  }
 }
 
 // -----------------------------
@@ -1258,13 +1268,12 @@ async function loadAgentData() {
     const projectedCost = (dailyAvgCost * 30).toFixed(2);
     document.getElementById('settings-agent-projected').textContent = `~$${projectedCost}/mo`;
 
-    document.getElementById('settings-agent-actions').textContent =
-      `${agent.metrics?.completedActions || 0}/${agent.metrics?.totalActions || 0}`;
+    // Settings card actions count will be updated when actions load
+    // Don't use stored metrics here as they can drift from actual counts
+    document.getElementById('settings-agent-actions').textContent = '...';
 
-    // Set header actions count from agent metrics (before actions are lazy-loaded)
-    const totalActions = agent.metrics?.totalActions || 0;
-    const completedActions = agent.metrics?.completedActions || 0;
-    document.getElementById('actions-count').textContent = totalActions - completedActions;
+    // Header actions count starts at "0" from HTML, will be updated when actions load
+    // Don't set from metrics as they can be incorrect (causing negative numbers)
 
     // Status badge
     const statusBadge = document.getElementById('settings-agent-status-badge');
@@ -1482,6 +1491,9 @@ function setupEventListeners() {
   // Agent loaded event - initialize chat
   window.addEventListener('agentLoaded', async (event) => {
     const agent = event.detail;
+
+    // Load actions early to ensure accurate counts in header
+    await ensureActionsLoaded();
 
     if (chatHistory.length > 0) {
       chatHistory.forEach(msg => {

@@ -249,9 +249,12 @@ function navigateToChat() {
 async function completeActionFromModal() {
   if (!currentAction) return;
 
+  // Save ID before hiding modal (which clears currentAction)
+  const actionId = currentAction.id;
+
   try {
     const userId = getUserId();
-    const data = await apiCompleteAction(currentAction.id, userId);
+    const data = await apiCompleteAction(actionId, userId);
 
     if (!data.success) {
       throw new Error(data.error || 'Failed to complete action');
@@ -261,7 +264,7 @@ async function completeActionFromModal() {
 
     // Call the completion callback if provided
     if (onActionComplete) {
-      onActionComplete(currentAction.id);
+      onActionComplete(actionId);
     }
 
     alert('Action completed!');

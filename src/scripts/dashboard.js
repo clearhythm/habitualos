@@ -115,9 +115,9 @@ function createAgentCard(agent, agentActions) {
   // Use agent name directly
   const displayName = agent.name || 'Untitled Agent';
 
-  // Calculate metrics
-  const completedCount = agent.metrics?.completedActions || 0;
-  const totalCount = agent.metrics?.totalActions || 0;
+  // Calculate metrics from actual actions (not stored counters which can drift)
+  const completedCount = agentActions.filter(a => a.state === 'completed').length;
+  const totalCount = agentActions.filter(a => a.state !== 'dismissed').length;
   const totalCost = agent.metrics?.totalCost || 0;
   const projectedCost = calculateProjectedCost(agent);
   const runtime = formatRuntime(agent._createdAt);
