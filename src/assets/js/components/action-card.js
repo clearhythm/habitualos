@@ -15,6 +15,7 @@ function getActionIcon(taskType) {
     measurement: '📊',
     manual: '📄',
     interactive: '💬',
+    review: '🔍',
   };
   return icons[taskType] || '📥';
 }
@@ -90,6 +91,28 @@ export function isMeasurementAction(action) {
  */
 export function handleMeasurementClick(action) {
   sessionStorage.setItem('measurementActionContext', JSON.stringify({
+    actionId: action.id,
+    title: action.title,
+    taskType: action.taskType,
+    taskConfig: action.taskConfig
+  }));
+  window.location.href = `/do/agent/?id=${action.agentId}#chat`;
+}
+
+/**
+ * Determine if action should open review chat
+ */
+export function isReviewAction(action) {
+  const isReview = action.taskType === 'review';
+  const isCompleted = action.state === 'completed' || action.state === 'dismissed';
+  return isReview && !isCompleted && action.agentId;
+}
+
+/**
+ * Handle click for review actions - redirects to agent chat
+ */
+export function handleReviewClick(action) {
+  sessionStorage.setItem('reviewActionContext', JSON.stringify({
     actionId: action.id,
     title: action.title,
     taskType: action.taskType,

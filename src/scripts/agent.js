@@ -10,7 +10,7 @@ import { log } from '/assets/js/utils/log.js';
 import { formatDate, escapeHtml, formatRuntime } from '/assets/js/utils/utils.js';
 import { listActions, completeAction as apiCompleteAction, dismissAction as apiDismissAction } from '/assets/js/api/actions.js';
 import { getAgent, updateAgent } from '/assets/js/api/agents.js';
-import { createActionCard, filterActions, sortActions, isMeasurementAction } from '/assets/js/components/action-card.js';
+import { createActionCard, filterActions, sortActions, isMeasurementAction, isReviewAction } from '/assets/js/components/action-card.js';
 import { showActionModal } from '/assets/js/components/action-modal.js';
 import { showToast } from '/assets/js/components/chat-toast.js';
 
@@ -28,6 +28,7 @@ let currentDraftAction = null;
 let currentProposedAsset = null;
 let currentMeasurementActionId = null;
 let currentMeasurementActionContext = null;
+let currentReviewActionContext = null;
 let actionsLoaded = false;
 let actionsCache = [];
 
@@ -700,6 +701,8 @@ function renderActions() {
   const handleActionClick = (action) => {
     if (isMeasurementAction(action)) {
       openMeasurementChat(action.id);
+    } else if (isReviewAction(action)) {
+      openReviewChat(action.id);
     } else {
       showActionModal(action, {
         agentName: currentAgent?.name,
@@ -974,6 +977,128 @@ async function startMeasurementCheckIn(actionContext) {
 }
 
 // -----------------------------
+// Review Chat
+// -----------------------------
+async function openReviewChat(actionId) {
+  const action = actionsCache.find(a => a.id === actionId);
+  if (!action || action.taskType !== 'review') return;
+
+  currentReviewActionContext = {
+    actionId: action.id,
+    title: action.title,
+    taskType: action.taskType,
+    taskConfig: action.taskConfig
+  };
+
+  const chatLink = document.querySelector('a[data-view="chat"]');
+  if (chatLink) chatLink.click();
+
+  chatHistory = [];
+  clearAgentChatFromLocalStorage();
+  chatMessages.innerHTML = '';
+
+  const initialMessage = `I'm ready to review the latest recommendations.`;
+
+  const userMessage = {
+    role: 'user',
+    content: initialMessage,
+    timestamp: new Date().toISOString()
+  };
+  renderMessage('user', initialMessage);
+  chatHistory.push(userMessage);
+  saveAgentChatHistory(chatHistory);
+
+  showLoadingMessage();
+
+  try {
+    const userId = getUserId();
+    const response = await fetch('/.netlify/functions/agent-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        agentId,
+        message: initialMessage,
+        chatHistory: [],
+        reviewContext: currentReviewActionContext
+      })
+    });
+
+    const data = await response.json();
+    hideLoadingMessage();
+
+    if (data.success) {
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+      renderMessage('assistant', data.response);
+      chatHistory.push(assistantMessage);
+      saveAgentChatHistory(chatHistory);
+    } else {
+      log('error', 'Error starting review chat:', data.error);
+    }
+  } catch (error) {
+    log('error', 'Error starting review chat:', error);
+    hideLoadingMessage();
+  }
+}
+
+async function startReviewSession(reviewContext) {
+  chatHistory = [];
+  clearAgentChatFromLocalStorage();
+  chatMessages.innerHTML = '';
+
+  const initialMessage = `I'm ready to review the latest recommendations.`;
+
+  const userMessage = {
+    role: 'user',
+    content: initialMessage,
+    timestamp: new Date().toISOString()
+  };
+  renderMessage('user', initialMessage);
+  chatHistory.push(userMessage);
+  saveAgentChatHistory(chatHistory);
+
+  showLoadingMessage();
+
+  try {
+    const userId = getUserId();
+    const response = await fetch('/.netlify/functions/agent-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        agentId,
+        message: initialMessage,
+        chatHistory: [],
+        reviewContext: reviewContext
+      })
+    });
+
+    const data = await response.json();
+    hideLoadingMessage();
+
+    if (data.success) {
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+      renderMessage('assistant', data.response);
+      chatHistory.push(assistantMessage);
+      saveAgentChatHistory(chatHistory);
+    } else {
+      log('error', 'Error starting review session:', data.error);
+    }
+  } catch (error) {
+    log('error', 'Error starting review session:', error);
+    hideLoadingMessage();
+  }
+}
+
+// -----------------------------
 // View Switching
 // -----------------------------
 async function ensureActionsLoaded() {
@@ -1049,6 +1174,27 @@ async function initializeViewFromHash() {
     }
   }
 
+  // Handle review action context (auto-starts review session)
+  const reviewContextStr = sessionStorage.getItem('reviewActionContext');
+  if (reviewContextStr && hash === 'chat') {
+    try {
+      const reviewContext = JSON.parse(reviewContextStr);
+      sessionStorage.removeItem('reviewActionContext');
+
+      currentReviewActionContext = reviewContext;
+
+      await switchToView('chat');
+
+      setTimeout(() => {
+        startReviewSession(reviewContext);
+      }, 100);
+      return;
+    } catch (e) {
+      log('error', 'Error parsing review context:', e);
+      sessionStorage.removeItem('reviewActionContext');
+    }
+  }
+
   // Handle general action chat context (from modal Chat button)
   const actionChatContextStr = sessionStorage.getItem('actionChatContext');
   if (actionChatContextStr && hash === 'chat') {
@@ -1113,7 +1259,8 @@ async function handleChatSubmit(e) {
           role: msg.role,
           content: msg.content
         })),
-        actionContext: currentMeasurementActionContext
+        actionContext: currentMeasurementActionContext,
+        reviewContext: currentReviewActionContext
       })
     });
 

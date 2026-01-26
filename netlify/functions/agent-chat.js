@@ -5,6 +5,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent, incrementAgentActionCount } = require('./_services/db-agents.cjs');
 const { getActionsByAgent, getAction, updateActionState } = require('./_services/db-actions.cjs');
 const { createNote, getNotesByAgent, getNoteById, updateNote } = require('./_services/db-agent-notes.cjs');
+const { getDraftsByAgent, updateDraftStatus } = require('./_services/db-agent-drafts.cjs');
+const { createFeedback } = require('./_services/db-user-feedback.cjs');
 const agentFilesystem = require('./_utils/agent-filesystem.cjs');
 
 const anthropic = new Anthropic({
@@ -302,6 +304,64 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
     return result;
   }
 
+  // Review tools
+  if (name === 'get_pending_drafts') {
+    const drafts = await getDraftsByAgent(agentId, userId, {
+      status: 'pending',
+      type: input.type || undefined
+    });
+
+    return {
+      success: true,
+      count: drafts.length,
+      drafts: drafts.map(d => ({
+        id: d.id,
+        type: d.type,
+        status: d.status,
+        data: d.data
+      }))
+    };
+  }
+
+  if (name === 'submit_draft_review') {
+    const { draftId, score, feedback, status, user_tags } = input;
+
+    if (!draftId || !draftId.startsWith('draft-')) {
+      return { error: 'Invalid draft ID format' };
+    }
+
+    // Get the draft to find its type
+    const { getDraftById } = require('./_services/db-agent-drafts.cjs');
+    const draft = await getDraftById(draftId);
+    if (!draft) {
+      return { error: 'Draft not found' };
+    }
+    if (draft._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    // Create feedback record
+    const feedbackRecord = await createFeedback({
+      _userId: userId,
+      agentId: agentId,
+      draftId: draftId,
+      type: draft.type,
+      score: score,
+      feedback: feedback,
+      status: status,
+      user_tags: user_tags || []
+    });
+
+    // Update draft status
+    await updateDraftStatus(draftId, status);
+
+    return {
+      success: true,
+      feedbackId: feedbackRecord.id,
+      draftStatus: status
+    };
+  }
+
   return { error: `Unknown tool: ${name}` };
 }
 
@@ -325,7 +385,7 @@ exports.handler = async (event) => {
     console.log('[agent-chat] Request started');
 
     // Parse request body
-    const { userId, agentId, message, chatHistory = [], actionContext = null } = JSON.parse(event.body);
+    const { userId, agentId, message, chatHistory = [], actionContext = null, reviewContext = null } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -606,6 +666,38 @@ When both are available, prefer local files for substantial documents and notes 
       console.log(`[agent-chat] Added action context for: ${actionContext.actionId} (${actionContext.taskType})`);
     }
 
+    // Build review context prompt (uncached - changes per conversation)
+    let reviewContextPrompt = '';
+    let pendingDrafts = [];
+    if (reviewContext) {
+      const draftType = reviewContext.taskConfig?.draftType;
+      pendingDrafts = await getDraftsByAgent(agentId, userId, { status: 'pending', type: draftType });
+      console.log(`[agent-chat] Review context: found ${pendingDrafts.length} pending drafts (type: ${draftType || 'all'})`);
+
+      reviewContextPrompt = `## Review Context
+
+You are in draft review mode. The user is reviewing content recommendations you've made.
+
+Present each draft naturally in conversation. For each:
+- Share the key details (name, what they do, why you recommended them)
+- Share your fit score and reasoning
+- Ask the user what they think
+
+After the user shares their thoughts on each draft, use the submit_draft_review tool to record their feedback. Extract:
+- A score (0-10) based on their expressed interest level
+- A summary of their feedback in their own words
+- Whether they accept or reject the recommendation
+- Any tags they mention or imply
+
+Be conversational, not formulaic. Don't present all drafts at once — go through them one at a time unless the user asks to see them all.
+
+Review Action ID: ${reviewContext.actionId}
+Use complete_action with this ID after all drafts have been reviewed.
+
+Pending drafts to review:
+${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.status, data: d.data })), null, 2)}`;
+    }
+
     // Build actions list for system prompt (cached per session)
     let actionsListPrompt = '';
     if (openActions.length > 0) {
@@ -646,11 +738,17 @@ When both are available, prefer local files for substantial documents and notes 
     // - Block 3: Actions snapshot for this session (cached)
     const systemMessages = [];
 
-    // Block 1: Per-message action context (uncached)
+    // Block 1: Per-message action/review context (uncached)
     if (actionContextPrompt) {
       systemMessages.push({
         type: "text",
         text: actionContextPrompt
+      });
+    }
+    if (reviewContextPrompt) {
+      systemMessages.push({
+        type: "text",
+        text: reviewContextPrompt
       });
     }
 
@@ -835,6 +933,38 @@ When both are available, prefer local files for substantial documents and notes 
             properties: {
               path: { type: "string", description: "Relative subdirectory path (default: root)" }
             }
+          }
+        }
+      );
+    }
+
+    // Add review tools if review context is present
+    if (reviewContext && pendingDrafts.length > 0) {
+      console.log(`[agent-chat] Adding review tools for ${pendingDrafts.length} pending drafts`);
+      tools.push(
+        {
+          name: "get_pending_drafts",
+          description: "Retrieve pending content drafts for this agent that need user review",
+          input_schema: {
+            type: "object",
+            properties: {
+              type: { type: "string", description: "Filter by draft type (e.g., 'company')" }
+            }
+          }
+        },
+        {
+          name: "submit_draft_review",
+          description: "Submit the user's review feedback for a specific content draft",
+          input_schema: {
+            type: "object",
+            properties: {
+              draftId: { type: "string", description: "The draft ID to review" },
+              score: { type: "number", description: "User's fit score 0-10" },
+              feedback: { type: "string", description: "User's narrative feedback" },
+              status: { type: "string", enum: ["accepted", "rejected"], description: "Accept or reject" },
+              user_tags: { type: "array", items: { type: "string" }, description: "Optional user-applied tags" }
+            },
+            required: ["draftId", "score", "feedback", "status"]
           }
         }
       );

@@ -58,6 +58,16 @@ function generateAgentNoteId() {
   return uniqueId('note');
 }
 
+// Generates a unique Draft ID with "draft-" prefix
+function generateDraftId() {
+  return uniqueId('draft');
+}
+
+// Generates a unique Feedback ID with "feedback-" prefix
+function generateFeedbackId() {
+  return uniqueId('feedback');
+}
+
 // Export named functions (alphabetically)
 module.exports = {
   generateActionArtifactId,
@@ -66,6 +76,8 @@ module.exports = {
   generateAgentCreationChatId,
   generateAgentId,
   generateAgentNoteId,
+  generateDraftId,
+  generateFeedbackId,
   generateMeasurementId,
   generatePracticeId,
   generateUserId,
