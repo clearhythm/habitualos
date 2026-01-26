@@ -385,7 +385,11 @@ exports.handler = async (event) => {
     console.log('[agent-chat] Request started');
 
     // Parse request body
-    const { userId, agentId, message, chatHistory = [], actionContext = null, reviewContext = null } = JSON.parse(event.body);
+    const { userId, agentId, message, chatHistory = [], actionContext = null, reviewContext: rawReviewContext = null } = JSON.parse(event.body);
+
+    // If actionContext is a review-type action, treat it as review context
+    // (handles both explicit reviewContext and review actions opened via general modal)
+    const reviewContext = rawReviewContext || (actionContext?.taskType === 'review' ? actionContext : null);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
