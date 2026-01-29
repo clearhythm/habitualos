@@ -68,6 +68,21 @@ function generateFeedbackId() {
   return uniqueId('feedback');
 }
 
+// Generates a unique Agent Log ID with "alog-" prefix
+function generateAgentLogId() {
+  return uniqueId('alog');
+}
+
+// Generates a unique Project ID with "project-" prefix
+function generateProjectId() {
+  return uniqueId('project');
+}
+
+// Generates a unique Work Log ID with "w-" prefix
+function generateWorkLogId() {
+  return uniqueId('w');
+}
+
 // Export named functions (alphabetically)
 module.exports = {
   generateActionArtifactId,
@@ -75,12 +90,15 @@ module.exports = {
   generateActionId,
   generateAgentCreationChatId,
   generateAgentId,
+  generateAgentLogId,
   generateAgentNoteId,
   generateDraftId,
   generateFeedbackId,
   generateMeasurementId,
   generatePracticeId,
+  generateProjectId,
   generateUserId,
+  generateWorkLogId,
   // Also export uniqueId for any custom prefixes
   uniqueId
 };
