@@ -1,59 +1,153 @@
 ---
-title: Dashboard - HabitualOS
+title: Do - HabitualOS
 layout: base.njk
 permalink: /do/
-pageScript: /scripts/dashboard.js
 ---
 
-<style>
-  /* Force 3-column grid on desktop for actions */
-  #actions-grid {
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 768px) {
-    #actions-grid {
-      grid-template-columns: repeat(3, 1fr);
+<div style="max-width: 800px; margin: 4rem auto; padding: 2rem; text-align: center;">
+  <h1 id="rank-title"><span id="rank-emoji"></span> <span id="rank-name">&nbsp;</span></h1>
+  <p style="font-size: 1.2rem; color: #666; margin: 0 0 2rem 0;" id="rank-subtitle">
+    Loading...
+  </p>
+
+  <!-- Action Cards -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0;">
+    <!-- Motivate Card -->
+    <a href="/do/chat/" style="text-decoration: none; color: inherit;">
+      <div style="padding: 3rem 2rem; border: 2px solid #ddd; border-radius: 12px; transition: all 0.2s;"
+           onmouseover="this.style.borderColor='#9b59b6'"
+           onmouseout="this.style.borderColor='#ddd'">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🦊</div>
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Explore</h2>
+        <p style="color: #666; margin: 0;">Your EA helps you focus.<br/>Prioritize what matters.</p>
+      </div>
+    </a>
+
+    <!-- Log Work Card -->
+    <a href="/do/log/" style="text-decoration: none; color: inherit;">
+      <div style="padding: 3rem 2rem; border: 2px solid #ddd; border-radius: 12px; transition: all 0.2s;"
+           onmouseover="this.style.borderColor='#0066cc'"
+           onmouseout="this.style.borderColor='#ddd'">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🖱️</div>
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Log Work</h2>
+        <p style="color: #666; margin: 0;">Track what you did.<br/>Build your momentum.</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Mobile responsive: Stack cards on small screens -->
+  <style>
+    @media (max-width: 600px) {
+      div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    /* Dark mode styles for Your Projects section */
+    html[data-theme="dark"] .projects-title {
+      color: #e5e7eb;
+    }
+
+    html[data-theme="dark"] .stat-number {
+      color: #e5e7eb !important;
+    }
+
+    html[data-theme="dark"] .stat-label {
+      color: #9ca3af !important;
+    }
+
+    html[data-theme="dark"] .stat-link {
+      color: #6b7280 !important;
+    }
+
+    html[data-theme="dark"] .stat-link.disabled {
+      color: #4b5563 !important;
+    }
+
+    html[data-theme="dark"] .stat-divider {
+      background: #374151 !important;
+    }
+  </style>
+
+  <!-- Your Projects Section -->
+  <h2 class="projects-title" style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Projects</h2>
+  <div class="projects-stats" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; border-radius: 8px;">
+    <!-- Work Logs Stat -->
+    <div style="text-align: center; color: inherit; cursor: default;">
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="worklogs-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">work logs</div>
+      <div class="stat-link disabled" style="font-size: 0.85rem; color: #999;">view &gt;</div>
+    </div>
+
+    <!-- Vertical Divider -->
+    <div class="stat-divider" style="width: 1px; height: 60px; background: #ddd;"></div>
+
+    <!-- Projects Stat -->
+    <div style="text-align: center; color: inherit; cursor: default;">
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="projects-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">projects</div>
+      <div class="stat-link disabled" style="font-size: 0.85rem; color: #999;">view &gt;</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  // Initialize userId
+  const userId = initializeUser();
+
+  // Calculate rank based on work logs
+  function getRank(workLogs) {
+    if (workLogs <= 2) {
+      return { emoji: '\u{1F331}', name: 'Starting' };
+    } else if (workLogs <= 5) {
+      return { emoji: '\u{1F680}', name: 'Building Momentum' };
+    } else if (workLogs <= 10) {
+      return { emoji: '\u{26A1}', name: 'Gaining Traction' };
+    } else if (workLogs <= 20) {
+      return { emoji: '\u{1F525}', name: 'On Fire' };
+    } else if (workLogs <= 50) {
+      return { emoji: '\u{1F4AA}', name: 'Powerhouse' };
+    } else {
+      return { emoji: '\u{1F3C6}', name: 'Champion' };
     }
   }
-</style>
 
-<div id="loading-dashboard" class="mb-xl">
-  <p class="text-muted">Loading your dashboard...</p>
-</div>
+  // Load stats
+  async function loadStats() {
+    try {
+      const [workLogsRes, projectsRes] = await Promise.all([
+        fetch(`/.netlify/functions/work-log-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`/.netlify/functions/project-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' })
+      ]);
 
-<div id="no-northstar" class="mb-xl" style="display: none;">
-  <div class="card">
-    <h2 class="mb-md">Welcome to HabitualOS</h2>
-    <p class="mb-md">You haven't created any goals yet. Let's get started!</p>
-    <a href="/do/setup/" class="btn btn-primary">Create Your First Goal</a>
-  </div>
-</div>
+      const workLogsData = await workLogsRes.json();
+      const projectsData = await projectsRes.json();
 
-<div id="dashboard-content" style="display: none;">
-  {# Agents Section #}
-  <div class="mb-xl">
-    <div class="flex flex-between mb-md">
-      <h2>🤖 Agents</h2>
-    </div>
-    <div class="agents-grid" id="agents-grid">
-      {# Agent cards dynamically populated #}
-    </div>
-  </div>
+      if (workLogsData.success && projectsData.success) {
+        const totalWorkLogs = workLogsData.totalCount || 0;
+        const totalProjects = projectsData.projects?.length || 0;
 
-  {# Actions Section #}
-  <div class="mb-lg">
-    <div class="flex flex-between mb-md">
-      <h2>📥 Actions</h2>
-      <div class="flex gap-sm">
-        <button id="show-all-agents-btn" class="btn btn-secondary" style="display: none;">Show All Agents</button>
-        <select id="actions-filter" class="actions-filter-select">
-          <option value="open" selected>Open</option>
-          <option value="all">All</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
-    </div>
+        // Update rank
+        const rank = getRank(totalWorkLogs);
+        document.getElementById('rank-emoji').textContent = rank.emoji;
+        document.getElementById('rank-name').textContent = rank.name;
 
-    <div class="actions-grid" id="actions-grid"></div>
-  </div>
-</div>
+        // Update subtitle
+        const sessionsText = totalWorkLogs === 1 ? 'session' : 'sessions';
+        document.getElementById('rank-subtitle').textContent =
+          `You logged ${totalWorkLogs} work ${sessionsText}.`;
+
+        // Update stats
+        document.getElementById('worklogs-count').textContent = totalWorkLogs;
+        document.getElementById('projects-count').textContent = totalProjects;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      document.getElementById('rank-subtitle').textContent = 'Error loading stats';
+    }
+  }
+
+  loadStats();
+</script>

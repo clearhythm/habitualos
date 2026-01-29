@@ -1,0 +1,191 @@
+---
+title: Agents - HabitualOS
+layout: base.njk
+permalink: /do/agents/
+---
+
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="margin: 0;">Agents</h1>
+    <a href="/do/setup/" style="padding: 0.75rem 1.5rem; background: #0066cc; color: white; text-decoration: none; border-radius: 4px; font-weight: 600;">+ New Agent</a>
+  </div>
+
+  <div id="loading" style="text-align: center; padding: 3rem; color: #666;">
+    Loading agents...
+  </div>
+
+  <div id="empty-state" style="display: none; text-align: center; padding: 3rem; color: #666;">
+    <p style="font-size: 1.1rem; margin-bottom: 1rem;">No agents yet</p>
+    <a href="/do/setup/" style="color: #0066cc;">Create your first agent</a>
+  </div>
+
+  <div id="agents-list" style="display: none; display: flex; flex-direction: column; gap: 1rem;"></div>
+</div>
+
+<style>
+  .agent-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .agent-item:hover {
+    border-color: #0066cc;
+    background: #f8fafc;
+  }
+
+  .agent-info {
+    flex: 1;
+  }
+
+  .agent-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #333;
+  }
+
+  .agent-meta {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .agent-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .status-active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-paused {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-archived {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  /* Dark mode */
+  html[data-theme="dark"] .agent-item {
+    border-color: #374151;
+    background: transparent;
+  }
+
+  html[data-theme="dark"] .agent-item:hover {
+    border-color: #60a5fa;
+    background: #1f2937;
+  }
+
+  html[data-theme="dark"] .agent-name {
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] .agent-meta {
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] .status-active {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+
+  html[data-theme="dark"] .status-paused {
+    background: #78350f;
+    color: #fcd34d;
+  }
+
+  html[data-theme="dark"] .status-archived {
+    background: #374151;
+    color: #9ca3af;
+  }
+</style>
+
+<script type="module">
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { listAgents } from '/assets/js/api/agents.js';
+
+  initializeUser();
+  const userId = getUserId();
+
+  const loadingEl = document.getElementById('loading');
+  const emptyEl = document.getElementById('empty-state');
+  const listEl = document.getElementById('agents-list');
+
+  function formatRuntime(createdAt) {
+    if (!createdAt) return 'Unknown';
+    const created = new Date(createdAt);
+    const now = new Date();
+    const days = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return '1 day';
+    if (days < 30) return `${days} days`;
+    const months = Math.floor(days / 30);
+    return months === 1 ? '1 month' : `${months} months`;
+  }
+
+  async function loadAgents() {
+    try {
+      const data = await listAgents(userId);
+
+      loadingEl.style.display = 'none';
+
+      if (!data.success || !data.agents || data.agents.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Sort by status (active first) then by creation date (newest first)
+      const agents = data.agents.sort((a, b) => {
+        if (a.status === 'active' && b.status !== 'active') return -1;
+        if (a.status !== 'active' && b.status === 'active') return 1;
+        return new Date(b._createdAt) - new Date(a._createdAt);
+      });
+
+      listEl.style.display = 'flex';
+
+      agents.forEach(agent => {
+        const item = document.createElement('a');
+        item.className = 'agent-item';
+        item.href = `/do/agent/?id=${agent.id}`;
+
+        const statusClass = agent.status === 'active' ? 'status-active' :
+                           agent.status === 'paused' ? 'status-paused' : 'status-archived';
+
+        const runtime = formatRuntime(agent._createdAt);
+        const model = agent.model || 'Sonnet 4.5';
+        const cost = (agent.metrics?.totalCost || 0).toFixed(2);
+
+        item.innerHTML = `
+          <div class="agent-info">
+            <h3 class="agent-name">${agent.name || 'Untitled Agent'}</h3>
+            <div class="agent-meta">${model} &bull; ${runtime} &bull; $${cost}</div>
+          </div>
+          <span class="agent-status ${statusClass}">${agent.status}</span>
+        `;
+
+        listEl.appendChild(item);
+      });
+
+    } catch (error) {
+      console.error('Error loading agents:', error);
+      loadingEl.textContent = 'Error loading agents';
+    }
+  }
+
+  loadAgents();
+</script>

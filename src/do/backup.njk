@@ -1,0 +1,59 @@
+---
+title: Dashboard (Legacy) - HabitualOS
+layout: base.njk
+permalink: /do/backup/
+pageScript: /scripts/dashboard.js
+---
+
+<style>
+  /* Force 3-column grid on desktop for actions */
+  #actions-grid {
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) {
+    #actions-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>
+
+<div id="loading-dashboard" class="mb-xl">
+  <p class="text-muted">Loading your dashboard...</p>
+</div>
+
+<div id="no-northstar" class="mb-xl" style="display: none;">
+  <div class="card">
+    <h2 class="mb-md">Welcome to HabitualOS</h2>
+    <p class="mb-md">You haven't created any goals yet. Let's get started!</p>
+    <a href="/do/setup/" class="btn btn-primary">Create Your First Goal</a>
+  </div>
+</div>
+
+<div id="dashboard-content" style="display: none;">
+  {# Agents Section #}
+  <div class="mb-xl">
+    <div class="flex flex-between mb-md">
+      <h2>Agents</h2>
+    </div>
+    <div class="agents-grid" id="agents-grid">
+      {# Agent cards dynamically populated #}
+    </div>
+  </div>
+
+  {# Actions Section #}
+  <div class="mb-lg">
+    <div class="flex flex-between mb-md">
+      <h2>Actions</h2>
+      <div class="flex gap-sm">
+        <button id="show-all-agents-btn" class="btn btn-secondary" style="display: none;">Show All Agents</button>
+        <select id="actions-filter" class="actions-filter-select">
+          <option value="open" selected>Open</option>
+          <option value="all">All</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions-grid" id="actions-grid"></div>
+  </div>
+</div>

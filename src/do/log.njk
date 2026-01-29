@@ -1,0 +1,337 @@
+---
+title: Log Work - HabitualOS
+layout: base.njk
+permalink: /do/log/
+---
+
+<div class="container-narrow" style="max-width: 600px; margin: 0 auto; padding: 2rem;">
+  <div id="work-form" style="display: block;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h1 style="margin: 0;">Log Work</h1>
+      <a
+        href="/do/"
+        style="padding: 0.75rem 1.5rem; background: #f0f0f0; color: #333; text-decoration: none; border-radius: 4px; font-weight: 600; border: 1px solid #ddd;"
+      >
+        &larr; Back
+      </a>
+    </div>
+
+    <form id="workForm" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <!-- What did you work on (required) -->
+      <div>
+        <label for="title" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          What did you work on?
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          required
+          placeholder="e.g., Worked on resume formatting"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+        />
+      </div>
+
+      <!-- Project (optional) -->
+      <div>
+        <label for="projectId" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          Project <span style="color: #999; font-weight: 400;">(optional)</span>
+        </label>
+        <select
+          id="projectId"
+          name="projectId"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; background: white;"
+        >
+          <option value="">No project</option>
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Duration (optional) -->
+      <div>
+        <label for="duration" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          Duration <span style="color: #999; font-weight: 400;">(minutes, optional)</span>
+        </label>
+        <input
+          type="number"
+          id="duration"
+          name="duration"
+          min="1"
+          placeholder="e.g., 45"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+        />
+      </div>
+
+      <!-- Reflection (optional) -->
+      <div>
+        <label for="reflection" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+          Reflection <span style="color: #999; font-weight: 400;">(optional)</span>
+        </label>
+        <textarea
+          id="reflection"
+          name="reflection"
+          rows="4"
+          placeholder="What did you learn? What's next?"
+          style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; font-family: inherit; resize: vertical;"
+        ></textarea>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        id="submitBtn"
+        style="padding: 1rem 2rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+        onmouseover="this.style.background='#0052a3'"
+        onmouseout="this.style.background='#0066cc'"
+      >
+        Log Work
+      </button>
+    </form>
+  </div>
+
+  <!-- System Success Message (hidden initially) -->
+  <div id="system-success" style="display: none;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <!-- Growth visual -->
+      <div id="growth-visual" style="margin-bottom: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+        <div id="rank-emoji" style="font-size: 5rem; line-height: 1; transition: all 0.3s ease;"></div>
+        <div id="rank-label" style="font-size: 0.85rem; color: #888; font-style: italic;"></div>
+      </div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Work Logged</h2>
+      <p id="success-message" style="color: #666;">Your work session has been recorded.</p>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+      <button
+        id="backToDashboard"
+        style="flex: 1; padding: 1rem; background: white; border: 2px solid #0066cc; color: #0066cc; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+        onmouseover="this.style.background='#f0f8ff'"
+        onmouseout="this.style.background='white'"
+        onclick="window.location.href='/do/'"
+      >
+        Back to Dashboard
+      </button>
+      <button
+        id="logAnother"
+        style="flex: 1; padding: 1rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+        onmouseover="this.style.background='#0052a3'"
+        onmouseout="this.style.background='#0066cc'"
+      >
+        Log Another
+      </button>
+    </div>
+  </div>
+
+  <!-- EA Response (hidden initially) -->
+  <div id="ea-response" style="display: none;">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">&#x1F9ED;</div>
+      <div style="font-size: 1rem; font-weight: 600; color: #9b59b6; margin-bottom: 1rem;">Your EA notices...</div>
+      <p id="ea-message" style="font-size: 1.25rem; line-height: 1.6; font-style: italic; color: #333; margin-bottom: 1rem;"></p>
+
+      <!-- Expandable insight -->
+      <div id="ea-expand-container" style="margin-bottom: 2rem;">
+        <button
+          id="expandInsight"
+          style="background: none; border: none; color: #9b59b6; cursor: pointer; font-size: 0.9rem; text-decoration: underline; padding: 0;"
+        >
+          Read more...
+        </button>
+        <div id="ea-expanded" style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(155, 89, 182, 0.05); border-radius: 4px; line-height: 1.6; color: #555;"></div>
+      </div>
+    </div>
+
+    <button
+      id="eaContinue"
+      style="width: 100%; padding: 1rem; background: #9b59b6; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;"
+      onmouseover="this.style.background='#8b4a96'"
+      onmouseout="this.style.background='#9b59b6'"
+    >
+      Continue
+    </button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  const form = document.getElementById('workForm');
+  const formContainer = document.getElementById('work-form');
+  const successContainer = document.getElementById('system-success');
+  const eaContainer = document.getElementById('ea-response');
+  const eaMessage = document.getElementById('ea-message');
+  const eaExpanded = document.getElementById('ea-expanded');
+  const expandButton = document.getElementById('expandInsight');
+  const expandContainer = document.getElementById('ea-expand-container');
+  const submitBtn = document.getElementById('submitBtn');
+
+  // Initialize userId
+  const userId = initializeUser();
+
+  let workLogCount = 0;
+
+  // Calculate rank based on work logs
+  function getRank(workLogs) {
+    if (workLogs <= 2) {
+      return { emoji: '\u{1F331}', name: 'Starting' };
+    } else if (workLogs <= 5) {
+      return { emoji: '\u{1F680}', name: 'Building Momentum' };
+    } else if (workLogs <= 10) {
+      return { emoji: '\u{26A1}', name: 'Gaining Traction' };
+    } else if (workLogs <= 20) {
+      return { emoji: '\u{1F525}', name: 'On Fire' };
+    } else if (workLogs <= 50) {
+      return { emoji: '\u{1F4AA}', name: 'Powerhouse' };
+    } else {
+      return { emoji: '\u{1F3C6}', name: 'Champion' };
+    }
+  }
+
+  // Render rank visual
+  function renderRank(count) {
+    const actualCount = Math.max(1, count || 1);
+    const rank = getRank(actualCount);
+
+    document.getElementById('rank-emoji').textContent = rank.emoji;
+    document.getElementById('rank-label').textContent = `${rank.name} \u2022 ${actualCount} work ${actualCount === 1 ? 'session' : 'sessions'}`;
+  }
+
+  // Load projects for dropdown
+  async function loadProjects() {
+    try {
+      const response = await fetch(`/.netlify/functions/project-list?userId=${userId}&_=${Date.now()}`, {
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.projects?.length > 0) {
+        const select = document.getElementById('projectId');
+        data.projects.forEach(project => {
+          const option = document.createElement('option');
+          option.value = project.id;
+          option.textContent = project.name;
+          select.appendChild(option);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    }
+  }
+
+  // Initialize expand/collapse for EA insight
+  let isExpanded = false;
+  expandButton.addEventListener('click', () => {
+    if (isExpanded) {
+      eaExpanded.style.display = 'none';
+      expandButton.textContent = 'Read more...';
+    } else {
+      eaExpanded.style.display = 'block';
+      expandButton.textContent = 'Show less';
+    }
+    isExpanded = !isExpanded;
+  });
+
+  // Handle form submission
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Recording...';
+
+    const formData = {
+      userId: userId,
+      title: document.getElementById('title').value,
+      projectId: document.getElementById('projectId').value || null,
+      duration: document.getElementById('duration').value ? parseInt(document.getElementById('duration').value) : null,
+      reflection: document.getElementById('reflection').value || null
+    };
+
+    try {
+      const response = await fetch('/.netlify/functions/work-log-submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store count for visualization
+        workLogCount = data.totalCount;
+
+        console.log('Work logged successfully. Count:', workLogCount);
+
+        // Hide form
+        formContainer.style.display = 'none';
+
+        // Show either EA response or system success
+        if (data.ea_appeared && data.ea_message) {
+          // Display EA message
+          eaMessage.textContent = data.ea_message;
+
+          // Handle expanded content
+          if (data.ea_expanded) {
+            eaExpanded.textContent = data.ea_expanded;
+            expandContainer.style.display = 'block';
+          } else {
+            expandContainer.style.display = 'none';
+          }
+
+          eaContainer.style.display = 'block';
+        } else {
+          // Render rank visual
+          renderRank(workLogCount);
+          document.getElementById('success-message').textContent = `Work session #${workLogCount} logged!`;
+          successContainer.style.display = 'block';
+        }
+      } else {
+        alert('Error: ' + data.error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log Work';
+      }
+    } catch (error) {
+      console.error('Error submitting work log:', error);
+      alert('Failed to submit work log. Please try again.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log Work';
+    }
+  });
+
+  // Handle "Log Another" button
+  document.getElementById('logAnother').addEventListener('click', resetForm);
+
+  // Handle EA "Continue" button (goes to system success)
+  document.getElementById('eaContinue').addEventListener('click', () => {
+    // Render rank visual
+    renderRank(workLogCount);
+    document.getElementById('success-message').textContent = `Work session #${workLogCount} logged!`;
+    eaContainer.style.display = 'none';
+    successContainer.style.display = 'block';
+  });
+
+  function resetForm() {
+    // Reset form
+    form.reset();
+
+    // Re-enable submit button
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Log Work';
+
+    // Reset expand state
+    isExpanded = false;
+    expandButton.textContent = 'Read more...';
+    eaExpanded.style.display = 'none';
+
+    // Switch views
+    successContainer.style.display = 'none';
+    eaContainer.style.display = 'none';
+    formContainer.style.display = 'block';
+  }
+
+  // Load projects on page load
+  loadProjects();
+</script>
