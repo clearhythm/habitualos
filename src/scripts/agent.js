@@ -202,7 +202,7 @@ function hideLoadingMessage() {
   }
 }
 
-function showActionContextIndicator(actionTitle) {
+function showActionContextIndicator(actionTitle, actionId) {
   // Remove existing indicator if any
   const existing = document.getElementById('action-context-indicator');
   if (existing) existing.remove();
@@ -211,11 +211,22 @@ function showActionContextIndicator(actionTitle) {
   indicator.id = 'action-context-indicator';
   indicator.style.cssText = 'align-self: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; color: #1e40af; display: flex; align-items: center; gap: 0.5rem;';
   indicator.innerHTML = `
-    <span>💬 Discussing: <strong>${escapeHtml(actionTitle)}</strong></span>
+    <a href="#" id="action-context-link" style="color: #1e40af; text-decoration: none; font-weight: 500;">💬 Discussing: <strong>${escapeHtml(actionTitle)}</strong></a>
     <button id="clear-action-context" style="background: none; border: none; color: #6b7280; cursor: pointer; padding: 0 0.25rem; font-size: 1rem;">×</button>
   `;
 
   chatMessages.insertBefore(indicator, chatMessages.firstChild);
+
+  document.getElementById('action-context-link').onclick = (e) => {
+    e.preventDefault();
+    const action = actionsCache.find(a => a.id === actionId);
+    if (action) {
+      showActionModal(action, {
+        agentName: currentAgent?.name,
+        onComplete: async () => { await loadActions(); }
+      });
+    }
+  };
 
   document.getElementById('clear-action-context').onclick = () => {
     indicator.remove();
@@ -976,6 +987,8 @@ async function startMeasurementCheckIn(actionContext) {
   }
 }
 
+
+
 // -----------------------------
 // Review Chat
 // -----------------------------
@@ -1207,8 +1220,20 @@ async function initializeViewFromHash() {
 
       await switchToView('chat');
 
-      // Show context indicator (user can type whatever they want)
-      showActionContextIndicator(actionContext.title);
+      // Show context indicator and a static greeting (no auto API call)
+      chatHistory = [];
+      clearAgentChatFromLocalStorage();
+      chatMessages.innerHTML = '';
+      showActionContextIndicator(actionContext.title, actionContext.actionId);
+
+      const greeting = {
+        role: 'assistant',
+        content: `Ready to get to work on <a href="#" class="action-title-link" data-action-id="${actionContext.actionId}" style="color: #1e40af; font-weight: 600;">${escapeHtml(actionContext.title)}</a>?`,
+        timestamp: new Date().toISOString()
+      };
+      chatHistory.push(greeting);
+      saveAgentChatHistory(chatHistory);
+      renderMessage('assistant', greeting.content);
       return;
     } catch (e) {
       log('error', 'Error parsing action chat context:', e);
@@ -1744,7 +1769,7 @@ function setupEventListeners() {
         sessionStorage.removeItem('actionChatContext');
         currentMeasurementActionContext = actionContext;
         await switchToView('chat');
-        showActionContextIndicator(actionContext.title);
+        showActionContextIndicator(actionContext.title, actionContext.actionId);
       } catch (e) {
         log('error', 'Error parsing action chat context:', e);
         sessionStorage.removeItem('actionChatContext');
@@ -1773,12 +1798,20 @@ function setupEventListeners() {
     // Load actions early to ensure accurate counts in header
     await ensureActionsLoaded();
 
+    // Check if an action context will auto-start chat (skip greeting to avoid flash)
+    const hasPendingContext = window.location.hash === '#chat' && (
+      sessionStorage.getItem('actionChatContext') ||
+      sessionStorage.getItem('measurementActionContext') ||
+      sessionStorage.getItem('reviewActionContext')
+    );
+
     if (chatHistory.length > 0) {
       chatHistory.forEach(msg => {
         if (typeof msg.content !== 'string') return;
+        if (msg.hidden) return;
         renderMessage(msg.role, msg.content);
       });
-    } else {
+    } else if (!hasPendingContext) {
       const greeting = {
         role: 'assistant',
         content: `Ready to get to work? I can help suggest next steps, and we can work together to create assets or create actions I'll complete at a scheduled time. How would you like to begin?`,
@@ -1835,6 +1868,22 @@ function init() {
   chatForm = document.getElementById('agent-chat-form');
   messageInput = document.getElementById('agent-message-input');
   sendButton = document.getElementById('agent-send-button');
+
+  // Delegate clicks on action title links in chat messages
+  chatMessages.addEventListener('click', (e) => {
+    const link = e.target.closest('.action-title-link');
+    if (link) {
+      e.preventDefault();
+      const actionId = link.dataset.actionId;
+      const action = actionsCache.find(a => a.id === actionId);
+      if (action) {
+        showActionModal(action, {
+          agentName: currentAgent?.name,
+          onComplete: async () => { await loadActions(); }
+        });
+      }
+    }
+  });
 
   // Load state from localStorage
   chatHistory = getAgentChatHistory();

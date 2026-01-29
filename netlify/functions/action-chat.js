@@ -5,6 +5,8 @@ const { getAction, updateActionState, recordApiCall } = require('./_services/db-
 const { getAgent, updateAgent } = require('./_services/db-agents.cjs');
 const { getChatMessagesByAction, createChatMessage } = require('./_services/db-action-chats.cjs');
 const { createApiCallRecord } = require('./_utils/metrics-calculator.cjs');
+const { log } = require('./_utils/log.cjs');
+const { createAgentTracker } = require('./_utils/agent-tracker.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -22,6 +24,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: false, error: 'Method not allowed' })
     };
   }
+
+  const tracker = createAgentTracker({ source: 'action-chat' });
 
   try {
     // Extract action ID from path (last part of path)
@@ -83,6 +87,8 @@ exports.handler = async (event) => {
       };
     }
 
+    tracker.setContext({ userId, agentId: action.agentId, actionId });
+
     // Insert user message
     const userMessageId = generateActionChatId();
     await createChatMessage(userMessageId, {
@@ -133,12 +139,14 @@ SUCCESS_CRITERIA:
 - [Criterion 3]
 TIMELINE: [When they want to complete this by]`;
 
+      const apiCallStart = Date.now();
       apiResponse = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         system: systemPrompt,
         messages: conversationHistory
       });
+      tracker.apiCall({ model: 'claude-sonnet-4-20250514', usage: apiResponse.usage, duration_ms: Date.now() - apiCallStart, stop_reason: apiResponse.stop_reason });
 
       assistantResponse = apiResponse.content[0].text;
 
@@ -211,6 +219,7 @@ User's latest message: ${message}
 
 Respond helpfully to refine the action. Be concise and actionable.`;
 
+      const apiCallStart = Date.now();
       apiResponse = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
@@ -219,6 +228,7 @@ Respond helpfully to refine the action. Be concise and actionable.`;
           content: chatPrompt
         }]
       });
+      tracker.apiCall({ model: 'claude-sonnet-4-20250514', usage: apiResponse.usage, duration_ms: Date.now() - apiCallStart, stop_reason: apiResponse.stop_reason });
 
       assistantResponse = apiResponse.content[0].text;
     }
@@ -270,7 +280,8 @@ Respond helpfully to refine the action. Be concise and actionable.`;
     };
 
   } catch (error) {
-    console.error('Error in action-chat:', error);
+    log('error', '[action-chat] ERROR:', error);
+    tracker.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({
@@ -278,5 +289,7 @@ Respond helpfully to refine the action. Be concise and actionable.`;
         error: error.message || 'Internal server error'
       })
     };
+  } finally {
+    await tracker.flush();
   }
 };

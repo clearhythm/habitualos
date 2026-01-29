@@ -8,6 +8,8 @@ const { createNote, getNotesByAgent, getNoteById, updateNote } = require('./_ser
 const { getDraftsByAgent, updateDraftStatus } = require('./_services/db-agent-drafts.cjs');
 const { createFeedback } = require('./_services/db-user-feedback.cjs');
 const agentFilesystem = require('./_utils/agent-filesystem.cjs');
+const { log } = require('./_utils/log.cjs');
+const { createAgentTracker } = require('./_utils/agent-tracker.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -380,12 +382,16 @@ exports.handler = async (event) => {
     };
   }
 
+  // Activity tracker - accumulates events, flushes one doc to Firestore in finally
+  const tracker = createAgentTracker({ source: 'agent-chat' });
+
   try {
     const startTime = Date.now();
-    console.log('[agent-chat] Request started');
+    log('info', '[agent-chat] Request started');
 
     // Parse request body
     const { userId, agentId, message, chatHistory = [], actionContext = null, reviewContext: rawReviewContext = null } = JSON.parse(event.body);
+    tracker.setContext({ userId, agentId, actionId: actionContext?.actionId || null });
 
     // If actionContext is a review-type action, treat it as review context
     // (handles both explicit reviewContext and review actions opened via general modal)
@@ -413,9 +419,9 @@ exports.handler = async (event) => {
     }
 
     // Fetch agent details
-    console.log('[agent-chat] Fetching agent from Firestore');
+    log('info', '[agent-chat] Fetching agent from Firestore');
     const agent = await getAgent(agentId);
-    console.log(`[agent-chat] Agent fetched in ${Date.now() - startTime}ms`);
+    log('info', `[agent-chat] Agent fetched in ${Date.now() - startTime}ms`);
 
     if (!agent || agent._userId !== userId) {
       return {
@@ -428,12 +434,13 @@ exports.handler = async (event) => {
     }
 
     // Fetch active actions for this agent (to include in system prompt)
-    console.log('[agent-chat] Fetching active actions');
+    log('info', '[agent-chat] Fetching active actions');
     const allAgentActions = await getActionsByAgent(agentId, userId);
     const openActions = allAgentActions.filter(a =>
       ['defined', 'scheduled', 'in_progress'].includes(a.state)
     );
-    console.log(`[agent-chat] Found ${openActions.length} open actions for agent`);
+    log('info', `[agent-chat] Found ${openActions.length} open actions for agent`);
+    tracker.context('open_actions', { count: openActions.length });
 
     // Load agent overview doc for strategic context
     const agentOverviewPath = path.join(__dirname, '..', '..', 'docs', 'architecture', 'agent-overview.md');
@@ -441,9 +448,9 @@ exports.handler = async (event) => {
     let agentOverview = '';
     if (fs.existsSync(agentOverviewPath)) {
       agentOverview = fs.readFileSync(agentOverviewPath, 'utf-8');
-      console.log(`[agent-chat] Loaded agent-overview.md (${agentOverview.length} chars)`);
+      log('info', `[agent-chat] Loaded agent-overview.md (${agentOverview.length} chars)`);
     } else {
-      console.error(`[agent-chat] agent-overview.md NOT FOUND at: ${agentOverviewPath}`);
+      log('error', `[agent-chat] agent-overview.md NOT FOUND at: ${agentOverviewPath}`);
     }
 
     // Build system prompt
@@ -667,7 +674,8 @@ When both are available, prefer local files for substantial documents and notes 
         const dimensions = actionContext.taskConfig?.dimensions || [];
         actionContextPrompt += `\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, use STORE_MEASUREMENT to record the check-in.`;
       }
-      console.log(`[agent-chat] Added action context for: ${actionContext.actionId} (${actionContext.taskType})`);
+      log('info', `[agent-chat] Added action context for: ${actionContext.actionId} (${actionContext.taskType})`);
+      tracker.context('action_context', { actionId: actionContext.actionId, taskType: actionContext.taskType, title: actionContext.title });
     }
 
     // Build review context prompt (uncached - changes per conversation)
@@ -676,7 +684,8 @@ When both are available, prefer local files for substantial documents and notes 
     if (reviewContext) {
       const draftType = reviewContext.taskConfig?.draftType;
       pendingDrafts = await getDraftsByAgent(agentId, userId, { status: 'pending', type: draftType });
-      console.log(`[agent-chat] Review context: found ${pendingDrafts.length} pending drafts (type: ${draftType || 'all'})`);
+      log('info', `[agent-chat] Review context: found ${pendingDrafts.length} pending drafts (type: ${draftType || 'all'})`);
+      tracker.context('review_context', { draftType: draftType || 'all', pendingDraftCount: pendingDrafts.length });
 
       reviewContextPrompt = `## Review Context
 
@@ -730,10 +739,10 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
     });
 
     // Call Claude API with agent overview in system prompt (cached)
-    console.log('[agent-chat] Calling Claude API');
-    console.log(`[agent-chat] System prompt size: ${systemPrompt.length} characters`);
-    console.log(`[agent-chat] Agent overview size: ${agentOverview.length} characters`);
-    console.log(`[agent-chat] Actions list size: ${actionsListPrompt.length} characters`);
+    log('info', '[agent-chat] Calling Claude API');
+    log('info', `[agent-chat] System prompt size: ${systemPrompt.length} characters`);
+    log('info', `[agent-chat] Agent overview size: ${agentOverview.length} characters`);
+    log('info', `[agent-chat] Actions list size: ${actionsListPrompt.length} characters`);
     const apiCallStart = Date.now();
 
     // Build system messages with caching strategy:
@@ -903,7 +912,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
     // Add filesystem tools if available (localhost + agent has filesystem capability)
     const isLocalhost = agentFilesystem.isFilesystemAvailable();
     if (isLocalhost && agent.capabilities?.filesystem && agent.localDataPath) {
-      console.log(`[agent-chat] Adding filesystem tools for agent with localDataPath: ${agent.localDataPath}`);
+      log('info', `[agent-chat] Adding filesystem tools for agent with localDataPath: ${agent.localDataPath}`);
       tools.push(
         {
           name: "read_file",
@@ -944,7 +953,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
     // Add review tools if review context is present
     if (reviewContext && pendingDrafts.length > 0) {
-      console.log(`[agent-chat] Adding review tools for ${pendingDrafts.length} pending drafts`);
+      log('info', `[agent-chat] Adding review tools for ${pendingDrafts.length} pending drafts`);
       tools.push(
         {
           name: "get_pending_drafts",
@@ -984,11 +993,11 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
     let apiResponse = await anthropic.messages.create(requestParams);
 
-    console.log(`[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
+    log('info', `[agent-chat] Claude API responded in ${Date.now() - apiCallStart}ms`);
 
     // Log cache usage
     if (apiResponse.usage) {
-      console.log(`[agent-chat] Token usage:`, {
+      log('info', `[agent-chat] Token usage:`, {
         input_tokens: apiResponse.usage.input_tokens,
         cache_creation_input_tokens: apiResponse.usage.cache_creation_input_tokens || 0,
         cache_read_input_tokens: apiResponse.usage.cache_read_input_tokens || 0,
@@ -996,29 +1005,35 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       });
 
       if (apiResponse.usage.cache_read_input_tokens > 0) {
-        console.log(`[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
+        log('info', `[agent-chat] ✓ CACHE HIT - Read ${apiResponse.usage.cache_read_input_tokens} tokens from cache`);
       } else if (apiResponse.usage.cache_creation_input_tokens > 0) {
-        console.log(`[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
+        log('info', `[agent-chat] ⚠ CACHE MISS - Created cache with ${apiResponse.usage.cache_creation_input_tokens} tokens`);
       }
     }
+
+    // Record API call event
+    tracker.apiCall({ model: requestParams.model, usage: apiResponse.usage, duration_ms: Date.now() - apiCallStart, stop_reason: apiResponse.stop_reason });
 
     // Handle tool calls if present
     let assistantResponse = '';
     const toolUseBlocks = apiResponse.content.filter(block => block.type === 'tool_use');
 
     if (toolUseBlocks.length > 0) {
-      console.log(`[agent-chat] Processing ${toolUseBlocks.length} tool call(s)`);
+      log('info', `[agent-chat] Processing ${toolUseBlocks.length} tool call(s)`);
 
       // Execute tool calls and collect results
       const toolResults = [];
       for (const toolBlock of toolUseBlocks) {
+        log('info', `[agent-chat] Tool call: ${toolBlock.name}`, toolBlock.input);
+        tracker.toolCall(toolBlock.name, toolBlock.input);
         const toolResult = await handleToolCall(toolBlock, userId, agentId, agent);
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolBlock.id,
           content: JSON.stringify(toolResult)
         });
-        console.log(`[agent-chat] Tool ${toolBlock.name} result:`, toolResult.success ? 'success' : toolResult.error);
+        log('info', `[agent-chat] Tool result: ${toolBlock.name}`, toolResult);
+        tracker.toolResult(toolBlock.name, toolResult);
       }
 
       // Add assistant's tool use to conversation
@@ -1034,7 +1049,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       });
 
       // Make follow-up call to get final response
-      console.log('[agent-chat] Making follow-up API call after tool use');
+      log('info', '[agent-chat] Making follow-up API call after tool use');
       const followUpResponse = await anthropic.messages.create({
         ...requestParams,
         messages: conversationHistory
@@ -1046,11 +1061,12 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
       // Log follow-up usage
       if (followUpResponse.usage) {
-        console.log(`[agent-chat] Follow-up token usage:`, {
+        log('info', `[agent-chat] Follow-up token usage:`, {
           input_tokens: followUpResponse.usage.input_tokens,
           cache_read_input_tokens: followUpResponse.usage.cache_read_input_tokens || 0,
           output_tokens: followUpResponse.usage.output_tokens
         });
+        tracker.apiCall({ model: requestParams.model, usage: followUpResponse.usage, stop_reason: followUpResponse.stop_reason });
       }
 
       // Use follow-up response for signal detection
@@ -1061,7 +1077,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       assistantResponse = textBlock ? textBlock.text : '';
     }
 
-    console.log(`[agent-chat] Total request time: ${Date.now() - startTime}ms`);
+    log('info', `[agent-chat] Total request time: ${Date.now() - startTime}ms`);
 
     // Check if response indicates action generation
     // Be flexible with whitespace and markdown code blocks
@@ -1069,6 +1085,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
     // Check for GENERATE_ACTIONS at start of line followed by --- separator
     if (/^GENERATE_ACTIONS\s*\n---/m.test(trimmedResponse)) {
+      log('info', '[agent-chat] Signal detected: GENERATE_ACTIONS');
       // Find JSON object (single action)
       const lines = assistantResponse.split('\n');
       let jsonStart = -1;
@@ -1082,7 +1099,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       }
 
       if (jsonStart === -1) {
-        console.error('Could not find JSON object in response:', assistantResponse);
+        log('error', '[agent-chat] Could not find JSON object in GENERATE_ACTIONS response:', assistantResponse);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1113,8 +1130,8 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       try {
         generatedAction = JSON.parse(jsonContent);
       } catch (parseError) {
-        console.error('Failed to parse generated action:', parseError);
-        console.error('JSON content:', jsonContent);
+        log('error', '[agent-chat] Failed to parse generated action:', parseError);
+        log('error', '[agent-chat] JSON content:', jsonContent);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1123,6 +1140,9 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
           })
         };
       }
+
+      log('info', '[agent-chat] GENERATE_ACTIONS parsed:', { title: generatedAction.title, taskType: generatedAction.taskType, priority: generatedAction.priority });
+      tracker.signal('GENERATE_ACTIONS', { title: generatedAction.title, taskType: generatedAction.taskType, priority: generatedAction.priority });
 
       // Return draft action (NOT persisted to DB yet)
       // Frontend will store this in localStorage until it's "defined"
@@ -1154,6 +1174,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
     // Check for GENERATE_ASSET at start of line followed by --- separator
     if (/^GENERATE_ASSET\s*\n---/m.test(trimmedResponse)) {
+      log('info', '[agent-chat] Signal detected: GENERATE_ASSET');
       // Find JSON object (single asset)
       const lines = assistantResponse.split('\n');
       let jsonStart = -1;
@@ -1167,7 +1188,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       }
 
       if (jsonStart === -1) {
-        console.error('Could not find JSON object in asset response:', assistantResponse);
+        log('error', '[agent-chat] Could not find JSON object in GENERATE_ASSET response:', assistantResponse);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1198,8 +1219,8 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       try {
         generatedAsset = JSON.parse(jsonContent);
       } catch (parseError) {
-        console.error('Failed to parse generated asset:', parseError);
-        console.error('JSON content:', jsonContent);
+        log('error', '[agent-chat] Failed to parse generated asset:', parseError);
+        log('error', '[agent-chat] JSON content:', jsonContent);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1208,6 +1229,9 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
           })
         };
       }
+
+      log('info', '[agent-chat] GENERATE_ASSET parsed:', { title: generatedAsset.title, type: generatedAsset.type });
+      tracker.signal('GENERATE_ASSET', { title: generatedAsset.title, type: generatedAsset.type });
 
       // Create draft action with taskType: "manual" (formerly assets)
       const draftAction = {
@@ -1251,7 +1275,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       }
 
       if (jsonStart === -1) {
-        console.error('[agent-chat] Could not find JSON in STORE_MEASUREMENT response');
+        log('error', '[agent-chat] Could not find JSON in STORE_MEASUREMENT response');
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1282,8 +1306,8 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
       try {
         measurementData = JSON.parse(jsonContent);
       } catch (parseError) {
-        console.error('[agent-chat] Failed to parse measurement JSON:', parseError);
-        console.error('[agent-chat] JSON content:', jsonContent);
+        log('error', '[agent-chat] Failed to parse measurement JSON:', parseError);
+        log('error', '[agent-chat] JSON content:', jsonContent);
         return {
           statusCode: 500,
           body: JSON.stringify({
@@ -1293,7 +1317,8 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
         };
       }
 
-      console.log(`[agent-chat] STORE_MEASUREMENT signal detected with ${measurementData.dimensions?.length || 0} dimensions`);
+      log('info', `[agent-chat] STORE_MEASUREMENT signal detected with ${measurementData.dimensions?.length || 0} dimensions`);
+      tracker.signal('STORE_MEASUREMENT', { dimensionCount: measurementData.dimensions?.length || 0 });
 
       // Return measurement signal for frontend to handle
       return {
@@ -1327,16 +1352,17 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
     };
 
   } catch (error) {
-    console.error('[agent-chat] ERROR:', error);
-    console.error('[agent-chat] Error type:', error.constructor.name);
-    console.error('[agent-chat] Error message:', error.message);
+    log('error', '[agent-chat] ERROR:', error);
+    log('error', '[agent-chat] Error type:', error.constructor.name);
+    log('error', '[agent-chat] Error message:', error.message);
+    tracker.error(error);
 
     // Log specific error types for better debugging
     if (error.status) {
-      console.error('[agent-chat] HTTP Status:', error.status);
+      log('error', '[agent-chat] HTTP Status:', error.status);
     }
     if (error.code) {
-      console.error('[agent-chat] Error code:', error.code);
+      log('error', '[agent-chat] Error code:', error.code);
     }
 
     // Provide more specific error messages
@@ -1344,7 +1370,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
 
     if (error.message?.includes('timeout') || error.code === 'ETIMEDOUT' || error.name === 'APIConnectionTimeoutError') {
       errorMessage = 'The AI is taking too long to respond. Try a simpler request or try again';
-      console.error('[agent-chat] TIMEOUT - Consider reducing system prompt size or max_tokens');
+      log('error', '[agent-chat] TIMEOUT - Consider reducing system prompt size or max_tokens');
     } else if (error.status === 429) {
       errorMessage = 'Rate limit exceeded - please wait a moment';
     } else if (error.status >= 500) {
@@ -1358,5 +1384,7 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
         error: errorMessage
       })
     };
+  } finally {
+    await tracker.flush();
   }
 };
