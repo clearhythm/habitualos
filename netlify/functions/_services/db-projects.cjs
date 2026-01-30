@@ -9,6 +9,8 @@
 //   - getProject(projectId) - Get a single project
 //   - createProject(id, data) - Create a new project
 //   - updateProject(projectId, updates) - Update project fields
+//   - getProjectAgents(projectId, userId) - Get agents assigned to project
+//   - getProjectActions(projectId, userId) - Get actions (direct + via agents)
 //
 // Schema:
 //   {
@@ -25,6 +27,8 @@
 // ------------------------------------------------------
 
 const dbCore = require('./db-core.cjs');
+const { getAgentsByUserId } = require('./db-agents.cjs');
+const { getActionsByUserId } = require('./db-actions.cjs');
 
 /**
  * Get all projects for a specific user
@@ -97,4 +101,37 @@ exports.updateProject = async (projectId, updates) => {
 exports.getProjectCount = async (userId) => {
   const projects = await exports.getProjectsByUserId(userId);
   return projects.length;
+};
+
+/**
+ * Get all agents assigned to a project
+ * @param {string} projectId - Project ID
+ * @param {string} userId - User ID (for security)
+ * @returns {Promise<Array>} Array of agent documents
+ */
+exports.getProjectAgents = async (projectId, userId) => {
+  const allAgents = await getAgentsByUserId(userId);
+  return allAgents.filter(agent => agent.projectId === projectId);
+};
+
+/**
+ * Get all actions for a project (direct assignment + via agent inheritance)
+ * An action belongs to a project if:
+ * - action.projectId matches the project, OR
+ * - action.agentId points to an agent whose projectId matches
+ * @param {string} projectId - Project ID
+ * @param {string} userId - User ID (for security)
+ * @returns {Promise<Array>} Array of action documents
+ */
+exports.getProjectActions = async (projectId, userId) => {
+  // Get project's agents first
+  const projectAgents = await exports.getProjectAgents(projectId, userId);
+  const projectAgentIds = new Set(projectAgents.map(a => a.id));
+
+  // Get all user actions and filter
+  const allActions = await getActionsByUserId(userId);
+  return allActions.filter(action =>
+    action.projectId === projectId ||  // Direct assignment
+    projectAgentIds.has(action.agentId) // Agent belongs to project
+  );
 };

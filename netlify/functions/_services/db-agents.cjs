@@ -15,6 +15,7 @@
 //   {
 //     id: "agent-{uuid}",
 //     _userId: "u-xyz789",
+//     projectId: "project-abc123" | null,  // Optional project container
 //     type: "northstar",  // "northstar", "custom", "delegated" (future)
 //     name: "Build SaaS MVP",
 //     status: "active",  // "active", "paused", "completed", "archived"
@@ -49,9 +50,10 @@ const { db, FieldValue } = require('../_utils/firestore.cjs');
 exports.createAgent = async (id, data) => {
   const formattedId = id?.startsWith('agent-') ? id : `agent-${id}`;
 
-  // Ensure metrics are initialized
+  // Ensure metrics and projectId are initialized
   const agentData = {
     ...data,
+    projectId: data.projectId || null,
     metrics: {
       totalActions: 0,
       completedActions: 0,

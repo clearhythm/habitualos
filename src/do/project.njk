@@ -1,0 +1,479 @@
+---
+title: Project - HabitualOS
+layout: base.njk
+permalink: /do/project/
+---
+
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="/do/projects/" style="color: #6b7280; text-decoration: none; font-size: 0.95rem;">&larr; Back to Projects</a>
+  </div>
+
+  <div id="loading" style="text-align: center; padding: 3rem; color: #666;">
+    Loading project...
+  </div>
+
+  <div id="error-state" style="display: none; text-align: center; padding: 3rem;">
+    <p style="font-size: 1.1rem; color: #dc2626; margin-bottom: 1rem;">Project not found</p>
+    <a href="/do/projects/" style="color: #0066cc;">Back to Projects</a>
+  </div>
+
+  <div id="project-detail" style="display: none;">
+    {# Header #}
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+      <div>
+        <h1 id="project-name" style="margin: 0 0 0.5rem 0; font-size: 1.75rem; font-weight: 600;"></h1>
+        <p id="project-description" style="margin: 0; color: #666; font-size: 1rem;"></p>
+      </div>
+      <span id="project-status" class="project-status"></span>
+    </div>
+
+    {# View Navigation #}
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; padding: 0.75rem 0; border-bottom: 1px solid #e5e7eb;">
+      <a href="#overview" class="view-link active" data-view="overview" style="color: #2563eb; text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+        Overview
+      </a>
+      <span style="color: #ddd;">|</span>
+      <a href="#agents" class="view-link" data-view="agents" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+        <span id="agents-count">0</span> Agents
+      </a>
+      <span style="color: #ddd;">|</span>
+      <a href="#actions" class="view-link" data-view="actions" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+        <span id="actions-count">0</span> Actions
+      </a>
+    </div>
+
+    {# Overview View #}
+    <div id="view-overview" class="project-view">
+      <div class="project-card" style="margin-bottom: 1.5rem;">
+        <div id="timeline-section" style="display: none; margin-bottom: 1.5rem;">
+          <h3 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Timeline</h3>
+          <p id="project-timeline" style="margin: 0; font-size: 1rem;"></p>
+        </div>
+
+        <div id="criteria-section" style="display: none;">
+          <h3 style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Success Criteria</h3>
+          <ul id="project-criteria" style="margin: 0; padding-left: 1.25rem; line-height: 1.6;"></ul>
+        </div>
+
+        <div id="empty-overview" style="display: none; color: #9ca3af; font-style: italic;">
+          No timeline or success criteria defined.
+        </div>
+      </div>
+
+      <div style="color: #9ca3af; font-size: 0.85rem;">
+        Created <span id="project-created"></span>
+      </div>
+    </div>
+
+    {# Agents View #}
+    <div id="view-agents" class="project-view" style="display: none;">
+      <div id="agents-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">No agents assigned to this project</p>
+        <p style="font-size: 0.9rem;">Assign agents to this project from the agent settings page.</p>
+      </div>
+      <div id="agents-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+    </div>
+
+    {# Actions View #}
+    <div id="view-actions" class="project-view" style="display: none;">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <select id="actions-filter" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem;">
+          <option value="open" selected>Open</option>
+          <option value="all">All</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div id="actions-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">No actions for this project</p>
+        <p style="font-size: 0.9rem;">Actions are created by agents or can be assigned directly to this project.</p>
+      </div>
+      <div id="actions-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .project-card {
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+
+  .project-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .status-open {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-completed {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-archived {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .view-link {
+    transition: color 0.2s;
+  }
+
+  .view-link:hover {
+    color: #2563eb !important;
+  }
+
+  .view-link.active {
+    color: #2563eb !important;
+    font-weight: 500;
+  }
+
+  .agent-item, .action-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .agent-item:hover, .action-item:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+  }
+
+  .item-info {
+    flex: 1;
+  }
+
+  .item-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #111;
+  }
+
+  .item-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .item-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .badge-active { background: #dcfce7; color: #166534; }
+  .badge-paused { background: #fef3c7; color: #92400e; }
+  .badge-open { background: #dbeafe; color: #1e40af; }
+  .badge-in_progress { background: #fef3c7; color: #92400e; }
+  .badge-completed { background: #dcfce7; color: #166534; }
+  .badge-dismissed { background: #f3f4f6; color: #6b7280; }
+  .badge-defined { background: #e0e7ff; color: #3730a3; }
+
+  /* Dark mode */
+  html[data-theme="dark"] .project-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  html[data-theme="dark"] #project-name,
+  html[data-theme="dark"] .item-name {
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] #project-description,
+  html[data-theme="dark"] .item-meta {
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] .agent-item,
+  html[data-theme="dark"] .action-item {
+    border-color: #374151;
+    background: transparent;
+  }
+
+  html[data-theme="dark"] .agent-item:hover,
+  html[data-theme="dark"] .action-item:hover {
+    border-color: #60a5fa;
+    background: #1f2937;
+  }
+
+  html[data-theme="dark"] .status-open,
+  html[data-theme="dark"] .badge-active {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+
+  html[data-theme="dark"] .status-completed,
+  html[data-theme="dark"] .badge-completed {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  html[data-theme="dark"] .status-archived {
+    background: #374151;
+    color: #9ca3af;
+  }
+</style>
+
+<script type="module">
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { getProjectDetails } from '/assets/js/api/projects.js';
+
+  initializeUser();
+  const userId = getUserId();
+
+  const loadingEl = document.getElementById('loading');
+  const errorEl = document.getElementById('error-state');
+  const detailEl = document.getElementById('project-detail');
+
+  // Store loaded data for filtering
+  let projectData = { project: null, agents: [], actions: [] };
+
+  function formatDate(dateStr) {
+    if (!dateStr) return 'Unknown';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatTimeline(timeline) {
+    if (!timeline) return null;
+    if (timeline === 'ongoing') return 'Ongoing';
+    const date = new Date(timeline);
+    if (isNaN(date.getTime())) return timeline;
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function renderAgents(agents) {
+    const listEl = document.getElementById('agents-list');
+    const emptyEl = document.getElementById('agents-empty');
+
+    listEl.innerHTML = '';
+
+    if (agents.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+
+    agents.forEach(agent => {
+      const item = document.createElement('a');
+      item.className = 'agent-item';
+      item.href = `/do/agent/?id=${agent.id}`;
+
+      const badgeClass = agent.status === 'active' ? 'badge-active' :
+                        agent.status === 'paused' ? 'badge-paused' : 'badge-completed';
+
+      const cost = (agent.metrics?.totalCost || 0).toFixed(2);
+      const actions = agent.metrics?.totalActions || 0;
+
+      item.innerHTML = `
+        <div class="item-info">
+          <h3 class="item-name">${agent.name || 'Untitled Agent'}</h3>
+          <div class="item-meta">${actions} actions &bull; $${cost}</div>
+        </div>
+        <span class="item-badge ${badgeClass}">${agent.status}</span>
+      `;
+
+      listEl.appendChild(item);
+    });
+  }
+
+  function renderActions(actions, filter = 'open') {
+    const listEl = document.getElementById('actions-list');
+    const emptyEl = document.getElementById('actions-empty');
+
+    listEl.innerHTML = '';
+
+    // Filter actions
+    let filteredActions = actions;
+    if (filter === 'open') {
+      filteredActions = actions.filter(a => !['completed', 'dismissed'].includes(a.state));
+    } else if (filter === 'completed') {
+      filteredActions = actions.filter(a => a.state === 'completed');
+    }
+
+    if (filteredActions.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+
+    filteredActions.forEach(action => {
+      const item = document.createElement('a');
+      item.className = 'action-item';
+      item.href = `/do/agent/?id=${action.agentId}#actions`;
+
+      const badgeClass = `badge-${action.state}`;
+
+      const priorityText = action.priority === 'high' ? 'High' :
+                          action.priority === 'low' ? 'Low' : 'Medium';
+
+      item.innerHTML = `
+        <div class="item-info">
+          <h3 class="item-name">${action.title || 'Untitled Action'}</h3>
+          <div class="item-meta">${priorityText} priority &bull; ${action.taskType || 'scheduled'}</div>
+        </div>
+        <span class="item-badge ${badgeClass}">${action.state}</span>
+      `;
+
+      listEl.appendChild(item);
+    });
+  }
+
+  function setupViewNavigation() {
+    const viewLinks = document.querySelectorAll('.view-link');
+    const views = document.querySelectorAll('.project-view');
+
+    function switchView(viewName) {
+      // Update links
+      viewLinks.forEach(link => {
+        if (link.dataset.view === viewName) {
+          link.classList.add('active');
+          link.style.color = '#2563eb';
+          link.style.fontWeight = '500';
+        } else {
+          link.classList.remove('active');
+          link.style.color = '#6b7280';
+          link.style.fontWeight = 'normal';
+        }
+      });
+
+      // Update views
+      views.forEach(view => {
+        view.style.display = view.id === `view-${viewName}` ? 'block' : 'none';
+      });
+    }
+
+    // Handle clicks
+    viewLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const viewName = link.dataset.view;
+        switchView(viewName);
+        history.replaceState(null, '', `#${viewName}`);
+      });
+    });
+
+    // Handle initial hash
+    const hash = window.location.hash.slice(1);
+    if (['overview', 'agents', 'actions'].includes(hash)) {
+      switchView(hash);
+    }
+  }
+
+  function setupActionsFilter() {
+    const filterEl = document.getElementById('actions-filter');
+    filterEl.addEventListener('change', () => {
+      renderActions(projectData.actions, filterEl.value);
+    });
+  }
+
+  async function loadProject() {
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('id');
+
+    if (!projectId) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      const data = await getProjectDetails(projectId, userId);
+
+      loadingEl.style.display = 'none';
+
+      if (!data.success || !data.project) {
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Store data for filtering
+      projectData = {
+        project: data.project,
+        agents: data.agents || [],
+        actions: data.actions || []
+      };
+
+      const project = data.project;
+      detailEl.style.display = 'block';
+
+      // Populate header
+      document.getElementById('project-name').textContent = project.name || 'Untitled Project';
+      document.getElementById('project-description').textContent = project.description || '';
+
+      // Status badge
+      const statusEl = document.getElementById('project-status');
+      const statusClass = project.status === 'open' ? 'status-open' :
+                         project.status === 'completed' ? 'status-completed' : 'status-archived';
+      statusEl.className = `project-status ${statusClass}`;
+      statusEl.textContent = project.status || 'open';
+
+      // Update counts in navigation
+      document.getElementById('agents-count').textContent = projectData.agents.length;
+      document.getElementById('actions-count').textContent = projectData.actions.length;
+
+      // Overview: Timeline
+      const timeline = formatTimeline(project.timeline);
+      if (timeline) {
+        document.getElementById('timeline-section').style.display = 'block';
+        document.getElementById('project-timeline').textContent = timeline;
+      }
+
+      // Overview: Success criteria
+      if (project.success_criteria && project.success_criteria.length > 0) {
+        document.getElementById('criteria-section').style.display = 'block';
+        const criteriaList = document.getElementById('project-criteria');
+        project.success_criteria.forEach(criterion => {
+          const li = document.createElement('li');
+          li.textContent = criterion;
+          criteriaList.appendChild(li);
+        });
+      }
+
+      // Show empty state if no timeline or criteria
+      if (!timeline && (!project.success_criteria || project.success_criteria.length === 0)) {
+        document.getElementById('empty-overview').style.display = 'block';
+      }
+
+      // Overview: Created date
+      document.getElementById('project-created').textContent = formatDate(project._createdAt);
+
+      // Render agents and actions
+      renderAgents(projectData.agents);
+      renderActions(projectData.actions, 'open');
+
+      // Setup interactions
+      setupViewNavigation();
+      setupActionsFilter();
+
+    } catch (error) {
+      console.error('Error loading project:', error);
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+    }
+  }
+
+  loadProject();
+</script>

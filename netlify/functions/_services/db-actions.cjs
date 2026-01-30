@@ -9,6 +9,7 @@
 //   - getActionsByUserId(userId) - List all user's actions
 //   - getActionsByAgent(agentId, userId) - Filter by agent
 //   - getAction(actionId) - Get single action
+//   - updateAction(actionId, updates) - Update action fields
 //   - updateActionState(actionId, state, fields) - Update state/timestamps
 //   - recordApiCall(actionId, callData) - Track API call + update metrics
 //
@@ -17,6 +18,7 @@
 //     id: "action-{uuid}",
 //     _userId: "u-xyz789",
 //     agentId: "agent-abc123",
+//     projectId: "project-abc123" | null,  // Optional direct project assignment
 //     title: "Create database schema",
 //     description: "Design and implement...",
 //     state: "open",  // "open", "in_progress", "completed", "dismissed"
@@ -128,6 +130,20 @@ exports.updateActionState = async (actionId, state, additionalFields = {}) => {
     updates.dismissedAt = now;
   }
 
+  return await dbCore.patch({
+    collection: 'actions',
+    id: actionId,
+    data: updates
+  });
+};
+
+/**
+ * Update action fields (title, description, priority, projectId, taskConfig)
+ * @param {string} actionId - Action ID
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<Object>} Result with id
+ */
+exports.updateAction = async (actionId, updates) => {
   return await dbCore.patch({
     collection: 'actions',
     id: actionId,

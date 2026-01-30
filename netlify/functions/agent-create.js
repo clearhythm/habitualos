@@ -2,6 +2,7 @@ require('dotenv').config();
 const { generateAgentId, generateAgentCreationChatId } = require('./_utils/data-utils.cjs');
 const { createAgent } = require('./_services/db-agents.cjs');
 const { createAgentCreationChat } = require('./_services/db-agent-creation-chats.cjs');
+const { getProject } = require('./_services/db-projects.cjs');
 
 /**
  * POST /api/agent-create
@@ -20,7 +21,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, name, goal, success_criteria, timeline, type, chatHistory, localDataPath } = JSON.parse(event.body);
+    const { userId, name, goal, success_criteria, timeline, type, chatHistory, localDataPath, projectId } = JSON.parse(event.body);
 
     // Validate userId
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -41,10 +42,22 @@ exports.handler = async (event) => {
       };
     }
 
+    // Validate projectId ownership if provided
+    if (projectId) {
+      const project = await getProject(projectId);
+      if (!project || project._userId !== userId) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ success: false, error: 'Invalid project' })
+        };
+      }
+    }
+
     // Create agent in Firestore
     const agentId = generateAgentId();
     const agent = await createAgent(agentId, {
       _userId: userId,
+      projectId: projectId || null,
       type: type || 'northstar',
       name,
       status: 'active',
@@ -79,7 +92,7 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        agent: { id: agent.id, name, goal, success_criteria, timeline, type: type || 'northstar' }
+        agent: { id: agent.id, name, goal, success_criteria, timeline, type: type || 'northstar', projectId: projectId || null }
       })
     };
 

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getAgent } = require('./_services/db-agents.cjs');
 const { createAction, getAction } = require('./_services/db-actions.cjs');
+const { getProject } = require('./_services/db-projects.cjs');
 const { generateActionId } = require('./_utils/data-utils.cjs');
 
 /**
@@ -20,7 +21,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content } = JSON.parse(event.body);
+    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content, projectId } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -55,12 +56,24 @@ exports.handler = async (event) => {
       };
     }
 
+    // Validate projectId ownership if provided
+    if (projectId) {
+      const project = await getProject(projectId);
+      if (!project || project._userId !== userId) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ success: false, error: 'Invalid project' })
+        };
+      }
+    }
+
     // Create action in Firestore
     const actionId = generateActionId();
 
     const actionData = {
       _userId: userId,
       agentId,
+      projectId: projectId || null,
       title,
       description,
       state: 'defined',  // State is 'defined' - ready for scheduling

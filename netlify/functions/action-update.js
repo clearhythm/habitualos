@@ -1,10 +1,12 @@
 require('dotenv').config();
-const { getAgent, updateAgent } = require('./_services/db-agents.cjs');
+const { getAction, updateAction } = require('./_services/db-actions.cjs');
 const { getProject } = require('./_services/db-projects.cjs');
 
 /**
- * POST /api/agent-update
- * Update agent configuration (status, model, instructions)
+ * POST /api/action-update
+ *
+ * Update action fields (title, description, priority, projectId, taskConfig).
+ * Does not handle state transitions - use action-complete, action-dismiss, etc.
  */
 exports.handler = async (event) => {
   // Only allow POST
@@ -17,14 +19,14 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { agentId, status, model, instructions, localDataPath, capabilities, projectId } = JSON.parse(event.body);
+    const { actionId, title, description, priority, projectId, taskConfig } = JSON.parse(event.body);
 
-    if (!agentId) {
+    if (!actionId) {
       return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
-          error: 'Agent ID is required'
+          error: 'Action ID is required'
         })
       };
     }
@@ -40,21 +42,21 @@ exports.handler = async (event) => {
       };
     }
 
-    // Check if agent exists and belongs to user
-    const agent = await getAgent(agentId);
+    // Check if action exists and belongs to user
+    const action = await getAction(actionId);
 
-    if (!agent) {
+    if (!action) {
       return {
         statusCode: 404,
         body: JSON.stringify({
           success: false,
-          error: 'Agent not found'
+          error: 'Action not found'
         })
       };
     }
 
-    // Verify agent belongs to user
-    if (agent._userId !== userId) {
+    // Verify action belongs to user
+    if (action._userId !== userId) {
       return {
         statusCode: 403,
         body: JSON.stringify({ success: false, error: 'Unauthorized' })
@@ -74,29 +76,17 @@ exports.handler = async (event) => {
 
     // Build updates object (only include provided fields)
     const updates = {};
-    if (status !== undefined) updates.status = status;
-    if (model !== undefined) updates.model = model;
-    if (instructions !== undefined) updates.instructions = instructions;
-    if (localDataPath !== undefined) updates.localDataPath = localDataPath;
-    if (capabilities !== undefined) updates.capabilities = capabilities;
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (priority !== undefined) updates.priority = priority;
     if (projectId !== undefined) updates.projectId = projectId;
+    if (taskConfig !== undefined) updates.taskConfig = taskConfig;
 
-    // Update agent
-    await updateAgent(agentId, updates);
+    // Update action
+    await updateAction(actionId, updates);
 
-    // Get updated agent
-    const updatedAgent = await getAgent(agentId);
-
-    // Convert Firestore Timestamps to ISO strings
-    const agentWithDates = {
-      ...updatedAgent,
-      _createdAt: updatedAgent._createdAt?.toDate ? updatedAgent._createdAt.toDate().toISOString() : updatedAgent._createdAt,
-      _updatedAt: updatedAgent._updatedAt?.toDate ? updatedAgent._updatedAt.toDate().toISOString() : updatedAgent._updatedAt,
-      metrics: {
-        ...updatedAgent.metrics,
-        lastRunAt: updatedAgent.metrics?.lastRunAt || null
-      }
-    };
+    // Get updated action
+    const updatedAction = await getAction(actionId);
 
     // Return success response
     return {
@@ -106,12 +96,12 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        agent: agentWithDates
+        action: updatedAction
       })
     };
 
   } catch (error) {
-    console.error('Error in agent-update:', error);
+    console.error('Error in action-update:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
