@@ -207,7 +207,13 @@ async function reconcile({ userId } = {}) {
       }
 
       // Build relative path: {type}s/{filename} (e.g., companies/Spring-Health.md)
-      const typeFolder = `${draft.type}s`; // company -> companies
+      // Handle basic pluralization (company -> companies, person -> people)
+      const pluralize = (type) => {
+        if (type === 'person') return 'people';
+        if (type.endsWith('y')) return type.slice(0, -1) + 'ies';
+        return type + 's';
+      };
+      const typeFolder = pluralize(draft.type);
       const relativePath = `${typeFolder}/${filename}`;
 
       // Get agent's data path
