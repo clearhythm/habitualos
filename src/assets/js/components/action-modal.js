@@ -140,9 +140,12 @@ export function showActionModal(action, options = {}) {
   // Chat button - always show (routes to agent chat or EA)
   buttons += `<button id="modal-chat-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">💬 Chat</button>`;
 
-  // Complete button - show if not completed/dismissed
+  // Complete button with duration input - show if not completed/dismissed
   if (action.state !== 'completed' && action.state !== 'dismissed') {
+    buttons += `<div style="display: flex; align-items: center; gap: 0.5rem; margin-left: auto;">`;
+    buttons += `<input type="number" id="modal-duration-input" min="1" max="480" placeholder="mins" style="width: 60px; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; font-family: inherit; text-align: center;">`;
     buttons += `<button id="modal-complete-btn" style="padding: 0.5rem 1rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">✓ Complete</button>`;
+    buttons += `</div>`;
   }
 
   // Delete button - show if not completed/dismissed
@@ -264,9 +267,13 @@ async function completeActionFromModal() {
   // Save ID before hiding modal (which clears currentAction)
   const actionId = currentAction.id;
 
+  // Get duration value if entered
+  const durationInput = document.getElementById('modal-duration-input');
+  const duration = durationInput?.value ? parseInt(durationInput.value, 10) : null;
+
   try {
     const userId = getUserId();
-    const data = await apiCompleteAction(actionId, userId);
+    const data = await apiCompleteAction(actionId, userId, duration);
 
     if (!data.success) {
       throw new Error(data.error || 'Failed to complete action');

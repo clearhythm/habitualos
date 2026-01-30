@@ -52,13 +52,16 @@ export async function getAction(actionId, userId) {
  * Mark an action as completed
  * @param {string} actionId
  * @param {string} userId
+ * @param {number} [duration] - Optional duration in minutes
  * @returns {Promise<{success: boolean}>}
  */
-export async function completeAction(actionId, userId) {
+export async function completeAction(actionId, userId, duration = null) {
   const url = `${API_ACTION_COMPLETE}/${actionId}?userId=${userId}`;
+  const body = duration ? { duration } : undefined;
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
   });
   return response.json();
 }

@@ -36,6 +36,19 @@ exports.handler = async (event) => {
     // Get userId from query parameters
     const { userId } = event.queryStringParameters || {};
 
+    // Parse optional duration from request body
+    let duration = null;
+    if (event.body) {
+      try {
+        const body = JSON.parse(event.body);
+        if (body.duration && typeof body.duration === 'number' && body.duration > 0) {
+          duration = body.duration;
+        }
+      } catch (e) {
+        // Body parsing failed, ignore - duration is optional
+      }
+    }
+
     // Validate userId
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
       return {
@@ -110,6 +123,9 @@ exports.handler = async (event) => {
     }
     if (action.agentId) {
       workLogData.agentId = action.agentId;
+    }
+    if (duration) {
+      workLogData.duration = duration;
     }
     await createWorkLog(null, workLogData);
 
