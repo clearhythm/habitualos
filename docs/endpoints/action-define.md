@@ -6,13 +6,15 @@ Persist a draft action to Firestore (transition from "draft" to "defined" state)
 
 ```javascript
 {
-  userId: "u-{timestamp}-{random}",  // Required
-  agentId: "agent-{random}",         // Required
-  title: string,                      // Required
-  description: string,                // Required
-  priority: "low"|"medium"|"high",   // Optional (default: "medium")
-  taskType: "scheduled"|"interactive", // Optional (default: "scheduled")
-  taskConfig: {                       // Optional (default: {})
+  userId: "u-{timestamp}-{random}",    // Required
+  agentId: "agent-{random}",           // Required if no projectId
+  projectId: "project-{random}",       // Required if no agentId
+  title: string,                       // Required
+  description: string,                 // Optional (default: "")
+  priority: "low"|"medium"|"high",     // Optional (default: "medium")
+  taskType: "scheduled"|"interactive"|"manual", // Optional (default: "scheduled")
+  dueDate: "YYYY-MM-DD",               // Optional due date
+  taskConfig: {                        // Optional (default: {})
     instructions: string,
     expectedOutput: string,
     context: object
@@ -30,12 +32,14 @@ Persist a draft action to Firestore (transition from "draft" to "defined" state)
   action: {
     id: "action-{timestamp}-{random}",
     _userId: "u-{timestamp}-{random}",
-    agentId: "agent-{random}",
+    agentId: "agent-{random}" | null,
+    projectId: "project-{random}" | null,
     title: string,
     description: string,
-    state: "defined",  // Always "defined" after this call
+    state: "open",  // Ready for scheduling
     priority: string,
     taskType: string,
+    dueDate: "YYYY-MM-DD" | null,
     taskConfig: object,
     scheduleTime: null,
     startedAt: null,
@@ -60,10 +64,10 @@ Persist a draft action to Firestore (transition from "draft" to "defined" state)
 ## Behavior
 
 1. Validates userId format (`u-*`)
-2. Validates required fields (agentId, title, description)
-3. Verifies agent exists and user owns it
+2. Validates required fields (title, and either agentId or projectId)
+3. Verifies agent/project exists and user owns it
 4. Generates action ID: `action-{timestamp}-{random}`
-5. Creates action document in `actions` collection with state="defined"
+5. Creates action document in `actions` collection with state="open"
 6. Fetches and returns created action
 
 ## State Transitions

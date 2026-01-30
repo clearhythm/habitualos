@@ -26,6 +26,7 @@
 //     taskType: "interactive",  // "interactive", "scheduled", "measurement", "manual"
 //     assignedTo: "user",  // "user" (blue bar) or "agent" (purple bar)
 //     scheduleTime: null,
+//     dueDate: "2024-01-15" | null,  // Optional due date (YYYY-MM-DD string)
 //     taskConfig: {},
 //     metrics: {
 //       totalTokens: 3500,
