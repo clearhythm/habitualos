@@ -221,64 +221,19 @@ permalink: /do/chat/
 
   // Initialize chat with opening message or load history
   if (chatHistory.length === 0) {
-    // Fetch initial greeting from EA
-    fetchInitialGreeting();
-  } else {
-    // Render all messages from history
-    chatHistory.forEach(msg => {
-      renderMessage(msg.role, msg.content);
-    });
+    const openingMessage = {
+      role: 'assistant',
+      content: "What would you like to get done today?",
+      timestamp: new Date().toISOString()
+    };
+    chatHistory.push(openingMessage);
+    saveChatHistory(chatHistory);
   }
 
-  async function fetchInitialGreeting() {
-    showLoadingMessage();
-
-    try {
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      const response = await fetch('/.netlify/functions/do-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId,
-          message: "Hello",
-          timezone: userTimezone,
-          chatHistory: []
-        })
-      });
-
-      const data = await response.json();
-      hideLoadingMessage();
-
-      if (data.success) {
-        const greeting = {
-          role: 'assistant',
-          content: data.response,
-          timestamp: new Date().toISOString()
-        };
-        chatHistory.push(greeting);
-        saveChatHistory(chatHistory);
-        renderMessage('assistant', data.response);
-      } else {
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      console.error('Error fetching initial greeting:', error);
-      hideLoadingMessage();
-
-      // Fallback greeting
-      const fallbackGreeting = {
-        role: 'assistant',
-        content: "What's on your mind today?",
-        timestamp: new Date().toISOString()
-      };
-      chatHistory.push(fallbackGreeting);
-      saveChatHistory(chatHistory);
-      renderMessage('assistant', fallbackGreeting.content);
-    }
-  }
+  // Render all messages from history
+  chatHistory.forEach(msg => {
+    renderMessage(msg.role, msg.content);
+  });
 
   // Handle form submission
   chatForm.addEventListener('submit', async (e) => {
