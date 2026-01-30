@@ -132,7 +132,7 @@ exports.handler = async (event) => {
 
     // Filter to open actions only
     const openActions = allActions.filter(a =>
-      ['defined', 'scheduled', 'in_progress'].includes(a.state)
+      ['open', 'defined', 'scheduled', 'in_progress'].includes(a.state)
     );
 
     // Get recent work logs (last 10)

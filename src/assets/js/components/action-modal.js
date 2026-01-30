@@ -6,7 +6,7 @@
 // ------------------------------------------------------
 
 import { formatDate, escapeHtml, capitalize } from "/assets/js/utils/utils.js";
-import { getAction, completeAction as apiCompleteAction } from "/assets/js/api/actions.js";
+import { getAction, completeAction as apiCompleteAction, dismissAction as apiDismissAction } from "/assets/js/api/actions.js";
 import { getUserId } from "/assets/js/auth/auth.js";
 
 let modalElement = null;
@@ -137,14 +137,17 @@ export function showActionModal(action, options = {}) {
     buttons += `<button id="modal-copy-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">📋 Copy</button>`;
   }
 
-  // Chat button - always show (navigates to agent chat with context)
-  if (action.agentId) {
-    buttons += `<button id="modal-chat-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">💬 Chat</button>`;
-  }
+  // Chat button - always show (routes to agent chat or EA)
+  buttons += `<button id="modal-chat-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">💬 Chat</button>`;
 
   // Complete button - show if not completed/dismissed
   if (action.state !== 'completed' && action.state !== 'dismissed') {
     buttons += `<button id="modal-complete-btn" style="padding: 0.5rem 1rem; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">✓ Complete</button>`;
+  }
+
+  // Delete button - show if not completed/dismissed
+  if (action.state !== 'completed' && action.state !== 'dismissed') {
+    buttons += `<button id="modal-delete-btn" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.875rem; cursor: pointer; font-weight: 500;">Delete</button>`;
   }
 
   modalActions.innerHTML = buttons;
@@ -153,6 +156,7 @@ export function showActionModal(action, options = {}) {
   document.getElementById('modal-copy-btn')?.addEventListener('click', copyActionContent);
   document.getElementById('modal-chat-btn')?.addEventListener('click', navigateToChat);
   document.getElementById('modal-complete-btn')?.addEventListener('click', completeActionFromModal);
+  document.getElementById('modal-delete-btn')?.addEventListener('click', deleteActionFromModal);
 
   // Meta pills (left-aligned)
   const modalMeta = document.getElementById('modal-meta');
@@ -206,14 +210,16 @@ async function copyActionContent() {
 
 /**
  * Navigate to agent chat with action context
+ * Routes to agent page if action has agentId, otherwise routes to EA
  */
 function navigateToChat() {
-  if (!currentAction || !currentAction.agentId) return;
+  if (!currentAction) return;
 
   // Save values before hiding modal (which clears currentAction)
   const agentId = currentAction.agentId;
+  const actionId = currentAction.id;
 
-  // Store full action context in sessionStorage for agent chat
+  // Store full action context in sessionStorage for chat
   sessionStorage.setItem('actionChatContext', JSON.stringify({
     actionId: currentAction.id,
     title: currentAction.title,
@@ -228,18 +234,24 @@ function navigateToChat() {
 
   hideActionModal();
 
-  const targetUrl = `/do/agent/?id=${agentId}#chat`;
-  const currentPath = window.location.pathname + window.location.search;
-  const targetPath = `/do/agent/?id=${agentId}`;
+  if (agentId) {
+    // Route to agent chat
+    const targetUrl = `/do/agent/?id=${agentId}#chat`;
+    const currentPath = window.location.pathname + window.location.search;
+    const targetPath = `/do/agent/?id=${agentId}`;
 
-  if (currentPath === targetPath) {
-    // Already on the agent page - manually trigger hash change and reload handling
-    window.location.hash = 'chat';
-    // Dispatch a custom event that agent.js can listen for
-    window.dispatchEvent(new CustomEvent('actionChatContextReady'));
+    if (currentPath === targetPath) {
+      // Already on the agent page - manually trigger hash change and reload handling
+      window.location.hash = 'chat';
+      // Dispatch a custom event that agent.js can listen for
+      window.dispatchEvent(new CustomEvent('actionChatContextReady'));
+    } else {
+      // Navigate to the agent page
+      window.location.href = targetUrl;
+    }
   } else {
-    // Navigate to the agent page
-    window.location.href = targetUrl;
+    // Route to EA (Executive Agent) with action context
+    window.location.href = `/do/ea/?action=${actionId}`;
   }
 }
 
@@ -271,5 +283,41 @@ async function completeActionFromModal() {
   } catch (error) {
     console.error('Error completing action:', error);
     alert(`Failed to complete action: ${error.message}`);
+  }
+}
+
+/**
+ * Delete action from modal (uses dismiss with standard reason)
+ */
+async function deleteActionFromModal() {
+  if (!currentAction) return;
+
+  // Confirm deletion
+  if (!confirm(`Delete "${currentAction.title}"? This cannot be undone.`)) {
+    return;
+  }
+
+  // Save ID before hiding modal (which clears currentAction)
+  const actionId = currentAction.id;
+
+  try {
+    const userId = getUserId();
+    const data = await apiDismissAction(actionId, userId, 'Deleted by user');
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to delete action');
+    }
+
+    hideActionModal();
+
+    // Call the completion callback if provided (to refresh the list)
+    if (onActionComplete) {
+      onActionComplete(actionId);
+    }
+
+    alert('Action deleted!');
+  } catch (error) {
+    console.error('Error deleting action:', error);
+    alert(`Failed to delete action: ${error.message}`);
   }
 }

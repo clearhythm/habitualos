@@ -21,7 +21,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content, projectId } = JSON.parse(event.body);
+    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content, projectId, dueDate } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -34,26 +34,39 @@ exports.handler = async (event) => {
       };
     }
 
-    if (!agentId || !title || !description) {
+    if (!title) {
       return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
-          error: 'agentId, title, and description are required'
+          error: 'title is required'
         })
       };
     }
 
-    // Verify agent ownership
-    const agent = await getAgent(agentId);
-    if (!agent || agent._userId !== userId) {
+    // Require at least agentId or projectId
+    if (!agentId && !projectId) {
       return {
-        statusCode: 404,
+        statusCode: 400,
         body: JSON.stringify({
           success: false,
-          error: 'Agent not found or access denied'
+          error: 'Either agentId or projectId is required'
         })
       };
+    }
+
+    // Verify agent ownership if agentId provided
+    if (agentId) {
+      const agent = await getAgent(agentId);
+      if (!agent || agent._userId !== userId) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({
+            success: false,
+            error: 'Agent not found or access denied'
+          })
+        };
+      }
     }
 
     // Validate projectId ownership if provided
@@ -72,16 +85,17 @@ exports.handler = async (event) => {
 
     const actionData = {
       _userId: userId,
-      agentId,
+      agentId: agentId || null,
       projectId: projectId || null,
       title,
-      description,
-      state: 'defined',  // State is 'defined' - ready for scheduling
+      description: description || '',
+      state: 'open',  // State is 'open' - ready for scheduling
       priority: priority || 'medium',
       taskType: taskType || 'scheduled',
       assignedTo: 'user',  // default to user assignment
       taskConfig: taskConfig || {},
       scheduleTime: null,
+      dueDate: dueDate || null,
       startedAt: null,
       completedAt: null,
       dismissedAt: null,

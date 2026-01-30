@@ -16,6 +16,7 @@ const API_ACTION_GET = `${API_BASE_URL}/action-get`;
 const API_ACTION_COMPLETE = `${API_BASE_URL}/action-complete`;
 const API_ACTION_DISMISS = `${API_BASE_URL}/action-dismiss`;
 const API_ACTION_GENERATE = `${API_BASE_URL}/action-generate`;
+const API_ACTION_DEFINE = `${API_BASE_URL}/action-define`;
 
 // -----------------------------
 // CRUD ACTIONS
@@ -93,6 +94,26 @@ export async function generateAction(actionId, userId, type, title) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type, title: title.trim() })
+  });
+  return response.json();
+}
+
+/**
+ * Create a new action
+ * @param {Object} data - Action data
+ * @param {string} data.userId - User ID
+ * @param {string} data.title - Action title
+ * @param {string} [data.description] - Action description
+ * @param {string} [data.agentId] - Agent ID (required if no projectId)
+ * @param {string} [data.projectId] - Project ID (required if no agentId)
+ * @param {string} [data.priority] - Priority: high, medium, low
+ * @returns {Promise<{success: boolean, action: Object}>}
+ */
+export async function createAction(data) {
+  const response = await fetch(API_ACTION_DEFINE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
   });
   return response.json();
 }
