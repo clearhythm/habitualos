@@ -1,21 +1,23 @@
 # Discovery Pipeline — Phase 4: Draft Reconciler
 
-> **Note**: This plan was drafted in a planning session and needs refinement — some assumptions about the feedback bug root cause may be incorrect. Verify actual Firestore data and agent chat logs before implementing the bug fix. The tool calling logging infrastructure (see `tool-calling-logging.md`) should be built first to provide visibility into what's happening.
+Converts reviewed Firestore drafts into markdown files on the local filesystem. ALL reviewed drafts become files — the scoring and annotation IS the data, not a gate. Both positively and negatively evaluated companies are written to build a comprehensive record.
+
+> **Note**: This phase covers local mode only. See [discovery-pipeline-github.md](./discovery-pipeline-github.md) for the GitHub API integration needed for production/mobile usage.
 
 ---
 
 ## Pre-requisite: Bug Fix — submit_draft_review not capturing feedback data
 
-**Problem**: When the agent reviews drafts via chat, `submit_draft_review` is called but feedback fields (score, feedback, user_tags) are empty in Firestore. The agent LLM isn't properly extracting/including the user's actual feedback when making the tool call.
+**Problem**: When the agent reviews drafts via chat, `submit_draft_review` is called but feedback fields (score, feedback, user_tags) are empty in Firestore. The LLM isn't properly extracting/including the user's actual feedback when making the tool call.
 
-**Suspected root causes** (needs verification with better logging):
+**Root causes**:
 1. No input validation in the tool handler — accepts undefined/empty values without complaint
 2. Review prompt isn't explicit enough about requiring real extracted values
 3. Agent chats aren't auto-saving after review tasks complete (loss of context)
 
-**Proposed fix (2 changes in `agent-chat.js`):**
+### Fix 1: Add validation in the tool handler
 
-### Fix 1: Add validation in the tool handler (line ~327)
+File: `netlify/functions/agent-chat.js` (around line 328)
 
 ```javascript
 if (name === 'submit_draft_review') {
@@ -31,21 +33,18 @@ if (name === 'submit_draft_review') {
   if (!feedback || typeof feedback !== 'string' || feedback.trim().length === 0) {
     return { error: 'Feedback summary is required. Summarize what the user said.' };
   }
-  if (!status || !['accepted', 'rejected'].includes(status)) {
-    return { error: 'Status must be "accepted" or "rejected".' };
-  }
+  // Note: status is now ignored - we always set to 'reviewed'
   // ... rest of handler
 ```
 
-### Fix 2: Strengthen the review context prompt (line ~690)
+### Fix 2: Strengthen the review context prompt
 
-Replace the current extraction instructions with:
+Update the review context prompt to be more explicit about extraction requirements:
 
 ```
 After the user shares their thoughts on each draft, use the submit_draft_review tool. You MUST include:
 - score: A number 0-10 based on the user's expressed interest. Very excited: 8-10. Interested but uncertain: 5-7. Not interested: 1-4.
 - feedback: A 1-2 sentence summary capturing the user's actual opinion in their own words. Never leave this empty.
-- status: "accepted" if score >= 5, "rejected" if score < 5
 - user_tags: Any relevant tags the user mentioned or that describe their sentiment
 
 Do NOT call submit_draft_review until the user has shared their opinion. Wait for their response first.
@@ -57,11 +56,7 @@ When all drafts are reviewed and the review action is completed, the chat should
 
 ---
 
-## Phase 4: Reconciler
-
-Converts reviewed Firestore drafts into markdown files on the filesystem. ALL reviewed drafts become files — the scoring and annotation IS the data, not a gate. Both positively and negatively evaluated companies are written to build a comprehensive record.
-
-### Status Model Change
+## Status Model Change
 
 **Old:** `pending` → `accepted` / `rejected` → `committed`
 **New:** `pending` → `reviewed` → `committed`
@@ -69,20 +64,17 @@ Converts reviewed Firestore drafts into markdown files on the filesystem. ALL re
 The user's sentiment is captured in feedback data (score, narrative, tags), not in the draft status. The status is purely a workflow stage.
 
 **Changes needed:**
-- `submit_draft_review` tool in `agent-chat.js`: change from setting status to `accepted`/`rejected` → set to `reviewed`
-- `reconcile()`: query drafts with `status: 'reviewed'` (not `accepted`)
+- `submit_draft_review` tool in `agent-chat.js`: always set status to `reviewed` (ignore the `status` param from LLM)
+- `reconcile()`: query drafts with `status: 'reviewed'` (plus legacy `accepted`/`rejected` for backcompat)
 - Draft schema comment updates in `db-agent-drafts.cjs`
 
-### Dual-Mode Write Strategy
+---
 
-- **Local mode** (`APP_ENV=local`): Write files directly via `agent-filesystem.cjs`
-- **Remote mode** (Netlify production): Commit files via GitHub API using Octokit
-
-Both modes share the same core logic. Mode detected automatically via `APP_ENV`.
+## Reconciler Implementation
 
 ### Files to Create
 
-**1. `netlify/functions/_utils/draft-reconciler.cjs`** — Core reconciliation logic
+**`netlify/functions/_utils/draft-reconciler.cjs`** — Core reconciliation logic
 
 Exports:
 - `reconcile({ userId? })` — Main entry. Returns `{ committed, skipped, errors, details }`
@@ -98,30 +90,26 @@ Reconciliation flow:
    c. Generate markdown (merge draft.data + feedback into YAML frontmatter)
    d. Compute relative path: `companies/{Slug}.md`
    e. Check if file already exists (dedup)
-   f. Write file (local fs or GitHub API depending on mode)
+   f. Write file via `agent-filesystem.cjs`
    g. Mark draft status as `committed` via `updateDraftStatus()`
 4. Return summary
 
-Local mode reuses `agent-filesystem.cjs`. Remote mode uses `github-commit.cjs`.
-
-**2. `netlify/functions/_utils/github-commit.cjs`** — GitHub API utility
-
-Exports:
-- `fileExists(repoRelativePath)` — Check via GitHub contents API
-- `commitFiles(files, message)` — Atomic commit via Git Data API
-
-Env vars: `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`
-
-**3. `netlify/functions/reconciler-run-background.js`** — Netlify background function
+**`netlify/functions/reconciler-run.js`** — HTTP endpoint for triggering reconciliation
 
 - POST with optional `{ userId }` body
-- Calls `reconcile()`, logs results
-- Returns 202 immediately
+- Calls `reconcile()`, returns results
+- Can be called manually or via scheduled trigger
 
 ### Files to Modify
 
-**`netlify/functions/_services/db-agent-drafts.cjs`** — Add:
+**`netlify/functions/_services/db-agent-drafts.cjs`** — Add query methods:
+
 ```javascript
+/**
+ * Get all drafts with a specific status
+ * @param {string} status - Status to filter by
+ * @returns {Promise<Array>} Array of drafts
+ */
 exports.getDraftsByStatus = async (status) => {
   return await dbCore.query({
     collection: 'agent-drafts',
@@ -129,6 +117,11 @@ exports.getDraftsByStatus = async (status) => {
   });
 };
 
+/**
+ * Get all drafts ready for reconciliation
+ * Includes 'reviewed' status + legacy 'accepted'/'rejected' for backcompat
+ * @returns {Promise<Array>} Array of drafts
+ */
 exports.getReconciledDrafts = async () => {
   const [reviewed, accepted, rejected] = await Promise.all([
     exports.getDraftsByStatus('reviewed'),
@@ -139,20 +132,26 @@ exports.getReconciledDrafts = async () => {
 };
 ```
 
-**`netlify/functions/agent-chat.js`** — Change `submit_draft_review` to set draft status to `reviewed` (not `accepted`/`rejected`)
+Also update schema comments to document the new `reviewed` status.
 
-**`netlify.toml`** — Add schedule: `[functions."reconciler-run-background"]` schedule = "0 7 * * *"
+**`netlify/functions/agent-chat.js`** — Change `submit_draft_review` to always set status to `reviewed`:
 
-**`package.json`** — Add `@octokit/rest`
+```javascript
+// Line ~358: Change from
+await updateDraftStatus(draftId, status);
+// to
+await updateDraftStatus(draftId, 'reviewed');
+```
 
-**`.env`** — Add `GITHUB_TOKEN`, `GITHUB_OWNER`, `GITHUB_REPO`
+---
 
-### Markdown Generation
+## Markdown Generation
 
-Field mapping:
+Field mapping from draft + feedback to YAML frontmatter:
+
 | Frontmatter field | Source |
 |---|---|
-| type | Hardcoded: `company` |
+| type | Hardcoded: `company` (or `draft.type`) |
 | name | `draft.data.name` |
 | domain | `draft.data.domain` |
 | stage | `draft.data.stage` |
@@ -166,30 +165,32 @@ Field mapping:
 | source | Hardcoded: `agent-discovery` |
 | discovered_at | `draft._createdAt` → ISO string |
 
-### Implementation Sequence
+---
 
-1. **Build tool calling logging** (see `tool-calling-logging.md`) — needed for debugging
-2. **Fix `agent-chat.js`** — Validation + stronger prompt + auto-save + status model change
-3. **Update `db-agent-drafts.cjs`** — Add `getDraftsByStatus()`, schema comments
-4. **Create `draft-reconciler.cjs`** — Core logic with local mode
-5. **Create `reconciler-run-background.js`** — Endpoint, test locally
-6. **Create `github-commit.cjs`** — GitHub API, wire into remote mode
-7. **Update `netlify.toml`**, `package.json`, `.env`
+## Implementation Sequence
 
-### Error Handling
+1. **Fix `agent-chat.js`** — Add validation + stronger prompt + status model change
+2. **Update `db-agent-drafts.cjs`** — Add `getDraftsByStatus()`, `getReconciledDrafts()`, update schema comments
+3. **Create `draft-reconciler.cjs`** — Core logic with local mode
+4. **Create `reconciler-run.js`** — HTTP endpoint for triggering
+
+---
+
+## Error Handling
 
 | Scenario | Behavior |
 |----------|----------|
 | Agent not found | Skip draft, log error, do NOT mark committed |
 | Agent has no `localDataPath` | Skip draft, log error |
 | Draft has no `data.name` | Skip draft, log error |
-| Feedback not found | Continue — user fields will be empty |
+| Feedback not found | Continue — user fields will be empty in output |
 | Local fs write fails | Skip draft, log error |
-| GitHub API fails | Fail entire batch (atomic), log error |
 | No reviewed drafts | Return `{ committed: 0 }`, not an error |
 | File already exists | Skip write, still mark as committed |
 
-### Key Files Reference
+---
+
+## Key Files Reference
 
 | File | Role |
 |------|------|
@@ -198,4 +199,4 @@ Field mapping:
 | `netlify/functions/_services/db-agents.cjs` | getAgent for localDataPath lookup |
 | `netlify/functions/_utils/agent-filesystem.cjs` | Local file writes (reused as-is) |
 | `netlify/functions/agent-chat.js` | submit_draft_review tool (status + validation) |
-| `data/careerlaunch-agent-mk3jq2dqjbfy/_templates/company.md` | YAML frontmatter schema |
+| `data/careerlaunch-agent-mk3jq2dqjbfy/_templates/company.md` | YAML frontmatter schema reference |

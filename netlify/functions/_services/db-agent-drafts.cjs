@@ -9,6 +9,8 @@
 //   - createDraft(data) - Create a new draft
 //   - getDraftById(draftId) - Get single draft by ID
 //   - getDraftsByAgent(agentId, userId, filters?) - Get drafts for an agent
+//   - getDraftsByStatus(status) - Get all drafts with a specific status
+//   - getReconciledDrafts() - Get all drafts ready for reconciliation
 //   - updateDraft(draftId, updates) - Update draft fields
 //   - updateDraftStatus(draftId, status) - Convenience status update
 //
@@ -18,7 +20,8 @@
 //     _userId: "u-...",
 //     agentId: "agent-...",
 //     type: "company",              // company | person | article | job
-//     status: "pending",            // pending | accepted | rejected | committed
+//     status: "pending",            // pending | reviewed | committed
+//                                   // (legacy: accepted | rejected - treated as 'reviewed')
 //     data: {                       // type-specific payload
 //       name: "Spring Health",
 //       domain: "springhealth.com",
@@ -27,6 +30,10 @@
 //     _createdAt: Firestore timestamp,
 //     _updatedAt: Firestore timestamp
 //   }
+//
+// Status Flow:
+//   pending -> reviewed -> committed
+//   User sentiment is captured in user-feedback collection, not in status.
 // ------------------------------------------------------
 
 const dbCore = require('./db-core.cjs');
@@ -145,4 +152,30 @@ exports.updateDraft = async (draftId, updates) => {
  */
 exports.updateDraftStatus = async (draftId, status) => {
   return await exports.updateDraft(draftId, { status });
+};
+
+/**
+ * Get all drafts with a specific status
+ * @param {string} status - Status to filter by (pending, reviewed, committed)
+ * @returns {Promise<Array>} Array of drafts
+ */
+exports.getDraftsByStatus = async (status) => {
+  return await dbCore.query({
+    collection: 'agent-drafts',
+    where: `status::eq::${status}`
+  });
+};
+
+/**
+ * Get all drafts ready for reconciliation
+ * Includes 'reviewed' status + legacy 'accepted'/'rejected' for backcompat
+ * @returns {Promise<Array>} Array of drafts ready to be committed to filesystem
+ */
+exports.getReconciledDrafts = async () => {
+  const [reviewed, accepted, rejected] = await Promise.all([
+    exports.getDraftsByStatus('reviewed'),
+    exports.getDraftsByStatus('accepted'),
+    exports.getDraftsByStatus('rejected')
+  ]);
+  return [...reviewed, ...accepted, ...rejected];
 };

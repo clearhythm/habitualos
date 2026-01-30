@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent, incrementAgentActionCount } = require('./_services/db-agents.cjs');
-const { getActionsByAgent, getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { getActionsByUserId, getAction, updateActionState } = require('./_services/db-actions.cjs');
 const { createNote, getNotesByAgent, getNoteById, updateNote } = require('./_services/db-agent-notes.cjs');
 const { getDraftsByAgent, updateDraftStatus } = require('./_services/db-agent-drafts.cjs');
 const { createFeedback } = require('./_services/db-user-feedback.cjs');
@@ -326,10 +326,24 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
   }
 
   if (name === 'submit_draft_review') {
-    const { draftId, score, feedback, status, user_tags } = input;
+    const { draftId, score, feedback, user_tags } = input;
 
+    // Validate draft ID
     if (!draftId || !draftId.startsWith('draft-')) {
       return { error: 'Invalid draft ID format' };
+    }
+
+    // Validate score - must be a number 0-10
+    if (score === undefined || score === null || typeof score !== 'number') {
+      return { error: 'Score is required (0-10). Extract from user conversation based on their expressed interest level.' };
+    }
+    if (score < 0 || score > 10) {
+      return { error: 'Score must be between 0 and 10.' };
+    }
+
+    // Validate feedback - must be non-empty string
+    if (!feedback || typeof feedback !== 'string' || feedback.trim().length === 0) {
+      return { error: 'Feedback summary is required. Summarize what the user said about this recommendation.' };
     }
 
     // Get the draft to find its type
@@ -342,6 +356,9 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
       return { error: 'Access denied' };
     }
 
+    // Derive status from score for feedback record (for analytics)
+    const derivedStatus = score >= 5 ? 'accepted' : 'rejected';
+
     // Create feedback record
     const feedbackRecord = await createFeedback({
       _userId: userId,
@@ -350,17 +367,19 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
       type: draft.type,
       score: score,
       feedback: feedback,
-      status: status,
+      status: derivedStatus,
       user_tags: user_tags || []
     });
 
-    // Update draft status
-    await updateDraftStatus(draftId, status);
+    // Update draft status to 'reviewed' (workflow stage, not sentiment)
+    await updateDraftStatus(draftId, 'reviewed');
 
     return {
       success: true,
       feedbackId: feedbackRecord.id,
-      draftStatus: status
+      draftStatus: 'reviewed',
+      derivedStatus: derivedStatus,
+      shouldSaveChat: true  // Signal to frontend to auto-save chat
     };
   }
 
@@ -433,13 +452,13 @@ exports.handler = async (event) => {
       };
     }
 
-    // Fetch active actions for this agent (to include in system prompt)
+    // Fetch all active actions for user (to include in system prompt)
     log('info', '[agent-chat] Fetching active actions');
-    const allAgentActions = await getActionsByAgent(agentId, userId);
-    const openActions = allAgentActions.filter(a =>
-      ['defined', 'scheduled', 'in_progress'].includes(a.state)
+    const allUserActions = await getActionsByUserId(userId);
+    const openActions = allUserActions.filter(a =>
+      ['open', 'defined', 'scheduled', 'in_progress'].includes(a.state)
     );
-    log('info', `[agent-chat] Found ${openActions.length} open actions for agent`);
+    log('info', `[agent-chat] Found ${openActions.length} open actions for user`);
     tracker.context('open_actions', { count: openActions.length });
 
     // Load agent overview doc for strategic context
@@ -696,11 +715,20 @@ Present each draft naturally in conversation. For each:
 - Share your fit score and reasoning
 - Ask the user what they think
 
-After the user shares their thoughts on each draft, use the submit_draft_review tool to record their feedback. Extract:
-- A score (0-10) based on their expressed interest level
-- A summary of their feedback in their own words
-- Whether they accept or reject the recommendation
-- Any tags they mention or imply
+**CRITICAL: Recording User Feedback**
+After the user shares their thoughts on each draft, you MUST use submit_draft_review with real extracted values:
+
+- **score** (REQUIRED): A number 0-10 based on the user's expressed interest level:
+  - 8-10: User is very excited, wants to pursue this
+  - 5-7: User is interested but has reservations
+  - 1-4: User is not interested or has significant concerns
+  - 0: User explicitly rejects or dislikes the recommendation
+
+- **feedback** (REQUIRED): A 1-2 sentence summary capturing the user's actual opinion in their own words. NEVER leave this empty or generic.
+
+- **user_tags** (optional): Any relevant tags the user mentioned or that describe their sentiment (e.g., "too-large", "great-mission", "remote-friendly")
+
+Do NOT call submit_draft_review until the user has shared their opinion. Wait for their response first.
 
 Be conversational, not formulaic. Don't present all drafts at once — go through them one at a time unless the user asks to see them all.
 
@@ -967,17 +995,16 @@ ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, status: d.sta
         },
         {
           name: "submit_draft_review",
-          description: "Submit the user's review feedback for a specific content draft",
+          description: "Submit the user's review feedback for a specific content draft. Extract real values from the conversation - do not use placeholders or generic text.",
           input_schema: {
             type: "object",
             properties: {
-              draftId: { type: "string", description: "The draft ID to review" },
-              score: { type: "number", description: "User's fit score 0-10" },
-              feedback: { type: "string", description: "User's narrative feedback" },
-              status: { type: "string", enum: ["accepted", "rejected"], description: "Accept or reject" },
-              user_tags: { type: "array", items: { type: "string" }, description: "Optional user-applied tags" }
+              draftId: { type: "string", description: "The draft ID being reviewed" },
+              score: { type: "number", description: "User's fit score 0-10 based on their expressed interest (8-10: excited, 5-7: interested with reservations, 1-4: not interested, 0: rejected)" },
+              feedback: { type: "string", description: "1-2 sentence summary of the user's actual opinion in their own words. NEVER leave empty." },
+              user_tags: { type: "array", items: { type: "string" }, description: "Tags the user mentioned or that describe their sentiment" }
             },
-            required: ["draftId", "score", "feedback", "status"]
+            required: ["draftId", "score", "feedback"]
           }
         }
       );
