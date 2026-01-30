@@ -15,8 +15,10 @@
 //     id: "project-abc123",
 //     _userId: "u-xyz789",
 //     name: "Career Launch",
-//     goal: "Get a job by March",
-//     status: "active",  // active, paused, completed
+//     description: "Finding a new role in product management",
+//     success_criteria: ["Land 3 interviews", "Get an offer by March"],
+//     timeline: "2025-03-31" or "ongoing",
+//     status: "open" | "completed" | "archived" | "deleted",
 //     _createdAt: Firestore timestamp,
 //     _updatedAt: Firestore timestamp
 //   }
@@ -66,7 +68,7 @@ exports.createProject = async (id, data) => {
     id: formattedId,
     data: {
       ...data,
-      status: data.status || 'active'
+      status: data.status || 'open'
     }
   });
 

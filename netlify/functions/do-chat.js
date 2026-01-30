@@ -17,27 +17,28 @@ async function handleToolCall(toolBlock, userId) {
   const { name, input } = toolBlock;
 
   if (name === 'create_project') {
-    const { name: projectName, goal, status } = input;
+    const { name: projectName, description, success_criteria, timeline, status } = input;
 
     if (!projectName) {
       return { error: 'Project name is required' };
     }
 
     const projectId = generateProjectId();
-    await createProject(projectId, {
+    const projectData = {
       _userId: userId,
       name: projectName,
-      goal: goal || '',
-      status: status || 'active'
-    });
+      description: description || '',
+      success_criteria: success_criteria || [],
+      timeline: timeline || 'ongoing',
+      status: status || 'open'
+    };
+    await createProject(projectId, projectData);
 
     return {
       success: true,
       project: {
         id: projectId,
-        name: projectName,
-        goal: goal || '',
-        status: status || 'active'
+        ...projectData
       },
       message: `Created project "${projectName}"`
     };
@@ -61,8 +62,10 @@ async function handleToolCall(toolBlock, userId) {
     // Build safe updates
     const safeUpdates = {};
     if (updates.name) safeUpdates.name = updates.name;
-    if (updates.goal !== undefined) safeUpdates.goal = updates.goal;
-    if (updates.status && ['active', 'paused', 'completed'].includes(updates.status)) {
+    if (updates.description !== undefined) safeUpdates.description = updates.description;
+    if (updates.success_criteria !== undefined) safeUpdates.success_criteria = updates.success_criteria;
+    if (updates.timeline !== undefined) safeUpdates.timeline = updates.timeline;
+    if (updates.status && ['open', 'completed', 'archived', 'deleted'].includes(updates.status)) {
       safeUpdates.status = updates.status;
     }
 
@@ -140,7 +143,7 @@ exports.handler = async (event) => {
 
     // Build context strings
     const projectsContext = projects.length > 0
-      ? projects.map(p => `- ${p.name} (${p.id}): ${p.goal || 'No goal set'} [${p.status || 'active'}]`).join('\n')
+      ? projects.map(p => `- ${p.name} (${p.id}): ${p.description || 'No description'} [${p.status || 'open'}]`).join('\n')
       : 'No projects yet';
 
     const agentsContext = activeAgents.length > 0
@@ -220,14 +223,17 @@ YOUR CAPABILITIES:
 PROJECT MANAGEMENT TOOLS:
 You have access to these tools:
 
-1. create_project(name, goal?, status?) - Create a new project
+1. create_project(name, description?, success_criteria?, timeline?, status?) - Create a new project
    - Use when user discusses a new initiative, area of focus, or project
-   - Goal should capture what success looks like
-   - Status defaults to "active"
+   - description: Brief description of the project
+   - success_criteria: Array of specific outcomes that define success
+   - timeline: Target date (YYYY-MM-DD) or "ongoing" for indefinite projects
+   - Status defaults to "open"
    - After creating, mention the project naturally and include a link: [Project Name](/do/projects)
 
 2. update_project(project_id, updates) - Update an existing project
-   - Can update: name, goal, status (active/paused/completed)
+   - Can update: name, description, success_criteria, timeline, status
+   - Status values: open, completed, archived, deleted
    - Use when user wants to refine a project's focus or change its status
 
 When to create projects:
@@ -272,14 +278,23 @@ CONVERSATIONAL APPROACH:
               type: "string",
               description: "Project name (concise, 2-5 words)"
             },
-            goal: {
+            description: {
               type: "string",
-              description: "What success looks like for this project"
+              description: "Brief description of what this project is about"
+            },
+            success_criteria: {
+              type: "array",
+              items: { type: "string" },
+              description: "List of specific outcomes that define success"
+            },
+            timeline: {
+              type: "string",
+              description: "Target date (YYYY-MM-DD) or 'ongoing' for indefinite projects"
             },
             status: {
               type: "string",
-              enum: ["active", "paused", "completed"],
-              description: "Project status (default: active)"
+              enum: ["open", "completed", "archived", "deleted"],
+              description: "Project status (default: open)"
             }
           },
           required: ["name"]
@@ -300,10 +315,12 @@ CONVERSATIONAL APPROACH:
               description: "Fields to update",
               properties: {
                 name: { type: "string", description: "New project name" },
-                goal: { type: "string", description: "Updated goal" },
+                description: { type: "string", description: "Updated description" },
+                success_criteria: { type: "array", items: { type: "string" }, description: "Updated success criteria" },
+                timeline: { type: "string", description: "Updated timeline (YYYY-MM-DD or 'ongoing')" },
                 status: {
                   type: "string",
-                  enum: ["active", "paused", "completed"],
+                  enum: ["open", "completed", "archived", "deleted"],
                   description: "New status"
                 }
               }

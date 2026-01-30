@@ -16,7 +16,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, name, goal, status } = JSON.parse(event.body);
+    const { userId, name, description, success_criteria, timeline, status } = JSON.parse(event.body);
 
     // Validate userId
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -39,12 +39,15 @@ exports.handler = async (event) => {
 
     // Create project in Firestore
     const projectId = generateProjectId();
-    const result = await createProject(projectId, {
+    const projectData = {
       _userId: userId,
       name,
-      goal: goal || '',
-      status: status || 'active'
-    });
+      description: description || '',
+      success_criteria: success_criteria || [],
+      timeline: timeline || 'ongoing',
+      status: status || 'open'
+    };
+    const result = await createProject(projectId, projectData);
 
     return {
       statusCode: 200,
@@ -55,9 +58,7 @@ exports.handler = async (event) => {
         success: true,
         project: {
           id: result.id,
-          name,
-          goal: goal || '',
-          status: status || 'active'
+          ...projectData
         }
       })
     };
