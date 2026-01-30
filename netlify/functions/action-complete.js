@@ -2,6 +2,8 @@ require('dotenv').config();
 const { getAction, updateActionState, createAction } = require('./_services/db-actions.cjs');
 const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
 const { generateActionId } = require('./_utils/data-utils.cjs');
+const { createWorkLog, getWorkLogsByUserId } = require('./_services/db-work-logs.cjs');
+const { shouldEAAppear, generateEAMessage } = require('./_utils/ea-appearance.cjs');
 
 /**
  * POST /api/action/:id/complete?userId=u-abc123
@@ -78,6 +80,39 @@ exports.handler = async (event) => {
       }
     }
 
+    // Get recent logs for EA decision
+    let recentLogs = [];
+    let workLogCount = 0;
+    try {
+      recentLogs = await getWorkLogsByUserId(userId);
+      workLogCount = recentLogs.length;
+    } catch (error) {
+      console.log('No existing work logs found');
+    }
+
+    // Check if EA should appear
+    const { shouldAppear, reason } = shouldEAAppear(workLogCount, recentLogs);
+
+    // Generate EA message if appearing
+    let eaMessage = null;
+    if (shouldAppear) {
+      eaMessage = await generateEAMessage(reason, action.title, workLogCount);
+    }
+
+    // Create work-log entry for this completed action
+    const workLogData = {
+      _userId: userId,
+      actionId: actionId,
+      title: action.title
+    };
+    if (action.projectId) {
+      workLogData.projectId = action.projectId;
+    }
+    if (action.agentId) {
+      workLogData.agentId = action.agentId;
+    }
+    await createWorkLog(null, workLogData);
+
     // Check for recurrence configuration and create next instance
     if (action.taskConfig?.recurrence?.type === 'daily') {
       const tomorrow = new Date();
@@ -138,7 +173,8 @@ exports.handler = async (event) => {
       },
       body: JSON.stringify({
         success: true,
-        action: actionWithDates
+        action: actionWithDates,
+        ea: shouldAppear ? { message: eaMessage } : null
       })
     };
 

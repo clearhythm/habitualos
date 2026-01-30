@@ -15,9 +15,10 @@
 //     id: "w-1706550000000-abc123",
 //     _userId: "u-xyz789",
 //     projectId: "project-abc123",  // optional
+//     actionId: "action-abc123",    // optional - if from action completion
+//     agentId: "agent-abc123",      // optional - if agent completed
 //     title: "Resume formatting",
 //     duration: 45,  // minutes, optional
-//     reflection: "...",  // optional
 //     _createdAt: Firestore timestamp
 //   }
 // ------------------------------------------------------

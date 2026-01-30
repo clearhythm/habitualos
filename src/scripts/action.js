@@ -370,6 +370,10 @@ function initActionControls() {
         const data = await response.json();
 
         if (data.success) {
+          // Store EA message if present
+          if (data.ea?.message) {
+            sessionStorage.setItem('pending_ea_message', data.ea.message);
+          }
           window.location.href = '/do/';
         } else {
           alert('Failed to mark action as complete.');
