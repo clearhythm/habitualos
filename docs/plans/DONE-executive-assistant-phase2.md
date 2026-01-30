@@ -59,7 +59,7 @@ Your Projects
 **Rank system** (work-focused):
 ```javascript
 function getRank(workLogs) {
-  if (workLogs <= 2) return { emoji: '🌱', name: 'Starting' };
+  if (workLogs <= 2) return { emoji: '✨', name: 'Starting' };
   if (workLogs <= 5) return { emoji: '🚀', name: 'Building Momentum' };
   if (workLogs <= 10) return { emoji: '⚡', name: 'Gaining Traction' };
   if (workLogs <= 20) return { emoji: '🔥', name: 'On Fire' };

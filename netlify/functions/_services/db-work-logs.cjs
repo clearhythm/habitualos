@@ -15,7 +15,7 @@
 //     id: "w-1706550000000-abc123",
 //     _userId: "u-xyz789",
 //     projectId: "project-abc123",  // optional
-//     title: "Worked on resume formatting",
+//     title: "Resume formatting",
 //     duration: 45,  // minutes, optional
 //     reflection: "...",  // optional
 //     _createdAt: Firestore timestamp

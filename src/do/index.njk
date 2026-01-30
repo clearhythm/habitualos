@@ -29,8 +29,8 @@ permalink: /do/
            onmouseover="this.style.borderColor='#0066cc'"
            onmouseout="this.style.borderColor='#ddd'">
         <div style="font-size: 3rem; margin-bottom: 1rem;">🖱️</div>
-        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Log Work</h2>
-        <p style="color: #666; margin: 0;">Track what you did.<br/>Build your momentum.</p>
+        <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">Log Session</h2>
+        <p style="color: #666; margin: 0;">Track what you did.<br/>Visualize your progress.</p>
       </div>
     </a>
   </div>
@@ -75,7 +75,7 @@ permalink: /do/
     <!-- Work Logs Stat -->
     <div style="text-align: center; color: inherit; cursor: default;">
       <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="worklogs-count">--</div>
-      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">work logs</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">sessions</div>
       <div class="stat-link disabled" style="font-size: 0.85rem; color: #999;">view &gt;</div>
     </div>
 
@@ -83,11 +83,11 @@ permalink: /do/
     <div class="stat-divider" style="width: 1px; height: 60px; background: #ddd;"></div>
 
     <!-- Projects Stat -->
-    <div style="text-align: center; color: inherit; cursor: default;">
+    <a href="/do/projects/" style="text-decoration: none; text-align: center; color: inherit;">
       <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="projects-count">--</div>
       <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">projects</div>
-      <div class="stat-link disabled" style="font-size: 0.85rem; color: #999;">view &gt;</div>
-    </div>
+      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+    </a>
   </div>
 </div>
 
@@ -100,7 +100,7 @@ permalink: /do/
   // Calculate rank based on work logs
   function getRank(workLogs) {
     if (workLogs <= 2) {
-      return { emoji: '\u{1F331}', name: 'Starting' };
+      return { emoji: '⛰️', name: 'Starting' };
     } else if (workLogs <= 5) {
       return { emoji: '\u{1F680}', name: 'Building Momentum' };
     } else if (workLogs <= 10) {

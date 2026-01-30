@@ -1,0 +1,191 @@
+---
+title: Projects - HabitualOS
+layout: base.njk
+permalink: /do/projects/
+---
+
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 style="margin: 0;">Projects</h1>
+  </div>
+
+  <div id="loading" style="text-align: center; padding: 3rem; color: #666;">
+    Loading projects...
+  </div>
+
+  <div id="empty-state" style="display: none; text-align: center; padding: 3rem; color: #666;">
+    <p style="font-size: 1.1rem; margin-bottom: 1rem;">No projects yet</p>
+  </div>
+
+  <div id="projects-list" style="display: none; display: flex; flex-direction: column; gap: 1rem;"></div>
+</div>
+
+<style>
+  .project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .project-item:hover {
+    border-color: #0066cc;
+    background: #f8fafc;
+    text-decoration: none !important;
+  }
+
+  .project-info {
+    flex: 1;
+  }
+
+  .project-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #333;
+  }
+
+  .project-meta {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .project-status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .status-open {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status-completed {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-archived {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  /* Dark mode */
+  html[data-theme="dark"] .project-item {
+    border-color: #374151;
+    background: transparent;
+  }
+
+  html[data-theme="dark"] .project-item:hover {
+    border-color: #60a5fa;
+    background: #1f2937;
+  }
+
+  html[data-theme="dark"] .project-name {
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] .project-meta {
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] .status-open {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+
+  html[data-theme="dark"] .status-completed {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  html[data-theme="dark"] .status-archived {
+    background: #374151;
+    color: #9ca3af;
+  }
+</style>
+
+<script type="module">
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { listProjects } from '/assets/js/api/projects.js';
+
+  initializeUser();
+  const userId = getUserId();
+
+  const loadingEl = document.getElementById('loading');
+  const emptyEl = document.getElementById('empty-state');
+  const listEl = document.getElementById('projects-list');
+
+  function formatTimeline(timeline) {
+    if (!timeline) return null;
+    if (timeline === 'ongoing') return 'Ongoing';
+    const date = new Date(timeline);
+    if (isNaN(date.getTime())) return timeline;
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  }
+
+  function truncate(str, maxLen) {
+    if (!str) return '';
+    return str.length > maxLen ? str.slice(0, maxLen) + '...' : str;
+  }
+
+  async function loadProjects() {
+    try {
+      const data = await listProjects(userId);
+
+      loadingEl.style.display = 'none';
+
+      if (!data.success || !data.projects || data.projects.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+
+      // Sort by status (open first) then by creation date (newest first)
+      const projects = data.projects.sort((a, b) => {
+        if (a.status === 'open' && b.status !== 'open') return -1;
+        if (a.status !== 'open' && b.status === 'open') return 1;
+        return new Date(b._createdAt) - new Date(a._createdAt);
+      });
+
+      listEl.style.display = 'flex';
+
+      projects.forEach(project => {
+        const item = document.createElement('a');
+        item.className = 'project-item';
+        item.href = `/do/project/?id=${project.id}`;
+
+        const statusClass = project.status === 'open' ? 'status-open' :
+                           project.status === 'completed' ? 'status-completed' : 'status-archived';
+
+        const timeline = formatTimeline(project.timeline);
+        const description = truncate(project.description, 60);
+        const metaParts = [description, timeline].filter(Boolean);
+
+        item.innerHTML = `
+          <div class="project-info">
+            <h3 class="project-name">${project.name || 'Untitled Project'}</h3>
+            ${metaParts.length > 0 ? `<div class="project-meta">${metaParts.join(' &bull; ')}</div>` : ''}
+          </div>
+          <span class="project-status ${statusClass}">${project.status}</span>
+        `;
+
+        listEl.appendChild(item);
+      });
+
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      loadingEl.textContent = 'Error loading projects';
+    }
+  }
+
+  loadProjects();
+</script>

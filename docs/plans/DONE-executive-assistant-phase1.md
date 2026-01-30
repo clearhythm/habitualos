@@ -53,7 +53,7 @@ This phase builds the data layer and EA agent logic. No UI changes yet.
 {
   id: "w-{timestamp}-{random}",
   projectId: "project-xxx", // optional
-  title: "Worked on resume formatting",
+  title: "Resume formatting",
   duration: 45, // minutes, optional
   reflection: "...", // optional
   _userId: "u-xxx",
