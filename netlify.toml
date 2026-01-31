@@ -3,6 +3,11 @@
   publish = "_site"
   functions = "netlify/functions"
 
+[dev]
+  command = "npm run dev"
+  targetPort = 8080
+  autoLaunch = false
+
 [functions]
   node_bundler = "esbuild"
   # Include docs directory in function bundle
