@@ -19,6 +19,7 @@
 //     _userId: "u-xyz789",
 //     agentId: "agent-abc123",
 //     projectId: "project-abc123" | null,  // Optional direct project assignment
+//     goalId: "goal-abc123" | null,        // Optional goal within project
 //     title: "Create database schema",
 //     description: "Design and implement...",
 //     state: "open",  // "open", "in_progress", "completed", "dismissed"

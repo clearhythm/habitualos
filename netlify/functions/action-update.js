@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getAction, updateAction } = require('./_services/db-actions.cjs');
 const { getProject } = require('./_services/db-projects.cjs');
+const { getGoal } = require('./_services/db-goals.cjs');
 
 /**
  * POST /api/action-update
@@ -19,7 +20,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { actionId, title, description, priority, projectId, taskConfig } = JSON.parse(event.body);
+    const { actionId, title, description, priority, projectId, goalId, taskConfig } = JSON.parse(event.body);
 
     if (!actionId) {
       return {
@@ -74,12 +75,29 @@ exports.handler = async (event) => {
       }
     }
 
+    // Validate goalId ownership if provided (null is allowed to unassign from goal)
+    let resolvedProjectId = projectId;
+    if (goalId !== undefined && goalId !== null) {
+      const goal = await getGoal(goalId);
+      if (!goal || goal._userId !== userId) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ success: false, error: 'Invalid goal' })
+        };
+      }
+      // When setting goalId, auto-set projectId to match goal's project
+      if (resolvedProjectId === undefined) {
+        resolvedProjectId = goal.projectId;
+      }
+    }
+
     // Build updates object (only include provided fields)
     const updates = {};
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (priority !== undefined) updates.priority = priority;
-    if (projectId !== undefined) updates.projectId = projectId;
+    if (resolvedProjectId !== undefined) updates.projectId = resolvedProjectId;
+    if (goalId !== undefined) updates.goalId = goalId;
     if (taskConfig !== undefined) updates.taskConfig = taskConfig;
 
     // Update action

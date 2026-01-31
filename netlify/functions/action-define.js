@@ -2,6 +2,7 @@ require('dotenv').config();
 const { getAgent } = require('./_services/db-agents.cjs');
 const { createAction, getAction } = require('./_services/db-actions.cjs');
 const { getProject } = require('./_services/db-projects.cjs');
+const { getGoal } = require('./_services/db-goals.cjs');
 const { generateActionId } = require('./_utils/data-utils.cjs');
 
 /**
@@ -21,7 +22,7 @@ exports.handler = async (event) => {
 
   try {
     // Parse request body
-    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content, projectId, dueDate } = JSON.parse(event.body);
+    const { userId, agentId, title, description, priority, taskType, taskConfig, type, content, projectId, goalId, dueDate } = JSON.parse(event.body);
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -44,15 +45,36 @@ exports.handler = async (event) => {
       };
     }
 
-    // Require at least agentId or projectId
-    if (!agentId && !projectId) {
+    // Require at least agentId, projectId, or goalId
+    if (!agentId && !projectId && !goalId) {
       return {
         statusCode: 400,
         body: JSON.stringify({
           success: false,
-          error: 'Either agentId or projectId is required'
+          error: 'Either agentId, projectId, or goalId is required'
         })
       };
+    }
+
+    // If goalId provided, look up goal to get projectId
+    let resolvedProjectId = projectId;
+    let resolvedGoalId = goalId || null;
+
+    if (goalId) {
+      const goal = await getGoal(goalId);
+      if (!goal || goal._userId !== userId) {
+        return {
+          statusCode: 404,
+          body: JSON.stringify({
+            success: false,
+            error: 'Goal not found or access denied'
+          })
+        };
+      }
+      // Use goal's projectId if not explicitly provided
+      if (!resolvedProjectId) {
+        resolvedProjectId = goal.projectId;
+      }
     }
 
     // Verify agent ownership if agentId provided
@@ -70,8 +92,8 @@ exports.handler = async (event) => {
     }
 
     // Validate projectId ownership if provided
-    if (projectId) {
-      const project = await getProject(projectId);
+    if (resolvedProjectId) {
+      const project = await getProject(resolvedProjectId);
       if (!project || project._userId !== userId) {
         return {
           statusCode: 403,
@@ -86,7 +108,8 @@ exports.handler = async (event) => {
     const actionData = {
       _userId: userId,
       agentId: agentId || null,
-      projectId: projectId || null,
+      projectId: resolvedProjectId || null,
+      goalId: resolvedGoalId,
       title,
       description: description || '',
       state: 'open',  // State is 'open' - ready for scheduling

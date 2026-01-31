@@ -1,0 +1,314 @@
+---
+title: Goal - HabitualOS
+layout: base.njk
+permalink: /do/goal/
+pageScript: /scripts/goal.js
+---
+
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="margin-bottom: 1.5rem;">
+    <a id="back-link" href="/do/projects/" style="color: #6b7280; text-decoration: none; font-size: 0.95rem;">&larr; Back to Projects</a>
+  </div>
+
+  <div id="loading" style="text-align: center; padding: 3rem; color: #666;">
+    Loading goal...
+  </div>
+
+  <div id="error-state" style="display: none; text-align: center; padding: 3rem;">
+    <p style="font-size: 1.1rem; color: #dc2626; margin-bottom: 1rem;">Goal not found</p>
+    <a href="/do/projects/" style="color: #0066cc;">Back to Projects</a>
+  </div>
+
+  <div id="goal-detail" style="display: none;">
+    {# Centered Header #}
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <h1 id="goal-title" style="margin: 0 0 0.5rem 0; font-size: 1.75rem; font-weight: 600;"></h1>
+      <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center; margin-bottom: 0.5rem;">
+        <span id="goal-state" class="goal-state"></span>
+      </div>
+      <p id="goal-description" style="margin: 0 auto; max-width: 600px; color: #666; font-size: 0.9rem; line-height: 1.4;"></p>
+      <div id="parent-project" style="margin-top: 0.5rem; font-size: 0.9rem;">
+        <span style="color: #6b7280;">Project:</span>
+        <a id="project-link" href="#" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;"></a>
+      </div>
+    </div>
+
+    {# Progress Section #}
+    <div class="goal-card" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <h3 style="margin: 0; font-size: 0.9rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Progress</h3>
+        <span id="progress-text" style="font-size: 0.9rem; font-weight: 600;"></span>
+      </div>
+      <div style="background: #e5e7eb; border-radius: 4px; height: 8px; overflow: hidden;">
+        <div id="progress-bar" style="background: #2563eb; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+      </div>
+    </div>
+
+    {# View Navigation #}
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; padding: 0.75rem 0;">
+      <a href="#open" class="view-link active" data-view="open" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
+        <span id="open-count">0</span> open
+      </a>
+      <span style="color: #ddd;">|</span>
+      <a href="#completed" class="view-link" data-view="completed" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+        <span id="completed-count">0</span> completed
+      </a>
+    </div>
+
+    {# Open Actions View (Default) #}
+    <div id="view-open" class="goal-view">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <button id="add-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">+ Add Action</button>
+      </div>
+      <div id="open-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">No open actions</p>
+        <p style="font-size: 0.9rem;">Click "Add Action" to create one.</p>
+      </div>
+      <div id="open-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+    </div>
+
+    {# Completed Actions View #}
+    <div id="view-completed" class="goal-view" style="display: none;">
+      <div id="completed-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">No completed actions</p>
+      </div>
+      <div id="completed-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+    </div>
+
+    {# Goal Actions #}
+    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <button id="edit-goal-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Edit Goal</button>
+        <button id="complete-goal-btn" style="padding: 0.5rem 1rem; background: #dcfce7; color: #166534; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Mark Complete</button>
+        <button id="archive-goal-btn" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #6b7280; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Archive</button>
+      </div>
+    </div>
+  </div>
+
+  {# Edit Goal Modal #}
+  <div id="edit-goal-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="max-width: 500px; margin: 4rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Edit Goal</h3>
+        <button id="close-edit-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; color: #9ca3af;">&times;</button>
+      </div>
+      <form id="edit-goal-form" style="padding: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+          <label for="edit-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Title</label>
+          <input type="text" id="edit-title" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label for="edit-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Description <span style="color: #9ca3af; font-weight: normal;">(optional)</span></label>
+          <textarea id="edit-description" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" id="cancel-edit" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+          <button type="submit" id="submit-edit" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# Add Action Modal #}
+  <div id="add-action-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="max-width: 500px; margin: 4rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Add Action</h3>
+        <button id="close-add-action-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; color: #9ca3af;">&times;</button>
+      </div>
+      <form id="add-action-form" style="padding: 1.5rem;">
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <div style="flex: 2;">
+            <label for="action-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Title</label>
+            <input type="text" id="action-title" name="title" required placeholder="What needs to be done?" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
+          </div>
+          <div style="flex: 1;">
+            <label for="action-due-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Due Date <span style="color: #9ca3af; font-weight: normal;">(opt)</span></label>
+            <input type="date" id="action-due-date" name="dueDate" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box; font-family: inherit;">
+          </div>
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label for="action-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Description <span style="color: #9ca3af; font-weight: normal;">(optional)</span></label>
+          <textarea id="action-description" name="description" rows="3" placeholder="Add details..." style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" id="cancel-add-action" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+          <button type="submit" id="submit-add-action" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">Add Action</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .goal-card {
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fafafa;
+  }
+
+  .goal-state {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .state-active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .state-completed {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .state-archived {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+
+  .view-link {
+    transition: color 0.2s;
+  }
+
+  .view-link:hover {
+    color: #2563eb !important;
+  }
+
+  .view-link.active {
+    color: #2563eb !important;
+  }
+
+  .action-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .action-item:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+  }
+
+  .item-info {
+    flex: 1;
+  }
+
+  .item-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #111;
+  }
+
+  .item-meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .item-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .badge-open { background: #dbeafe; color: #1e40af; }
+  .badge-in_progress { background: #fef3c7; color: #92400e; }
+  .badge-completed { background: #dcfce7; color: #166534; }
+  .badge-dismissed { background: #f3f4f6; color: #6b7280; }
+
+  /* Dark mode */
+  html[data-theme="dark"] .goal-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  html[data-theme="dark"] #goal-title,
+  html[data-theme="dark"] .item-name {
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] #goal-description,
+  html[data-theme="dark"] .item-meta {
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] .action-item {
+    border-color: #374151;
+    background: transparent;
+  }
+
+  html[data-theme="dark"] .action-item:hover {
+    border-color: #60a5fa;
+    background: #1f2937;
+  }
+
+  html[data-theme="dark"] .state-active {
+    background: #064e3b;
+    color: #6ee7b7;
+  }
+
+  html[data-theme="dark"] .state-completed {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  html[data-theme="dark"] .state-archived {
+    background: #374151;
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] #edit-goal-modal > div,
+  html[data-theme="dark"] #add-action-modal > div {
+    background: #1f2937;
+  }
+
+  html[data-theme="dark"] #edit-goal-modal h3,
+  html[data-theme="dark"] #add-action-modal h3 {
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] #edit-goal-modal label,
+  html[data-theme="dark"] #add-action-modal label {
+    color: #d1d5db;
+  }
+
+  html[data-theme="dark"] #edit-goal-modal input,
+  html[data-theme="dark"] #edit-goal-modal textarea,
+  html[data-theme="dark"] #add-action-modal input,
+  html[data-theme="dark"] #add-action-modal textarea {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+  }
+
+  html[data-theme="dark"] #edit-goal-modal input::placeholder,
+  html[data-theme="dark"] #edit-goal-modal textarea::placeholder,
+  html[data-theme="dark"] #add-action-modal input::placeholder,
+  html[data-theme="dark"] #add-action-modal textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  html[data-theme="dark"] #cancel-edit,
+  html[data-theme="dark"] #cancel-add-action,
+  html[data-theme="dark"] #edit-goal-btn,
+  html[data-theme="dark"] #archive-goal-btn {
+    background: #374151;
+    color: #d1d5db;
+  }
+</style>

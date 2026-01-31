@@ -78,6 +78,11 @@ function generateProjectId() {
   return uniqueId('project');
 }
 
+// Generates a unique Goal ID with "goal-" prefix
+function generateGoalId() {
+  return uniqueId('goal');
+}
+
 // Generates a unique Work Log ID with "w-" prefix
 function generateWorkLogId() {
   return uniqueId('w');
@@ -94,6 +99,7 @@ module.exports = {
   generateAgentNoteId,
   generateDraftId,
   generateFeedbackId,
+  generateGoalId,
   generateMeasurementId,
   generatePracticeId,
   generateProjectId,

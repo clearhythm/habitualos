@@ -33,12 +33,16 @@ pageScript: /scripts/action.js
       <div id="action-due-date" style="font-size: 0.9rem; color: #6b7280; display: none;"></div>
     </div>
 
-    {# Parent Section - Project/Agent links #}
+    {# Parent Section - Project/Goal/Agent links #}
     <div id="parent-section" class="card mb-lg" style="display: none; padding: 0.75rem 1rem; background: #f9fafb;">
       <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem;">
         <div id="parent-project" style="display: none;">
           <span style="color: #6b7280;">Project:</span>
           <a id="parent-project-link" href="#" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;"></a>
+        </div>
+        <div id="parent-goal" style="display: none;">
+          <span style="color: #6b7280;">Goal:</span>
+          <a id="parent-goal-link" href="#" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;"></a>
         </div>
         <div id="parent-agent" style="display: none;">
           <span style="color: #6b7280;">Agent:</span>
@@ -51,7 +55,7 @@ pageScript: /scripts/action.js
     {# Action Description #}
     <div class="card mb-lg">
       <h3 class="mb-md">Description:</h3>
-      <p class="text-muted" id="action-description"></p>
+      <div class="text-muted" id="action-description" style="white-space: pre-wrap; word-break: break-word;"></div>
     </div>
 
     {# Notes Section #}
@@ -187,6 +191,12 @@ pageScript: /scripts/action.js
       <div style="margin-bottom: 1rem;">
         <label for="edit-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Description</label>
         <textarea id="edit-description" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label for="edit-goal" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Goal <span style="color: #9ca3af; font-weight: normal;">(optional)</span></label>
+        <select id="edit-goal" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; background: white;">
+          <option value="">No goal (ungrouped)</option>
+        </select>
       </div>
       <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
         <div style="flex: 1;">

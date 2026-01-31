@@ -19,6 +19,7 @@ let currentTimeEntries = [];
 let currentTotalMinutes = 0;
 let allProjects = [];
 let allAgents = [];
+let allGoals = [];
 
 // -----------------------------
 // Action Loading
@@ -61,6 +62,17 @@ async function loadActionDetail() {
     // Store action for later use
     currentAction = data.action;
 
+    // Load goals for the action's project (if it has one)
+    if (currentAction.projectId) {
+      try {
+        const goalsResponse = await fetch(`/.netlify/functions/goals-list?userId=${userId}&projectId=${currentAction.projectId}`);
+        const goalsData = await goalsResponse.json();
+        allGoals = goalsData.success ? (goalsData.goals || []) : [];
+      } catch (e) {
+        allGoals = [];
+      }
+    }
+
     // Store notes for later use
     currentNotes = data.notes || [];
 
@@ -100,6 +112,24 @@ function getAgentName(agentId) {
   return agent ? agent.name : null;
 }
 
+function getGoalName(goalId) {
+  if (!goalId) return null;
+  const goal = allGoals.find(g => g.id === goalId);
+  return goal ? goal.title : null;
+}
+
+function formatDescription(text) {
+  if (!text) return 'No description available.';
+  // Escape HTML first
+  let formatted = escapeHtml(text);
+  // Make URLs clickable
+  formatted = formatted.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #2563eb;">$1</a>'
+  );
+  return formatted;
+}
+
 function displayParentSection(action) {
   const parentSection = document.querySelector('#parent-section');
   if (!parentSection) return;
@@ -114,6 +144,17 @@ function displayParentSection(action) {
     projectLink.textContent = projectName;
     projectLink.href = `/do/project/?id=${action.projectId}`;
     projectEl.style.display = 'block';
+    hasParent = true;
+  }
+
+  // Goal link
+  const goalName = getGoalName(action.goalId);
+  const goalEl = document.querySelector('#parent-goal');
+  const goalLink = document.querySelector('#parent-goal-link');
+  if (goalEl && goalLink && goalName) {
+    goalLink.textContent = goalName;
+    goalLink.href = `/do/goal/?id=${action.goalId}`;
+    goalEl.style.display = 'block';
     hasParent = true;
   }
 
@@ -154,8 +195,8 @@ function displayActionDetail(action, chatHistory, artifacts, notes, timeEntries,
     <span class="badge badge-${action.state}">${formatState(action.state)}</span>
   `;
 
-  // Display description
-  document.querySelector('#action-description').textContent = action.description || 'No description available.';
+  // Display description (with line breaks preserved and links clickable)
+  document.querySelector('#action-description').innerHTML = formatDescription(action.description);
 
   // Display due date
   const dueDateEl = document.querySelector('#action-due-date');
@@ -891,12 +932,31 @@ function initEditModal() {
 
   if (!editBtn || !editModal || !editForm) return;
 
+  function populateGoalDropdown() {
+    const goalSelect = document.querySelector('#edit-goal');
+    if (!goalSelect) return;
+
+    goalSelect.innerHTML = '<option value="">No goal (ungrouped)</option>';
+    allGoals.forEach(goal => {
+      if (goal.state === 'active' || goal.id === currentAction.goalId) {
+        const option = document.createElement('option');
+        option.value = goal.id;
+        option.textContent = goal.title || 'Untitled Goal';
+        if (goal.id === currentAction.goalId) {
+          option.selected = true;
+        }
+        goalSelect.appendChild(option);
+      }
+    });
+  }
+
   function openModal() {
     if (!currentAction) return;
     document.querySelector('#edit-title').value = currentAction.title || '';
     document.querySelector('#edit-description').value = currentAction.description || '';
     document.querySelector('#edit-priority').value = currentAction.priority || 'medium';
     document.querySelector('#edit-due-date').value = currentAction.dueDate || '';
+    populateGoalDropdown();
     editModal.style.display = 'block';
   }
 
@@ -919,6 +979,8 @@ function initEditModal() {
     const description = document.querySelector('#edit-description').value.trim();
     const priority = document.querySelector('#edit-priority').value;
     const dueDate = document.querySelector('#edit-due-date').value || null;
+    const goalSelect = document.querySelector('#edit-goal');
+    const goalId = goalSelect ? (goalSelect.value || null) : currentAction.goalId;
 
     const submitBtn = document.querySelector('#submit-edit');
     submitBtn.disabled = true;
@@ -935,7 +997,8 @@ function initEditModal() {
           title,
           description,
           priority,
-          dueDate
+          dueDate,
+          goalId
         })
       });
 
@@ -947,10 +1010,11 @@ function initEditModal() {
         currentAction.description = description;
         currentAction.priority = priority;
         currentAction.dueDate = dueDate;
+        currentAction.goalId = goalId;
 
         // Update UI
         document.querySelector('#action-title').textContent = title;
-        document.querySelector('#action-description').textContent = description || 'No description available.';
+        document.querySelector('#action-description').innerHTML = formatDescription(description);
 
         const badgesEl = document.querySelector('#action-badges');
         badgesEl.innerHTML = `
@@ -967,6 +1031,9 @@ function initEditModal() {
             dueDateEl.style.display = 'none';
           }
         }
+
+        // Update goal link
+        displayParentSection(currentAction);
 
         closeModal();
       } else {

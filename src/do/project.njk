@@ -2,6 +2,7 @@
 title: Project - HabitualOS
 layout: base.njk
 permalink: /do/project/
+pageScript: /scripts/project.js
 ---
 
 <div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
@@ -29,7 +30,11 @@ permalink: /do/project/
     </div>
 
     {# View Navigation #}
-    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; padding: 0.75rem 0;">
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap;">
+      <a href="#goals" class="view-link" data-view="goals" style="color: #6b7280; text-decoration: none; font-size: 0.9rem;">
+        <span id="goals-count">0</span> Goals
+      </a>
+      <span style="color: #ddd;">|</span>
       <a href="#open" class="view-link active" data-view="open" style="color: #2563eb; text-decoration: none; font-size: 0.9rem;">
         <span id="open-count">0</span> open
       </a>
@@ -43,14 +48,27 @@ permalink: /do/project/
       </a>
     </div>
 
+    {# Goals View #}
+    <div id="view-goals" class="project-view" style="display: none;">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+        <button id="add-goal-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">+ Add Goal</button>
+      </div>
+      <div id="goals-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
+        <p style="font-size: 1rem; margin-bottom: 0.5rem;">No goals yet</p>
+        <p style="font-size: 0.9rem;">Click "Add Goal" to create one and organize your actions.</p>
+      </div>
+      <div id="goals-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
+    </div>
+
     {# Open Actions View (Default) #}
     <div id="view-open" class="project-view">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <span style="font-size: 0.85rem; color: #6b7280;">Ungrouped actions</span>
         <button id="add-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">+ Add Action</button>
       </div>
       <div id="open-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
         <p style="font-size: 1rem; margin-bottom: 0.5rem;">No open actions</p>
-        <p style="font-size: 0.9rem;">Click "Add Action" to create one.</p>
+        <p style="font-size: 0.9rem;">Click "Add Action" to create one, or add actions to a goal.</p>
       </div>
       <div id="open-list" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
     </div>
@@ -105,6 +123,30 @@ permalink: /do/project/
     </div>
   </div>
 
+  {# Add Goal Modal #}
+  <div id="add-goal-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="max-width: 500px; margin: 4rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Add Goal</h3>
+        <button id="close-add-goal-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; color: #9ca3af;">&times;</button>
+      </div>
+      <form id="add-goal-form" style="padding: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+          <label for="goal-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Title</label>
+          <input type="text" id="goal-title" name="title" required placeholder="What do you want to achieve?" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label for="goal-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Description <span style="color: #9ca3af; font-weight: normal;">(optional)</span></label>
+          <textarea id="goal-description" name="description" rows="3" placeholder="Add details..." style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" id="cancel-add-goal" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+          <button type="submit" id="submit-add-goal" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">Add Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   {# Add Action Modal #}
   <div id="add-action-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
     <div style="max-width: 500px; margin: 4rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -113,11 +155,17 @@ permalink: /do/project/
         <button id="close-add-action-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; color: #9ca3af;">&times;</button>
       </div>
       <form id="add-action-form" style="padding: 1.5rem;">
-        <div style="margin-bottom: 1rem;">
-          <label for="action-project" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Project</label>
-          <select id="action-project" name="projectId" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box; background: white;">
-            <!-- Populated dynamically -->
-          </select>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <div style="flex: 1;">
+            <label for="action-project" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Project</label>
+            <select id="action-project" name="projectId" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box; background: white;"></select>
+          </div>
+          <div style="flex: 1;">
+            <label for="action-goal" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Goal <span style="color: #9ca3af; font-weight: normal;">(opt)</span></label>
+            <select id="action-goal" name="goalId" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box; background: white;">
+              <option value="">No goal (ungrouped)</option>
+            </select>
+          </div>
         </div>
         <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
           <div style="flex: 2;">
@@ -204,6 +252,68 @@ permalink: /do/project/
     text-decoration: none !important;
   }
 
+  .goal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .goal-item:hover {
+    border-color: #2563eb;
+    background: #f8fafc;
+    text-decoration: none !important;
+  }
+
+  .goal-info {
+    flex: 1;
+  }
+
+  .goal-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #111;
+  }
+
+  .goal-progress-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+
+  .goal-progress-fill {
+    height: 100%;
+    background: #2563eb;
+    transition: width 0.3s ease;
+  }
+
+  .goal-meta {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .goal-state {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-left: 1rem;
+  }
+
+  .state-active { background: #dcfce7; color: #166534; }
+  .state-completed { background: #dbeafe; color: #1e40af; }
+  .state-archived { background: #f3f4f6; color: #6b7280; }
+
   .item-info {
     flex: 1;
   }
@@ -244,464 +354,90 @@ permalink: /do/project/
   }
 
   html[data-theme="dark"] #project-name,
-  html[data-theme="dark"] .item-name {
+  html[data-theme="dark"] .item-name,
+  html[data-theme="dark"] .goal-name {
     color: #e5e7eb;
   }
 
   html[data-theme="dark"] #project-description,
-  html[data-theme="dark"] .item-meta {
+  html[data-theme="dark"] .item-meta,
+  html[data-theme="dark"] .goal-meta {
     color: #9ca3af;
   }
 
   html[data-theme="dark"] .agent-item,
-  html[data-theme="dark"] .action-item {
+  html[data-theme="dark"] .action-item,
+  html[data-theme="dark"] .goal-item {
     border-color: #374151;
     background: transparent;
   }
 
   html[data-theme="dark"] .agent-item:hover,
-  html[data-theme="dark"] .action-item:hover {
+  html[data-theme="dark"] .action-item:hover,
+  html[data-theme="dark"] .goal-item:hover {
     border-color: #60a5fa;
     background: #1f2937;
   }
 
+  html[data-theme="dark"] .goal-progress-bar {
+    background: #374151;
+  }
+
   html[data-theme="dark"] .status-open,
-  html[data-theme="dark"] .badge-active {
+  html[data-theme="dark"] .badge-active,
+  html[data-theme="dark"] .state-active {
     background: #064e3b;
     color: #6ee7b7;
   }
 
   html[data-theme="dark"] .status-completed,
-  html[data-theme="dark"] .badge-completed {
+  html[data-theme="dark"] .badge-completed,
+  html[data-theme="dark"] .state-completed {
     background: #1e3a5f;
     color: #93c5fd;
   }
 
-  html[data-theme="dark"] .status-archived {
+  html[data-theme="dark"] .status-archived,
+  html[data-theme="dark"] .state-archived {
     background: #374151;
     color: #9ca3af;
   }
 
-  html[data-theme="dark"] #add-action-modal > div {
+  html[data-theme="dark"] #add-action-modal > div,
+  html[data-theme="dark"] #add-goal-modal > div {
     background: #1f2937;
   }
 
-  html[data-theme="dark"] #add-action-modal h3 {
+  html[data-theme="dark"] #add-action-modal h3,
+  html[data-theme="dark"] #add-goal-modal h3 {
     color: #e5e7eb;
   }
 
-  html[data-theme="dark"] #add-action-modal label {
+  html[data-theme="dark"] #add-action-modal label,
+  html[data-theme="dark"] #add-goal-modal label {
     color: #d1d5db;
   }
 
   html[data-theme="dark"] #add-action-modal input,
   html[data-theme="dark"] #add-action-modal textarea,
-  html[data-theme="dark"] #add-action-modal select {
+  html[data-theme="dark"] #add-action-modal select,
+  html[data-theme="dark"] #add-goal-modal input,
+  html[data-theme="dark"] #add-goal-modal textarea {
     background: #374151;
     border-color: #4b5563;
     color: #e5e7eb;
   }
 
   html[data-theme="dark"] #add-action-modal input::placeholder,
-  html[data-theme="dark"] #add-action-modal textarea::placeholder {
+  html[data-theme="dark"] #add-action-modal textarea::placeholder,
+  html[data-theme="dark"] #add-goal-modal input::placeholder,
+  html[data-theme="dark"] #add-goal-modal textarea::placeholder {
     color: #9ca3af;
   }
 
-  html[data-theme="dark"] #cancel-add-action {
+  html[data-theme="dark"] #cancel-add-action,
+  html[data-theme="dark"] #cancel-add-goal {
     background: #374151;
     color: #d1d5db;
   }
 </style>
-
-<script type="module">
-  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
-  import { getProjectDetails, listProjects } from '/assets/js/api/projects.js';
-  import { createAction } from '/assets/js/api/actions.js';
-  import { showActionModal } from '/assets/js/components/action-modal.js';
-
-  initializeUser();
-  const userId = getUserId();
-
-  const loadingEl = document.getElementById('loading');
-  const errorEl = document.getElementById('error-state');
-  const detailEl = document.getElementById('project-detail');
-
-  // Store loaded data for filtering
-  let projectData = { project: null, agents: [], actions: [] };
-
-  function formatDate(dateStr) {
-    if (!dateStr) return 'Unknown';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-
-  function formatTimeline(timeline) {
-    if (!timeline) return null;
-    if (timeline === 'ongoing') return 'Ongoing';
-    const date = new Date(timeline);
-    if (isNaN(date.getTime())) return timeline;
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  }
-
-  function renderAgents(agents) {
-    const listEl = document.getElementById('agents-list');
-    const emptyEl = document.getElementById('agents-empty');
-
-    listEl.innerHTML = '';
-
-    if (agents.length === 0) {
-      emptyEl.style.display = 'block';
-      return;
-    }
-
-    emptyEl.style.display = 'none';
-
-    agents.forEach(agent => {
-      const item = document.createElement('a');
-      item.className = 'agent-item';
-      item.href = `/do/agent/?id=${agent.id}`;
-
-      const badgeClass = agent.status === 'active' ? 'badge-active' :
-                        agent.status === 'paused' ? 'badge-paused' : 'badge-completed';
-
-      const cost = (agent.metrics?.totalCost || 0).toFixed(2);
-      const actions = agent.metrics?.totalActions || 0;
-
-      item.innerHTML = `
-        <div class="item-info">
-          <h3 class="item-name">${agent.name || 'Untitled Agent'}</h3>
-          <div class="item-meta">${actions} actions &bull; $${cost}</div>
-        </div>
-        <span class="item-badge ${badgeClass}">${agent.status}</span>
-      `;
-
-      listEl.appendChild(item);
-    });
-  }
-
-  function renderActionsList(actions, listId, emptyId, filter = 'all') {
-    const listEl = document.getElementById(listId);
-    const emptyEl = document.getElementById(emptyId);
-
-    listEl.innerHTML = '';
-
-    // Filter actions
-    let filteredActions = actions;
-    if (filter === 'open') {
-      filteredActions = actions.filter(a => !['completed', 'dismissed'].includes(a.state));
-    } else if (filter === 'completed') {
-      filteredActions = actions.filter(a => a.state === 'completed');
-    }
-
-    // Sort by creation date, newest first
-    filteredActions.sort((a, b) => {
-      const dateA = new Date(a._createdAt || 0);
-      const dateB = new Date(b._createdAt || 0);
-      return dateB - dateA;
-    });
-
-    if (filteredActions.length === 0) {
-      emptyEl.style.display = 'block';
-      return;
-    }
-
-    emptyEl.style.display = 'none';
-
-    filteredActions.forEach(action => {
-      const item = document.createElement('div');
-      item.className = 'action-item';
-      item.style.cursor = 'pointer';
-
-      const badgeClass = `badge-${action.state}`;
-
-      const priorityText = action.priority === 'high' ? 'High' :
-                          action.priority === 'low' ? 'Low' : 'Medium';
-
-      item.innerHTML = `
-        <div class="item-info">
-          <h3 class="item-name">${action.title || 'Untitled Action'}</h3>
-          <div class="item-meta">${priorityText} priority &bull; ${action.taskType || 'scheduled'}</div>
-        </div>
-        <span class="item-badge ${badgeClass}">${action.state}</span>
-      `;
-
-      // Open modal on click
-      item.addEventListener('click', () => {
-        showActionModal(action, {
-          onComplete: () => {
-            // Refresh actions after completion/deletion
-            loadProject();
-          }
-        });
-      });
-
-      listEl.appendChild(item);
-    });
-  }
-
-  function renderOpenActions() {
-    renderActionsList(projectData.actions, 'open-list', 'open-empty', 'open');
-  }
-
-  function renderCompletedActions(filter = 'completed') {
-    renderActionsList(projectData.actions, 'completed-list', 'completed-empty', filter);
-  }
-
-  function setupViewNavigation() {
-    const viewLinks = document.querySelectorAll('.view-link');
-    const views = document.querySelectorAll('.project-view');
-    const moreLink = document.getElementById('project-more-link');
-
-    function switchView(viewName) {
-      // Update links (only for main nav links, not overview)
-      viewLinks.forEach(link => {
-        if (link.dataset.view === viewName) {
-          link.classList.add('active');
-          link.style.color = '#2563eb';
-        } else {
-          link.classList.remove('active');
-          link.style.color = '#6b7280';
-        }
-      });
-
-      // Update views
-      views.forEach(view => {
-        view.style.display = view.id === `view-${viewName}` ? 'block' : 'none';
-      });
-    }
-
-    // Handle nav link clicks
-    viewLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const viewName = link.dataset.view;
-        switchView(viewName);
-        history.replaceState(null, '', `#${viewName}`);
-      });
-    });
-
-    // Handle "more" link click
-    moreLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      switchView('overview');
-      history.replaceState(null, '', '#overview');
-    });
-
-    // Handle initial hash
-    const hash = window.location.hash.slice(1);
-    if (['open', 'completed', 'agents', 'overview'].includes(hash)) {
-      switchView(hash);
-    }
-  }
-
-  function setupCompletedFilter() {
-    const filterEl = document.getElementById('completed-filter');
-    filterEl.addEventListener('change', () => {
-      renderCompletedActions(filterEl.value);
-    });
-  }
-
-  // Store all projects for dropdown
-  let allProjects = [];
-
-  async function loadAllProjects() {
-    try {
-      const data = await listProjects(userId);
-      if (data.success && data.projects) {
-        allProjects = data.projects;
-      }
-    } catch (error) {
-      console.error('Error loading projects:', error);
-    }
-  }
-
-  function setupAddActionModal() {
-    const modal = document.getElementById('add-action-modal');
-    const openBtn = document.getElementById('add-action-btn');
-    const closeBtn = document.getElementById('close-add-action-modal');
-    const cancelBtn = document.getElementById('cancel-add-action');
-    const form = document.getElementById('add-action-form');
-    const titleInput = document.getElementById('action-title');
-    const projectSelect = document.getElementById('action-project');
-
-    function populateProjectDropdown() {
-      projectSelect.innerHTML = '';
-      allProjects.forEach(project => {
-        const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = project.name || 'Untitled Project';
-        // Default to current project
-        if (projectData.project && project.id === projectData.project.id) {
-          option.selected = true;
-        }
-        projectSelect.appendChild(option);
-      });
-    }
-
-    function openModal() {
-      populateProjectDropdown();
-      modal.style.display = 'block';
-      titleInput.focus();
-    }
-
-    function closeModal() {
-      modal.style.display = 'none';
-      form.reset();
-    }
-
-    openBtn.addEventListener('click', openModal);
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = document.getElementById('submit-add-action');
-      const title = titleInput.value.trim();
-      const description = document.getElementById('action-description').value.trim();
-      const selectedProjectId = projectSelect.value;
-      const dueDate = document.getElementById('action-due-date').value || null;
-
-      if (!title) return;
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Adding...';
-
-      try {
-        const result = await createAction({
-          userId,
-          projectId: selectedProjectId,
-          title,
-          description,
-          dueDate,
-          priority: 'medium',
-          taskType: 'manual'
-        });
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to create action');
-        }
-
-        // Only add to list if it's the current project
-        if (selectedProjectId === projectData.project.id) {
-          projectData.actions.unshift(result.action);
-          const openActions = projectData.actions.filter(a => !['completed', 'dismissed'].includes(a.state));
-          document.getElementById('open-count').textContent = openActions.length;
-          renderOpenActions();
-        }
-
-        closeModal();
-      } catch (error) {
-        console.error('Error creating action:', error);
-        alert(`Failed to create action: ${error.message}`);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Add Action';
-      }
-    });
-  }
-
-  async function loadProject() {
-    const params = new URLSearchParams(window.location.search);
-    const projectId = params.get('id');
-
-    if (!projectId) {
-      loadingEl.style.display = 'none';
-      errorEl.style.display = 'block';
-      return;
-    }
-
-    try {
-      const data = await getProjectDetails(projectId, userId);
-
-      loadingEl.style.display = 'none';
-
-      if (!data.success || !data.project) {
-        errorEl.style.display = 'block';
-        return;
-      }
-
-      // Store data for filtering
-      projectData = {
-        project: data.project,
-        agents: data.agents || [],
-        actions: data.actions || []
-      };
-
-      const project = data.project;
-      detailEl.style.display = 'block';
-
-      // Populate header
-      document.getElementById('project-name').textContent = project.name || 'Untitled Project';
-      const descText = project.description || '';
-      document.getElementById('project-description-text').textContent = descText;
-      // Hide "more" link if no description and no overview content
-      const hasOverviewContent = project.timeline || (project.success_criteria && project.success_criteria.length > 0);
-      if (!descText && !hasOverviewContent) {
-        document.getElementById('project-more-link').style.display = 'none';
-      }
-
-      // Status badge
-      const statusEl = document.getElementById('project-status');
-      const statusClass = project.status === 'open' ? 'status-open' :
-                         project.status === 'completed' ? 'status-completed' : 'status-archived';
-      statusEl.className = `project-status ${statusClass}`;
-      statusEl.textContent = project.status || 'open';
-
-      // Update counts in navigation
-      const openActions = projectData.actions.filter(a => !['completed', 'dismissed'].includes(a.state));
-      const completedActions = projectData.actions.filter(a => a.state === 'completed');
-      document.getElementById('open-count').textContent = openActions.length;
-      document.getElementById('completed-count').textContent = completedActions.length;
-      document.getElementById('agents-count').textContent = projectData.agents.length;
-
-      // Overview: Timeline
-      const timeline = formatTimeline(project.timeline);
-      if (timeline) {
-        document.getElementById('timeline-section').style.display = 'block';
-        document.getElementById('project-timeline').textContent = timeline;
-      }
-
-      // Overview: Success criteria
-      if (project.success_criteria && project.success_criteria.length > 0) {
-        document.getElementById('criteria-section').style.display = 'block';
-        const criteriaList = document.getElementById('project-criteria');
-        project.success_criteria.forEach(criterion => {
-          const li = document.createElement('li');
-          li.textContent = criterion;
-          criteriaList.appendChild(li);
-        });
-      }
-
-      // Show empty state if no timeline or criteria
-      if (!timeline && (!project.success_criteria || project.success_criteria.length === 0)) {
-        document.getElementById('empty-overview').style.display = 'block';
-      }
-
-      // Overview: Created date
-      document.getElementById('project-created').textContent = formatDate(project._createdAt);
-
-      // Render agents and actions
-      renderAgents(projectData.agents);
-      renderOpenActions();
-      renderCompletedActions();
-
-      // Load all projects for dropdown
-      await loadAllProjects();
-
-      // Setup interactions
-      setupViewNavigation();
-      setupCompletedFilter();
-      setupAddActionModal();
-
-    } catch (error) {
-      console.error('Error loading project:', error);
-      loadingEl.style.display = 'none';
-      errorEl.style.display = 'block';
-    }
-  }
-
-  loadProject();
-</script>

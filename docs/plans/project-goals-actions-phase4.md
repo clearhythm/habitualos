@@ -1,5 +1,7 @@
 # Phase 4: Goals
 
+**STATUS: DONE**
+
 ## Context
 
 This phase adds Goals as an optional tier between Projects and Actions. Goals allow users to group related actions within a project and track progress toward specific objectives.
