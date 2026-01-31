@@ -40,7 +40,7 @@ async function loadActionDetail() {
     // Load action, projects, and agents in parallel
     const [actionResponse, projectsResponse, agentsResponse] = await Promise.all([
       fetch(`/.netlify/functions/action-get/${actionId}?userId=${userId}`),
-      fetch(`/.netlify/functions/projects-list?userId=${userId}`),
+      fetch(`/.netlify/functions/project-list?userId=${userId}`),
       fetch(`/.netlify/functions/agents-list?userId=${userId}`)
     ]);
 
