@@ -1,14 +1,11 @@
-# Phase 5: Project Progress Tracking
+# Project Progress Tracking & Visualization
 
 ## Context
 
-This phase adds progress visualization to projects. Different project types (end-date vs ongoing) get different progress views.
-
-**Prerequisites:** Phases 1-4 must be complete.
+This phase adds progress visualization to projects. Different project types (end-date vs ongoing) get different progress views. Please review current architecture and system design and and then have a design discussion with the user to finalize the design and generate a plan before implementation.
 
 ## Current State
 
-After Phase 4:
 - Projects have goals and actions
 - Goals have progress (completed/total)
 - Projects have `timeline` field: date string or "ongoing"
