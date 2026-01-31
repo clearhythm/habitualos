@@ -988,11 +988,10 @@ function initEditModal() {
 
     try {
       const userId = getUserId();
-      const response = await fetch('/.netlify/functions/action-update', {
+      const response = await fetch(`/.netlify/functions/action-update?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
           actionId: currentActionId,
           title,
           description,
