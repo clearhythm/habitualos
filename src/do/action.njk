@@ -54,11 +54,22 @@ pageScript: /scripts/action.js
       <p class="text-muted" id="action-description"></p>
     </div>
 
-    {# Notes Section (placeholder for Phase 2) #}
+    {# Notes Section #}
     <div id="notes-section" class="card mb-lg">
       <h3 class="mb-md">Notes</h3>
-      <p class="text-muted" id="notes-placeholder" style="font-style: italic;">Notes feature coming in a future update.</p>
-      <div id="notes-list" style="display: none;"></div>
+      <div id="notes-list"></div>
+      <div id="no-notes" class="text-muted mb-md" style="font-style: italic;">No notes yet.</div>
+      <form id="add-note-form">
+        <textarea
+          name="note-content"
+          id="note-content"
+          class="textarea mb-sm"
+          placeholder="Add a note..."
+          rows="2"
+          style="font-family: inherit;"
+        ></textarea>
+        <button type="submit" class="btn btn-secondary" id="add-note-btn">Add Note</button>
+      </form>
     </div>
 
     {# Time Tracking Section (placeholder for Phase 3) #}

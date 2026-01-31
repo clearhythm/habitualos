@@ -14,6 +14,7 @@ import { formatDate, escapeHtml, capitalize, formatState, formatFileSize, getArt
 // -----------------------------
 let currentActionId = null;
 let currentAction = null;
+let currentNotes = [];
 let allProjects = [];
 let allAgents = [];
 
@@ -58,8 +59,11 @@ async function loadActionDetail() {
     // Store action for later use
     currentAction = data.action;
 
+    // Store notes for later use
+    currentNotes = data.notes || [];
+
     // Display action details
-    displayActionDetail(data.action, data.chat || [], data.artifacts || []);
+    displayActionDetail(data.action, data.chat || [], data.artifacts || [], currentNotes);
 
     // Show content
     loadingEl.style.display = 'none';
@@ -134,7 +138,7 @@ function displayParentSection(action) {
 // -----------------------------
 // Action Display
 // -----------------------------
-function displayActionDetail(action, chatHistory, artifacts) {
+function displayActionDetail(action, chatHistory, artifacts, notes) {
   // Display action header
   document.querySelector('#action-title').textContent = action.title;
 
@@ -156,6 +160,9 @@ function displayActionDetail(action, chatHistory, artifacts) {
 
   // Display parent section (project/agent links)
   displayParentSection(action);
+
+  // Display notes
+  displayNotes(notes);
 
   // Hide action controls if completed/dismissed
   const isCompleted = ['completed', 'dismissed'].includes(action.state);
@@ -281,6 +288,162 @@ async function fetchOutputFiles(actionId, outputFilesEl, noOutputsEl) {
     outputFilesEl.innerHTML = '<p class="text-muted">Error loading output files.</p>';
     outputFilesEl.style.display = 'block';
     noOutputsEl.style.display = 'none';
+  }
+}
+
+// -----------------------------
+// Notes Display
+// -----------------------------
+function displayNotes(notes) {
+  const notesListEl = document.querySelector('#notes-list');
+  const noNotesEl = document.querySelector('#no-notes');
+
+  if (!notesListEl) return;
+
+  notesListEl.innerHTML = '';
+
+  if (!notes || notes.length === 0) {
+    if (noNotesEl) noNotesEl.style.display = 'block';
+    return;
+  }
+
+  if (noNotesEl) noNotesEl.style.display = 'none';
+
+  // Sort notes by creation date (newest first)
+  const sortedNotes = [...notes].sort((a, b) => {
+    const dateA = new Date(a._createdAt || 0);
+    const dateB = new Date(b._createdAt || 0);
+    return dateB - dateA;
+  });
+
+  sortedNotes.forEach(note => {
+    const noteEl = document.createElement('div');
+    noteEl.className = 'note-item';
+    noteEl.dataset.noteId = note.id;
+    noteEl.style.cssText = 'padding: 0.75rem; background: #f9fafb; border-radius: 4px; margin-bottom: 0.5rem;';
+
+    const created = note._createdAt ? formatDate(note._createdAt) : '';
+
+    noteEl.innerHTML = `
+      <div class="note-content" style="white-space: pre-wrap; margin-bottom: 0.5rem;">${escapeHtml(note.content)}</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+        <span style="color: #9ca3af;">${created}</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="note-edit-btn" style="background: none; border: none; color: #6b7280; cursor: pointer; font-size: 0.8rem;">Edit</button>
+          <button class="note-delete-btn" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.8rem;">Delete</button>
+        </div>
+      </div>
+    `;
+
+    // Bind edit handler
+    const editBtn = noteEl.querySelector('.note-edit-btn');
+    editBtn.addEventListener('click', () => editNote(note.id, note.content));
+
+    // Bind delete handler
+    const deleteBtn = noteEl.querySelector('.note-delete-btn');
+    deleteBtn.addEventListener('click', () => deleteNote(note.id));
+
+    notesListEl.appendChild(noteEl);
+  });
+}
+
+async function addNote(content) {
+  const userId = getUserId();
+
+  try {
+    const response = await fetch('/.netlify/functions/action-note-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, actionId: currentActionId, content })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Add note to local state and re-render
+      const newNote = {
+        id: data.note.id,
+        actionId: currentActionId,
+        content,
+        _createdAt: new Date().toISOString()
+      };
+      currentNotes.unshift(newNote);
+      displayNotes(currentNotes);
+      return true;
+    } else {
+      log('error', 'Failed to add note:', data.error);
+      alert('Failed to add note.');
+      return false;
+    }
+  } catch (error) {
+    log('error', 'Error adding note:', error);
+    alert('Network error. Please try again.');
+    return false;
+  }
+}
+
+async function editNote(noteId, currentContent) {
+  const newContent = prompt('Edit note:', currentContent);
+  if (newContent === null || newContent.trim() === currentContent) return;
+
+  if (!newContent.trim()) {
+    alert('Note content cannot be empty.');
+    return;
+  }
+
+  const userId = getUserId();
+
+  try {
+    const response = await fetch('/.netlify/functions/action-note-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, noteId, content: newContent.trim() })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Update local state and re-render
+      const note = currentNotes.find(n => n.id === noteId);
+      if (note) {
+        note.content = newContent.trim();
+        displayNotes(currentNotes);
+      }
+    } else {
+      log('error', 'Failed to update note:', data.error);
+      alert('Failed to update note.');
+    }
+  } catch (error) {
+    log('error', 'Error updating note:', error);
+    alert('Network error. Please try again.');
+  }
+}
+
+async function deleteNote(noteId) {
+  if (!confirm('Delete this note?')) return;
+
+  const userId = getUserId();
+
+  try {
+    const response = await fetch('/.netlify/functions/action-note-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, noteId })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Remove from local state and re-render
+      currentNotes = currentNotes.filter(n => n.id !== noteId);
+      displayNotes(currentNotes);
+    } else {
+      log('error', 'Failed to delete note:', data.error);
+      alert('Failed to delete note.');
+    }
+  } catch (error) {
+    log('error', 'Error deleting note:', error);
+    alert('Network error. Please try again.');
   }
 }
 
@@ -678,6 +841,36 @@ function initEditModal() {
 window.viewArtifact = viewArtifact;
 
 // -----------------------------
+// Notes Form
+// -----------------------------
+function initNotesForm() {
+  const notesForm = document.querySelector('#add-note-form');
+  if (!notesForm) return;
+
+  notesForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const input = document.querySelector('#note-content');
+    const content = input.value.trim();
+
+    if (!content) return;
+
+    const addBtn = document.querySelector('#add-note-btn');
+    addBtn.disabled = true;
+    addBtn.textContent = 'Adding...';
+
+    const success = await addNote(content);
+
+    if (success) {
+      input.value = '';
+    }
+
+    addBtn.disabled = false;
+    addBtn.textContent = 'Add Note';
+  });
+}
+
+// -----------------------------
 // Page Initialization
 // -----------------------------
 function init() {
@@ -693,6 +886,7 @@ function init() {
   initChatForm();
   initActionControls();
   initEditModal();
+  initNotesForm();
 }
 
 // Self-initialize when DOM is ready
