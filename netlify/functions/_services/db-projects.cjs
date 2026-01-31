@@ -37,7 +37,7 @@ const { getActionsByUserId } = require('./db-actions.cjs');
  */
 exports.getProjectsByUserId = async (userId) => {
   const results = await dbCore.query({
-    collection: 'projects',
+    collection: 'work-projects',
     where: `_userId::eq::${userId}`
   });
 
@@ -55,7 +55,7 @@ exports.getProjectsByUserId = async (userId) => {
  * @returns {Promise<Object|null>} Project document or null
  */
 exports.getProject = async (projectId) => {
-  return await dbCore.get({ collection: 'projects', id: projectId });
+  return await dbCore.get({ collection: 'work-projects', id: projectId });
 };
 
 /**
@@ -68,7 +68,7 @@ exports.createProject = async (id, data) => {
   const formattedId = id?.startsWith('project-') ? id : `project-${id}`;
 
   await dbCore.create({
-    collection: 'projects',
+    collection: 'work-projects',
     id: formattedId,
     data: {
       ...data,
@@ -87,7 +87,7 @@ exports.createProject = async (id, data) => {
  */
 exports.updateProject = async (projectId, updates) => {
   await dbCore.patch({
-    collection: 'projects',
+    collection: 'work-projects',
     id: projectId,
     data: updates
   });

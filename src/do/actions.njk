@@ -225,7 +225,6 @@ permalink: /do/actions/
   import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
   import { listActions, createAction } from '/assets/js/api/actions.js';
   import { listProjects } from '/assets/js/api/projects.js';
-  import { showActionModal } from '/assets/js/components/action-modal.js';
 
   initializeUser();
   const userId = getUserId();
@@ -272,9 +271,9 @@ permalink: /do/actions/
     emptyEl.style.display = 'none';
 
     filteredActions.forEach(action => {
-      const item = document.createElement('div');
+      const item = document.createElement('a');
       item.className = 'action-item';
-      item.style.cursor = 'pointer';
+      item.href = `/do/action/?id=${action.id}`;
 
       const badgeClass = `badge-${action.state}`;
       const projectName = getProjectName(action.projectId);
@@ -286,15 +285,6 @@ permalink: /do/actions/
         </div>
         <span class="item-badge ${badgeClass}">${action.state}</span>
       `;
-
-      // Open modal on click
-      item.addEventListener('click', () => {
-        showActionModal(action, {
-          onComplete: () => {
-            loadActions();
-          }
-        });
-      });
 
       listEl.appendChild(item);
     });

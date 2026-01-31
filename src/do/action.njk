@@ -5,32 +5,69 @@ permalink: /do/action/
 pageScript: /scripts/action.js
 ---
 
-{% include "breadcrumb.njk" %}
-
-<div id="loading-action" class="mb-xl">
-  <p class="text-muted">Loading action details...</p>
-</div>
-
-<div id="action-error" class="mb-xl" style="display: none;">
-  <div class="card">
-    <h2 class="mb-md">Action Not Found</h2>
-    <p class="mb-md">The action you're looking for doesn't exist.</p>
-    <a href="/do/" class="btn btn-primary">Back to Dashboard</a>
-  </div>
-</div>
-
-<div id="action-content" style="display: none;">
-  {# Action Header #}
-  <div class="mb-lg">
-    <h2 class="mb-sm" id="action-title"></h2>
-    <div class="flex gap-md mb-md" id="action-badges"></div>
+<div style="max-width: 800px; margin: 0 auto; padding: 0 1rem;">
+  <div style="margin-bottom: 1.5rem;">
+    <a href="/do/actions/" style="color: #6b7280; text-decoration: none; font-size: 0.95rem;">&larr; Back to Actions</a>
   </div>
 
-  {# Action Description #}
-  <div class="card mb-lg">
-    <h3 class="mb-md">Description:</h3>
-    <p class="text-muted" id="action-description"></p>
+  <div id="loading-action" class="mb-xl">
+    <p class="text-muted">Loading action details...</p>
   </div>
+
+  <div id="action-error" class="mb-xl" style="display: none;">
+    <div class="card">
+      <h2 class="mb-md">Action Not Found</h2>
+      <p class="mb-md">The action you're looking for doesn't exist.</p>
+      <a href="/do/actions/" class="btn btn-primary">Back to Actions</a>
+    </div>
+  </div>
+
+  <div id="action-content" style="display: none;">
+    {# Action Header #}
+    <div class="mb-lg">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+        <h2 class="mb-sm" id="action-title" style="flex: 1; margin: 0;"></h2>
+        <button id="edit-action-btn" class="btn btn-secondary" style="flex-shrink: 0;">Edit</button>
+      </div>
+      <div class="flex gap-md mb-md" id="action-badges"></div>
+      <div id="action-due-date" style="font-size: 0.9rem; color: #6b7280; display: none;"></div>
+    </div>
+
+    {# Parent Section - Project/Agent links #}
+    <div id="parent-section" class="card mb-lg" style="display: none; padding: 0.75rem 1rem; background: #f9fafb;">
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.9rem;">
+        <div id="parent-project" style="display: none;">
+          <span style="color: #6b7280;">Project:</span>
+          <a id="parent-project-link" href="#" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;"></a>
+        </div>
+        <div id="parent-agent" style="display: none;">
+          <span style="color: #6b7280;">Agent:</span>
+          <a id="parent-agent-link" href="#" style="color: #2563eb; text-decoration: none; margin-left: 0.25rem;"></a>
+        </div>
+        <div id="action-created" style="color: #6b7280;"></div>
+      </div>
+    </div>
+
+    {# Action Description #}
+    <div class="card mb-lg">
+      <h3 class="mb-md">Description:</h3>
+      <p class="text-muted" id="action-description"></p>
+    </div>
+
+    {# Notes Section (placeholder for Phase 2) #}
+    <div id="notes-section" class="card mb-lg">
+      <h3 class="mb-md">Notes</h3>
+      <p class="text-muted" id="notes-placeholder" style="font-style: italic;">Notes feature coming in a future update.</p>
+      <div id="notes-list" style="display: none;"></div>
+    </div>
+
+    {# Time Tracking Section (placeholder for Phase 3) #}
+    <div id="time-section" class="card mb-lg">
+      <h3 class="mb-md">Time Tracking</h3>
+      <div id="time-total" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; display: none;"></div>
+      <p class="text-muted" id="time-placeholder" style="font-style: italic;">Time tracking feature coming in a future update.</p>
+      <div id="time-entries-list" style="display: none;"></div>
+    </div>
 
   {# Scheduled Task Details (only for scheduled tasks) #}
   <div id="scheduled-task-details" style="display: none;">
@@ -99,9 +136,52 @@ pageScript: /scripts/action.js
     </div>
 
     {# Action Controls #}
-    <div class="flex gap-md">
-      <button class="btn btn-success" id="mark-complete-btn">Mark Complete</button>
+    <div class="flex gap-md" style="flex-wrap: wrap;">
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="number" id="complete-duration-input" min="1" max="480" placeholder="mins" style="width: 70px; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; text-align: center;">
+        <button class="btn btn-success" id="mark-complete-btn">Complete</button>
+      </div>
       <button class="btn btn-danger" id="dismiss-btn">Dismiss</button>
     </div>
   </div>
 </div>
+
+{# Edit Action Modal #}
+<div id="edit-action-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div style="max-width: 500px; margin: 4rem auto; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+      <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">Edit Action</h3>
+      <button id="close-edit-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; color: #9ca3af;">&times;</button>
+    </div>
+    <form id="edit-action-form" style="padding: 1.5rem;">
+      <div style="margin-bottom: 1rem;">
+        <label for="edit-title" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Title</label>
+        <input type="text" id="edit-title" required style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box;">
+      </div>
+      <div style="margin-bottom: 1rem;">
+        <label for="edit-description" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Description</label>
+        <textarea id="edit-description" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; resize: vertical; box-sizing: border-box; font-family: inherit;"></textarea>
+      </div>
+      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <div style="flex: 1;">
+          <label for="edit-priority" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Priority</label>
+          <select id="edit-priority" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; background: white;">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div style="flex: 1;">
+          <label for="edit-due-date" style="display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem;">Due Date</label>
+          <input type="date" id="edit-due-date" style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 1rem; box-sizing: border-box; font-family: inherit;">
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" id="cancel-edit" style="padding: 0.5rem 1rem; background: #f3f4f6; color: #374151; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer;">Cancel</button>
+        <button type="submit" id="submit-edit" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</div> {# End max-width container #}

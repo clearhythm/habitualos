@@ -66,7 +66,7 @@ exports.createAction = async (id, data) => {
   };
 
   await dbCore.create({
-    collection: 'actions',
+    collection: 'work-actions',
     id: formattedId,
     data: actionData
   });
@@ -86,7 +86,7 @@ exports.createAction = async (id, data) => {
  */
 exports.getActionsByUserId = async (userId) => {
   return await dbCore.query({
-    collection: 'actions',
+    collection: 'work-actions',
     where: `_userId::eq::${userId}`
   });
 };
@@ -108,7 +108,7 @@ exports.getActionsByAgent = async (agentId, userId) => {
  * @returns {Promise<Object|null>} Action document or null
  */
 exports.getAction = async (actionId) => {
-  return await dbCore.get({ collection: 'actions', id: actionId });
+  return await dbCore.get({ collection: 'work-actions', id: actionId });
 };
 
 /**
@@ -132,7 +132,7 @@ exports.updateActionState = async (actionId, state, additionalFields = {}) => {
   }
 
   return await dbCore.patch({
-    collection: 'actions',
+    collection: 'work-actions',
     id: actionId,
     data: updates
   });
@@ -146,7 +146,7 @@ exports.updateActionState = async (actionId, state, additionalFields = {}) => {
  */
 exports.updateAction = async (actionId, updates) => {
   return await dbCore.patch({
-    collection: 'actions',
+    collection: 'work-actions',
     id: actionId,
     data: updates
   });
@@ -173,7 +173,7 @@ exports.recordApiCall = async (actionId, callData) => {
   const totalCost = (action.metrics?.totalCost || 0) + callData.cost;
 
   await dbCore.patch({
-    collection: 'actions',
+    collection: 'work-actions',
     id: actionId,
     data: {
       metrics: {

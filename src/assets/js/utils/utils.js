@@ -125,9 +125,17 @@ export function getArtifactIcon(type) {
 
 /**
  * Get action ID from current URL
- * URL format: /do/action/UUID
+ * URL formats: /do/action/UUID or /do/action/?id=UUID
  */
 export function getActionIdFromUrl() {
+  // First check query param
+  const urlParams = new URLSearchParams(window.location.search);
+  const idParam = urlParams.get('id');
+  if (idParam) {
+    return idParam;
+  }
+
+  // Fall back to path-based URL
   const pathParts = window.location.pathname.split('/').filter(p => p);
   if (pathParts[0] === 'do' && pathParts[1] === 'action' && pathParts[2]) {
     return pathParts[2];
