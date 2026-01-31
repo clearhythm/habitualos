@@ -4,6 +4,7 @@ const { incrementAgentActionCount } = require('./_services/db-agents.cjs');
 const { generateActionId } = require('./_utils/data-utils.cjs');
 const { createWorkLog, getWorkLogsByUserId } = require('./_services/db-work-logs.cjs');
 const { shouldEAAppear, generateEAMessage } = require('./_utils/ea-appearance.cjs');
+const { createTimeEntry } = require('./_services/db-action-time-entries.cjs');
 
 /**
  * POST /api/action/:id/complete?userId=u-abc123
@@ -110,6 +111,17 @@ exports.handler = async (event) => {
     let eaMessage = null;
     if (shouldAppear) {
       eaMessage = await generateEAMessage(reason, action.title, workLogCount);
+    }
+
+    // Create time entry if duration provided (for unified time tracking)
+    if (duration) {
+      await createTimeEntry(null, {
+        _userId: userId,
+        actionId: actionId,
+        duration: duration,
+        note: 'Logged on completion',
+        loggedAt: new Date().toISOString()
+      });
     }
 
     // Create work-log entry for this completed action

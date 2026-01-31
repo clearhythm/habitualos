@@ -15,6 +15,8 @@ import { formatDate, escapeHtml, capitalize, formatState, formatFileSize, getArt
 let currentActionId = null;
 let currentAction = null;
 let currentNotes = [];
+let currentTimeEntries = [];
+let currentTotalMinutes = 0;
 let allProjects = [];
 let allAgents = [];
 
@@ -62,8 +64,12 @@ async function loadActionDetail() {
     // Store notes for later use
     currentNotes = data.notes || [];
 
+    // Store time entries
+    currentTimeEntries = data.timeEntries || [];
+    currentTotalMinutes = data.totalMinutes || 0;
+
     // Display action details
-    displayActionDetail(data.action, data.chat || [], data.artifacts || [], currentNotes);
+    displayActionDetail(data.action, data.chat || [], data.artifacts || [], currentNotes, currentTimeEntries, currentTotalMinutes);
 
     // Show content
     loadingEl.style.display = 'none';
@@ -138,7 +144,7 @@ function displayParentSection(action) {
 // -----------------------------
 // Action Display
 // -----------------------------
-function displayActionDetail(action, chatHistory, artifacts, notes) {
+function displayActionDetail(action, chatHistory, artifacts, notes, timeEntries, totalMinutes) {
   // Display action header
   document.querySelector('#action-title').textContent = action.title;
 
@@ -163,6 +169,9 @@ function displayActionDetail(action, chatHistory, artifacts, notes) {
 
   // Display notes
   displayNotes(notes);
+
+  // Display time entries
+  displayTimeEntries(timeEntries, totalMinutes);
 
   // Hide action controls if completed/dismissed
   const isCompleted = ['completed', 'dismissed'].includes(action.state);
@@ -443,6 +452,144 @@ async function deleteNote(noteId) {
     }
   } catch (error) {
     log('error', 'Error deleting note:', error);
+    alert('Network error. Please try again.');
+  }
+}
+
+// -----------------------------
+// Time Tracking
+// -----------------------------
+function formatDuration(minutes) {
+  if (!minutes || minutes <= 0) return '0m';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
+function displayTimeEntries(entries, totalMinutes) {
+  const entriesListEl = document.querySelector('#time-entries-list');
+  const noEntriesEl = document.querySelector('#no-time-entries');
+  const totalEl = document.querySelector('#time-total');
+
+  if (!entriesListEl) return;
+
+  // Display total
+  if (totalEl) {
+    totalEl.textContent = totalMinutes > 0 ? `${formatDuration(totalMinutes)} total` : '';
+  }
+
+  entriesListEl.innerHTML = '';
+
+  if (!entries || entries.length === 0) {
+    if (noEntriesEl) noEntriesEl.style.display = 'block';
+    return;
+  }
+
+  if (noEntriesEl) noEntriesEl.style.display = 'none';
+
+  // Sort entries by loggedAt (newest first)
+  const sortedEntries = [...entries].sort((a, b) => {
+    const dateA = new Date(a.loggedAt || 0);
+    const dateB = new Date(b.loggedAt || 0);
+    return dateB - dateA;
+  });
+
+  sortedEntries.forEach(entry => {
+    const entryEl = document.createElement('div');
+    entryEl.className = 'time-entry-item';
+    entryEl.dataset.entryId = entry.id;
+    entryEl.style.cssText = 'padding: 0.75rem; background: #f9fafb; border-radius: 4px; margin-bottom: 0.5rem;';
+
+    const loggedDate = entry.loggedAt ? formatDate(entry.loggedAt) : '';
+
+    entryEl.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="font-weight: 600;">${formatDuration(entry.duration)}</span>
+          ${entry.note ? `<span style="color: #6b7280; margin-left: 0.5rem;">- ${escapeHtml(entry.note)}</span>` : ''}
+        </div>
+        <button class="time-entry-delete-btn" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.8rem;">Delete</button>
+      </div>
+      <div style="font-size: 0.8rem; color: #9ca3af; margin-top: 0.25rem;">${loggedDate}</div>
+    `;
+
+    // Bind delete handler
+    const deleteBtn = entryEl.querySelector('.time-entry-delete-btn');
+    deleteBtn.addEventListener('click', () => deleteTimeEntry(entry.id));
+
+    entriesListEl.appendChild(entryEl);
+  });
+}
+
+async function addTimeEntry(duration, note) {
+  const userId = getUserId();
+
+  try {
+    const response = await fetch('/.netlify/functions/action-time-entry-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        actionId: currentActionId,
+        duration,
+        note: note || null
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Add entry to local state and re-render
+      const newEntry = {
+        id: data.entry.id,
+        actionId: currentActionId,
+        duration,
+        note: note || null,
+        loggedAt: data.entry.loggedAt
+      };
+      currentTimeEntries.unshift(newEntry);
+      currentTotalMinutes = data.totalMinutes;
+      displayTimeEntries(currentTimeEntries, currentTotalMinutes);
+      return true;
+    } else {
+      log('error', 'Failed to log time:', data.error);
+      alert('Failed to log time.');
+      return false;
+    }
+  } catch (error) {
+    log('error', 'Error logging time:', error);
+    alert('Network error. Please try again.');
+    return false;
+  }
+}
+
+async function deleteTimeEntry(entryId) {
+  if (!confirm('Delete this time entry?')) return;
+
+  const userId = getUserId();
+
+  try {
+    const response = await fetch('/.netlify/functions/action-time-entry-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, entryId })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Remove from local state and re-render
+      currentTimeEntries = currentTimeEntries.filter(e => e.id !== entryId);
+      currentTotalMinutes = data.totalMinutes;
+      displayTimeEntries(currentTimeEntries, currentTotalMinutes);
+    } else {
+      log('error', 'Failed to delete time entry:', data.error);
+      alert('Failed to delete time entry.');
+    }
+  } catch (error) {
+    log('error', 'Error deleting time entry:', error);
     alert('Network error. Please try again.');
   }
 }
@@ -871,6 +1018,40 @@ function initNotesForm() {
 }
 
 // -----------------------------
+// Time Tracking Form
+// -----------------------------
+function initTimeForm() {
+  const timeForm = document.querySelector('#log-time-form');
+  if (!timeForm) return;
+
+  timeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const durationInput = document.querySelector('#time-duration');
+    const noteInput = document.querySelector('#time-note');
+
+    const duration = parseInt(durationInput.value, 10);
+    const note = noteInput.value.trim();
+
+    if (!duration || duration <= 0) return;
+
+    const logBtn = document.querySelector('#log-time-btn');
+    logBtn.disabled = true;
+    logBtn.textContent = 'Logging...';
+
+    const success = await addTimeEntry(duration, note);
+
+    if (success) {
+      durationInput.value = '';
+      noteInput.value = '';
+    }
+
+    logBtn.disabled = false;
+    logBtn.textContent = 'Log Time';
+  });
+}
+
+// -----------------------------
 // Page Initialization
 // -----------------------------
 function init() {
@@ -887,6 +1068,7 @@ function init() {
   initActionControls();
   initEditModal();
   initNotesForm();
+  initTimeForm();
 }
 
 // Self-initialize when DOM is ready

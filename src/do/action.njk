@@ -72,12 +72,27 @@ pageScript: /scripts/action.js
       </form>
     </div>
 
-    {# Time Tracking Section (placeholder for Phase 3) #}
+    {# Time Tracking Section #}
     <div id="time-section" class="card mb-lg">
       <h3 class="mb-md">Time Tracking</h3>
-      <div id="time-total" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; display: none;"></div>
-      <p class="text-muted" id="time-placeholder" style="font-style: italic;">Time tracking feature coming in a future update.</p>
-      <div id="time-entries-list" style="display: none;"></div>
+      <div id="time-total" style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;"></div>
+      <div id="time-entries-list" style="margin-bottom: 1rem;"></div>
+      <div id="no-time-entries" class="text-muted mb-md" style="font-style: italic;">No time logged yet.</div>
+      <form id="log-time-form">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end;">
+          <div style="flex: 0 0 80px;">
+            <label for="time-duration" style="display: block; font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">Minutes</label>
+            <input type="number" id="time-duration" name="duration" min="1" max="999" required placeholder="30" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem;">
+          </div>
+          <div style="flex: 1; min-width: 150px;">
+            <label for="time-note" style="display: block; font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem;">Note (optional)</label>
+            <input type="text" id="time-note" name="note" placeholder="What did you work on?" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box;">
+          </div>
+          <div style="flex: 0 0 auto;">
+            <button type="submit" class="btn btn-secondary" id="log-time-btn">Log Time</button>
+          </div>
+        </div>
+      </form>
     </div>
 
   {# Scheduled Task Details (only for scheduled tasks) #}

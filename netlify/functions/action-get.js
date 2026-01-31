@@ -3,6 +3,7 @@ const { getAction } = require('./_services/db-actions.cjs');
 const { getChatMessagesByAction } = require('./_services/db-action-chats.cjs');
 const { getArtifactsByAction } = require('./_services/db-action-artifacts.cjs');
 const { getNotesByAction } = require('./_services/db-action-notes.cjs');
+const { getTimeEntriesByAction } = require('./_services/db-action-time-entries.cjs');
 
 /**
  * GET /api/action/:id?userId=u-abc123
@@ -64,16 +65,21 @@ exports.handler = async (event) => {
       };
     }
 
-    // Get chat history, artifacts, and notes
+    // Get chat history, artifacts, notes, and time entries
     const chat = await getChatMessagesByAction(actionId, userId);
     const artifacts = await getArtifactsByAction(actionId, userId);
     const notes = await getNotesByAction(actionId, userId);
+    const timeEntries = await getTimeEntriesByAction(actionId, userId);
+
+    // Calculate total time
+    const totalMinutes = timeEntries.reduce((sum, entry) => sum + (entry.duration || 0), 0);
 
     // Convert Firestore Timestamps to ISO strings
     const actionWithDates = convertTimestamps(action);
     const chatWithDates = chat.map(convertTimestamps);
     const artifactsWithDates = artifacts.map(convertTimestamps);
     const notesWithDates = notes.map(convertTimestamps);
+    const timeEntriesWithDates = timeEntries.map(convertTimestamps);
 
     // Return success response
     return {
@@ -86,7 +92,9 @@ exports.handler = async (event) => {
         action: actionWithDates,
         chat: chatWithDates,
         artifacts: artifactsWithDates,
-        notes: notesWithDates
+        notes: notesWithDates,
+        timeEntries: timeEntriesWithDates,
+        totalMinutes
       })
     };
 
@@ -115,6 +123,7 @@ function convertTimestamps(obj) {
     startedAt: obj.startedAt, // Already ISO string
     completedAt: obj.completedAt, // Already ISO string
     dismissedAt: obj.dismissedAt, // Already ISO string
-    timestamp: obj.timestamp // Already ISO string (for chat messages)
+    timestamp: obj.timestamp, // Already ISO string (for chat messages)
+    loggedAt: obj.loggedAt // Already ISO string (for time entries)
   };
 }
