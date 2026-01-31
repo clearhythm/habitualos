@@ -135,7 +135,7 @@ permalink: /do/
     try {
       const [workLogsRes, projectsRes] = await Promise.all([
         fetch(`/.netlify/functions/work-log-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' }),
-        fetch(`/.netlify/functions/project-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' })
+        fetch(`/.netlify/functions/projects-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' })
       ]);
 
       const workLogsData = await workLogsRes.json();

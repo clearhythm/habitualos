@@ -103,7 +103,7 @@ permalink: /do/log/
   // Load projects for dropdown
   async function loadProjects() {
     try {
-      const response = await fetch(`/.netlify/functions/project-list?userId=${userId}&_=${Date.now()}`, {
+      const response = await fetch(`/.netlify/functions/projects-list?userId=${userId}&_=${Date.now()}`, {
         cache: 'no-store'
       });
 

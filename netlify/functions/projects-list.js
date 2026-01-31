@@ -2,7 +2,7 @@ require('dotenv').config();
 const { getProjectsByUserId } = require('./_services/db-projects.cjs');
 
 /**
- * GET /api/project-list?userId=u-abc123
+ * GET /api/projects-list?userId=u-abc123
  * Get all projects for a user
  */
 exports.handler = async (event) => {
@@ -49,7 +49,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Error in project-list:', error);
+    console.error('Error in projects-list:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({

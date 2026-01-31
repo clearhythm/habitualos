@@ -11,7 +11,7 @@ import { API_BASE_URL } from "/assets/js/utils/env-config.js";
 // -----------------------------
 // Keys & Constants
 // -----------------------------
-const API_PROJECTS_LIST = `${API_BASE_URL}/project-list`;
+const API_PROJECTS_LIST = `${API_BASE_URL}/projects-list`;
 const API_PROJECT_GET = `${API_BASE_URL}/project-get`;
 const API_PROJECT_DETAILS = `${API_BASE_URL}/project-details`;
 
