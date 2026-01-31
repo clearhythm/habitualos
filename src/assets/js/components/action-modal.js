@@ -8,6 +8,7 @@
 import { formatDate, escapeHtml, capitalize } from "/assets/js/utils/utils.js";
 import { getAction, completeAction as apiCompleteAction, dismissAction as apiDismissAction } from "/assets/js/api/actions.js";
 import { getUserId } from "/assets/js/auth/auth.js";
+import { showToast } from "/assets/js/components/chat-toast.js";
 
 let modalElement = null;
 let currentAction = null;  // Store current action for chat navigation
@@ -286,7 +287,7 @@ async function completeActionFromModal() {
       onActionComplete(actionId);
     }
 
-    alert('Action completed!');
+    showToast('Action completed!');
   } catch (error) {
     console.error('Error completing action:', error);
     alert(`Failed to complete action: ${error.message}`);

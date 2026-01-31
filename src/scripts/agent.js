@@ -833,7 +833,7 @@ async function completeAction(actionId) {
       renderFeed();
     }
 
-    alert('Action completed!');
+    showToast('Action completed!');
 
   } catch (error) {
     log('error', '[actions] Error completing action:', error);
