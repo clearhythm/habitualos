@@ -17,7 +17,13 @@
   # Max timeout for Claude API calls (26 seconds on Pro plan)
   timeout = 26
 
+# Edge functions configuration
+[[edge_functions]]
+  path = "/api/agent-chat-stream"
+  function = "agent-chat-stream"
+
 # Browser API - gateway for all /api/* requests
+# Note: Edge functions are automatically excluded from this redirect
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

@@ -257,6 +257,88 @@ function renderMessage(role, content) {
 }
 
 // -----------------------------
+// Streaming Chat Functions
+// -----------------------------
+let streamingMessageElement = null;
+let streamingText = '';
+
+function showStreamingMessage() {
+  streamingText = '';
+  const messageDiv = document.createElement('div');
+  messageDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #eff6ff; color: #333; align-self: flex-start; border-left: 3px solid #2563eb; border-bottom-left-radius: 4px;';
+  messageDiv.innerHTML = '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
+  chatMessages.appendChild(messageDiv);
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  streamingMessageElement = messageDiv;
+
+  // Add cursor blink animation if not present
+  if (!document.getElementById('streaming-cursor-style')) {
+    const style = document.createElement('style');
+    style.id = 'streaming-cursor-style';
+    style.textContent = '@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }';
+    document.head.appendChild(style);
+  }
+}
+
+function appendStreamingText(text) {
+  if (!streamingMessageElement) return;
+  streamingText += text;
+
+  // Update content with cursor at end
+  if (window.marked) {
+    streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
+  } else {
+    streamingMessageElement.textContent = streamingText;
+  }
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+function showToolStatus(toolName, status) {
+  if (!streamingMessageElement) return;
+
+  // Add tool status indicator
+  const statusText = status === 'start' ? `Using ${toolName}...` : `✓ ${toolName}`;
+  const statusSpan = document.createElement('div');
+  statusSpan.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic; margin: 0.5rem 0;';
+  statusSpan.textContent = statusText;
+
+  // Insert before cursor
+  const cursor = streamingMessageElement.querySelector('.streaming-cursor');
+  if (cursor) {
+    streamingMessageElement.insertBefore(statusSpan, cursor);
+  } else {
+    streamingMessageElement.appendChild(statusSpan);
+  }
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+function finalizeStreamingMessage() {
+  if (!streamingMessageElement) return;
+
+  // Remove cursor and finalize content
+  const cursor = streamingMessageElement.querySelector('.streaming-cursor');
+  if (cursor) cursor.remove();
+
+  // Re-render with final markdown
+  if (window.marked && streamingText) {
+    streamingMessageElement.innerHTML = marked.parse(streamingText);
+  }
+
+  const finalElement = streamingMessageElement;
+  streamingMessageElement = null;
+
+  return { element: finalElement, text: streamingText };
+}
+
+function hideStreamingMessage() {
+  if (streamingMessageElement) {
+    streamingMessageElement.remove();
+    streamingMessageElement = null;
+    streamingText = '';
+  }
+}
+
+// -----------------------------
 // Firestore Chat Persistence
 // -----------------------------
 async function saveChatToFirestore(generatedAssets = [], generatedActions = []) {
@@ -1246,7 +1328,7 @@ async function initializeViewFromHash() {
 }
 
 // -----------------------------
-// Chat Form Handler
+// Chat Form Handler (Streaming)
 // -----------------------------
 async function handleChatSubmit(e) {
   e.preventDefault();
@@ -1269,10 +1351,100 @@ async function handleChatSubmit(e) {
   sendButton.style.background = '#ddd';
   sendButton.style.cursor = 'not-allowed';
 
+  const userId = getUserId();
+
+  // Try streaming endpoint first, fall back to regular on error
+  try {
+    await handleStreamingChat(userId, message);
+  } catch (streamError) {
+    log('warn', 'Streaming failed, falling back to regular endpoint:', streamError);
+    await handleNonStreamingChat(userId, message);
+  }
+}
+
+async function handleStreamingChat(userId, message) {
+  showStreamingMessage();
+
+  const response = await fetch('/api/agent-chat-stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      agentId,
+      message,
+      chatHistory: chatHistory.slice(0, -1).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      actionContext: currentMeasurementActionContext,
+      reviewContext: currentReviewActionContext
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Stream request failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let finalData = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Parse SSE lines from buffer
+    const lines = buffer.split('\n\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(line.slice(6));
+
+          if (data.type === 'token') {
+            appendStreamingText(data.text);
+          } else if (data.type === 'tool_start') {
+            showToolStatus(data.tool, 'start');
+          } else if (data.type === 'tool_complete') {
+            showToolStatus(data.tool, 'complete');
+          } else if (data.type === 'done') {
+            finalData = data;
+          } else if (data.type === 'error') {
+            throw new Error(data.error);
+          }
+        } catch (parseErr) {
+          log('warn', 'Failed to parse SSE data:', parseErr);
+        }
+      }
+    }
+  }
+
+  // Finalize the streaming message
+  const { text: fullResponse } = finalizeStreamingMessage();
+
+  // Add to chat history
+  const assistantMessage = {
+    role: 'assistant',
+    content: fullResponse,
+    timestamp: new Date().toISOString()
+  };
+  chatHistory.push(assistantMessage);
+  saveAgentChatHistory(chatHistory);
+
+  // Handle signals from the response
+  if (finalData?.hasSignal && finalData.signal) {
+    await handleSignal(finalData.signal, fullResponse, userId);
+  }
+}
+
+async function handleNonStreamingChat(userId, message) {
   showLoadingMessage();
 
   try {
-    const userId = getUserId();
     const response = await fetch('/.netlify/functions/agent-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1280,7 +1452,7 @@ async function handleChatSubmit(e) {
         userId,
         agentId,
         message,
-        chatHistory: chatHistory.map(msg => ({
+        chatHistory: chatHistory.slice(0, -1).map(msg => ({
           role: msg.role,
           content: msg.content
         })),
@@ -1328,39 +1500,7 @@ async function handleChatSubmit(e) {
 
     // Handle measurement check-in completion
     if (data.hasMeasurement && data.measurementData && currentMeasurementActionId) {
-      try {
-        const measurementResponse = await fetch('/.netlify/functions/measurement-create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            agentId,
-            actionId: currentMeasurementActionId,
-            dimensions: data.measurementData.dimensions,
-            notes: data.measurementData.notes || null
-          })
-        });
-
-        const measurementResult = await measurementResponse.json();
-
-        if (measurementResult.success) {
-          await completeAction(currentMeasurementActionId);
-
-          const completionMessage = {
-            role: 'system',
-            content: '✓ Check-in recorded',
-            timestamp: new Date().toISOString()
-          };
-          renderMessage('system', completionMessage.content);
-        } else {
-          log('error', 'Failed to store measurement:', measurementResult.error);
-        }
-      } catch (err) {
-        log('error', 'Error storing measurement:', err);
-      } finally {
-        currentMeasurementActionId = null;
-        currentMeasurementActionContext = null;
-      }
+      await handleMeasurementCompletion(userId, data.measurementData);
     }
 
   } catch (error) {
@@ -1375,6 +1515,87 @@ async function handleChatSubmit(e) {
     renderMessage('assistant', errorMessage.content);
     chatHistory.push(errorMessage);
     saveAgentChatHistory(chatHistory);
+  }
+}
+
+async function handleSignal(signal, fullResponse, userId) {
+  const { type, data } = signal;
+
+  if (type === 'GENERATE_ACTIONS' && data && !data.error) {
+    const draftAction = {
+      id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      title: data.title,
+      description: data.description,
+      priority: data.priority || 'medium',
+      taskType: data.taskType || 'scheduled',
+      taskConfig: data.taskConfig || {},
+      state: 'draft',
+      agentId: agentId
+    };
+
+    draftActions.push(draftAction);
+    saveDraftActions(draftActions);
+    renderDraftActionCard(draftAction);
+    saveChatToFirestore([], [draftAction.id]);
+  }
+
+  if (type === 'GENERATE_ASSET' && data && !data.error) {
+    const draftAction = {
+      id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      title: data.title,
+      description: data.description,
+      taskType: 'manual',
+      type: data.type || 'text',
+      content: data.content,
+      priority: 'medium',
+      state: 'draft',
+      agentId: agentId
+    };
+
+    draftActions.push(draftAction);
+    saveDraftActions(draftActions);
+    renderDraftActionCard(draftAction);
+    saveChatToFirestore([], [draftAction.id]);
+  }
+
+  if (type === 'STORE_MEASUREMENT' && data && !data.error && currentMeasurementActionId) {
+    await handleMeasurementCompletion(userId, data);
+  }
+}
+
+async function handleMeasurementCompletion(userId, measurementData) {
+  try {
+    const measurementResponse = await fetch('/.netlify/functions/measurement-create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        agentId,
+        actionId: currentMeasurementActionId,
+        dimensions: measurementData.dimensions,
+        notes: measurementData.notes || null
+      })
+    });
+
+    const measurementResult = await measurementResponse.json();
+
+    if (measurementResult.success) {
+      await completeAction(currentMeasurementActionId);
+
+      const completionMessage = {
+        role: 'system',
+        content: '✓ Check-in recorded',
+        timestamp: new Date().toISOString()
+      };
+      renderMessage('system', completionMessage.content);
+    } else {
+      log('error', 'Failed to store measurement:', measurementResult.error);
+    }
+  } catch (err) {
+    log('error', 'Error storing measurement:', err);
+  } finally {
+    currentMeasurementActionId = null;
+    currentMeasurementActionContext = null;
   }
 }
 
