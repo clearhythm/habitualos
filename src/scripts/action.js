@@ -549,7 +549,7 @@ function displayTimeEntries(entries, totalMinutes) {
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
           <span style="font-weight: 600;">${formatDuration(entry.duration)}</span>
-          ${entry.note ? `<span style="color: #6b7280; margin-left: 0.5rem;">- ${escapeHtml(entry.note)}</span>` : ''}
+          ${entry.note ? `<span style="color: #6b7280; margin-left: 0.5rem;">${escapeHtml(entry.note)}</span>` : ''}
         </div>
         <button class="time-entry-delete-btn" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.8rem;">Delete</button>
       </div>
