@@ -261,12 +261,30 @@ function renderMessage(role, content) {
 // -----------------------------
 let streamingMessageElement = null;
 let streamingText = '';
+let streamingStarted = false;
+
+// Signal keywords that should be hidden from display
+const SIGNAL_KEYWORDS = ['GENERATE_ACTIONS', 'GENERATE_ASSET', 'STORE_MEASUREMENT'];
+
+function getDisplayText(fullText) {
+  // Find the earliest signal start and only show content before it
+  let displayText = fullText;
+  for (const signal of SIGNAL_KEYWORDS) {
+    const pattern = new RegExp(`(^|\\n)${signal}`, 'm');
+    const match = displayText.match(pattern);
+    if (match) {
+      displayText = displayText.substring(0, match.index);
+    }
+  }
+  return displayText.trim();
+}
 
 function showStreamingMessage() {
   streamingText = '';
+  streamingStarted = false;
   const messageDiv = document.createElement('div');
-  messageDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #eff6ff; color: #333; align-self: flex-start; border-left: 3px solid #2563eb; border-bottom-left-radius: 4px;';
-  messageDiv.innerHTML = '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
+  messageDiv.style.cssText = 'padding: 0.875rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #eff6ff; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
+  messageDiv.innerHTML = '<span style="color: #999; font-style: italic;">Thinking...</span>';
   chatMessages.appendChild(messageDiv);
   chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   streamingMessageElement = messageDiv;
@@ -284,11 +302,20 @@ function appendStreamingText(text) {
   if (!streamingMessageElement) return;
   streamingText += text;
 
+  // On first token, switch from "Thinking..." to streaming mode
+  if (!streamingStarted) {
+    streamingStarted = true;
+    streamingMessageElement.style.borderLeftColor = '#2563eb';
+  }
+
+  // Get display text (without signals)
+  const displayText = getDisplayText(streamingText);
+
   // Update content with cursor at end
   if (window.marked) {
-    streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
+    streamingMessageElement.innerHTML = marked.parse(displayText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
   } else {
-    streamingMessageElement.textContent = streamingText;
+    streamingMessageElement.textContent = displayText;
   }
   chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
@@ -319,15 +346,22 @@ function finalizeStreamingMessage() {
   const cursor = streamingMessageElement.querySelector('.streaming-cursor');
   if (cursor) cursor.remove();
 
-  // Re-render with final markdown
-  if (window.marked && streamingText) {
-    streamingMessageElement.innerHTML = marked.parse(streamingText);
+  // Get display text (without signals) for final render
+  const displayText = getDisplayText(streamingText);
+
+  // Re-render with final markdown (without signal content)
+  if (window.marked && displayText) {
+    streamingMessageElement.innerHTML = marked.parse(displayText);
+  } else if (displayText) {
+    streamingMessageElement.textContent = displayText;
   }
 
   const finalElement = streamingMessageElement;
   streamingMessageElement = null;
+  streamingStarted = false;
 
-  return { element: finalElement, text: streamingText };
+  // Return full text for signal parsing, display text for chat history
+  return { element: finalElement, text: streamingText, displayText };
 }
 
 function hideStreamingMessage() {
@@ -335,6 +369,7 @@ function hideStreamingMessage() {
     streamingMessageElement.remove();
     streamingMessageElement = null;
     streamingText = '';
+    streamingStarted = false;
   }
 }
 
@@ -1424,12 +1459,12 @@ async function handleStreamingChat(userId, message) {
   }
 
   // Finalize the streaming message
-  const { text: fullResponse } = finalizeStreamingMessage();
+  const { text: fullResponse, displayText } = finalizeStreamingMessage();
 
-  // Add to chat history
+  // Add to chat history (use displayText to exclude signal content)
   const assistantMessage = {
     role: 'assistant',
-    content: fullResponse,
+    content: displayText || fullResponse,
     timestamp: new Date().toISOString()
   };
   chatHistory.push(assistantMessage);
