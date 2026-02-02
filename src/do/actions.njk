@@ -33,11 +33,17 @@ permalink: /do/actions/
       </a>
     </div>
 
+    {# Project Filter (shared across views) #}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <select id="project-filter" style="padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.9rem; background: white;">
+        <option value="">All Projects</option>
+        <!-- Populated dynamically -->
+      </select>
+      <button id="add-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">+ Add Action</button>
+    </div>
+
     {# Open Actions View (Default) #}
     <div id="view-open" class="actions-view">
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-        <button id="add-action-btn" style="padding: 0.5rem 1rem; background: #2563eb; color: white; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 500;">+ Add Action</button>
-      </div>
       <div id="open-empty" style="text-align: center; padding: 2rem; color: #6b7280;">
         <p style="font-size: 1rem; margin-bottom: 0.5rem;">No open actions</p>
         <p style="font-size: 0.9rem;">Click "Add Action" to create one.</p>
@@ -219,6 +225,13 @@ permalink: /do/actions/
     background: #374151;
     color: #d1d5db;
   }
+
+  html[data-theme="dark"] #project-filter,
+  html[data-theme="dark"] #completed-filter {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+  }
 </style>
 
 <script type="module">
@@ -235,6 +248,7 @@ permalink: /do/actions/
   // Store loaded data
   let allActions = [];
   let allProjects = [];
+  let selectedProjectId = '';
 
   function getProjectName(projectId) {
     if (!projectId) return 'No project';
@@ -248,12 +262,17 @@ permalink: /do/actions/
 
     listEl.innerHTML = '';
 
-    // Filter actions
+    // Filter by project first
     let filteredActions = actions;
+    if (selectedProjectId) {
+      filteredActions = filteredActions.filter(a => a.projectId === selectedProjectId);
+    }
+
+    // Then filter by state
     if (filter === 'open') {
-      filteredActions = actions.filter(a => !['completed', 'dismissed'].includes(a.state));
+      filteredActions = filteredActions.filter(a => !['completed', 'dismissed'].includes(a.state));
     } else if (filter === 'completed') {
-      filteredActions = actions.filter(a => a.state === 'completed');
+      filteredActions = filteredActions.filter(a => a.state === 'completed');
     }
 
     // Sort by creation date, newest first
@@ -299,8 +318,13 @@ permalink: /do/actions/
   }
 
   function updateCounts() {
-    const openActions = allActions.filter(a => !['completed', 'dismissed'].includes(a.state));
-    const completedActions = allActions.filter(a => a.state === 'completed');
+    // Apply project filter to counts
+    let actions = allActions;
+    if (selectedProjectId) {
+      actions = actions.filter(a => a.projectId === selectedProjectId);
+    }
+    const openActions = actions.filter(a => !['completed', 'dismissed'].includes(a.state));
+    const completedActions = actions.filter(a => a.state === 'completed');
     document.getElementById('open-count').textContent = openActions.length;
     document.getElementById('completed-count').textContent = completedActions.length;
   }
@@ -345,6 +369,27 @@ permalink: /do/actions/
     const filterEl = document.getElementById('completed-filter');
     filterEl.addEventListener('change', () => {
       renderCompletedActions(filterEl.value);
+    });
+  }
+
+  function setupProjectFilter() {
+    const filterEl = document.getElementById('project-filter');
+
+    // Populate dropdown
+    filterEl.innerHTML = '<option value="">All Projects</option>';
+    allProjects.forEach(project => {
+      const option = document.createElement('option');
+      option.value = project.id;
+      option.textContent = project.name || 'Untitled Project';
+      filterEl.appendChild(option);
+    });
+
+    // Handle filter changes
+    filterEl.addEventListener('change', () => {
+      selectedProjectId = filterEl.value;
+      renderOpenActions();
+      renderCompletedActions(document.getElementById('completed-filter').value);
+      updateCounts();
     });
   }
 
@@ -448,6 +493,7 @@ permalink: /do/actions/
 
       pageEl.style.display = 'block';
 
+      setupProjectFilter();
       updateCounts();
       renderOpenActions();
       renderCompletedActions();
