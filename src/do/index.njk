@@ -5,7 +5,7 @@ permalink: /do/
 ---
 
 <div style="max-width: 800px; margin: 4rem auto; padding: 2rem; text-align: center;">
-  <h1 id="rank-title"><span id="rank-emoji" style="display: inline-block; width: 1.5em;"></span><span id="rank-name">&nbsp;</span><span style="display: inline-block; width: 1.5em;"></span></h1>
+  <h1 id="rank-title"><span id="rank-emoji"></span> <span id="rank-name">&nbsp;</span></h1>
   <p style="font-size: 1.2rem; color: #666; margin: 0 0 2rem 0;" id="rank-subtitle">
     Loading...
   </p>
@@ -153,7 +153,7 @@ permalink: /do/
         // Update subtitle
         const sessionsText = totalWorkLogs === 1 ? 'session' : 'sessions';
         document.getElementById('rank-subtitle').textContent =
-          `You completed ${totalWorkLogs} work actions.`;
+          `You logged ${totalWorkLogs} work ${sessionsText}.`;
 
         // Update stats
         document.getElementById('worklogs-count').textContent = totalWorkLogs;
