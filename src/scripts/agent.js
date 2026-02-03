@@ -1400,10 +1400,11 @@ async function handleChatSubmit(e) {
 async function handleStreamingChat(userId, message) {
   showStreamingMessage();
 
-  const response = await fetch('/api/agent-chat-stream', {
+  const response = await fetch('/api/chat-stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      chatType: 'agent',
       userId,
       agentId,
       message,

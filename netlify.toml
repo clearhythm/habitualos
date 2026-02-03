@@ -29,7 +29,12 @@
 # Deno runtime, runs at edge locations, no timeout issues with streaming
 # =============================================================================
 
-# Streaming chat endpoint - primary path, streams tokens via SSE
+# Generic streaming chat endpoint - handles agent, fox-ea, obi-wai chat types
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
+
+# Legacy streaming endpoint - kept for backwards compatibility
 [[edge_functions]]
   path = "/api/agent-chat-stream"
   function = "agent-chat-stream"
