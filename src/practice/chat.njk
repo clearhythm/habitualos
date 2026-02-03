@@ -153,6 +153,11 @@ permalink: /practice/chat/
   let currentPracticeData = null;
   let loadingMessageElement = null;
 
+  // Streaming state
+  let streamingMessageElement = null;
+  let streamingText = '';
+  let streamingStarted = false;
+
   // Update send button state based on textarea content
   function updateSendButton() {
     const hasContent = messageInput.value.trim().length > 0;
@@ -183,6 +188,110 @@ permalink: /practice/chat/
       loadingMessageElement.remove();
       loadingMessageElement = null;
     }
+  }
+
+  // Streaming message helpers
+  function showStreamingMessage() {
+    streamingText = '';
+    streamingStarted = false;
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #f9f6ff; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
+    messageDiv.innerHTML = '<span style="color: #999; font-style: italic;">Obi-Wai is thinking...</span>';
+    chatMessages.appendChild(messageDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    streamingMessageElement = messageDiv;
+
+    // Add cursor blink animation if not present
+    if (!document.getElementById('streaming-cursor-style')) {
+      const style = document.createElement('style');
+      style.id = 'streaming-cursor-style';
+      style.textContent = '@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }';
+      document.head.appendChild(style);
+    }
+  }
+
+  function appendStreamingText(text) {
+    if (!streamingMessageElement) return;
+    streamingText += text;
+
+    // On first token, switch from "Thinking..." to streaming mode
+    if (!streamingStarted) {
+      streamingStarted = true;
+      streamingMessageElement.style.borderLeftColor = '#9b59b6';
+    }
+
+    // Update content with cursor at end
+    if (window.marked) {
+      streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
+    } else {
+      streamingMessageElement.textContent = streamingText;
+    }
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
+  function finalizeStreamingMessage() {
+    if (!streamingMessageElement) return { text: '', displayText: '' };
+
+    // Remove cursor and finalize content
+    const cursor = streamingMessageElement.querySelector('.streaming-cursor');
+    if (cursor) cursor.remove();
+
+    // Re-render with final markdown
+    if (window.marked && streamingText) {
+      streamingMessageElement.innerHTML = marked.parse(streamingText);
+    } else if (streamingText) {
+      streamingMessageElement.textContent = streamingText;
+    }
+
+    const finalText = streamingText;
+    streamingMessageElement = null;
+    streamingText = '';
+    streamingStarted = false;
+
+    return { text: finalText, displayText: finalText };
+  }
+
+  function hideStreamingMessage() {
+    if (streamingMessageElement) {
+      streamingMessageElement.remove();
+      streamingMessageElement = null;
+      streamingText = '';
+      streamingStarted = false;
+    }
+  }
+
+  // Parse READY_TO_PRACTICE signal from response
+  function parseReadySignal(text) {
+    if (!text.includes('READY_TO_PRACTICE')) return null;
+
+    const lines = text.split('\n');
+    let practiceName = '';
+    let message = '';
+    let inMessage = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('PRACTICE_NAME:')) {
+        practiceName = line.substring(14).trim();
+      } else if (line.startsWith('MESSAGE:')) {
+        message = line.substring(8).trim();
+        inMessage = true;
+      } else if (inMessage && line.trim() && !line.startsWith('READY_TO_PRACTICE') && !line.startsWith('---')) {
+        message += ' ' + line.trim();
+      }
+    }
+
+    if (practiceName) {
+      return { practiceName: practiceName.trim(), message: message.trim() };
+    }
+    return null;
+  }
+
+  // Get display text (without signal content)
+  function getDisplayText(text) {
+    if (!text.includes('READY_TO_PRACTICE')) return text;
+    const signalIndex = text.indexOf('READY_TO_PRACTICE');
+    return text.substring(0, signalIndex).trim();
   }
 
   // Load chat history from localStorage
@@ -239,6 +348,169 @@ permalink: /practice/chat/
     renderMessage(msg.role, msg.content);
   });
 
+  // Streaming chat handler
+  async function handleStreamingChat(message) {
+    showStreamingMessage();
+
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const response = await fetch('/api/chat-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chatType: 'obi-wai',
+        userId,
+        message,
+        timezone: userTimezone,
+        chatHistory: chatHistory.slice(0, -1).map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Stream request failed: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let signalData = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse SSE lines from buffer
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.type === 'token') {
+              appendStreamingText(data.text);
+            } else if (data.type === 'done') {
+              // Check for signal in the done event
+              if (data.hasSignal && data.signal) {
+                signalData = data.signal;
+              }
+            } else if (data.type === 'error') {
+              throw new Error(data.error);
+            }
+          } catch (parseErr) {
+            console.warn('Failed to parse SSE data:', parseErr);
+          }
+        }
+      }
+    }
+
+    // Finalize the streaming message
+    const { text: fullResponse } = finalizeStreamingMessage();
+
+    // Parse signal from the full response (backup check)
+    const parsedSignal = parseReadySignal(fullResponse);
+
+    // Get display text (without signal content)
+    const displayText = getDisplayText(fullResponse);
+
+    // Update the rendered message to show only display text
+    if (displayText !== fullResponse && streamingMessageElement === null) {
+      // Find the last message and update it
+      const lastMessage = chatMessages.lastElementChild;
+      if (lastMessage && window.marked) {
+        lastMessage.innerHTML = marked.parse(displayText);
+      }
+    }
+
+    // Add to chat history (use display text)
+    const assistantMessage = {
+      role: 'assistant',
+      content: displayText || fullResponse,
+      timestamp: new Date().toISOString()
+    };
+    chatHistory.push(assistantMessage);
+    saveChatHistory(chatHistory);
+
+    // Handle ready to practice signal
+    if (parsedSignal || (signalData?.type === 'READY_TO_PRACTICE')) {
+      const readyData = parsedSignal || signalData.data;
+      currentPracticeData = {
+        practiceName: readyData.practiceName || readyData.PRACTICE_NAME,
+        fullSuggestion: displayText
+      };
+
+      // Show "I'm Ready" modal
+      readyButtonContainer.style.display = 'flex';
+
+      // Disable chat form
+      sendButton.disabled = true;
+      sendButton.style.background = '#ddd';
+      sendButton.style.cursor = 'not-allowed';
+      messageInput.disabled = true;
+    }
+  }
+
+  // Non-streaming fallback
+  async function handleNonStreamingChat(message) {
+    showLoadingMessage();
+
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    const response = await fetch('/.netlify/functions/practice-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        message,
+        timezone: userTimezone,
+        chatHistory: chatHistory.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to get response');
+    }
+
+    hideLoadingMessage();
+
+    const assistantMessage = {
+      role: 'assistant',
+      content: data.response,
+      timestamp: new Date().toISOString()
+    };
+    renderMessage('assistant', data.response);
+    chatHistory.push(assistantMessage);
+    saveChatHistory(chatHistory);
+
+    // Check if ready to practice
+    if (data.ready) {
+      currentPracticeData = {
+        practiceName: data.practiceName,
+        fullSuggestion: data.response
+      };
+
+      // Show "I'm Ready" modal
+      readyButtonContainer.style.display = 'flex';
+
+      // Disable chat form
+      sendButton.disabled = true;
+      sendButton.style.background = '#ddd';
+      sendButton.style.cursor = 'not-allowed';
+      messageInput.disabled = true;
+    }
+  }
+
   // Handle form submission
   chatForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -265,81 +537,28 @@ permalink: /practice/chat/
     sendButton.style.background = '#ddd';
     sendButton.style.cursor = 'not-allowed';
 
-    // Show loading message inline
-    showLoadingMessage();
-
+    // Try streaming first, fall back to non-streaming on error
     try {
-      // Get user's timezone
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      await handleStreamingChat(message);
+    } catch (streamError) {
+      console.warn('Streaming failed, falling back to regular endpoint:', streamError);
+      hideStreamingMessage();
+      try {
+        await handleNonStreamingChat(message);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        hideLoadingMessage();
 
-      // Call backend
-      const response = await fetch('/.netlify/functions/practice-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId,
-          message,
-          timezone: userTimezone,
-          chatHistory: chatHistory.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }))
-        })
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to get response');
-      }
-
-      // Hide loading message
-      hideLoadingMessage();
-      // Button state is controlled by textarea content (updateSendButton)
-
-      // Add assistant response to UI and history
-      const assistantMessage = {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date().toISOString()
-      };
-      renderMessage('assistant', data.response);
-      chatHistory.push(assistantMessage);
-      saveChatHistory(chatHistory);
-
-      // Check if ready to practice
-      if (data.ready) {
-        currentPracticeData = {
-          practiceName: data.practiceName,
-          fullSuggestion: data.response
+        // Show error message
+        const errorMessage = {
+          role: 'assistant',
+          content: "I'm having trouble connecting right now. Could you try again?",
+          timestamp: new Date().toISOString()
         };
-
-        // Show "I'm Ready" modal
-        readyButtonContainer.style.display = 'flex';
-
-        // Disable chat form
-        sendButton.disabled = true;
-        sendButton.style.background = '#ddd';
-        sendButton.style.cursor = 'not-allowed';
-        messageInput.disabled = true;
+        renderMessage('assistant', errorMessage.content);
+        chatHistory.push(errorMessage);
+        saveChatHistory(chatHistory);
       }
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      hideLoadingMessage();
-      // Button state is controlled by textarea content (updateSendButton)
-
-      // Show error message
-      const errorMessage = {
-        role: 'assistant',
-        content: "I'm having trouble connecting right now. Could you try again?",
-        timestamp: new Date().toISOString()
-      };
-      renderMessage('assistant', errorMessage.content);
-      chatHistory.push(errorMessage);
-      saveChatHistory(chatHistory);
     }
   });
 
