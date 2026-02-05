@@ -1,14 +1,16 @@
 # =============================================================================
-# Build & Dev
+# Build & Dev (Monorepo Configuration)
 # =============================================================================
+# When deployed, Netlify's "Package directory" should be set to "apps/habitual-web"
+# This makes all paths below relative to apps/habitual-web/
 
 [build]
-  command = "npm run build"
+  command = "cd ../.. && pnpm install && pnpm --filter habitual-web build"
   publish = "_site"
   functions = "netlify/functions"
 
 [dev]
-  command = "npm run dev"
+  command = "pnpm dev"
   targetPort = 8080
   autoLaunch = false
 

@@ -25,7 +25,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 const { getActionsByUserId } = require('./db-actions.cjs');
 
 /**

@@ -32,7 +32,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 const { generateAgentLogId } = require('../_utils/data-utils.cjs');
 
 /**

@@ -27,7 +27,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 
 /**
  * Create a new artifact

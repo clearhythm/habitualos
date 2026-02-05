@@ -23,7 +23,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 
 /**
  * Get all practice logs for a specific user (newest first)

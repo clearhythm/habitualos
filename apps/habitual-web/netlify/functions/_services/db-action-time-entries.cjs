@@ -23,7 +23,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 const { v4: uuidv4 } = require('uuid');
 
 const COLLECTION = 'work-action-time-entries';

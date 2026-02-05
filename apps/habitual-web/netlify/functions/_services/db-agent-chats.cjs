@@ -28,7 +28,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 
 /**
  * Get all agent work chats for a specific user (newest first)
@@ -95,7 +95,7 @@ exports.createAgentChat = async (id, data) => {
  * @returns {Promise<Object>} Result with id
  */
 exports.appendToAgentChat = async (id, newMessages, generatedAssets = [], generatedActions = []) => {
-  const { db, FieldValue } = require('../_utils/firestore.cjs');
+  const { db, FieldValue } = require('@habitualos/db-core');
   const chatRef = db.collection('agent-chats').doc(id);
 
   // Get current document to append to arrays

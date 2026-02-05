@@ -24,7 +24,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 
 /**
  * Get all practice chats for a specific user (newest first)
@@ -79,7 +79,7 @@ exports.getPracticeChatCount = async (userId) => {
  * @returns {Promise<Object>} Result with id
  */
 exports.appendToPracticeChat = async (id, newMessages, updates = {}) => {
-  const { db, FieldValue } = require('../_utils/firestore.cjs');
+  const { db, FieldValue } = require('@habitualos/db-core');
   const chatRef = db.collection('practice-chats').doc(id);
 
   const chatDoc = await chatRef.get();

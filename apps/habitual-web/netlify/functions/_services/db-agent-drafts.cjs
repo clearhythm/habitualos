@@ -36,7 +36,7 @@
 //   User sentiment is captured in user-feedback collection, not in status.
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const dbCore = require('@habitualos/db-core');
 const { generateDraftId } = require('../_utils/data-utils.cjs');
 
 /**

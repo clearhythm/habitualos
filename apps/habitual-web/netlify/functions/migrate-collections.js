@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { db } = require('./_utils/firestore.cjs');
+const { db } = require('@habitualos/db-core');
 
 /**
  * POST /api/migrate-collections

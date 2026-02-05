@@ -38,8 +38,8 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
-const { db, FieldValue } = require('../_utils/firestore.cjs');
+const dbCore = require('@habitualos/db-core');
+const { db, FieldValue } = require('@habitualos/db-core');
 
 /**
  * Create a new agent with initial metrics
