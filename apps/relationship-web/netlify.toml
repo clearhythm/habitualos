@@ -1,0 +1,31 @@
+# =============================================================================
+# Build & Dev (Monorepo Configuration)
+# =============================================================================
+# When deployed, Netlify's "Package directory" should be set to "apps/relationship-web"
+
+[build]
+  command = "cd ../.. && pnpm install && pnpm --filter relationship-web build"
+  publish = "_site"
+  functions = "netlify/functions"
+
+[dev]
+  command = "pnpm dev"
+  targetPort = 8080
+  autoLaunch = false
+
+# =============================================================================
+# Functions
+# =============================================================================
+
+[functions]
+  node_bundler = "esbuild"
+
+# =============================================================================
+# Redirects
+# =============================================================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true

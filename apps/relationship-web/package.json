@@ -1,0 +1,15 @@
+{
+  "name": "relationship-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "eleventy:build": "eleventy",
+    "eleventy:serve": "eleventy --serve",
+    "dev": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "dependencies": {
+    "@habitualos/db-core": "workspace:*",
+    "@11ty/eleventy": "^2.0.1"
+  }
+}

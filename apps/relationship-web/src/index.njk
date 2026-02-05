@@ -1,0 +1,146 @@
+---
+layout: base.njk
+title: Relationship Web - Capture Moments
+---
+
+<h1>Relationship Web</h1>
+<p class="subtitle">Capture meaningful moments with the people in your life</p>
+
+<form id="moment-form">
+  <input type="text" id="personName" placeholder="Person's name (optional)">
+  <select id="type">
+    <option value="note">Note</option>
+    <option value="conversation">Conversation</option>
+    <option value="gift">Gift</option>
+    <option value="milestone">Milestone</option>
+    <option value="memory">Memory</option>
+  </select>
+  <textarea id="content" placeholder="What happened? What do you want to remember?" rows="3" required></textarea>
+  <button type="submit">Add Moment</button>
+</form>
+
+<div id="moments-list">
+  <div class="empty-state">Loading moments...</div>
+</div>
+
+<script type="module">
+  // Simple auth - same pattern as HabitualOS
+  const LOCAL_STORAGE_KEY = "user";
+
+  function generateUserId() {
+    const t = (Date.now() * 1000 + Math.random() * 1000).toString(36).slice(-8);
+    return 'u-' + t;
+  }
+
+  function initializeUser() {
+    let user;
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      user = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      user = null;
+    }
+
+    if (!user || !user._userId) {
+      user = {
+        _userId: generateUserId(),
+        _createdAt: new Date().toISOString()
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+    }
+
+    return user._userId;
+  }
+
+  const userId = initializeUser();
+
+  // Format date nicely
+  function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  }
+
+  // Load moments
+  async function loadMoments() {
+    try {
+      const res = await fetch(`/api/moments-list?userId=${userId}`);
+      const data = await res.json();
+
+      const container = document.getElementById('moments-list');
+
+      if (!data.success || !data.moments || !data.moments.length) {
+        container.innerHTML = '<div class="empty-state"><p>No moments yet.</p><p>Add your first moment above!</p></div>';
+        return;
+      }
+
+      container.innerHTML = data.moments.map(m => `
+        <div class="moment">
+          <div class="moment-header">
+            <span class="moment-type ${m.type || 'note'}">${m.type || 'note'}</span>
+            <span class="moment-date">${formatDate(m.occurredAt)}</span>
+          </div>
+          ${m.personName ? `<div class="moment-person">with ${m.personName}</div>` : ''}
+          <p class="moment-content">${m.content}</p>
+        </div>
+      `).join('');
+    } catch (error) {
+      console.error('Failed to load moments:', error);
+      document.getElementById('moments-list').innerHTML =
+        '<div class="empty-state">Failed to load moments. Please refresh.</div>';
+    }
+  }
+
+  // Handle form submit
+  document.getElementById('moment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const personName = document.getElementById('personName').value.trim();
+    const type = document.getElementById('type').value;
+    const content = document.getElementById('content').value.trim();
+
+    if (!content) return;
+
+    const button = e.target.querySelector('button');
+    button.disabled = true;
+    button.textContent = 'Adding...';
+
+    try {
+      const res = await fetch('/api/moments-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, personName, type, content })
+      });
+
+      if (res.ok) {
+        document.getElementById('content').value = '';
+        document.getElementById('personName').value = '';
+        document.getElementById('type').value = 'note';
+        loadMoments();
+      } else {
+        const data = await res.json();
+        alert('Failed to add moment: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to create moment:', error);
+      alert('Failed to add moment. Please try again.');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Add Moment';
+    }
+  });
+
+  // Initial load
+  loadMoments();
+</script>

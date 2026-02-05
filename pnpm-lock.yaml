@@ -53,6 +53,15 @@ importers:
         specifier: ^1.69.5
         version: 1.97.3
 
+  apps/relationship-web:
+    dependencies:
+      '@11ty/eleventy':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@habitualos/db-core':
+        specifier: workspace:*
+        version: link:../../packages/db-core
+
   packages/db-core:
     dependencies:
       dotenv:
