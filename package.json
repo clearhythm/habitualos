@@ -29,6 +29,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@habitualos/db-core": "workspace:*",
     "@11ty/eleventy": "^2.0.1",
     "@anthropic-ai/sdk": "^0.71.2",
     "dotenv": "^16.6.1",

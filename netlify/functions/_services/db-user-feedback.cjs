@@ -25,7 +25,7 @@
 //   }
 // ------------------------------------------------------
 
-const dbCore = require('./db-core.cjs');
+const { create, query } = require('@habitualos/db-core');
 const { generateFeedbackId } = require('../_utils/data-utils.cjs');
 
 /**
@@ -40,7 +40,7 @@ exports.createFeedback = async (data) => {
     ...data
   };
 
-  await dbCore.create({
+  await create({
     collection: 'user-feedback',
     id,
     data: feedbackData
@@ -58,7 +58,7 @@ exports.createFeedback = async (data) => {
 exports.getFeedbackByDraft = async (draftId, userId) => {
   const whereClause = `draftId::eq::${draftId}`;
 
-  let results = await dbCore.query({
+  let results = await query({
     collection: 'user-feedback',
     where: whereClause
   });
@@ -79,7 +79,7 @@ exports.getFeedbackByDraft = async (draftId, userId) => {
 exports.getFeedbackByAgent = async (agentId, userId, limit) => {
   const whereClause = `agentId::eq::${agentId}`;
 
-  let results = await dbCore.query({
+  let results = await query({
     collection: 'user-feedback',
     where: whereClause
   });
