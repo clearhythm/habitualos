@@ -1,0 +1,1 @@
+module.exports = require('./netlify/functions/fox-ea-chat-init.js')

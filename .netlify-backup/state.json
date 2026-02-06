@@ -1,0 +1,21 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Santa Cruz",
+			"country": {
+				"code": "US",
+				"name": "United States"
+			},
+			"subdivision": {
+				"code": "CA",
+				"name": "California"
+			},
+			"timezone": "America/Los_Angeles",
+			"latitude": 36.9689,
+			"longitude": -121.9903,
+			"postalCode": "95062"
+		},
+		"timestamp": 1770316282267
+	},
+	"siteId": "5ba65bb7-9dea-4736-82df-9ee6f64b1ba9"
+}

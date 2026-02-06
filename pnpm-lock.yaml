@@ -61,6 +61,13 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+    devDependencies:
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      sass:
+        specifier: ^1.69.5
+        version: 1.97.3
 
   packages/db-core:
     dependencies:
