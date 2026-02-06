@@ -9,12 +9,14 @@
   # Paths must be relative to repo root since Package directory doesn't affect path resolution
   publish = "apps/habitual-web/_site"
   functions = "apps/habitual-web/netlify/functions"
+  edge_functions = "apps/habitual-web/netlify/edge-functions"
 
 [dev]
   command = "npm run dev"
   targetPort = 8080
   autoLaunch = false
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
   publish = "_site"
 
 # =============================================================================
