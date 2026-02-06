@@ -3,7 +3,7 @@
  * Uses shared core from packages/edge-functions.
  */
 
-import { createChatStreamHandler } from "../../../../packages/edge-functions/chat-stream-core.ts";
+import { createChatStreamHandler } from "./chat-stream-core.ts";
 
 // Configure chat types for this app
 export default createChatStreamHandler({
