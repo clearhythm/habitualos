@@ -1,13 +1,386 @@
-// relationship-web styles
-// Add your styles here
+// RelationalOS Main Styles
+// Warm coral theme
 
+// Variables
+$color-primary: #e07a5f;
+$color-primary-dark: #c96a52;
+$color-success: #10b981;
+$color-warning: #f59e0b;
+$color-danger: #ef4444;
+$color-text: #1f2937;
+$color-text-muted: #6b7280;
+$color-bg: #ffffff;
+$color-bg-muted: #faf9f8;
+$color-bg-accent: #fef6f3;
+$color-border: #e5e7eb;
+
+// Dark mode colors
+$dark-color-text: #e5e7eb;
+$dark-color-text-muted: #9ca3af;
+$dark-color-bg: #1f2937;
+$dark-color-bg-muted: #111827;
+$dark-color-border: #374151;
+
+// Reset
 * {
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.6;
+html, body {
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: $color-text;
+  background: $color-bg;
+}
+
+html[data-theme="dark"] {
+  color: $dark-color-text;
+  background: $dark-color-bg;
+}
+
+// Layout
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.main {
+  min-height: calc(100vh - 200px);
+}
+
+// Navbar
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: $color-bg;
+  border-bottom: 1px solid $color-border;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+  }
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: $color-text;
+  font-weight: 600;
+  font-size: 1.25rem;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+  }
+}
+
+.brand-icon {
+  font-size: 1.5rem;
+}
+
+// Hamburger
+.hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hamburger-line {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: $color-text;
+  transition: all 0.2s ease;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-text;
+  }
+}
+
+.hamburger.active .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+// Side Menu
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: linear-gradient(135deg, $color-primary 0%, darken($color-primary, 10%) 100%);
+  z-index: 1001;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+}
+
+.side-menu.open {
+  transform: translateX(0);
+}
+
+.side-menu-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 2rem 1.5rem;
+}
+
+.side-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  margin-bottom: 2rem;
+
+  .brand-icon {
+    font-size: 2rem;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.side-menu-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.nav-icon {
+  font-size: 1.25rem;
+}
+
+.side-menu-footer {
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+// Side Menu Overlay
+.side-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.side-menu-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+// Footer
+.footer {
+  padding: 2rem 0;
+  text-align: center;
+  border-top: 1px solid $color-border;
+  margin-top: 2rem;
+
+  html[data-theme="dark"] & {
+    border-color: $dark-color-border;
+  }
+}
+
+.text-muted {
+  color: $color-text-muted;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+// Moments List
+.moments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.moment-card {
+  background: white;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg-muted;
+    border-color: $dark-color-border;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.moment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.moment-person {
+  font-weight: 600;
+  color: $color-primary;
+}
+
+.moment-type {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: $color-bg-accent;
+  color: $color-primary;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.moment-content {
+  color: $color-text;
+  margin-bottom: 0.75rem;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+  }
+}
+
+.moment-date {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: $color-text-muted;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: $color-primary;
+  color: white;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}
+
+.btn-secondary {
+  background: $color-bg-muted;
+  color: $color-text;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg-muted;
+    color: $dark-color-text;
+  }
+
+  &:hover {
+    background: darken($color-bg-muted, 5%);
+  }
+}
+
+// Page Header
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
 }

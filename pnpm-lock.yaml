@@ -33,6 +33,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.71.2
         version: 0.71.2
+      '@habitualos/chat-storage':
+        specifier: workspace:*
+        version: link:../../packages/chat-storage
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
@@ -58,9 +61,18 @@ importers:
       '@11ty/eleventy':
         specifier: ^2.0.1
         version: 2.0.1
+      '@anthropic-ai/sdk':
+        specifier: ^0.71.2
+        version: 0.71.2
+      '@habitualos/chat-storage':
+        specifier: workspace:*
+        version: link:../../packages/chat-storage
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      marked:
+        specifier: ^15.0.12
+        version: 15.0.12
     devDependencies:
       npm-run-all:
         specifier: ^4.1.5
@@ -68,6 +80,15 @@ importers:
       sass:
         specifier: ^1.69.5
         version: 1.97.3
+
+  packages/chat-storage:
+    dependencies:
+      '@habitualos/db-core':
+        specifier: workspace:*
+        version: link:../db-core
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
 
   packages/db-core:
     dependencies:
@@ -77,6 +98,10 @@ importers:
       firebase-admin:
         specifier: ^13.6.0
         version: 13.6.1
+
+  packages/edge-functions: {}
+
+  packages/frontend-utils: {}
 
 packages:
 

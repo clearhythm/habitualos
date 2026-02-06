@@ -1,13 +1,13 @@
 /**
- * GET /api/work-chat-list
- * List work chats for a user.
+ * GET /api/relational-chat-list
+ * List relational chats for a user.
  * Uses shared @habitualos/chat-storage package.
  */
 
 const { createChatListHandler } = require('@habitualos/chat-storage');
 
 exports.handler = createChatListHandler({
-  collection: 'work-chats',
-  idPrefix: 'wc',
-  responseKey: 'workChats'
+  collection: 'relational-chats',
+  idPrefix: 'rc',
+  responseKey: 'relationalChats'
 });

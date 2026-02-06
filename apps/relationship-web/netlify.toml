@@ -7,11 +7,14 @@
   command = "cd ../.. && pnpm install && pnpm --filter relationship-web build"
   publish = "_site"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [dev]
   command = "npm run dev"
   targetPort = 8080
   autoLaunch = false
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 # =============================================================================
 # Functions
@@ -19,6 +22,14 @@
 
 [functions]
   node_bundler = "esbuild"
+
+# =============================================================================
+# Edge Functions
+# =============================================================================
+
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
 
 # =============================================================================
 # Redirects

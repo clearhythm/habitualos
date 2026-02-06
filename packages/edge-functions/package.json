@@ -1,0 +1,6 @@
+{
+  "name": "@habitualos/edge-functions",
+  "version": "1.0.0",
+  "description": "Shared edge function utilities for HabitualOS apps",
+  "type": "module"
+}
