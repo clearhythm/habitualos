@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "netlify dev --cwd .",
+    "start": "netlify dev",
     "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
     "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
     "eleventy:build": "eleventy",
-    "eleventy:serve": "eleventy --serve",
+    "eleventy:serve": "eleventy --serve --port=8080",
     "dev": "npm-run-all --parallel sass:watch eleventy:serve",
     "build": "npm-run-all sass:build eleventy:build"
   },

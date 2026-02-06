@@ -4,6 +4,8 @@
   "private": true,
   "description": "A personal agentic AI orchestration platform for accomplishing almost anything",
   "scripts": {
+    "start:habitual": "cd apps/habitual-web && netlify dev",
+    "start:relationship": "cd apps/relationship-web && netlify dev",
     "dev:habitual": "pnpm --filter habitual-web dev",
     "dev:relationship": "pnpm --filter relationship-web dev",
     "build:habitual": "pnpm --filter habitual-web build",

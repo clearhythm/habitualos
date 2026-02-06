@@ -4,20 +4,21 @@
 # Set "Package directory" to "apps/habitual-web" in Netlify UI.
 
 [build]
-  # Find repo root dynamically, install deps, build this app
+  base = "apps/habitual-web"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitual-web build"
-  # Paths must be relative to repo root since Package directory doesn't affect path resolution
-  publish = "apps/habitual-web/_site"
-  functions = "apps/habitual-web/netlify/functions"
-  edge_functions = "apps/habitual-web/netlify/edge-functions"
-
-[dev]
-  command = "npm run dev"
-  targetPort = 8080
-  autoLaunch = false
+  publish = "_site"
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
+
+[dev]
+  framework = "#custom"
+  command = "pnpm --filter habitual-web run eleventy:serve"
+  targetPort = 8080
+  autoLaunch = false
+  # These are relative to base (apps/habitual-web)
+  functions = "netlify/functions"
   publish = "_site"
+  edge_functions = "netlify/edge-functions"
 
 # =============================================================================
 # Node.js Functions
