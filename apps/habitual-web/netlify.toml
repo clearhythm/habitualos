@@ -10,7 +10,7 @@
   functions = "netlify/functions"
 
 [dev]
-  command = "pnpm dev"
+  command = "npm run dev"
   targetPort = 8080
   autoLaunch = false
 
