@@ -5,7 +5,7 @@
 
 [build]
   base = "apps/habitual-web"
-  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitual-web build"
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && cp packages/edge-functions/chat-stream-core.ts apps/habitual-web/netlify/edge-functions/ && pnpm --filter habitual-web build"
   publish = "_site"
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
