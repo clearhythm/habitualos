@@ -6,8 +6,9 @@
 [build]
   # Find repo root dynamically, install deps, build this app
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitual-web build"
-  publish = "_site"
-  functions = "netlify/functions"
+  # Paths must be relative to repo root since Package directory doesn't affect path resolution
+  publish = "apps/habitual-web/_site"
+  functions = "apps/habitual-web/netlify/functions"
 
 [dev]
   command = "npm run dev"
@@ -20,7 +21,7 @@
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["docs/**/*.md"]
+  included_files = ["apps/habitual-web/docs/**/*.md"]
 
 [functions."agent-chat"]
   timeout = 26
