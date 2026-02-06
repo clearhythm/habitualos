@@ -1,4 +1,4 @@
-import Anthropic from "npm:@anthropic-ai/sdk@0.32.1";
+import Anthropic from "@anthropic-ai/sdk";
 
 interface ChatMessage {
   role: "user" | "assistant";
