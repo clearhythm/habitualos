@@ -25,3 +25,4 @@ npm-debug.log*
 !.env.example
 # Local Netlify folder
 .netlify
+.netlify-backup

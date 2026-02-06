@@ -1,1 +1,0 @@
-module.exports = require('./netlify/functions/obi-wai-chat-init.js')

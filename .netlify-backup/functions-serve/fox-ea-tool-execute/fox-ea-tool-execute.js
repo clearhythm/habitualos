@@ -1,1 +1,0 @@
-module.exports = require('./netlify/functions/fox-ea-tool-execute.js')
