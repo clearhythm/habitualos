@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "start": "netlify dev --cwd .",
     "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
     "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
     "eleventy:build": "eleventy",

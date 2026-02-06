@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "start": "netlify dev --cwd .",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve",
     "dev": "eleventy --serve",
