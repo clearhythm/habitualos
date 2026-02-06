@@ -1,103 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ title | default("Relationship Web") }}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 2rem;
-      line-height: 1.6;
-      background: #fafafa;
-      color: #333;
-    }
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 0.5rem;
-    }
-    .subtitle {
-      color: #7f8c8d;
-      margin-bottom: 2rem;
-    }
-    .moment {
-      background: white;
-      border: 1px solid #e1e4e8;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .moment-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .moment-type {
-      font-size: 0.7rem;
-      color: #fff;
-      background: #3498db;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .moment-type.conversation { background: #9b59b6; }
-    .moment-type.gift { background: #e74c3c; }
-    .moment-type.milestone { background: #f39c12; }
-    .moment-type.memory { background: #1abc9c; }
-    .moment-type.note { background: #95a5a6; }
-    .moment-person {
-      color: #2980b9;
-      font-weight: 500;
-    }
-    .moment-content {
-      margin: 0.5rem 0;
-    }
-    .moment-date {
-      font-size: 0.85rem;
-      color: #95a5a6;
-    }
-    form {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      margin-bottom: 2rem;
-      border: 1px solid #e1e4e8;
-    }
-    input, textarea, select, button {
-      display: block;
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 0.75rem;
-      font-size: 1rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: #3498db;
-    }
-    button {
-      background: #3498db;
-      color: white;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    button:hover { background: #2980b9; }
-    .empty-state {
-      text-align: center;
-      padding: 3rem;
-      color: #95a5a6;
-    }
-  </style>
+  <title>{{ title or "RelationalOS" }}</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <script>
+    // Initialize theme before page renders to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
 </head>
 <body>
-  {{ content | safe }}
+  {% include "nav.njk" %}
+
+  <main class="main" style="padding-top: 80px;">
+    <div class="container">
+      {{ content | safe }}
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="text-muted">Built with care by Erik Burns &copy; 2026 RelationalOS</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/scripts/nav.js"></script>
+  {% if pageScript %}
+  <script type="module" src="{{ pageScript }}"></script>
+  {% endif %}
+  <script>
+    // Dark mode toggle functionality
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      if (!toggle) return;
+
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      const html = document.documentElement;
+
+      function updateToggle() {
+        const currentTheme = html.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+          icon.textContent = '☀️';
+          text.textContent = 'Light Mode';
+        } else {
+          icon.textContent = '🌙';
+          text.textContent = 'Dark Mode';
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateToggle();
+      });
+
+      // Set initial state
+      updateToggle();
+    })();
+  </script>
 </body>
 </html>

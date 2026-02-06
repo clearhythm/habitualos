@@ -32,7 +32,7 @@ function generateMomentId() {
  * @param {string} params.occurredAt - When it happened (ISO string, defaults to now)
  * @returns {Promise<{id: string}>}
  */
-async function createMoment({ userId, personId, personName, type, content, occurredAt }) {
+async function createMoment({ userId, personId, personName, type, content, occurredAt, chatId }) {
   const id = generateMomentId();
 
   await dbCore.create({
@@ -44,7 +44,8 @@ async function createMoment({ userId, personId, personName, type, content, occur
       personName: personName || null,
       type: type || 'note',
       content: content || '',
-      occurredAt: occurredAt || new Date().toISOString()
+      occurredAt: occurredAt || new Date().toISOString(),
+      chatId: chatId || null // Link back to source conversation
     }
   });
 

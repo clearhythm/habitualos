@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@habitualos/db-core": "workspace:*",
+    "@habitualos/chat-storage": "workspace:*",
     "@11ty/eleventy": "^2.0.1",
     "@anthropic-ai/sdk": "^0.71.2",
     "marked": "^15.0.12",

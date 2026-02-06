@@ -1,0 +1,11 @@
+{
+  "name": "@habitualos/frontend-utils",
+  "version": "1.0.0",
+  "description": "Shared frontend utilities for HabitualOS apps (browser JavaScript)",
+  "type": "module",
+  "files": [
+    "auth.js",
+    "chat-toast.js",
+    "utils.js"
+  ]
+}

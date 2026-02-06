@@ -1,0 +1,10 @@
+{
+  "name": "@habitualos/chat-storage",
+  "version": "1.0.0",
+  "description": "Shared chat storage utilities for HabitualOS apps",
+  "main": "index.cjs",
+  "dependencies": {
+    "@habitualos/db-core": "workspace:*",
+    "dotenv": "^16.6.1"
+  }
+}

@@ -1,0 +1,123 @@
+---
+layout: base.njk
+title: Export - RelationalOS
+permalink: /export/
+---
+
+<div class="page-header">
+  <h1 class="page-title">Export Your Data</h1>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
+  <div class="moment-card">
+    <h3 style="margin: 0 0 0.5rem 0;">Moments</h3>
+    <p style="color: #6b7280; margin: 0 0 1rem 0;">Download all your captured moments as JSON.</p>
+    <button id="export-moments-btn" class="btn btn-primary">
+      <span>&#x1F4BE;</span>
+      Export Moments
+    </button>
+  </div>
+
+  <div class="moment-card">
+    <h3 style="margin: 0 0 0.5rem 0;">Chat History</h3>
+    <p style="color: #6b7280; margin: 0 0 1rem 0;">Download all saved conversations with Rely as JSON.</p>
+    <button id="export-chats-btn" class="btn btn-secondary">
+      <span>&#x1F4AC;</span>
+      Export Chats
+    </button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { showToast } from '/assets/js/components/chat-toast.js';
+
+  // Initialize user and get userId
+  initializeUser();
+  const userId = getUserId();
+
+  // Download helper
+  function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Export moments
+  document.getElementById('export-moments-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('export-moments-btn');
+    const originalText = btn.innerHTML;
+
+    try {
+      btn.innerHTML = 'Exporting...';
+      btn.disabled = true;
+
+      const res = await fetch(`/api/moments-list?userId=${userId}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch moments');
+      }
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        userId,
+        momentCount: data.moments?.length || 0,
+        moments: data.moments || []
+      };
+
+      const filename = `relationalos-moments-${new Date().toISOString().split('T')[0]}.json`;
+      downloadJSON(exportData, filename);
+
+      showToast(`Exported ${exportData.momentCount} moments!`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('Export failed. Please try again.', { type: 'error' });
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  // Export chats
+  document.getElementById('export-chats-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('export-chats-btn');
+    const originalText = btn.innerHTML;
+
+    try {
+      btn.innerHTML = 'Exporting...';
+      btn.disabled = true;
+
+      const res = await fetch(`/api/relational-chat-list?userId=${userId}`);
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch chats');
+      }
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        userId,
+        chatCount: data.relationalChats?.length || 0,
+        chats: data.relationalChats || []
+      };
+
+      const filename = `relationalos-chats-${new Date().toISOString().split('T')[0]}.json`;
+      downloadJSON(exportData, filename);
+
+      showToast(`Exported ${exportData.chatCount} conversations!`);
+    } catch (error) {
+      console.error('Export failed:', error);
+      showToast('Export failed. Please try again.', { type: 'error' });
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
+</script>
