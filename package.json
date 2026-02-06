@@ -1,24 +1,19 @@
 {
-  "name": "habitualos",
+  "name": "habitualos-monorepo",
   "version": "0.1.0",
+  "private": true,
   "description": "A personal agentic AI orchestration platform for accomplishing almost anything",
-  "main": "index.js",
   "scripts": {
-    "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
-    "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
-    "eleventy:build": "eleventy",
-    "eleventy:serve": "eleventy --serve",
+    "start:habitual": "cd apps/habitual-web && netlify dev",
+    "start:relationship": "cd apps/relationship-web && netlify dev",
+    "dev:habitual": "pnpm --filter habitual-web dev",
+    "dev:relationship": "pnpm --filter relationship-web dev",
+    "build:habitual": "pnpm --filter habitual-web build",
+    "build:relationship": "pnpm --filter relationship-web build",
+    "build:all": "pnpm -r build",
     "db:init": "node db/init.js",
     "db:reset": "node db/reset-firestore.js",
-    "scheduler": "node scheduler/index.js",
-    "task:healify": "node data/tasks/healify-shift-cards/scripts/create-healify-task.js",
-    "task:shift-report": "node data/tasks/healify-shift-reports/scripts/create-shift-report-task.js",
-    "pdf:shift-cards": "node scripts/generate-shift-cards-pdf.js",
-    "pdf:shift-report": "node scripts/generate-shift-report-pdf.js",
-    "dev": "npm-run-all --parallel sass:watch eleventy:serve",
-    "start": "netlify dev",
-    "build": "npm-run-all sass:build eleventy:build",
-    "clean": "rm -rf _site"
+    "scheduler": "node scheduler/index.js"
   },
   "keywords": [
     "ai",
@@ -29,19 +24,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@11ty/eleventy": "^2.0.1",
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@habitualos/db-core": "workspace:*",
     "dotenv": "^16.6.1",
-    "firebase": "^12.7.0",
     "firebase-admin": "^13.6.0",
-    "marked": "^15.0.12",
-    "node-cron": "^4.2.1",
-    "uuid": "^13.0.0"
+    "node-cron": "^4.2.1"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "netlify-cli": "^17.0.0",
-    "npm-run-all": "^4.1.5",
-    "sass": "^1.69.5"
+    "netlify-cli": "^17.0.0"
   }
 }

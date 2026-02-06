@@ -1,0 +1,66 @@
+# =============================================================================
+# Netlify Configuration for habitual-web
+# =============================================================================
+# Set "Package directory" to "apps/habitual-web" in Netlify UI.
+
+[build]
+  base = "apps/habitual-web"
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitual-web build"
+  publish = "_site"
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+[dev]
+  framework = "#custom"
+  command = "pnpm --filter habitual-web run eleventy:serve"
+  targetPort = 8080
+  autoLaunch = false
+  # These are relative to base (apps/habitual-web)
+  functions = "netlify/functions"
+  publish = "_site"
+  edge_functions = "netlify/edge-functions"
+
+# =============================================================================
+# Node.js Functions
+# =============================================================================
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["apps/habitual-web/docs/**/*.md"]
+
+[functions."agent-chat"]
+  timeout = 26
+
+# =============================================================================
+# Edge Functions
+# =============================================================================
+
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
+
+[[edge_functions]]
+  path = "/api/agent-chat-stream"
+  function = "agent-chat-stream"
+
+# =============================================================================
+# Redirects
+# =============================================================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/do/action/*"
+  to = "/do/action/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/do/file/*"
+  to = "/do/file/"
+  status = 200
+  force = true

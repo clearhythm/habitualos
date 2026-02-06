@@ -3,7 +3,7 @@
 ## Quick Start After Context Clear
 
 1. Read this file (CLAUDE.md)
-2. Read relevant docs from `docs/architecture/` and `docs/endpoints/`
+2. Read relevant docs from `apps/habitual-web/docs/architecture/` and `apps/habitual-web/docs/endpoints/`
 3. You now have current system context
 
 ## Documentation Maintenance Rules
@@ -22,8 +22,9 @@
 - Error message improvements
 
 **Documentation structure:**
-- `docs/architecture/` - High-level system design and patterns
-- `docs/endpoints/` - API contracts (request/response shapes, behavior)
+- `apps/habitual-web/docs/architecture/` - High-level system design and patterns
+- `apps/habitual-web/docs/endpoints/` - API contracts (request/response shapes, behavior)
+- `docs/plans/` - Monorepo-wide evolution plans (AI prompts for system development)
 - Keep docs contract-focused, not implementation-heavy
 - Update docs in the same commit as code changes
 
@@ -127,7 +128,7 @@ Agents have access to tools for action management:
  * POST /api/endpoint-name
  *
  * Brief description of what this endpoint does.
- * See: docs/endpoints/endpoint-name.md
+ * See: apps/habitual-web/docs/endpoints/endpoint-name.md
  */
 exports.handler = async (event) => {
   // Validate HTTP method
