@@ -14,6 +14,8 @@
   command = "npm run dev"
   targetPort = 8080
   autoLaunch = false
+  functions = "netlify/functions"
+  publish = "_site"
 
 # =============================================================================
 # Node.js Functions
