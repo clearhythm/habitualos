@@ -1,10 +1,60 @@
 # =============================================================================
-# Local Development Configuration
+# Netlify Configuration for habitual-web
 # =============================================================================
-# This file is used for local netlify dev only.
-# Production deploys use the root-level netlify.toml.
+# Set "Package directory" to "apps/habitual-web" in Netlify UI.
+
+[build]
+  # Find repo root dynamically, install deps, build this app
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitual-web build"
+  publish = "_site"
+  functions = "netlify/functions"
 
 [dev]
   command = "npm run dev"
   targetPort = 8080
   autoLaunch = false
+
+# =============================================================================
+# Node.js Functions
+# =============================================================================
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["docs/**/*.md"]
+
+[functions."agent-chat"]
+  timeout = 26
+
+# =============================================================================
+# Edge Functions
+# =============================================================================
+
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
+
+[[edge_functions]]
+  path = "/api/agent-chat-stream"
+  function = "agent-chat-stream"
+
+# =============================================================================
+# Redirects
+# =============================================================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/do/action/*"
+  to = "/do/action/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/do/file/*"
+  to = "/do/file/"
+  status = 200
+  force = true
