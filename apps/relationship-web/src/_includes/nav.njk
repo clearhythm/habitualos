@@ -44,6 +44,17 @@
         <span id="theme-icon">&#x1F319;</span>
         <span id="theme-text">Dark Mode</span>
       </button>
+      <p id="nav-auth" style="font-size: 0.85rem; padding: 0.75rem 1rem; opacity: 0.7;"></p>
+      <script type="module">
+        import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
+        const el = document.getElementById("nav-auth");
+        if (isSignedIn()) {
+          const name = getFriendlyName();
+          el.innerHTML = `${name} · <a href="/signout/" style="text-decoration: underline;">Sign out</a>`;
+        } else {
+          el.innerHTML = `<a href="/signin/" style="text-decoration: underline;">Sign in</a>`;
+        }
+      </script>
     </div>
   </div>
 </div>
