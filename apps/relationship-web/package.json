@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prestart": "mkdir -p netlify/edge-functions/_lib && cp ../../packages/edge-functions/chat-stream-core.ts netlify/edge-functions/_lib/",
     "start": "netlify dev --cwd .",
     "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
     "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
