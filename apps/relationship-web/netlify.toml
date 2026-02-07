@@ -4,7 +4,7 @@
 # When deployed, Netlify's "Package directory" should be set to "apps/relationship-web"
 
 [build]
-  base = "apps/relationship-web"
+  # base is set via Netlify UI "Package directory" = "apps/relationship-web"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/relationship-web/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/relationship-web/netlify/edge-functions/_lib/ && pnpm --filter relationship-web build"
   publish = "_site"
   functions = "netlify/functions"
