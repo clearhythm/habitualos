@@ -11,10 +11,12 @@
   edge_functions = "netlify/edge-functions"
 
 [dev]
-  command = "npm run dev"
+  framework = "#custom"
+  command = "pnpm --filter relationship-web run eleventy:serve"
   targetPort = 8080
   autoLaunch = false
   functions = "netlify/functions"
+  publish = "_site"
   edge_functions = "netlify/edge-functions"
 
 # =============================================================================
