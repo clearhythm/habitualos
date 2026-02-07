@@ -5,6 +5,9 @@
   "type": "module",
   "files": [
     "auth.js",
+    "auth-guard.js",
+    "auth-intent.js",
+    "auth-remote.js",
     "chat-toast.js",
     "utils.js"
   ]

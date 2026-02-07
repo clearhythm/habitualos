@@ -1,0 +1,109 @@
+---
+title: Sign In - RelationalOS
+layout: base.njk
+permalink: /signin/
+---
+
+<div style="max-width: 420px; margin: 4rem auto; padding: 2rem; text-align: center;">
+
+  <!-- STATE 0: Already signed in -->
+  <div id="already-signed-in" style="display: none;">
+    <h2>Welcome back</h2>
+    <p>You're signed in as <strong id="signedInName"></strong>.</p>
+    <p><a href="/">Go to dashboard</a></p>
+    <p style="margin-top: 2rem;"><a href="/signout/">Sign out</a></p>
+  </div>
+
+  <!-- STATE 1: Sign in form -->
+  <div id="signin-form" style="display: none;">
+    <h2>Sign in</h2>
+    <p style="color: #666; margin-bottom: 2rem;">Enter your email to access your account.</p>
+
+    <input id="emailInput" type="email" placeholder="Your email..."
+           style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+
+    <div id="errorMsg" style="display: none; color: #a00; margin-top: 0.5rem; font-size: 0.9rem;"></div>
+
+    <button id="signInBtn"
+            style="margin-top: 1.5rem; padding: 0.75rem 2rem; font-size: 1rem; background: #0066cc; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%;">
+      Sign in
+    </button>
+  </div>
+
+</div>
+
+<script type="module">
+  import { signIn, isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
+  import { getRemoteUserByEmail } from "/assets/js/auth/auth-remote.js";
+  import { readIntendedPath, clearIntendedPath } from "/assets/js/auth/auth-intent.js";
+
+  function sanitizePath(path) {
+    if (!path || typeof path !== "string") return "/";
+    if (!path.startsWith("/")) return "/";
+    if (path.startsWith("//")) return "/";
+    return path;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const signInBtn = document.getElementById("signInBtn");
+    const emailInput = document.getElementById("emailInput");
+    const errorMsg = document.getElementById("errorMsg");
+    const formEl = document.getElementById("signin-form");
+    const alreadyEl = document.getElementById("already-signed-in");
+
+    const nextPath = sanitizePath(readIntendedPath());
+
+    if (isSignedIn()) {
+      if (nextPath && nextPath !== "/signin/") {
+        clearIntendedPath();
+        location.replace(nextPath);
+        return;
+      }
+      document.getElementById("signedInName").textContent = getFriendlyName();
+      alreadyEl.style.display = "";
+      return;
+    }
+
+    formEl.style.display = "";
+
+    emailInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); signInBtn.click(); }
+    });
+
+    signInBtn.addEventListener("click", async () => {
+      const email = (emailInput.value || "").trim();
+      errorMsg.style.display = "none";
+      errorMsg.textContent = "";
+
+      if (!email) {
+        errorMsg.textContent = "Please enter your email.";
+        errorMsg.style.display = "";
+        return;
+      }
+
+      if (!email.includes("@") || !email.includes(".")) {
+        errorMsg.textContent = "Please enter a valid email.";
+        errorMsg.style.display = "";
+        return;
+      }
+
+      signInBtn.textContent = "Checking...";
+      signInBtn.disabled = true;
+
+      try {
+        const user = await getRemoteUserByEmail(email);
+        if (!user) throw new Error("not found");
+
+        signIn(user, false);
+        const dest = sanitizePath(readIntendedPath());
+        clearIntendedPath();
+        location.replace(dest);
+      } catch {
+        errorMsg.textContent = "Sorry, we couldn't find that account.";
+        errorMsg.style.display = "";
+        signInBtn.textContent = "Sign in";
+        signInBtn.disabled = false;
+      }
+    });
+  });
+</script>

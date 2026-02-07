@@ -1,0 +1,16 @@
+---
+title: Sign Out - RelationalOS
+layout: base.njk
+permalink: /signout/
+---
+
+<div style="max-width: 420px; margin: 4rem auto; padding: 2rem; text-align: center;">
+  <h2>Signed out</h2>
+  <p style="color: #666;">You've been signed out.</p>
+  <p style="margin-top: 2rem;"><a href="/signin/">Sign in again</a></p>
+</div>
+
+<script type="module">
+  import { signOut } from "/assets/js/auth/auth.js";
+  signOut(false);
+</script>

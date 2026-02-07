@@ -12,6 +12,7 @@
     "build": "npm-run-all sass:build eleventy:build"
   },
   "dependencies": {
+    "@habitualos/auth-server": "workspace:*",
     "@habitualos/db-core": "workspace:*",
     "@habitualos/chat-storage": "workspace:*",
     "@11ty/eleventy": "^2.0.1",

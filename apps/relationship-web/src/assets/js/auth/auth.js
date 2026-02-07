@@ -8,6 +8,56 @@ import { generateUserId } from "../utils/utils.js";
 
 const LOCAL_STORAGE_KEY = "user";
 
+// -----------------------------
+// Sign In / Out
+// -----------------------------
+export function signIn(user, refresh = true, redirectUrl = null) {
+  if (!user || typeof user !== "object") {
+    console.error("signIn() called without a valid user object.");
+    return;
+  }
+
+  if (!getUserId(user)) {
+    console.error("signIn() failed: missing _userId.");
+    return;
+  }
+
+  const normalized = {
+    _userId: getUserId(user),
+    _email: getEmail(user),
+    _createdAt: getCreatedAt(user),
+    profile: {
+      firstName: getFirstName(user),
+      lastName: getLastName(user)
+    }
+  };
+
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
+
+  if (redirectUrl) {
+    window.location.href = redirectUrl;
+  } else if (refresh) {
+    location.reload();
+  }
+}
+
+export function signOut(refresh = true, redirectUrl = null) {
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+  if (redirectUrl) {
+    window.location.href = redirectUrl;
+  } else if (refresh) {
+    location.reload();
+  }
+}
+
+export function isSignedIn() {
+  return !!getUserId();
+}
+
+// -----------------------------
+// User Initialization
+// -----------------------------
+
 /**
  * Initialize user - ensures user exists in localStorage.
  * Creates a new guest user if none exists.
@@ -28,15 +78,13 @@ export function initializeUser() {
   return userId;
 }
 
-/**
- * Get the full user object from localStorage
- */
+// -----------------------------
+// Get Full User Object & Attributes
+// -----------------------------
 export function getLocalUser() {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
+    if (!raw) return null;
     const u = JSON.parse(raw);
     return (u && typeof u === "object") ? u : null;
   } catch (e) {
@@ -45,17 +93,51 @@ export function getLocalUser() {
   }
 }
 
-/**
- * Get userId from user object or localStorage
- */
+// -----------------------------
+// Field Helpers (accept optional user override)
+// -----------------------------
 export function getUserId(user = null) {
   const u = user || getLocalUser();
   return u?._userId || u?.id || u?.uid || null;
 }
 
+export function getEmail(user = null) {
+  const u = user || getLocalUser();
+  return u?._email || u?.email || null;
+}
+
+export function getFirstName(user = null) {
+  const u = user || getLocalUser();
+  return u?.profile?.firstName || null;
+}
+
+export function getLastName(user = null) {
+  const u = user || getLocalUser();
+  return u?.profile?.lastName || null;
+}
+
+export function getFullName(user = null) {
+  const first = getFirstName(user);
+  const last = getLastName(user);
+  return first && last ? `${first} ${last}` : first || last || null;
+}
+
+export function getFriendlyName(user = null) {
+  return getFullName(user) || "friend";
+}
+
+export function getCreatedAt(user = null) {
+  const u = user || getLocalUser();
+  return u?._createdAt || null;
+}
+
+// -----------------------------
+// Setters
+// -----------------------------
+
 /**
- * Update the userId in localStorage
- * Useful for device linking where userId changes
+ * Update the userId in localStorage.
+ * Useful for device linking where userId changes.
  */
 export function setUserId(newUserId) {
   try {
@@ -66,15 +148,14 @@ export function setUserId(newUserId) {
     }
     user._userId = newUserId;
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-    console.log("Updated userId:", newUserId);
   } catch (e) {
     console.error("Failed to update userId in localStorage", e);
   }
 }
 
-/**
- * Create a new local user and save to localStorage
- */
+// -----------------------------
+// Guest Creation
+// -----------------------------
 export function createLocalUser() {
   const userId = generateUserId();
   const user = {
@@ -84,7 +165,6 @@ export function createLocalUser() {
 
   try {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
-    console.log("Created local user:", userId);
   } catch (e) {
     console.error("createLocalUser: failed to write user", e);
   }
