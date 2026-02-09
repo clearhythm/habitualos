@@ -1,0 +1,87 @@
+---
+title: Capture - Pidgerton
+layout: base.njk
+permalink: /rel/capture/
+---
+
+<div style="max-width: 500px; margin: 2rem auto; padding: 2rem; text-align: center;">
+  <div style="font-size: 3rem; margin-bottom: 0.5rem;">👒</div>
+  <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #333; font-weight: 600;">Capture</h1>
+  <p style="margin: 0 0 2rem 0; font-size: 0.95rem; color: #999;">Log a moment, celebratory or challenging.</p>
+
+  <form id="capture-form" class="capture-form">
+    <div class="form-group">
+      <label for="person-name">Who was this with?</label>
+      <input type="text" id="person-name" name="personName" placeholder="e.g. Marta" required>
+    </div>
+
+    <div class="form-group">
+      <label for="moment-type">What kind of moment?</label>
+      <select id="moment-type" name="type">
+        <option value="note">Note</option>
+        <option value="conversation">Conversation</option>
+        <option value="gift">Gift</option>
+        <option value="milestone">Milestone</option>
+        <option value="memory">Memory</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="moment-content">What happened?</label>
+      <textarea id="moment-content" name="content" placeholder="Describe the moment..." rows="4" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width: 100%;" id="capture-btn">
+      Save Moment
+    </button>
+  </form>
+</div>
+
+<script type="module">
+  import { initializeUser, getUserId, isSignedIn } from '/assets/js/auth/auth.js';
+  import { showToast } from '/assets/js/components/chat-toast.js';
+
+  if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
+
+  initializeUser();
+  const userId = getUserId();
+
+  const form = document.getElementById('capture-form');
+  const btn = document.getElementById('capture-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const personName = document.getElementById('person-name').value.trim();
+    const type = document.getElementById('moment-type').value;
+    const content = document.getElementById('moment-content').value.trim();
+
+    if (!personName || !content) return;
+
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/moment-capture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, personName, type, content })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to save');
+      }
+
+      showToast('Moment captured!');
+      form.reset();
+    } catch (error) {
+      console.error('Capture failed:', error);
+      showToast('Failed to save. Please try again.', { type: 'error' });
+    } finally {
+      btn.textContent = 'Save Moment';
+      btn.disabled = false;
+    }
+  });
+</script>

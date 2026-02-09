@@ -1,98 +1,38 @@
 ---
 layout: base.njk
-title: Moments - RelationalOS
+title: Pidgerton
+permalink: /
 ---
 
-<div class="page-header">
-  <h1 class="page-title">Your Moments</h1>
-  <a href="/rel/chat/" class="btn btn-primary">
-    <span>&#x2795;</span>
-    Capture a Moment
-  </a>
-</div>
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
+  <h1 style="color: white; font-size: 3rem; margin-bottom: 0.5rem;">🌧️ Rainy, 45°</h1>
 
-<div id="moments-list" class="moments-list">
-  <div class="empty-state">
-    <div class="empty-state-icon">&#x1F428;</div>
-    <p>Loading moments...</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0;">
+    <!-- Capture card -->
+    <a href="/rel/capture/" class="home-card">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">👒</div>
+      <h2 style="margin: 0 0 1rem 0;">Capture</h2>
+      <p style="color: #666;">Capture all the moments.<br/>Happy, sad, or hard?</p>
+    </a>
+
+    <!-- Chat card -->
+    <a href="/rel/chat/" class="home-card">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🍵</div>
+      <h2 style="margin: 0 0 1rem 0;">Chat</h2>
+      <p style="color: #666;">Get private support<br/>from one who knows.</p>
+    </a>
   </div>
+
+  <style>
+    @media (max-width: 600px) {
+      div[style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 </div>
 
 <script type="module">
-  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
-
-  // Initialize user and get userId
-  initializeUser();
-  const userId = getUserId();
-
-  // Format date nicely
-  function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days} days ago`;
-
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
-  }
-
-  // Load moments
-  async function loadMoments() {
-    try {
-      const res = await fetch(`/api/moments-list?userId=${userId}`);
-      const data = await res.json();
-
-      const container = document.getElementById('moments-list');
-
-      if (!data.success || !data.moments || !data.moments.length) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">&#x1F428;</div>
-            <p>No moments yet.</p>
-            <p style="margin-top: 0.5rem;">
-              <a href="/rel/chat/" class="btn btn-primary">Capture your first moment</a>
-            </p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = data.moments.map(m => `
-        <div class="moment-card">
-          <div class="moment-header">
-            <span class="moment-person">${m.personName || 'Someone'}</span>
-            <span class="moment-type">${m.type || 'note'}</span>
-          </div>
-          <p class="moment-content">${escapeHtml(m.content)}</p>
-          <div class="moment-date">${formatDate(m.occurredAt)}</div>
-        </div>
-      `).join('');
-    } catch (error) {
-      console.error('Failed to load moments:', error);
-      document.getElementById('moments-list').innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">&#x26A0;</div>
-          <p>Failed to load moments. Please refresh.</p>
-        </div>
-      `;
-    }
-  }
-
-  // Escape HTML to prevent XSS
-  function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Initial load
-  loadMoments();
+  import { isSignedIn } from '/assets/js/auth/auth.js';
+  if (!isSignedIn()) { location.href = '/signin/'; }
 </script>

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "prestart": "mkdir -p netlify/edge-functions/_lib && cp ../../packages/edge-functions/chat-stream-core.ts netlify/edge-functions/_lib/",
-    "start": "netlify dev",
+    "start": "npm-run-all --parallel sass:watch netlify:dev",
+    "netlify:dev": "netlify dev",
     "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
     "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
     "eleventy:build": "eleventy",

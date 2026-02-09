@@ -40,6 +40,7 @@ export interface RequestBody {
   reviewContext?: Record<string, unknown> | null;
   // General params
   timezone?: string;
+  userName?: string;
 }
 
 export interface ChatTypeConfig {
@@ -141,6 +142,7 @@ export function createChatStreamHandler(
       reviewContext,
       // General
       timezone,
+      userName,
     } = body;
 
     // Get chat type configuration
@@ -188,7 +190,7 @@ export function createChatStreamHandler(
       initBody = { userId, agentId, actionContext, reviewContext };
     } else {
       // For other chat types (fox-ea, obi-wai, rely, etc.)
-      initBody = { userId, timezone };
+      initBody = { userId, timezone, userName };
     }
 
     // Initialize chat session - get system prompt and tools from Node.js function

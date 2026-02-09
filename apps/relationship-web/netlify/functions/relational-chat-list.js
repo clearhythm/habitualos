@@ -7,7 +7,7 @@
 const { createChatListHandler } = require('@habitualos/chat-storage');
 
 exports.handler = createChatListHandler({
-  collection: 'relational-chats',
+  collection: 'moment-chats',
   idPrefix: 'rc',
   responseKey: 'relationalChats'
 });

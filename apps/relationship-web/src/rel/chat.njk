@@ -1,5 +1,5 @@
 ---
-title: Capture - RelationalOS
+title: Chat - Pidgerton
 layout: base.njk
 permalink: /rel/chat/
 ---
@@ -14,13 +14,20 @@ permalink: /rel/chat/
     display: none !important; /* Hide footer on chat page */
   }
 
-  /* Ensure header is transparent */
   body > nav {
     background: transparent !important;
   }
 
   #chat-page-container {
     overflow: hidden;
+  }
+
+  #message-input::placeholder {
+    color: #6d28d9;
+  }
+
+  #message-input {
+    color: #1e0a3c;
   }
 </style>
 
@@ -42,14 +49,14 @@ permalink: /rel/chat/
             id="message-input"
             placeholder="Reply..."
             required
-            rows="2"
-            style="width: 100%; padding: 0.75rem 3rem 0.75rem 0.75rem; border: 1px solid #ddd; border-radius: 20px; font-size: 1rem; font-family: inherit; resize: none; max-height: 150px; overflow-y: auto; box-sizing: border-box;"
+            rows="4"
+            style="width: 100%; padding: 0.75rem 3rem 0.75rem 0.75rem; border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; font-size: 1rem; font-family: inherit; resize: none; max-height: 150px; overflow-y: auto; box-sizing: border-box; background: rgba(255,255,255,.60);"
           ></textarea>
           <button
             type="submit"
             id="send-button"
             disabled
-            style="position: absolute; right: 0.5rem; bottom: 0.5rem; width: 32px; height: 32px; background: #ddd; color: white; border: none; border-radius: 50%; cursor: not-allowed; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0;"
+            style="position: absolute; right: 0.5rem; bottom: 0.5rem; width: 32px; height: 32px; background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.4); border: none; border-radius: 50%; cursor: not-allowed; transition: all 0.2s; display: flex; align-items: center; justify-content: center; padding: 0;"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
               <path d="M208.49,120.49a12,12,0,0,1-17,0L140,69V216a12,12,0,0,1-24,0V69L64.49,120.49a12,12,0,0,1-17-17l72-72a12,12,0,0,1,17,0l72,72A12,12,0,0,1,208.49,120.49Z"></path>
@@ -63,9 +70,9 @@ permalink: /rel/chat/
         <button
           id="save-chat-btn"
           type="button"
-          style="background: none; border: none; color: #e07a5f; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
-          onmouseover="this.style.color='#c96a52'"
-          onmouseout="this.style.color='#e07a5f'"
+          style="background: none; border: none; color: rgba(255,255,255,0.7); font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
+          onmouseover="this.style.color='white'"
+          onmouseout="this.style.color='rgba(255,255,255,0.7)'"
           title="Save conversation"
         >
           Save
@@ -73,9 +80,9 @@ permalink: /rel/chat/
         <button
           id="history-chat-btn"
           type="button"
-          style="background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
-          onmouseover="this.style.color='#666'"
-          onmouseout="this.style.color='#999'"
+          style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
+          onmouseover="this.style.color='rgba(255,255,255,0.7)'"
+          onmouseout="this.style.color='rgba(255,255,255,0.5)'"
           title="View saved conversations"
         >
           History
@@ -83,9 +90,9 @@ permalink: /rel/chat/
         <button
           id="reset-chat-btn"
           type="button"
-          style="background: none; border: none; color: #999; font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
-          onmouseover="this.style.color='#666'"
-          onmouseout="this.style.color='#999'"
+          style="background: none; border: none; color: rgba(255,255,255,0.5); font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; transition: color 0.2s;"
+          onmouseover="this.style.color='rgba(255,255,255,0.7)'"
+          onmouseout="this.style.color='rgba(255,255,255,0.5)'"
           title="Start over"
         >
           Reset
@@ -96,13 +103,35 @@ permalink: /rel/chat/
   </div>
 </div>
 
+<!-- "Ready to Capture?" Modal Overlay -->
+<div id="capture-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 2.5rem 2rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+    <div style="font-size: 2rem; margin-bottom: 1rem;">👒</div>
+    <h3 id="capture-modal-title" style="margin: 0 0 0.75rem 0; font-size: 1.25rem; color: #1e0a3c;">Ready to capture this?</h3>
+    <p id="capture-modal-summary" style="margin: 0 0 1.5rem 0; font-size: 0.95rem; color: #666; line-height: 1.5; text-align: left;"></p>
+    <button
+      id="capture-confirm-btn"
+      style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
+    >
+      Capture
+    </button>
+    <button
+      id="capture-dismiss-btn"
+      style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
+    >
+      No, keep talking
+    </button>
+  </div>
+</div>
+
 <script type="module">
-  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { initializeUser, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
 
   // Initialize user and get userId
   initializeUser();
   const userId = getUserId();
+  const userName = getFirstName();
 
   const chatMessages = document.getElementById('chat-messages-inner');
   const chatMessagesContainer = document.getElementById('chat-messages');
@@ -112,13 +141,21 @@ permalink: /rel/chat/
 
   let loadingMessageElement = null;
 
+  // Capture modal elements
+  const captureModal = document.getElementById('capture-modal');
+  const captureModalSummary = document.getElementById('capture-modal-summary');
+  const captureConfirmBtn = document.getElementById('capture-confirm-btn');
+  const captureDismissBtn = document.getElementById('capture-dismiss-btn');
+  let pendingSignal = null;
+
   // Streaming state
   let streamingMessageElement = null;
   let streamingText = '';
   let streamingStarted = false;
 
-  // Rely theme color
-  const THEME_COLOR = '#e07a5f'; // Warm coral
+  // Relly theme color
+  const THEME_COLOR = '#7c3aed'; // Purple
+  const THEME_COLOR_DARK = '#4c1d95'; // Deep purple
 
   // Local storage keys for relational chat
   const RELATIONAL_CHAT_HISTORY_KEY = 'relational_chat_history';
@@ -163,10 +200,12 @@ permalink: /rel/chat/
     sendButton.disabled = !hasContent;
 
     if (hasContent) {
-      sendButton.style.background = THEME_COLOR;
+      sendButton.style.background = 'white';
+      sendButton.style.color = THEME_COLOR;
       sendButton.style.cursor = 'pointer';
     } else {
-      sendButton.style.background = '#ddd';
+      sendButton.style.background = 'rgba(255,255,255,0.2)';
+      sendButton.style.color = 'rgba(255,255,255,0.4)';
       sendButton.style.cursor = 'not-allowed';
     }
   }
@@ -174,8 +213,8 @@ permalink: /rel/chat/
   // Show loading message inline
   function showLoadingMessage() {
     const loadingDiv = document.createElement('div');
-    loadingDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #fef6f3; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
-    loadingDiv.innerHTML = '<span style="color: #999; font-style: italic;">Rely is listening...</span>';
+    loadingDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); align-self: flex-start; border-left: 3px solid #4c1d95; border-bottom-left-radius: 4px;';
+    loadingDiv.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Listening...</span>';
     chatMessages.appendChild(loadingDiv);
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     loadingMessageElement = loadingDiv;
@@ -194,8 +233,8 @@ permalink: /rel/chat/
     streamingText = '';
     streamingStarted = false;
     const messageDiv = document.createElement('div');
-    messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #fef6f3; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
-    messageDiv.innerHTML = '<span style="color: #999; font-style: italic;">Rely is listening...</span>';
+    messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); align-self: flex-start; border-left: 3px solid #4c1d95; border-bottom-left-radius: 4px;';
+    messageDiv.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
     chatMessages.appendChild(messageDiv);
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     streamingMessageElement = messageDiv;
@@ -216,12 +255,12 @@ permalink: /rel/chat/
     // On first token, switch from "Listening..." to streaming mode
     if (!streamingStarted) {
       streamingStarted = true;
-      streamingMessageElement.style.borderLeftColor = THEME_COLOR;
+      streamingMessageElement.style.borderLeftColor = '#4c1d95';
     }
 
     // Update content with cursor at end
     if (window.marked) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: ${THEME_COLOR}; animation: blink 1s infinite;"></span>`;
+      streamingMessageElement.innerHTML = marked.parse(streamingText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: rgba(255,255,255,0.6); animation: blink 1s infinite;"></span>`;
     } else {
       streamingMessageElement.textContent = streamingText;
     }
@@ -268,8 +307,8 @@ permalink: /rel/chat/
     messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5;';
 
     if (role === 'assistant') {
-      // Rely message - warm coral theme, left-aligned
-      messageDiv.style.cssText += `background-color: #fef6f3; color: #333; align-self: flex-start; border-left: 3px solid ${THEME_COLOR}; border-bottom-left-radius: 4px;`;
+      // Assistant message - translucent on purple bg
+      messageDiv.style.cssText += 'background-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); align-self: flex-start; border-left: 3px solid #4c1d95; border-bottom-left-radius: 4px;';
 
       // Render markdown for assistant messages
       if (window.marked) {
@@ -278,8 +317,8 @@ permalink: /rel/chat/
         messageDiv.textContent = content;
       }
     } else {
-      // User message - blue theme, right-aligned
-      messageDiv.style.cssText += 'background-color: #0066cc; color: white; align-self: flex-end; border-bottom-right-radius: 4px;';
+      // User message - darker purple, right-aligned
+      messageDiv.style.cssText += 'background-color: #4c1d95; color: white; align-self: flex-end; border-bottom-right-radius: 4px;';
       messageDiv.textContent = content;
     }
 
@@ -291,9 +330,9 @@ permalink: /rel/chat/
   const headerDiv = document.createElement('div');
   headerDiv.style.cssText = 'text-align: center; padding: 2rem 1rem 1rem 1rem; margin-bottom: 1rem;';
   headerDiv.innerHTML = `
-    <div style="font-size: 3rem; margin-bottom: .5rem;">&#x1F428;</div>
-    <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #333; font-weight: 600;">Capture</h1>
-    <p style="margin: 0; font-size: 0.95rem; color: #999;">Rely can help you capture meaningful moments.</p>
+    <div style="font-size: 3rem; margin-bottom: .5rem;">🐽</div>
+    <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: white; font-weight: 600;">Chat</h1>
+    <p style="margin: 0; font-size: 0.95rem; color: rgba(255,255,255,0.6);">Get support from one who knows.<br/>Your chats stay 100% private.</p>
   `;
   chatMessages.appendChild(headerDiv);
 
@@ -301,7 +340,7 @@ permalink: /rel/chat/
   if (chatHistory.length === 0) {
     const openingMessage = {
       role: 'assistant',
-      content: "What moment would you like to capture?",
+      content: `Hey ${userName || 'friend'}. What's in your heart or mind today?`,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(openingMessage);
@@ -313,9 +352,29 @@ permalink: /rel/chat/
     renderMessage(msg.role, msg.content);
   });
 
-  // Handle SAVE_MOMENT signal
-  async function handleSignal(signal) {
+  // Handle SAVE_MOMENT signal — show confirmation popup
+  function handleSignal(signal) {
     if (!signal || signal.type !== 'SAVE_MOMENT') return;
+
+    pendingSignal = signal;
+
+    // Show moment summary in modal
+    const data = signal.data || {};
+    const summary = data.content || 'A moment from your conversation.';
+    const person = data.personName && data.personName !== 'Someone' ? ` with ${data.personName}` : '';
+    captureModalSummary.textContent = summary;
+
+    // Show modal, disable chat
+    captureModal.style.display = 'flex';
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.style.background = 'rgba(255,255,255,0.2)';
+    sendButton.style.cursor = 'not-allowed';
+  }
+
+  // Save the pending moment
+  async function savePendingMoment() {
+    if (!pendingSignal) return;
 
     try {
       const response = await fetch('/api/rely-moment-save', {
@@ -323,21 +382,42 @@ permalink: /rel/chat/
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          signal,
+          signal: pendingSignal,
           chatId: getChatId()
         })
       });
 
       const data = await response.json();
       if (data.success) {
-        console.log('Moment saved:', data.momentId);
+        showToast('Moment captured.');
       } else {
-        console.error('Failed to save moment:', data.error);
+        showToast('Failed to save moment.', { type: 'error' });
       }
     } catch (error) {
       console.error('Error saving moment:', error);
+      showToast('Failed to save moment.', { type: 'error' });
     }
+
+    pendingSignal = null;
   }
+
+  // Capture confirm button
+  captureConfirmBtn.addEventListener('click', async () => {
+    captureModal.style.display = 'none';
+    await savePendingMoment();
+    messageInput.disabled = false;
+    messageInput.focus();
+    updateSendButton();
+  });
+
+  // Capture dismiss button
+  captureDismissBtn.addEventListener('click', () => {
+    captureModal.style.display = 'none';
+    pendingSignal = null;
+    messageInput.disabled = false;
+    messageInput.focus();
+    updateSendButton();
+  });
 
   // Streaming chat handler
   async function handleStreamingChat(message) {
@@ -351,6 +431,7 @@ permalink: /rel/chat/
       body: JSON.stringify({
         chatType: 'rely',
         userId,
+        userName,
         message,
         timezone: userTimezone,
         chatHistory: chatHistory.slice(0, -1).map(msg => ({
@@ -442,7 +523,8 @@ permalink: /rel/chat/
 
     // Disable send button
     sendButton.disabled = true;
-    sendButton.style.background = '#ddd';
+    sendButton.style.background = 'rgba(255,255,255,0.2)';
+    sendButton.style.color = 'rgba(255,255,255,0.4)';
     sendButton.style.cursor = 'not-allowed';
 
     // Handle streaming chat
@@ -621,7 +703,7 @@ permalink: /rel/chat/
     chats.forEach(chat => {
       const item = document.createElement('div');
       item.style.cssText = 'padding: 0.75rem; border: 1px solid #eee; border-radius: 8px; cursor: pointer; transition: background 0.2s;';
-      item.onmouseover = () => item.style.background = '#fef6f3';
+      item.onmouseover = () => item.style.background = '#faf5ff';
       item.onmouseout = () => item.style.background = 'white';
 
       // Get preview from first user message or assistant message
@@ -681,4 +763,5 @@ permalink: /rel/chat/
 
   // Focus message input on load
   messageInput.focus();
+
 </script>

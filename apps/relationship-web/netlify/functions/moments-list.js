@@ -10,7 +10,8 @@
  *   { success: true, moments: [...] }
  */
 
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../../../.env') });
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
 
 exports.handler = async (event) => {

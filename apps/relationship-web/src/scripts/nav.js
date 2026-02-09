@@ -1,4 +1,4 @@
-// Navigation Component for RelationalOS
+// Navigation Component for Pidgerton
 // Handles hamburger menu toggle
 
 (function() {
@@ -40,4 +40,16 @@
       closeMenu();
     }
   });
+
+  // Scroll-based navbar: transparent → white
+  const navbar = document.querySelector('.navbar');
+  if (navbar) {
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 10) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+  }
 })();

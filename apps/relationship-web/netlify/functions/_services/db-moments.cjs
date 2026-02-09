@@ -10,7 +10,7 @@
 
 const dbCore = require('@habitualos/db-core');
 
-const COLLECTION = 'moments';
+const COLLECTION = 'moment-logs';
 
 /**
  * Generate a unique moment ID
