@@ -134,7 +134,7 @@ body.sidemenu-open {
   // Center the 3 bars (16px tall block) in the 44px container: (44-16)/2 = 14
   span:nth-child(1) {
     top: 14px;
-    width: 85%;
+    width: 20px;
   }
 
   span:nth-child(2) {
@@ -143,7 +143,7 @@ body.sidemenu-open {
 
   span:nth-child(3) {
     top: 30px;
-    width: 65%;
+    width: 16px;
   }
 
   // X state (white for visibility on purple menu)
