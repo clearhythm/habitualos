@@ -1,9 +1,9 @@
 /**
  * Shared chat streaming core for HabitualOS apps.
  * Each app imports this and configures its chat types.
+ * Uses raw fetch() to the Anthropic API instead of the SDK
+ * for maximum compatibility with Netlify Edge Functions.
  */
-
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.71.2?target=denonext";
 
 // ============================================================================
 // Types
@@ -111,6 +111,80 @@ function parseSignal(
 }
 
 // ============================================================================
+// Anthropic API (raw fetch, no SDK)
+// ============================================================================
+
+interface AnthropicStreamEvent {
+  type: string;
+  index?: number;
+  delta?: { type: string; text?: string; partial_json?: string; stop_reason?: string };
+  content_block?: { type: string; id?: string; name?: string; text?: string; input?: string };
+  message?: { content: ContentBlock[]; stop_reason: string };
+}
+
+async function* streamAnthropicMessages(
+  apiKey: string,
+  params: {
+    model: string;
+    max_tokens: number;
+    system: unknown;
+    messages: unknown[];
+    tools?: unknown[];
+  }
+): AsyncGenerator<AnthropicStreamEvent> {
+  const body: Record<string, unknown> = {
+    model: params.model,
+    max_tokens: params.max_tokens,
+    system: params.system,
+    messages: params.messages,
+    stream: true,
+  };
+  if (params.tools && params.tools.length > 0) {
+    body.tools = params.tools;
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Anthropic API error ${response.status}: ${errorText}`);
+  }
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const data = line.slice(6).trim();
+        if (data === "[DONE]") return;
+        try {
+          yield JSON.parse(data);
+        } catch {
+          // Skip unparseable lines
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
 // Handler Factory
 // ============================================================================
 
@@ -211,7 +285,7 @@ export function createChatStreamHandler(
     const initData = await initResponse.json();
     const { systemMessages, tools } = initData;
 
-    // Create Anthropic client
+    // Get API key
     const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "API key not configured" }), {
@@ -220,7 +294,6 @@ export function createChatStreamHandler(
       });
     }
 
-    const client = new Anthropic({ apiKey });
     const encoder = new TextEncoder();
 
     // Build conversation messages
@@ -247,35 +320,62 @@ export function createChatStreamHandler(
           while (continueLoop && loopCount < maxLoops) {
             loopCount++;
 
-            // Stream Claude's response
-            const response = client.messages.stream({
+            // Stream Claude's response via raw fetch
+            const eventStream = streamAnthropicMessages(apiKey, {
               model: "claude-sonnet-4-5-20250929",
               max_tokens: 2048,
               system: systemMessages,
-              messages: messages as Anthropic.MessageParam[],
+              messages: messages,
               tools: tools && tools.length > 0 ? tools : undefined,
             });
 
             let fullText = "";
             const contentBlocks: ContentBlock[] = [];
+            let currentBlockIndex = -1;
+            let currentToolInput = "";
+            let stopReason = "";
 
-            // Stream text tokens
-            for await (const event of response) {
-              if (
-                event.type === "content_block_delta" &&
-                event.delta.type === "text_delta"
-              ) {
-                send({ type: "token", text: event.delta.text });
-                fullText += event.delta.text;
+            for await (const event of eventStream) {
+              if (event.type === "content_block_start" && event.content_block) {
+                currentBlockIndex = event.index ?? currentBlockIndex + 1;
+                const block = event.content_block;
+                if (block.type === "tool_use") {
+                  contentBlocks.push({
+                    type: "tool_use",
+                    id: block.id,
+                    name: block.name,
+                    input: {},
+                  });
+                  currentToolInput = "";
+                } else {
+                  contentBlocks.push({ type: "text", text: "" });
+                }
+              } else if (event.type === "content_block_delta" && event.delta) {
+                if (event.delta.type === "text_delta" && event.delta.text) {
+                  send({ type: "token", text: event.delta.text });
+                  fullText += event.delta.text;
+                  // Update the text block
+                  const block = contentBlocks[event.index ?? currentBlockIndex];
+                  if (block) {
+                    block.text = (block.text || "") + event.delta.text;
+                  }
+                } else if (event.delta.type === "input_json_delta" && event.delta.partial_json) {
+                  currentToolInput += event.delta.partial_json;
+                }
+              } else if (event.type === "content_block_stop") {
+                // Parse accumulated tool input JSON
+                const block = contentBlocks[event.index ?? currentBlockIndex];
+                if (block && block.type === "tool_use" && currentToolInput) {
+                  try {
+                    block.input = JSON.parse(currentToolInput);
+                  } catch {
+                    block.input = {};
+                  }
+                  currentToolInput = "";
+                }
+              } else if (event.type === "message_delta" && event.delta) {
+                stopReason = event.delta.stop_reason || "";
               }
-            }
-
-            // Get final message
-            const finalMessage = await response.finalMessage();
-
-            // Collect all content blocks
-            for (const block of finalMessage.content) {
-              contentBlocks.push(block as ContentBlock);
             }
 
             // Check for tool use
@@ -283,7 +383,7 @@ export function createChatStreamHandler(
               (b) => b.type === "tool_use"
             ) as ToolUseBlock | undefined;
 
-            if (toolUseBlock && finalMessage.stop_reason === "tool_use" && config.toolExecuteEndpoint) {
+            if (toolUseBlock && stopReason === "tool_use" && config.toolExecuteEndpoint) {
               send({ type: "tool_start", tool: toolUseBlock.name });
 
               // Build tool execute request body
@@ -317,7 +417,7 @@ export function createChatStreamHandler(
               // Add assistant's response to messages
               messages.push({
                 role: "assistant",
-                content: finalMessage.content as ContentBlock[],
+                content: contentBlocks,
               });
 
               // Add tool result to messages
