@@ -37,12 +37,11 @@ permalink: /capture/
 </div>
 
 <script type="module">
-  import { initializeUser, getUserId, isSignedIn, getFirstName } from '/assets/js/auth/auth.js';
+  import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
 
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
 
-  initializeUser();
   const userId = getUserId();
   const addedBy = getFirstName() || null;
 

@@ -20,13 +20,16 @@
     <script type="module">
       import { isSignedIn } from "/assets/js/auth/auth.js";
       const nav = document.getElementById("side-menu-nav");
+      import { getFriendlyName } from "/assets/js/auth/auth.js";
       if (isSignedIn()) {
+        const name = getFriendlyName();
         nav.innerHTML = `
           <a href="/" class="nav-item"><span class="nav-icon">🪴</span><span>Home</span></a>
           <a href="/capture/" class="nav-item"><span class="nav-icon">👒</span><span>Capture</span></a>
           <a href="/chat/" class="nav-item"><span class="nav-icon">🍵</span><span>Chat</span></a>
           <a href="/moments/" class="nav-item"><span class="nav-icon">📖</span><span>Moments</span></a>
           <a href="/export/" class="nav-item"><span class="nav-icon">&#x1F4BE;</span><span>Export</span></a>
+          <a href="/signout/" class="nav-item" style="margin-top: 1rem; opacity: 0.7;"><span class="nav-icon">👋</span><span>${name} · Sign out</span></a>
         `;
       } else {
         nav.innerHTML = `
@@ -35,17 +38,6 @@
       }
     </script>
 
-    <div class="side-menu-footer">
-      <p id="nav-auth" style="font-size: 0.85rem; padding: 0.75rem 1rem; opacity: 0.7; color: #fff;"></p>
-      <script type="module">
-        import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
-        const el = document.getElementById("nav-auth");
-        if (isSignedIn()) {
-          const name = getFriendlyName();
-          el.innerHTML = `${name} · <a href="/signout/" style="text-decoration: underline; color: #fff;">Sign out</a>`;
-        }
-      </script>
-    </div>
   </div>
 </div>
 

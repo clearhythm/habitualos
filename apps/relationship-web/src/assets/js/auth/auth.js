@@ -51,7 +51,10 @@ export function signOut(refresh = true, redirectUrl = null) {
 }
 
 export function isSignedIn() {
-  return !!getUserId();
+  const user = getLocalUser();
+  // Require both a userId and an email (set during real sign-in).
+  // Prevents auto-created guest users from being treated as signed in.
+  return !!(getUserId(user) && getEmail(user));
 }
 
 // -----------------------------

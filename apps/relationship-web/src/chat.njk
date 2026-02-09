@@ -125,11 +125,10 @@ permalink: /chat/
 </div>
 
 <script type="module">
-  import { initializeUser, getUserId, getFirstName } from '/assets/js/auth/auth.js';
+  import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
 
-  // Initialize user and get userId
-  initializeUser();
+  if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
   const userId = getUserId();
   const userName = getFirstName();
 

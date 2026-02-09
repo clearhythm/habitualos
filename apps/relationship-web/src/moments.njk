@@ -41,10 +41,9 @@ permalink: /moments/
 </style>
 
 <script type="module">
-  import { isSignedIn, getUserId, initializeUser } from '/assets/js/auth/auth.js';
+  import { isSignedIn, getUserId } from '/assets/js/auth/auth.js';
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
 
-  initializeUser();
   const userId = getUserId();
 
   let allMoments = [];

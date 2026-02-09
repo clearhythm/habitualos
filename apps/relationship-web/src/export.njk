@@ -29,11 +29,10 @@ permalink: /export/
 </div>
 
 <script type="module">
-  import { initializeUser, getUserId } from '/assets/js/auth/auth.js';
+  import { isSignedIn, getUserId } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
 
-  // Initialize user and get userId
-  initializeUser();
+  if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
   const userId = getUserId();
 
   // Download helper
