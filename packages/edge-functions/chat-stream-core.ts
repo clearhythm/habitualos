@@ -3,7 +3,7 @@
  * Each app imports this and configures its chat types.
  */
 
-import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.71.2";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.71.2?target=denonext";
 
 // ============================================================================
 // Types
