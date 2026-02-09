@@ -1,23 +1,26 @@
 <!-- Top Navigation Bar -->
-<nav class="navbar">
-  <div class="nav-container">
-    <div id="sidemenu-toggle" class="sidemenu-toggle" aria-label="Toggle menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-    <a href="/" class="nav-brand">
-      <span class="brand-icon">🐷</span>
-      <span class="brand-text">Pidgerton</span>
-    </a>
-    <div style="width: 44px;"></div>
+<nav class="navbar" id="navbar">
+  <div id="sidemenu-toggle" class="sidemenu-toggle" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
   </div>
+  <a href="/" class="nav-brand">
+    <span class="brand-icon">🐷</span>
+    <span class="brand-text">Pidgerton</span>
+  </a>
+  <div style="width: 44px;"></div>
 </nav>
 
 <!-- Side Menu -->
 <div class="sidemenu-main" id="sidemenu-main">
   <div class="sidemenu-left">
     <div class="sidemenu-left-content">
+      <div class="sidemenu-header">
+        <span class="brand-icon">🐷</span>
+        <h2>Pidgerton</h2>
+      </div>
+
       <nav class="side-menu-nav" id="side-menu-nav"></nav>
       <script type="module">
         import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
