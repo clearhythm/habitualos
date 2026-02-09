@@ -31,7 +31,7 @@ export function showToast(message, options = {}) {
 
   // Style based on type
   const colors = {
-    success: { bg: '#10b981', text: '#fff' },
+    success: { bg: '#3b0f80', text: '#fff' },
     error: { bg: '#ef4444', text: '#fff' },
     info: { bg: '#3b82f6', text: '#fff' }
   };

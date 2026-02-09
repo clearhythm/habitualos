@@ -2,8 +2,10 @@
 // Purple theme
 
 // Variables
-$color-primary: #3b0f80;
-$color-primary-dark: #2d0a66;
+$color-primary: #7c3aed;
+$color-primary-dark: #6d28d9;
+$color-btn-primary: #3b0f80;
+$color-btn-primary-dark: #2d0a66;
 $color-success: #10b981;
 $color-warning: #f59e0b;
 $color-danger: #ef4444;
@@ -345,13 +347,13 @@ html[data-theme="dark"] {
 }
 
 .btn-primary {
-  background: #3b0f80;
+  background: $color-btn-primary;
   color: white;
   padding: 1rem 1.5rem;
   font-weight: 600;
 
   &:hover {
-    background: #2d0a66;
+    background: $color-btn-primary-dark;
   }
 }
 
