@@ -2,15 +2,15 @@
 // Purple theme
 
 // Variables
-$color-primary: #7c3aed;
-$color-primary-dark: #6d4869;
+$color-primary: #3b0f80;
+$color-primary-dark: #2d0a66;
 $color-success: #10b981;
 $color-warning: #f59e0b;
 $color-danger: #ef4444;
 $color-text: #1f2937;
 $color-text-muted: #6b7280;
 $color-bg: #ffffff;
-$color-bg-muted: #faf9f8;
+$color-bg-muted: #ede9e6;
 $color-bg-accent: #faf5ff;
 $color-border: #e5e7eb;
 
@@ -345,11 +345,13 @@ html[data-theme="dark"] {
 }
 
 .btn-primary {
-  background: $color-primary;
+  background: #3b0f80;
   color: white;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
 
   &:hover {
-    background: $color-primary-dark;
+    background: #2d0a66;
   }
 }
 

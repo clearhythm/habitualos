@@ -23,16 +23,81 @@ permalink: /
     </a>
   </div>
 
+  <!-- Shared Moments -->
+  <div id="shared-moments" style="margin-top: 1rem; text-align: left;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h2 style="margin: 0; color: #fff; font-size: 1.5rem;">Shared Moments</h2>
+      <a href="/moments/" style="color: rgba(255,255,255,0.7); font-size: 0.9rem; text-decoration: none;">View all</a>
+    </div>
+    <div id="moments-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <p id="moments-loading" style="color: rgba(255,255,255,0.5); font-style: italic;">Loading moments...</p>
+    </div>
+  </div>
+
   <style>
     @media (max-width: 600px) {
       div[style*="grid-template-columns: 1fr 1fr"] {
         grid-template-columns: 1fr !important;
       }
     }
+    .moment-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .moment-badge-happy { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+    .moment-badge-sad { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+    .moment-badge-hard { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
   </style>
 </div>
 
 <script type="module">
-  import { isSignedIn } from '/assets/js/auth/auth.js';
-  if (!isSignedIn()) { location.href = '/signin/'; }
+  import { isSignedIn, getUserId, initializeUser } from '/assets/js/auth/auth.js';
+  if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
+
+  initializeUser();
+  const userId = getUserId();
+
+  // Fetch recent moments
+  try {
+    const res = await fetch('/api/moment-list?limit=5');
+    const data = await res.json();
+
+    const listEl = document.getElementById('moments-list');
+    const loadingEl = document.getElementById('moments-loading');
+
+    if (!data.success || !data.moments || data.moments.length === 0) {
+      loadingEl.textContent = 'No moments yet. Capture your first one!';
+    } else {
+      loadingEl.remove();
+
+      data.moments.forEach(m => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem 1.25rem;';
+
+        const badgeClass = `moment-badge-${m.type || 'happy'}`;
+        const typeLabel = m.type || 'happy';
+        const addedBy = m.addedBy || '';
+        const date = new Date(m.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        item.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+            <span class="moment-badge ${badgeClass}">${typeLabel}</span>
+            ${addedBy ? `<span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">${addedBy}</span>` : ''}
+            <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem; margin-left: auto;">${date}</span>
+          </div>
+          <p style="margin: 0; color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;">${m.content}</p>
+        `;
+
+        listEl.appendChild(item);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to load moments:', err);
+    document.getElementById('moments-loading').textContent = 'Failed to load moments.';
+  }
 </script>

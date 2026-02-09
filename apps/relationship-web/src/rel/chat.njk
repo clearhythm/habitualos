@@ -258,11 +258,23 @@ permalink: /rel/chat/
       streamingMessageElement.style.borderLeftColor = '#4c1d95';
     }
 
+    // Filter out signal text — don't render anything from SAVE_MOMENT onward
+    let displayText = streamingText;
+    const signalIndex = displayText.indexOf('SAVE_MOMENT');
+    if (signalIndex !== -1) {
+      displayText = displayText.substring(0, signalIndex).trim();
+      // If nothing before the signal, keep showing "Thinking..." placeholder
+      if (!displayText) {
+        streamingMessageElement.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
+        return;
+      }
+    }
+
     // Update content with cursor at end
     if (window.marked) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: rgba(255,255,255,0.6); animation: blink 1s infinite;"></span>`;
+      streamingMessageElement.innerHTML = marked.parse(displayText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: rgba(255,255,255,0.6); animation: blink 1s infinite;"></span>`;
     } else {
-      streamingMessageElement.textContent = streamingText;
+      streamingMessageElement.textContent = displayText;
     }
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
@@ -274,19 +286,29 @@ permalink: /rel/chat/
     const cursor = streamingMessageElement.querySelector('.streaming-cursor');
     if (cursor) cursor.remove();
 
-    // Re-render with final markdown
-    if (window.marked && streamingText) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText);
-    } else if (streamingText) {
-      streamingMessageElement.textContent = streamingText;
+    // Strip signal text from display and stored content
+    let displayText = streamingText;
+    const signalIndex = displayText.indexOf('SAVE_MOMENT');
+    if (signalIndex !== -1) {
+      displayText = displayText.substring(0, signalIndex).trim();
+      // If the signal consumed all the text, show a friendly capture message
+      if (!displayText) {
+        displayText = "Looks like we're ready to capture this.";
+      }
     }
 
-    const finalText = streamingText;
+    // Re-render with final markdown (signal-stripped)
+    if (window.marked && displayText) {
+      streamingMessageElement.innerHTML = marked.parse(displayText);
+    } else if (displayText) {
+      streamingMessageElement.textContent = displayText;
+    }
+
     streamingMessageElement = null;
     streamingText = '';
     streamingStarted = false;
 
-    return { text: finalText, displayText: finalText, signal };
+    return { text: displayText, displayText, signal };
   }
 
   function hideStreamingMessage() {
@@ -372,42 +394,57 @@ permalink: /rel/chat/
     sendButton.style.cursor = 'not-allowed';
   }
 
-  // Save the pending moment
-  async function savePendingMoment() {
-    if (!pendingSignal) return;
+  // Save chat and get chatId (for linking moment back to conversation)
+  async function ensureChatSaved() {
+    const lastSavedIndex = getLastSavedIndex();
+    const newMessages = chatHistory.slice(lastSavedIndex);
+    if (newMessages.length === 0 && getChatId()) return getChatId();
+
+    const existingChatId = getChatId();
+    const isAppend = existingChatId && lastSavedIndex > 0;
 
     try {
-      const response = await fetch('/api/rely-moment-save', {
+      const response = await fetch('/api/relational-chat-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          signal: pendingSignal,
-          chatId: getChatId()
+          messages: isAppend ? newMessages : chatHistory,
+          chatId: existingChatId,
+          mode: isAppend ? 'append' : 'create'
         })
       });
 
       const data = await response.json();
       if (data.success) {
-        showToast('Moment captured.');
-      } else {
-        showToast('Failed to save moment.', { type: 'error' });
+        if (!existingChatId && data.chatId) {
+          saveChatId(data.chatId);
+        }
+        saveLastSavedIndex(chatHistory.length);
+        return getChatId();
       }
     } catch (error) {
-      console.error('Error saving moment:', error);
-      showToast('Failed to save moment.', { type: 'error' });
+      console.error('Error saving chat:', error);
     }
-
-    pendingSignal = null;
+    return getChatId();
   }
 
-  // Capture confirm button
+  // Capture confirm button — save chat then redirect to capture page
   captureConfirmBtn.addEventListener('click', async () => {
     captureModal.style.display = 'none';
-    await savePendingMoment();
-    messageInput.disabled = false;
-    messageInput.focus();
-    updateSendButton();
+    if (!pendingSignal) return;
+
+    const signalData = pendingSignal.data || {};
+    const chatId = await ensureChatSaved();
+
+    // Build capture URL with pre-filled data
+    const params = new URLSearchParams();
+    if (signalData.type) params.set('type', signalData.type);
+    if (signalData.content) params.set('content', signalData.content);
+    if (chatId) params.set('chatId', chatId);
+
+    pendingSignal = null;
+    window.location.href = `/rel/capture/?${params.toString()}`;
   });
 
   // Capture dismiss button

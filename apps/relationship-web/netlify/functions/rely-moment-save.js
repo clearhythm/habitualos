@@ -33,7 +33,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { personName, type, content, occurredAt } = signal.data;
+    const { type, content, occurredAt } = signal.data;
 
     if (!content) {
       return {
@@ -45,11 +45,11 @@ exports.handler = async (event) => {
     // Create the moment
     const result = await createMoment({
       userId,
-      personName: personName || 'Someone',
-      type: type || 'note',
+      addedBy: signal.data.addedBy || null,
+      type: type || 'happy',
       content,
       occurredAt: occurredAt || new Date().toISOString(),
-      chatId: chatId || null // Link back to source chat if provided
+      chatId: chatId || null
     });
 
     return {

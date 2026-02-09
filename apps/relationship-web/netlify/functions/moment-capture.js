@@ -16,7 +16,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, personName, type, content } = JSON.parse(event.body);
+    const { userId, addedBy, type, content, chatId } = JSON.parse(event.body);
 
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
       return {
@@ -34,10 +34,11 @@ exports.handler = async (event) => {
 
     const result = await createMoment({
       userId,
-      personName: personName || 'Someone',
-      type: type || 'note',
+      addedBy: addedBy || null,
+      type: type || 'happy',
       content: content.trim(),
-      occurredAt: new Date().toISOString()
+      occurredAt: new Date().toISOString(),
+      chatId: chatId || null
     });
 
     return {

@@ -1,15 +1,9 @@
 <!-- Top Navigation Bar -->
 <nav class="navbar">
   <div class="nav-container">
-    <a href="/" class="nav-brand">
+    <button class="nav-brand" id="hamburger" aria-label="Toggle menu" style="border: none; background: none; padding: 0; cursor: pointer;">
       <span class="brand-icon">🐷</span>
       <span class="brand-text">Pidgerton</span>
-    </a>
-
-    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
     </button>
   </div>
 </nav>
@@ -17,10 +11,10 @@
 <!-- Side Navigation Menu -->
 <div class="side-menu" id="side-menu">
   <div class="side-menu-content">
-    <div class="side-menu-header">
+    <a href="/" class="side-menu-header" style="text-decoration: none; color: #fff;">
       <span class="brand-icon">🐷</span>
       <h2>Pidgerton</h2>
-    </div>
+    </a>
 
     <nav class="side-menu-nav" id="side-menu-nav"></nav>
     <script type="module">
@@ -31,6 +25,7 @@
           <a href="/" class="nav-item"><span class="nav-icon">🪴</span><span>Home</span></a>
           <a href="/rel/capture/" class="nav-item"><span class="nav-icon">👒</span><span>Capture</span></a>
           <a href="/rel/chat/" class="nav-item"><span class="nav-icon">🍵</span><span>Chat</span></a>
+          <a href="/moments/" class="nav-item"><span class="nav-icon">📖</span><span>Moments</span></a>
           <a href="/export/" class="nav-item"><span class="nav-icon">&#x1F4BE;</span><span>Export</span></a>
         `;
       } else {

@@ -25,14 +25,13 @@ function generateMomentId() {
  *
  * @param {Object} params
  * @param {string} params.userId - Owner's user ID (required)
- * @param {string} params.personId - ID of the person this moment is with (optional)
- * @param {string} params.personName - Name of the person (for display)
- * @param {string} params.type - Type: 'conversation', 'gift', 'milestone', 'memory', 'note'
+ * @param {string} params.addedBy - Name of the person who added this moment
+ * @param {string} params.type - Emotional tone: 'happy', 'sad', 'hard'
  * @param {string} params.content - Description of the moment
  * @param {string} params.occurredAt - When it happened (ISO string, defaults to now)
  * @returns {Promise<{id: string}>}
  */
-async function createMoment({ userId, personId, personName, type, content, occurredAt, chatId }) {
+async function createMoment({ userId, addedBy, type, content, occurredAt, chatId }) {
   const id = generateMomentId();
 
   await dbCore.create({
@@ -40,12 +39,11 @@ async function createMoment({ userId, personId, personName, type, content, occur
     id,
     data: {
       _userId: userId,
-      personId: personId || null,
-      personName: personName || null,
-      type: type || 'note',
+      addedBy: addedBy || null,
+      type: type || 'happy',
       content: content || '',
       occurredAt: occurredAt || new Date().toISOString(),
-      chatId: chatId || null // Link back to source conversation
+      chatId: chatId || null
     }
   });
 
@@ -97,10 +95,23 @@ async function deleteMoment(id) {
   return dbCore.remove({ collection: COLLECTION, id });
 }
 
+/**
+ * Get all moments across all users
+ *
+ * @returns {Promise<Array>} Moments sorted by occurredAt desc
+ */
+async function getAllMoments() {
+  return dbCore.query({
+    collection: COLLECTION,
+    orderBy: 'occurredAt::desc'
+  });
+}
+
 module.exports = {
   generateMomentId,
   createMoment,
   getMomentsByUserId,
+  getAllMoments,
   getMoment,
   updateMoment,
   deleteMoment

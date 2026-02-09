@@ -1,0 +1,133 @@
+---
+title: Moments - Pidgerton
+layout: base.njk
+permalink: /moments/
+---
+
+<div style="max-width: 700px; margin: 0 auto; padding: 2rem;">
+  <h1 style="color: #fff; font-size: 2rem; font-weight: 600; margin: 0 0 1.5rem 0; text-align: center;">Moments</h1>
+
+  <!-- Filter bar -->
+  <div id="filter-bar" style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem;">
+    <button class="filter-btn active" data-filter="all" style="padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2); color: #fff; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">All</button>
+    <button class="filter-btn" data-filter="happy" style="padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">Happy</button>
+    <button class="filter-btn" data-filter="sad" style="padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">Sad</button>
+    <button class="filter-btn" data-filter="hard" style="padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); background: transparent; color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; transition: all 0.2s;">Hard</button>
+  </div>
+
+  <div id="moments-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <p id="moments-loading" style="color: rgba(255,255,255,0.5); font-style: italic; text-align: center;">Loading moments...</p>
+  </div>
+</div>
+
+<style>
+  .moment-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .moment-badge-happy { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+  .moment-badge-sad { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+  .moment-badge-hard { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+  .filter-btn.active {
+    background: rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.3) !important;
+  }
+</style>
+
+<script type="module">
+  import { isSignedIn, getUserId, initializeUser } from '/assets/js/auth/auth.js';
+  if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
+
+  initializeUser();
+  const userId = getUserId();
+
+  let allMoments = [];
+  let activeFilter = 'all';
+
+  const listEl = document.getElementById('moments-list');
+  const loadingEl = document.getElementById('moments-loading');
+
+  // Filter button handling
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderMoments();
+    });
+  });
+
+  function renderMoments() {
+    // Clear all moment items (keep loading if present)
+    listEl.querySelectorAll('.moment-item').forEach(el => el.remove());
+
+    const filtered = activeFilter === 'all'
+      ? allMoments
+      : allMoments.filter(m => m.type === activeFilter);
+
+    if (filtered.length === 0) {
+      let emptyMsg = listEl.querySelector('.empty-msg');
+      if (!emptyMsg) {
+        emptyMsg = document.createElement('p');
+        emptyMsg.className = 'empty-msg';
+        emptyMsg.style.cssText = 'color: rgba(255,255,255,0.5); font-style: italic; text-align: center;';
+        listEl.appendChild(emptyMsg);
+      }
+      emptyMsg.textContent = activeFilter === 'all'
+        ? 'No moments yet. Capture your first one!'
+        : `No ${activeFilter} moments yet.`;
+      return;
+    }
+
+    // Remove empty message if present
+    const emptyMsg = listEl.querySelector('.empty-msg');
+    if (emptyMsg) emptyMsg.remove();
+
+    filtered.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'moment-item';
+      item.style.cssText = 'background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem 1.25rem;';
+
+      const badgeClass = `moment-badge-${m.type || 'happy'}`;
+      const typeLabel = m.type || 'happy';
+      const addedBy = m.addedBy || '';
+      const date = new Date(m.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+      item.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+          <span class="moment-badge ${badgeClass}">${typeLabel}</span>
+          ${addedBy ? `<span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">${addedBy}</span>` : ''}
+          <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem; margin-left: auto;">${date}</span>
+        </div>
+        <p style="margin: 0; color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;">${m.content}</p>
+      `;
+
+      listEl.appendChild(item);
+    });
+  }
+
+  // Fetch all moments
+  try {
+    const res = await fetch('/api/moment-list?limit=100');
+    const data = await res.json();
+
+    if (loadingEl) loadingEl.remove();
+
+    if (!data.success || !data.moments || data.moments.length === 0) {
+      allMoments = [];
+    } else {
+      allMoments = data.moments;
+    }
+
+    renderMoments();
+  } catch (err) {
+    console.error('Failed to load moments:', err);
+    if (loadingEl) loadingEl.textContent = 'Failed to load moments.';
+  }
+</script>

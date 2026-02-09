@@ -4,47 +4,66 @@ layout: base.njk
 permalink: /rel/capture/
 ---
 
+<style>
+  #moment-content::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+</style>
+
 <div style="max-width: 500px; margin: 2rem auto; padding: 2rem; text-align: center;">
   <div style="font-size: 3rem; margin-bottom: 0.5rem;">👒</div>
-  <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #333; font-weight: 600;">Capture</h1>
-  <p style="margin: 0 0 2rem 0; font-size: 0.95rem; color: #999;">Log a moment, celebratory or challenging.</p>
+  <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: #fff; font-weight: 600;">Capture</h1>
+  <p style="margin: 0 0 2rem 0; font-size: 0.95rem; color: rgba(255,255,255,0.6);">Log a moment, celebratory or challenging.</p>
 
   <form id="capture-form" class="capture-form">
-    <div class="form-group">
-      <label for="person-name">Who was this with?</label>
-      <input type="text" id="person-name" name="personName" placeholder="e.g. Marta" required>
-    </div>
-
-    <div class="form-group">
-      <label for="moment-type">What kind of moment?</label>
-      <select id="moment-type" name="type">
-        <option value="note">Note</option>
-        <option value="conversation">Conversation</option>
-        <option value="gift">Gift</option>
-        <option value="milestone">Milestone</option>
-        <option value="memory">Memory</option>
+    <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+      <label for="moment-type" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: rgba(255,255,255,0.9);">What kind of moment?</label>
+      <select id="moment-type" name="type" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.12); color: #fff; font-size: 1rem; appearance: auto;">
+        <option value="happy">Happy</option>
+        <option value="sad">Sad</option>
+        <option value="hard">Hard</option>
       </select>
     </div>
 
-    <div class="form-group">
-      <label for="moment-content">What happened?</label>
-      <textarea id="moment-content" name="content" placeholder="Describe the moment..." rows="4" required></textarea>
+    <div class="form-group" style="margin-bottom: 1.25rem; text-align: left;">
+      <label for="moment-content" style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: rgba(255,255,255,0.9);">What happened?</label>
+      <textarea id="moment-content" name="content" placeholder="Describe the moment..." rows="4" required style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.12); color: #fff; font-size: 1rem; resize: vertical;"></textarea>
     </div>
 
-    <button type="submit" class="btn btn-primary" style="width: 100%;" id="capture-btn">
+    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; border-radius: 8px; border: none; background: #3b0f80; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;" id="capture-btn"
+      onmouseover="this.style.background='#2d0a66'"
+      onmouseout="this.style.background='#3b0f80'"
+    >
       Save Moment
     </button>
   </form>
 </div>
 
 <script type="module">
-  import { initializeUser, getUserId, isSignedIn } from '/assets/js/auth/auth.js';
+  import { initializeUser, getUserId, isSignedIn, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
 
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
 
   initializeUser();
   const userId = getUserId();
+  const addedBy = getFirstName() || null;
+
+  // Pre-fill from query params (when redirected from chat)
+  const params = new URLSearchParams(window.location.search);
+  const prefillType = params.get('type');
+  const prefillContent = params.get('content');
+  const prefillChatId = params.get('chatId');
+
+  if (prefillType) {
+    const typeSelect = document.getElementById('moment-type');
+    if (['happy', 'sad', 'hard'].includes(prefillType)) {
+      typeSelect.value = prefillType;
+    }
+  }
+  if (prefillContent) {
+    document.getElementById('moment-content').value = prefillContent;
+  }
 
   const form = document.getElementById('capture-form');
   const btn = document.getElementById('capture-btn');
@@ -52,11 +71,10 @@ permalink: /rel/capture/
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const personName = document.getElementById('person-name').value.trim();
     const type = document.getElementById('moment-type').value;
     const content = document.getElementById('moment-content').value.trim();
 
-    if (!personName || !content) return;
+    if (!content) return;
 
     btn.textContent = 'Saving...';
     btn.disabled = true;
@@ -65,7 +83,7 @@ permalink: /rel/capture/
       const res = await fetch('/api/moment-capture', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, personName, type, content })
+        body: JSON.stringify({ userId, addedBy, type, content, chatId: prefillChatId || null })
       });
 
       const data = await res.json();
@@ -74,8 +92,8 @@ permalink: /rel/capture/
         throw new Error(data.error || 'Failed to save');
       }
 
-      showToast('Moment captured!');
-      form.reset();
+      // Redirect to homepage after successful save
+      window.location.href = '/';
     } catch (error) {
       console.error('Capture failed:', error);
       showToast('Failed to save. Please try again.', { type: 'error' });
