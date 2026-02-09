@@ -2,6 +2,7 @@
 # Netlify Configuration for habitual-web
 # =============================================================================
 # Set "Package directory" to "apps/habitual-web" in Netlify UI.
+# ignore_paths: packages/edge-functions is outside base, so shared changes need a file touch here
 
 [build]
   base = "apps/habitual-web"
