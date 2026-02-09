@@ -1,7 +1,7 @@
 ---
 title: Chat - Pidgerton
 layout: base.njk
-permalink: /rel/chat/
+permalink: /chat/
 ---
 
 <style>
@@ -444,7 +444,7 @@ permalink: /rel/chat/
     if (chatId) params.set('chatId', chatId);
 
     pendingSignal = null;
-    window.location.href = `/rel/capture/?${params.toString()}`;
+    window.location.href = `/capture/?${params.toString()}`;
   });
 
   // Capture dismiss button
