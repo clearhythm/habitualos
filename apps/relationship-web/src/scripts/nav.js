@@ -1,50 +1,50 @@
 // Navigation Component for Pidgerton
-// Handles hamburger menu toggle
+// Handles hamburger → X toggle and sidemenu open/close
 
-(function() {
-  const hamburger = document.getElementById('hamburger');
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.getElementById('side-menu-overlay');
+document.addEventListener('DOMContentLoaded', function() {
+  const toggle = document.getElementById('sidemenu-toggle');
+  const menuLinks = document.querySelectorAll('.sidemenu-main a');
 
-  if (!hamburger || !sideMenu) return;
-
-  function toggleMenu() {
-    const isOpen = sideMenu.classList.contains('open');
-    if (isOpen) {
-      closeMenu();
-    } else {
-      openMenu();
-    }
+  if (toggle) {
+    toggle.addEventListener('click', function() {
+      toggle.classList.toggle('open');
+      document.body.classList.toggle('sidemenu-open');
+    });
   }
 
-  function openMenu() {
-    sideMenu.classList.add('open');
-    overlay.classList.add('visible');
-    hamburger.classList.add('active');
-    document.body.style.overflow = 'hidden';
+  // Auto-close menu when any link is clicked
+  menuLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      if (toggle) {
+        toggle.classList.remove('open');
+        document.body.classList.remove('sidemenu-open');
+      }
+    });
+  });
+
+  // Close on clicking the right overlay area
+  const overlay = document.querySelector('.sidemenu-right');
+  if (overlay) {
+    overlay.addEventListener('click', function() {
+      if (toggle) {
+        toggle.classList.remove('open');
+        document.body.classList.remove('sidemenu-open');
+      }
+    });
   }
 
-  function closeMenu() {
-    sideMenu.classList.remove('open');
-    overlay.classList.remove('visible');
-    hamburger.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  hamburger.addEventListener('click', toggleMenu);
-  overlay.addEventListener('click', closeMenu);
-
-  // Close menu on escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sideMenu.classList.contains('open')) {
-      closeMenu();
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.body.classList.contains('sidemenu-open')) {
+      toggle.classList.remove('open');
+      document.body.classList.remove('sidemenu-open');
     }
   });
 
-  // Scroll-based navbar: transparent → white
+  // Scroll-based navbar background
   const navbar = document.querySelector('.navbar');
   if (navbar) {
-    window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', function() {
       if (window.scrollY > 10) {
         navbar.classList.add('scrolled');
       } else {
@@ -52,4 +52,4 @@
       }
     });
   }
-})();
+});

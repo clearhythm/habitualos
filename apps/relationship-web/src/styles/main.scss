@@ -43,6 +43,10 @@ html[data-theme="dark"] {
   background: $dark-color-bg;
 }
 
+body.sidemenu-open {
+  overflow: hidden;
+}
+
 // Layout
 .container {
   max-width: 1200px;
@@ -60,7 +64,7 @@ html[data-theme="dark"] {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 2000;
   background: transparent;
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
@@ -98,80 +102,138 @@ html[data-theme="dark"] {
   font-size: 1.5rem;
 }
 
-// Hamburger
-.hamburger {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.hamburger-line {
-  display: block;
+// Hamburger toggle (3-bar → X animation)
+.sidemenu-toggle {
   width: 24px;
-  height: 2px;
-  background: white;
-  transition: all 0.2s ease;
+  height: 18px;
+  position: relative;
+  padding: 10px;
+  cursor: pointer;
+  z-index: 2001;
+
+  span {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 24px;
+    background: #fff;
+    border-radius: 1px;
+    opacity: 1;
+    left: 10px;
+    transform: rotate(0deg);
+    transition: 0.25s ease-in-out;
+  }
+
+  span:nth-child(1) {
+    top: 10px;
+    width: 85%;
+  }
+
+  span:nth-child(2) {
+    top: 18px;
+  }
+
+  span:nth-child(3) {
+    top: 26px;
+    width: 65%;
+  }
+
+  // X state (white for visibility on purple menu)
+  &.open span {
+    background: #fff;
+  }
+
+  &.open span:nth-child(1) {
+    top: 18px;
+    width: 28px;
+    height: 4px;
+    transform: rotate(135deg);
+  }
+
+  &.open span:nth-child(2) {
+    opacity: 0;
+    left: -60px;
+  }
+
+  &.open span:nth-child(3) {
+    top: 18px;
+    width: 28px;
+    height: 4px;
+    transform: rotate(-135deg);
+  }
 }
 
-.navbar.scrolled .hamburger-line {
+.navbar.scrolled .sidemenu-toggle span {
   background: $color-text;
 }
 
-.hamburger.active .hamburger-line:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+.navbar.scrolled .sidemenu-toggle.open span {
+  background: #fff;
 }
 
-.hamburger.active .hamburger-line:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger.active .hamburger-line:nth-child(3) {
-  transform: rotate(-45deg) translate(5px, -5px);
-}
-
-// Side Menu
-.side-menu {
+// Side Menu (HabitualOS-style fullscreen overlay)
+.sidemenu-main {
   position: fixed;
+  z-index: 1000;
   top: 0;
   left: 0;
-  width: 280px;
   height: 100vh;
-  background: linear-gradient(135deg, $color-primary 0%, darken($color-primary, 10%) 100%);
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+.sidemenu-open .sidemenu-main {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidemenu-left {
   z-index: 1001;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  background: linear-gradient(135deg, $color-primary 0%, darken($color-primary, 10%) 100%);
   overflow-y: auto;
-}
-
-.side-menu.open {
-  transform: translateX(0);
-}
-
-.side-menu-content {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 2rem 1.5rem;
 }
 
-.side-menu-header {
+.sidemenu-left-content {
+  padding: 0 2rem;
+  padding-top: 5rem;
+  flex: 1;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: white;
-  margin-bottom: 2rem;
+  flex-direction: column;
+}
 
-  .brand-icon {
-    font-size: 2rem;
+.sidemenu-right {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  right: 0;
+  top: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 900;
+}
+
+// Mobile: full width menu
+@media (max-width: 768px) {
+  .sidemenu-left {
+    max-width: 100%;
   }
+  .sidemenu-right {
+    display: none;
+  }
+}
 
-  h2 {
-    margin: 0;
-    font-size: 1.5rem;
+// Desktop: partial width with overlay
+@media (min-width: 769px) {
+  .sidemenu-left {
+    max-width: 320px;
   }
 }
 
@@ -190,6 +252,7 @@ html[data-theme="dark"] {
   color: white;
   text-decoration: none;
   border-radius: 8px;
+  font-size: 1.1rem;
   transition: background 0.2s;
 
   &:hover {
@@ -199,48 +262,6 @@ html[data-theme="dark"] {
 
 .nav-icon {
   font-size: 1.25rem;
-}
-
-.side-menu-footer {
-  margin-top: auto;
-  padding-top: 1rem;
-}
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100%;
-  transition: background 0.2s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-// Side Menu Overlay
-.side-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s, visibility 0.3s;
-}
-
-.side-menu-overlay.visible {
-  opacity: 1;
-  visibility: visible;
 }
 
 // Footer
