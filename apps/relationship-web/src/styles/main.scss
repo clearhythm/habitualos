@@ -111,10 +111,11 @@ body.sidemenu-open {
 // Hamburger toggle (3-bar → X animation)
 .sidemenu-toggle {
   width: 44px;
-  height: 38px;
+  height: 44px;
   position: relative;
   cursor: pointer;
   z-index: 2001;
+  flex-shrink: 0;
 
   span {
     display: block;
@@ -129,17 +130,18 @@ body.sidemenu-open {
     transition: 0.25s ease-in-out;
   }
 
+  // Center the 3 bars (16px tall block) in the 44px container: (44-16)/2 = 14
   span:nth-child(1) {
-    top: 10px;
+    top: 14px;
     width: 85%;
   }
 
   span:nth-child(2) {
-    top: 18px;
+    top: 22px;
   }
 
   span:nth-child(3) {
-    top: 26px;
+    top: 30px;
     width: 65%;
   }
 
@@ -149,7 +151,7 @@ body.sidemenu-open {
   }
 
   &.open span:nth-child(1) {
-    top: 18px;
+    top: 22px;
     width: 28px;
     height: 4px;
     transform: rotate(135deg);
@@ -161,7 +163,7 @@ body.sidemenu-open {
   }
 
   &.open span:nth-child(3) {
-    top: 18px;
+    top: 22px;
     width: 28px;
     height: 4px;
     transform: rotate(-135deg);
