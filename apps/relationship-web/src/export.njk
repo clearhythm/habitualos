@@ -11,7 +11,7 @@ permalink: /export/
 <div style="display: flex; flex-direction: column; gap: 1.5rem; max-width: 500px;">
   <div class="moment-card">
     <h3 style="margin: 0 0 0.5rem 0;">Shared Moments</h3>
-    <p style="color: #6b7280; margin: 0 0 1rem 0;">Download all your shared moments as JSON.</p>
+    <p style="color: #6b7280; margin: 0 0 1rem 0;">Download all shared moments (both users) as JSON.</p>
     <button id="export-moments-btn" class="btn btn-secondary">
       <span>&#x1F4BE;</span>
       Export Moments
@@ -58,7 +58,7 @@ permalink: /export/
       btn.innerHTML = 'Exporting...';
       btn.disabled = true;
 
-      const res = await fetch(`/api/moments-list?userId=${userId}`);
+      const res = await fetch('/api/moments-list?all=true');
       const data = await res.json();
 
       if (!data.success) {
@@ -67,7 +67,6 @@ permalink: /export/
 
       const exportData = {
         exportedAt: new Date().toISOString(),
-        userId,
         momentCount: data.moments?.length || 0,
         moments: data.moments || []
       };

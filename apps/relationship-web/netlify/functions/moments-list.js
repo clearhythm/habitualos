@@ -12,7 +12,7 @@
 
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../../../.env') });
-const { getMomentsByUserId } = require('./_services/db-moments.cjs');
+const { getMomentsByUserId, getAllMoments } = require('./_services/db-moments.cjs');
 
 exports.handler = async (event) => {
   // Only allow GET
@@ -25,7 +25,31 @@ exports.handler = async (event) => {
   }
 
   // Parse query params
-  const { userId } = event.queryStringParameters || {};
+  const { userId, all } = event.queryStringParameters || {};
+
+  // When all=true, return moments from all users (for shared export)
+  if (all === 'true') {
+    try {
+      const moments = await getAllMoments();
+      const formatted = moments.map(m => ({
+        ...m,
+        _createdAt: m._createdAt?.toDate?.()?.toISOString() || m._createdAt,
+        _updatedAt: m._updatedAt?.toDate?.()?.toISOString() || m._updatedAt
+      }));
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, moments: formatted })
+      };
+    } catch (error) {
+      console.error('moments-list (all) error:', error);
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: false, error: 'Internal server error' })
+      };
+    }
+  }
 
   // Validate userId
   if (!userId || !userId.startsWith('u-')) {
