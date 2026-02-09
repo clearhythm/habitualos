@@ -78,9 +78,15 @@ body.sidemenu-open {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// Hide navbar behind sidemenu when open
+// When sidemenu is open: keep navbar on top (for hamburger/X) but hide its background and brand
 .sidemenu-open .navbar {
-  z-index: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sidemenu-open .nav-brand {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .nav-brand {
@@ -104,10 +110,9 @@ body.sidemenu-open {
 
 // Hamburger toggle (3-bar → X animation)
 .sidemenu-toggle {
-  width: 24px;
-  height: 18px;
+  width: 44px;
+  height: 38px;
   position: relative;
-  padding: 10px;
   cursor: pointer;
   z-index: 2001;
 
