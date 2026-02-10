@@ -84,7 +84,8 @@ body.sidemenu-open {
   box-shadow: none !important;
 }
 
-.sidemenu-open .nav-brand {
+.sidemenu-open .nav-brand,
+.sidemenu-open .navbar.scrolled .nav-brand {
   color: #fff;
 }
 
