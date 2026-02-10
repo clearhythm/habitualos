@@ -7,8 +7,8 @@
  *
  * Usage: node scripts/seed-survey-responses.js
  *
- * NOTE: Replace USER_IDS and scores with real data before running.
- * Scores are placeholder averages per dimension (1-10 scale).
+ * Real scores extracted from Google Forms CSV export.
+ * Scale: 1-5 (1=Never/Strongly Disagree, 5=Always/Strongly Agree).
  */
 
 require('dotenv').config();
@@ -18,38 +18,38 @@ const { uniqueId } = require('../packages/db-core');
 const SURVEY_ID = 'survey-rel-v1';
 
 // TODO: Replace with actual user IDs from Firestore
-const ERIK_USER_ID = 'u-erik-placeholder';
-const MARTA_USER_ID = 'u-marta-placeholder';
+const ERIK_USER_ID = 'u-mgpqwa49';
+const MARTA_USER_ID = 'u-mgprma90';
 
 // Backdated to ~1 week ago
 const backdatedTimestamp = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-// Placeholder scores — replace with real survey responses
-// Each dimension has 3 question scores and a computed average
+// Real scores from Google Forms CSV (scale: 1-5)
+// Erik: 2/4/2026, Marta: 2/3/2026
 const erikScores = [
-  { dimension: 'Communication', questionScores: [7, 6, 5], average: 6.0 },
-  { dimension: 'Trust', questionScores: [8, 8, 7], average: 7.67 },
-  { dimension: 'Intimacy', questionScores: [5, 4, 4], average: 4.33 },
-  { dimension: 'Conflict Resolution', questionScores: [4, 3, 4], average: 3.67 },
-  { dimension: 'Appreciation', questionScores: [6, 5, 5], average: 5.33 },
-  { dimension: 'Shared Goals', questionScores: [7, 7, 8], average: 7.33 },
-  { dimension: 'Fun & Play', questionScores: [3, 4, 3], average: 3.33 },
-  { dimension: 'Emotional Support', questionScores: [6, 5, 6], average: 5.67 },
-  { dimension: 'Independence', questionScores: [8, 9, 8], average: 8.33 },
-  { dimension: 'Growth', questionScores: [7, 7, 6], average: 6.67 }
+  { dimension: 'Communication Patterns', questionScores: [3, 2, 2], average: 2.33 },
+  { dimension: 'Emotional Intimacy and Connection', questionScores: [2, 2, 2], average: 2.0 },
+  { dimension: 'Physical & Sexual Intimacy', questionScores: [1, 2, 1], average: 1.33 },
+  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [2, 2, 2], average: 2.0 },
+  { dimension: 'Shared Values & Life Vision', questionScores: [2, 2], average: 2.0 },
+  { dimension: 'Division of Labor & Responsibilities', questionScores: [4, 4], average: 4.0 },
+  { dimension: 'Financial Management', questionScores: [1, 2], average: 1.5 },
+  { dimension: 'Individual Autonomy & Identity', questionScores: [3, 3], average: 3.0 },
+  { dimension: 'Trust & Commitment', questionScores: [2, 4, 3, 4, 2], average: 3.0 },
+  { dimension: 'Friendship, Play & Appreciation', questionScores: [3, 3, 3], average: 3.0 }
 ];
 
 const martaScores = [
-  { dimension: 'Communication', questionScores: [6, 5, 5], average: 5.33 },
-  { dimension: 'Trust', questionScores: [7, 7, 8], average: 7.33 },
-  { dimension: 'Intimacy', questionScores: [4, 5, 4], average: 4.33 },
-  { dimension: 'Conflict Resolution', questionScores: [3, 4, 3], average: 3.33 },
-  { dimension: 'Appreciation', questionScores: [5, 6, 5], average: 5.33 },
-  { dimension: 'Shared Goals', questionScores: [8, 7, 7], average: 7.33 },
-  { dimension: 'Fun & Play', questionScores: [4, 3, 3], average: 3.33 },
-  { dimension: 'Emotional Support', questionScores: [5, 6, 5], average: 5.33 },
-  { dimension: 'Independence', questionScores: [9, 8, 9], average: 8.67 },
-  { dimension: 'Growth', questionScores: [7, 8, 7], average: 7.33 }
+  { dimension: 'Communication Patterns', questionScores: [4, 2, 3], average: 3.0 },
+  { dimension: 'Emotional Intimacy and Connection', questionScores: [3, 4, 3], average: 3.33 },
+  { dimension: 'Physical & Sexual Intimacy', questionScores: [2, 3, 4], average: 3.0 },
+  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [2, 1, 4], average: 2.33 },
+  { dimension: 'Shared Values & Life Vision', questionScores: [3, 3], average: 3.0 },
+  { dimension: 'Division of Labor & Responsibilities', questionScores: [3, 3], average: 3.0 },
+  { dimension: 'Financial Management', questionScores: [3, 2], average: 2.5 },
+  { dimension: 'Individual Autonomy & Identity', questionScores: [3, 5], average: 4.0 },
+  { dimension: 'Trust & Commitment', questionScores: [3, 4, 2, 3, 2], average: 2.8 },
+  { dimension: 'Friendship, Play & Appreciation', questionScores: [4, 4, 3], average: 3.67 }
 ];
 
 async function main() {
