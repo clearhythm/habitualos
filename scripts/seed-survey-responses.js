@@ -14,7 +14,7 @@
 
 require('dotenv').config();
 const { createSurveyResponse, recalculateFocus } = require('../packages/survey-engine');
-const { uniqueId } = require('../packages/db-core');
+const { uniqueId, query, remove } = require('../packages/db-core');
 
 const SURVEY_ID = 'survey-rel-v1';
 
@@ -55,6 +55,14 @@ const martaScores = [
 ];
 
 async function main() {
+  // Clean up old survey-responses for this survey definition
+  console.log('Cleaning up old survey responses...');
+  const existing = await query({ collection: 'survey-responses', where: `surveyDefinitionId::eq::${SURVEY_ID}` });
+  for (const doc of existing) {
+    await remove({ collection: 'survey-responses', id: doc.id });
+    console.log(`  Deleted: ${doc.id}`);
+  }
+
   console.log('Seeding survey responses...\n');
 
   // Create Erik's response
