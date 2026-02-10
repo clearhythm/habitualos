@@ -54,9 +54,11 @@ exports.handler = async (event) => {
     }
 
     // Build scores in the survey-responses format
+    // Agent emits 0-10 verbal scores; normalize to percentage (0-100)
     const scores = dimensions.map(d => ({
       dimension: d.name,
       average: d.score,
+      score: (d.score / 10) * 100,
       notes: d.notes || null
     }));
 

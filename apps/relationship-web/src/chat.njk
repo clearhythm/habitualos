@@ -441,15 +441,15 @@ permalink: /chat/
     // Build scores display
     let scoresHtml = '';
     for (const dim of dimensions) {
-      const barWidth = (dim.score / 4) * 100;
+      const pct = Math.round((dim.score / 10) * 100);
       scoresHtml += `
         <div style="margin-bottom: 0.75rem;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
             <span style="font-size: 0.9rem; color: #333; font-weight: 500;">${dim.name}</span>
-            <span style="font-size: 0.9rem; color: #7c3aed; font-weight: 600;">${dim.score}/4</span>
+            <span style="font-size: 0.9rem; color: #7c3aed; font-weight: 600;">${pct}%</span>
           </div>
           <div style="height: 6px; background: #f0e6ff; border-radius: 3px; overflow: hidden;">
-            <div style="height: 100%; width: ${barWidth}%; background: #7c3aed; border-radius: 3px;"></div>
+            <div style="height: 100%; width: ${pct}%; background: #7c3aed; border-radius: 3px;"></div>
           </div>
           ${dim.notes ? `<div style="font-size: 0.8rem; color: #888; margin-top: 0.25rem;">${dim.notes}</div>` : ''}
         </div>

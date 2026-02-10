@@ -1,8 +1,8 @@
 /**
  * Focus Algorithm
  *
- * Given all users' dimension averages for a survey, computes the 5 focus
- * dimensions: 3 lowest combined + 2 highest combined.
+ * Given all users' dimension scores (percentages) for a survey, computes the 5
+ * focus dimensions: 3 lowest combined + 2 highest combined.
  *
  * Pure function — no DB access.
  */
@@ -10,8 +10,8 @@
 /**
  * Compute focus dimensions from user scores.
  *
- * @param {Object} userScores - Map of userId → Map of dimension → average score
- *   e.g., { "u-erik": { "Communication": 7.0, "Trust": 3.5 }, "u-marta": { ... } }
+ * @param {Object} userScores - Map of userId → Map of dimension → score (percentage 0-100)
+ *   e.g., { "u-erik": { "Communication": 50.0, "Trust": 25.0 }, "u-marta": { ... } }
  * @returns {{ focusDimensions: string[], combinedScores: Object }}
  */
 function computeFocusDimensions(userScores) {

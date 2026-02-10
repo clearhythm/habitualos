@@ -25,12 +25,12 @@ async function getFocus(surveyDefinitionId) {
 async function recalculateFocus(surveyDefinitionId) {
   const latestByUser = await getLatestFullResponses(surveyDefinitionId);
 
-  // Build userScores map: userId → { dimension: average }
+  // Build userScores map: userId → { dimension: score (%) }
   const userScores = {};
   for (const [userId, response] of Object.entries(latestByUser)) {
     userScores[userId] = {};
-    for (const score of response.scores) {
-      userScores[userId][score.dimension] = score.average;
+    for (const s of response.scores) {
+      userScores[userId][s.dimension] = s.score;
     }
   }
 
