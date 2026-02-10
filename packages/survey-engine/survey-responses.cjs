@@ -5,7 +5,7 @@
  * Schema: {
  *   id: "sr-{timestamp}{random}",
  *   _userId, surveyDefinitionId, type: "full"|"weekly",
- *   timestamp (ISO), scores: [{ dimension, questionScores?, average }],
+ *   _createdAt (auto or backdated), scores: [{ dimension, questionScores?, average, score (%) }],
  *   surveyActionId?
  * }
  */
@@ -38,7 +38,7 @@ async function getResponsesBySurvey(surveyDefinitionId, { type } = {}) {
     filtered = results.filter(r => r.type === type);
   }
 
-  return filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  return filtered.sort((a, b) => new Date(b._createdAt) - new Date(a._createdAt));
 }
 
 /**
@@ -52,7 +52,7 @@ async function getResponsesByUser(userId, surveyDefinitionId) {
 
   return results
     .filter(r => r.surveyDefinitionId === surveyDefinitionId)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    .sort((a, b) => new Date(b._createdAt) - new Date(a._createdAt));
 }
 
 /**

@@ -68,7 +68,6 @@ exports.handler = async (event) => {
       _userId: userId,
       surveyDefinitionId: 'survey-rel-v1',
       type: 'weekly',
-      timestamp: new Date().toISOString(),
       scores,
       surveyActionId: surveyActionId || null,
       notes: notes || null

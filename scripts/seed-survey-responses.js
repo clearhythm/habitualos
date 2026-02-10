@@ -22,8 +22,8 @@ const SURVEY_ID = 'survey-rel-v1';
 const ERIK_USER_ID = 'u-mgpqwa49';
 const MARTA_USER_ID = 'u-mgprma90';
 
-// Backdated to ~1 week ago
-const backdatedTimestamp = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
+// Backdated to ~1 week ago (passed as _createdAt to override server timestamp)
+const backdatedCreatedAt = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString();
 
 // Real scores from Google Forms CSV (converted to 0-4 scale)
 // Original 1-5 values minus 1. Erik: 2/4/2026, Marta: 2/3/2026
@@ -63,19 +63,19 @@ async function main() {
     _userId: ERIK_USER_ID,
     surveyDefinitionId: SURVEY_ID,
     type: 'full',
-    timestamp: backdatedTimestamp,
+    _createdAt: backdatedCreatedAt,
     scores: erikScores,
     surveyActionId: null
   });
   console.log(`  Erik's response: ${erikId}`);
 
-  // Create Marta's response (slightly offset timestamp)
+  // Create Marta's response
   const martaId = `sr-${Date.now() + 1}-${uniqueId(6)}`;
   await createSurveyResponse(martaId, {
     _userId: MARTA_USER_ID,
     surveyDefinitionId: SURVEY_ID,
     type: 'full',
-    timestamp: backdatedTimestamp,
+    _createdAt: backdatedCreatedAt,
     scores: martaScores,
     surveyActionId: null
   });

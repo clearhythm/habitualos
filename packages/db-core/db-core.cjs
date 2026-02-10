@@ -47,7 +47,8 @@ async function create({ collection, id, data }) {
   } else {
     await ref.set({
       ...(data || {}),
-      _createdAt: now,
+      // Respect caller-provided _createdAt (e.g. for seeding historical data)
+      _createdAt: (data && data._createdAt) || now,
     });
   }
 
