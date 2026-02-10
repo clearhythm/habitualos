@@ -394,12 +394,19 @@ permalink: /chat/
 
   // Initialize chat with opening message or load history
   if (chatHistory.length === 0) {
-    const openingMessage = {
-      role: 'assistant',
-      content: `Hey ${userName || 'friend'}. What's in your heart or mind today?`,
-      timestamp: new Date().toISOString()
-    };
-    chatHistory.push(openingMessage);
+    // For new chats, check survey status before showing greeting
+    let greeting = `Hey ${userName || 'friend'}. What's in your heart or mind today?`;
+    try {
+      const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasSurvey) {
+          greeting = `Hey ${userName || 'friend'}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
+        }
+      }
+    } catch (e) { /* use default greeting */ }
+
+    chatHistory.push({ role: 'assistant', content: greeting, timestamp: new Date().toISOString() });
     saveChatHistory(chatHistory);
   }
 

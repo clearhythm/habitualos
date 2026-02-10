@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
-const { getOpenSurveyAction, hasUserCompleted } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction, hasUserCompleted, getResponsesByUser } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/rely-chat-init
@@ -39,9 +39,12 @@ exports.handler = async (event) => {
       if (openAction) {
         const alreadyCompleted = await hasUserCompleted(openAction.id, userId);
         if (!alreadyCompleted) {
+          const priorResponses = await getResponsesByUser(userId, SURVEY_DEFINITION_ID);
+          const weeklyResponses = priorResponses.filter(r => r.type === 'weekly');
           surveyMode = {
             actionId: openAction.id,
-            dimensions: openAction.focusDimensions || []
+            dimensions: openAction.focusDimensions || [],
+            isFirstWeekly: weeklyResponses.length === 0
           };
         }
       }
@@ -137,23 +140,38 @@ Guidelines:
     // Append survey mode prompt if active
     let surveyPrompt = '';
     if (surveyMode && surveyMode.dimensions.length > 0) {
-      const dimList = surveyMode.dimensions.join(', ');
+      const dimList = surveyMode.dimensions.map((d, i) => `${i + 1}. ${d}`).join('\n');
+
+      const firstTimeContext = surveyMode.isFirstWeekly ? `
+This is ${userName || 'this user'}'s FIRST weekly check-in. Before starting the questions, give a brief explanation of what this is (one paragraph, 3-4 sentences):
+- You and your partner each filled out a longer relationship survey separately
+- From those results, 5 focus areas were identified — some where you're strongest, some where there's room to grow
+- Each week, you'll each do a quick pulse check on those areas — just a 0-10 rating and a little context
+- Over time, this tracks how things shift — it's not a test, just a way to stay aware together
+After the explanation, pause and ask "Does that make sense?" — wait for their response before starting the first question. Do NOT jump into the dimensions until they confirm they're ready.` : '';
+
       surveyPrompt = `
 
 == SURVEY CHECK-IN MODE ==
 
-There is a weekly relationship check-in waiting for ${userName || 'this user'}. The focus dimensions this week are: ${dimList}.
+There is a weekly relationship check-in waiting for ${userName || 'this user'}. The focus dimensions this week are:
+${dimList}
+${firstTimeContext}
 
-When the conversation begins, gently mention the check-in is available and ask if they'd like to do it now. Something like: "By the way, your weekly relationship check-in is ready. Want to go through it now, or would you rather just talk?"
-
-If they say "not now", "later", or want to talk about something else — drop it completely and continue as their supportive companion. Do not bring it up again unless they ask.
-
-If they engage with the survey:
-- Guide them through rating each dimension on a 0-10 scale (0 = not at all, 10 = couldn't be better)
-- Ask about 1-2 dimensions at a time, not all at once
-- Be conversational — probe for context on notable scores (very high or very low)
-- Keep your warmth and groundedness — this isn't a clinical assessment
-- After collecting all ${surveyMode.dimensions.length} scores, summarize what you heard and ask if it looks right
+IMPORTANT RULES for conducting the check-in:
+- Ask about ONE dimension at a time. Never combine multiple dimensions in a single question.
+- For each dimension, ask how they'd rate it this week on a 0-10 scale (0 = not at all, 10 = couldn't be better)
+- If they give just a number with no context, ask one brief follow-up: what's behind that score?
+- If they give a number WITH context, do NOT ask follow-ups. Reflect briefly (1-2 sentences), then move on to the next dimension.
+- Tailor your reflection to the score:
+  - Low scores (0-4): Acknowledge the difficulty, then add a note of forward momentum — something like "this is exactly the kind of thing tracking over time can help with" or "naming it is the first step." Don't be saccharine, but leave them with a sense that awareness leads somewhere.
+  - High scores (7-10): Celebrate briefly — what's working is worth noticing. Add something like "worth paying attention to what makes this work" or "that's something to keep building on."
+  - Mid scores (5-6): Neutral acknowledgment is fine.
+- Vary your language. Don't repeat the same reflection pattern for every dimension — mix up your phrasing.
+- Never linger on a dimension longer than needed. The goal is to keep moving.
+- Do NOT list upcoming dimensions or tell them how many are left
+- Keep it conversational — this should feel like a check-in with a friend, not a form
+- After all ${surveyMode.dimensions.length} dimensions are covered, summarize what you heard and ask if it looks right
 
 Once they confirm, emit the measurement signal:
 
