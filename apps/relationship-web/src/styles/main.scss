@@ -218,6 +218,16 @@ body.sidemenu-open {
   flex-direction: column;
 }
 
+.sidemenu-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
 .sidemenu-right {
   position: fixed;
   width: 100%;
@@ -250,7 +260,6 @@ body.sidemenu-open {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1rem;
 }
 
 .nav-item {
