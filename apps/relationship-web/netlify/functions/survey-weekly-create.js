@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { getOpenSurveyAction, createSurveyAction, getFocus } = require('@habitualos/survey-engine');
 const { query } = require('@habitualos/db-core');
-const { sendSurveyNotification } = require('./_services/email.cjs');
 
 const SURVEY_DEFINITION_ID = 'survey-rel-v1';
 
@@ -49,29 +48,42 @@ exports.handler = async (event) => {
     });
     console.log(`[survey-weekly-create] Created action: ${id}`);
 
-    // Query all users from the users table for email notifications
-    const users = await query({ collection: 'users' });
-
+    // Send email notifications (skip if Resend not configured)
     let emailsSent = 0;
-    for (const user of users) {
-      const email = user._email;
-      const name = user.profile?.firstName || 'there';
+    const testEmailOnly = process.env.SURVEY_TEST_EMAIL;
 
-      if (!email) {
-        console.warn(`[survey-weekly-create] User ${user.id} has no email, skipping`);
-        continue;
-      }
+    if (!process.env.RESEND_API_KEY) {
+      console.log('[survey-weekly-create] RESEND_API_KEY not set, skipping emails');
+    } else {
+      const { sendSurveyNotification } = require('./_services/email.cjs');
+      const users = await query({ collection: 'users' });
 
-      try {
-        await sendSurveyNotification({
-          to: email,
-          name,
-          dimensions: focus.focusDimensions
-        });
-        emailsSent++;
-        console.log(`[survey-weekly-create] Email sent to ${name} (${email})`);
-      } catch (emailErr) {
-        console.error(`[survey-weekly-create] Failed to email ${name}:`, emailErr.message);
+      for (const user of users) {
+        const email = user._email;
+        const name = user.profile?.firstName || 'there';
+
+        if (!email) {
+          console.warn(`[survey-weekly-create] User ${user.id} has no email, skipping`);
+          continue;
+        }
+
+        // If SURVEY_TEST_EMAIL is set, only send to that address
+        if (testEmailOnly && email !== testEmailOnly) {
+          console.log(`[survey-weekly-create] Test mode: skipping ${name} (${email})`);
+          continue;
+        }
+
+        try {
+          await sendSurveyNotification({
+            to: email,
+            name,
+            dimensions: focus.focusDimensions
+          });
+          emailsSent++;
+          console.log(`[survey-weekly-create] Email sent to ${name} (${email})`);
+        } catch (emailErr) {
+          console.error(`[survey-weekly-create] Failed to email ${name}:`, emailErr.message);
+        }
       }
     }
 
