@@ -3,7 +3,7 @@
  * scripts/seed-survey-definition.js
  *
  * Seeds the master relationship health survey definition to Firestore.
- * Uses placeholder dimensions/questions — replace with real content later.
+ * Questions match the Google Forms "Comprehensive Relationship Health Assessment".
  *
  * Usage: node scripts/seed-survey-definition.js
  */
@@ -16,85 +16,84 @@ const SURVEY_ID = 'survey-rel-v1';
 const surveyDefinition = {
   title: 'Relationship Health Survey',
   version: 1,
+  scale: { min: 1, max: 5, labels: ['Never / Strongly Disagree', 'Rarely / Disagree', 'Sometimes / Not Sure', 'Most of the time / Agree', 'Always / Strongly Agree'] },
   dimensions: [
     {
-      name: 'Communication',
+      name: 'Communication Patterns',
       questions: [
-        'How well are you expressing your needs to your partner?',
-        'How well is your partner hearing and understanding you?',
-        'How comfortable are you bringing up difficult topics?'
+        'I feel heard and understood when I express myself.',
+        'We can talk about difficult topics without shutdown or escalation.',
+        'We share openly about thoughts, plans, and feelings.'
       ]
     },
     {
-      name: 'Trust',
+      name: 'Emotional Intimacy and Connection',
       questions: [
-        'How much do you trust your partner with your vulnerabilities?',
-        'How reliable does your partner feel to you right now?',
-        'How safe do you feel being fully honest?'
+        'I feel emotionally close and safe with my partner.',
+        'I can share vulnerably and get comforted in distress.',
+        'I feel seen, valued, and accepted for who I really am.'
       ]
     },
     {
-      name: 'Intimacy',
+      name: 'Physical & Sexual Intimacy',
       questions: [
-        'How connected do you feel to your partner emotionally?',
-        'How satisfied are you with physical closeness and affection?',
-        'How comfortable are you initiating intimacy?'
+        'I am satisfied with our physical/sexual connection.',
+        'I feel safe expressing desires, boundaries, and preferences.',
+        'Our physical intimacy feels emotionally connected.'
       ]
     },
     {
-      name: 'Conflict Resolution',
+      name: 'Conflict Resolution & Problem Solving',
       questions: [
-        'How well are you and your partner resolving disagreements?',
-        'How quickly do you recover from arguments?',
-        'How fair do your conflicts feel?'
+        'We handle disagreements in a healthy and constructive way.',
+        'Our issues get addressed and resolved, not recycled.',
+        'We are able to repair and reconnect after conflict.'
       ]
     },
     {
-      name: 'Appreciation',
+      name: 'Shared Values & Life Vision',
       questions: [
-        'How appreciated do you feel by your partner?',
-        'How often do you express gratitude toward your partner?',
-        'How noticed do your efforts feel?'
+        'We are aligned on major life areas (children, goals, lifestyle, etc.).',
+        'We share a common vision for the future of our family.'
       ]
     },
     {
-      name: 'Shared Goals',
+      name: 'Division of Labor & Responsibilities',
       questions: [
-        'How aligned do you feel on your future together?',
-        'How well are you working together toward shared goals?',
-        'How supported do you feel in your individual goals?'
+        'The division of chores, parenting, and emotional labor feels fair to me.',
+        'We communicate clearly about responsibilities.'
       ]
     },
     {
-      name: 'Fun & Play',
+      name: 'Financial Management',
       questions: [
-        'How much fun are you having together?',
-        'How often do you laugh together?',
-        'How adventurous does your relationship feel?'
+        'We are transparent and collaborative in financial decisions.',
+        'We agree on financial priorities and habits.'
       ]
     },
     {
-      name: 'Emotional Support',
+      name: 'Individual Autonomy & Identity',
       questions: [
-        'How supported do you feel during hard times?',
-        'How comfortable are you leaning on your partner?',
-        'How well does your partner respond when you are struggling?'
+        'I have sufficient space for personal interests and friendships.',
+        'I feel supported in my individuality and independence.'
       ]
     },
     {
-      name: 'Independence',
+      name: 'Trust & Commitment',
       questions: [
-        'How well does your relationship support your individual identity?',
-        'How comfortable are you spending time apart?',
-        'How balanced is togetherness vs. personal space?'
+        'I feel emotionally safe in our relationship.',
+        'I feel physically safe in our relationship.',
+        'I trust my partner\'s honesty and intentions.',
+        'I feel secure in my partner\'s commitment to our union.',
+        'I feel like I can rely on my partner.'
       ]
     },
     {
-      name: 'Growth',
+      name: 'Friendship, Play & Appreciation',
       questions: [
-        'How much is your relationship helping you grow as a person?',
-        'How open are you both to feedback and change?',
-        'How much are you evolving together?'
+        'We enjoy spending time together beyond responsibilities.',
+        'We laugh, play, or share lightness.',
+        'We express appreciation and gratitude for each other.'
       ]
     }
   ]
@@ -102,7 +101,8 @@ const surveyDefinition = {
 
 async function main() {
   console.log(`Seeding survey definition: ${SURVEY_ID}`);
-  console.log(`  ${surveyDefinition.dimensions.length} dimensions, ${surveyDefinition.dimensions.length * 3} questions\n`);
+  const totalQuestions = surveyDefinition.dimensions.reduce((sum, d) => sum + d.questions.length, 0);
+  console.log(`  ${surveyDefinition.dimensions.length} dimensions, ${totalQuestions} questions\n`);
 
   await createSurveyDefinition(SURVEY_ID, surveyDefinition);
 
