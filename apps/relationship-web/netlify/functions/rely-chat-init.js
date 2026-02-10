@@ -149,7 +149,7 @@ When the conversation begins, gently mention the check-in is available and ask i
 If they say "not now", "later", or want to talk about something else — drop it completely and continue as their supportive companion. Do not bring it up again unless they ask.
 
 If they engage with the survey:
-- Guide them through rating each dimension on a 1-10 scale
+- Guide them through rating each dimension on a 0-4 scale (0 = Never/Strongly Disagree, 4 = Always/Strongly Agree)
 - Ask about 1-2 dimensions at a time, not all at once
 - Be conversational — probe for context on notable scores (very high or very low)
 - Keep your warmth and groundedness — this isn't a clinical assessment
@@ -162,7 +162,7 @@ STORE_MEASUREMENT
 {
   "surveyActionId": "${surveyMode.actionId}",
   "dimensions": [
-    { "name": "DimensionName", "score": 7, "notes": "Brief context they shared" }
+    { "name": "DimensionName", "score": 3, "notes": "Brief context they shared" }
   ],
   "notes": "Overall observation about the check-in"
 }

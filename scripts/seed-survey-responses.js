@@ -8,7 +8,8 @@
  * Usage: node scripts/seed-survey-responses.js
  *
  * Real scores extracted from Google Forms CSV export.
- * Scale: 1-5 (1=Never/Strongly Disagree, 5=Always/Strongly Agree).
+ * Scale: 0-4 (0=Never/Strongly Disagree, 4=Always/Strongly Agree).
+ * Original Google Forms used 1-5; we subtract 1 so "Never" = 0.
  */
 
 require('dotenv').config();
@@ -24,32 +25,32 @@ const MARTA_USER_ID = 'u-mgprma90';
 // Backdated to ~1 week ago
 const backdatedTimestamp = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-// Real scores from Google Forms CSV (scale: 1-5)
-// Erik: 2/4/2026, Marta: 2/3/2026
+// Real scores from Google Forms CSV (converted to 0-4 scale)
+// Original 1-5 values minus 1. Erik: 2/4/2026, Marta: 2/3/2026
 const erikScores = [
-  { dimension: 'Communication Patterns', questionScores: [3, 2, 2], average: 2.33 },
-  { dimension: 'Emotional Intimacy and Connection', questionScores: [2, 2, 2], average: 2.0 },
-  { dimension: 'Physical & Sexual Intimacy', questionScores: [1, 2, 1], average: 1.33 },
-  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [2, 2, 2], average: 2.0 },
-  { dimension: 'Shared Values & Life Vision', questionScores: [2, 2], average: 2.0 },
-  { dimension: 'Division of Labor & Responsibilities', questionScores: [4, 4], average: 4.0 },
-  { dimension: 'Financial Management', questionScores: [1, 2], average: 1.5 },
-  { dimension: 'Individual Autonomy & Identity', questionScores: [3, 3], average: 3.0 },
-  { dimension: 'Trust & Commitment', questionScores: [2, 4, 3, 4, 2], average: 3.0 },
-  { dimension: 'Friendship, Play & Appreciation', questionScores: [3, 3, 3], average: 3.0 }
+  { dimension: 'Communication Patterns', questionScores: [2, 1, 1], average: 1.33 },
+  { dimension: 'Emotional Intimacy and Connection', questionScores: [1, 1, 1], average: 1.0 },
+  { dimension: 'Physical & Sexual Intimacy', questionScores: [0, 1, 0], average: 0.33 },
+  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [1, 1, 1], average: 1.0 },
+  { dimension: 'Shared Values & Life Vision', questionScores: [1, 1], average: 1.0 },
+  { dimension: 'Division of Labor & Responsibilities', questionScores: [3, 3], average: 3.0 },
+  { dimension: 'Financial Management', questionScores: [0, 1], average: 0.5 },
+  { dimension: 'Individual Autonomy & Identity', questionScores: [2, 2], average: 2.0 },
+  { dimension: 'Trust & Commitment', questionScores: [1, 3, 2, 3, 1], average: 2.0 },
+  { dimension: 'Friendship, Play & Appreciation', questionScores: [2, 2, 2], average: 2.0 }
 ];
 
 const martaScores = [
-  { dimension: 'Communication Patterns', questionScores: [4, 2, 3], average: 3.0 },
-  { dimension: 'Emotional Intimacy and Connection', questionScores: [3, 4, 3], average: 3.33 },
-  { dimension: 'Physical & Sexual Intimacy', questionScores: [2, 3, 4], average: 3.0 },
-  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [2, 1, 4], average: 2.33 },
-  { dimension: 'Shared Values & Life Vision', questionScores: [3, 3], average: 3.0 },
-  { dimension: 'Division of Labor & Responsibilities', questionScores: [3, 3], average: 3.0 },
-  { dimension: 'Financial Management', questionScores: [3, 2], average: 2.5 },
-  { dimension: 'Individual Autonomy & Identity', questionScores: [3, 5], average: 4.0 },
-  { dimension: 'Trust & Commitment', questionScores: [3, 4, 2, 3, 2], average: 2.8 },
-  { dimension: 'Friendship, Play & Appreciation', questionScores: [4, 4, 3], average: 3.67 }
+  { dimension: 'Communication Patterns', questionScores: [3, 1, 2], average: 2.0 },
+  { dimension: 'Emotional Intimacy and Connection', questionScores: [2, 3, 2], average: 2.33 },
+  { dimension: 'Physical & Sexual Intimacy', questionScores: [1, 2, 3], average: 2.0 },
+  { dimension: 'Conflict Resolution & Problem Solving', questionScores: [1, 0, 3], average: 1.33 },
+  { dimension: 'Shared Values & Life Vision', questionScores: [2, 2], average: 2.0 },
+  { dimension: 'Division of Labor & Responsibilities', questionScores: [2, 2], average: 2.0 },
+  { dimension: 'Financial Management', questionScores: [2, 1], average: 1.5 },
+  { dimension: 'Individual Autonomy & Identity', questionScores: [2, 4], average: 3.0 },
+  { dimension: 'Trust & Commitment', questionScores: [2, 3, 1, 2, 1], average: 1.8 },
+  { dimension: 'Friendship, Play & Appreciation', questionScores: [3, 3, 2], average: 2.67 }
 ];
 
 async function main() {

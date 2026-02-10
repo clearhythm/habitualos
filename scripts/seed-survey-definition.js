@@ -16,7 +16,7 @@ const SURVEY_ID = 'survey-rel-v1';
 const surveyDefinition = {
   title: 'Relationship Health Survey',
   version: 1,
-  scale: { min: 1, max: 5, labels: ['Never / Strongly Disagree', 'Rarely / Disagree', 'Sometimes / Not Sure', 'Most of the time / Agree', 'Always / Strongly Agree'] },
+  scale: { min: 0, max: 4, labels: ['Never / Strongly Disagree', 'Rarely / Disagree', 'Sometimes / Not Sure', 'Most of the time / Agree', 'Always / Strongly Agree'] },
   dimensions: [
     {
       name: 'Communication Patterns',
