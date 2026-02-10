@@ -124,6 +124,27 @@ permalink: /chat/
   </div>
 </div>
 
+<!-- Survey Check-in Modal Overlay -->
+<div id="survey-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+  <div style="background: white; padding: 2.5rem 2rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+    <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
+    <h3 style="margin: 0 0 0.75rem 0; font-size: 1.25rem; color: #1e0a3c;">Save check-in results?</h3>
+    <div id="survey-modal-scores" style="margin: 0 0 1.5rem 0; text-align: left;"></div>
+    <button
+      id="survey-confirm-btn"
+      style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
+    >
+      Save
+    </button>
+    <button
+      id="survey-dismiss-btn"
+      style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
+    >
+      Keep chatting
+    </button>
+  </div>
+</div>
+
 <script type="module">
   import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
@@ -146,6 +167,12 @@ permalink: /chat/
   const captureConfirmBtn = document.getElementById('capture-confirm-btn');
   const captureDismissBtn = document.getElementById('capture-dismiss-btn');
   let pendingSignal = null;
+
+  // Survey modal elements
+  const surveyModal = document.getElementById('survey-modal');
+  const surveyModalScores = document.getElementById('survey-modal-scores');
+  const surveyConfirmBtn = document.getElementById('survey-confirm-btn');
+  const surveyDismissBtn = document.getElementById('survey-dismiss-btn');
 
   // Streaming state
   let streamingMessageElement = null;
@@ -257,16 +284,19 @@ permalink: /chat/
       streamingMessageElement.style.borderLeftColor = '#4c1d95';
     }
 
-    // Filter out signal text — don't render anything from SAVE_MOMENT onward
+    // Filter out signal text — don't render anything from signals onward
     let displayText = streamingText;
-    const signalIndex = displayText.indexOf('SAVE_MOMENT');
-    if (signalIndex !== -1) {
-      displayText = displayText.substring(0, signalIndex).trim();
-      // If nothing before the signal, keep showing "Thinking..." placeholder
-      if (!displayText) {
-        streamingMessageElement.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
-        return;
+    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT'];
+    for (const marker of signalMarkers) {
+      const idx = displayText.indexOf(marker);
+      if (idx !== -1) {
+        displayText = displayText.substring(0, idx).trim();
+        break;
       }
+    }
+    if (displayText !== streamingText && !displayText) {
+      streamingMessageElement.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
+      return;
     }
 
     // Update content with cursor at end
@@ -287,13 +317,18 @@ permalink: /chat/
 
     // Strip signal text from display and stored content
     let displayText = streamingText;
-    const signalIndex = displayText.indexOf('SAVE_MOMENT');
-    if (signalIndex !== -1) {
-      displayText = displayText.substring(0, signalIndex).trim();
-      // If the signal consumed all the text, show a friendly capture message
-      if (!displayText) {
-        displayText = "Looks like we're ready to capture this.";
+    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT'];
+    for (const marker of signalMarkers) {
+      const idx = displayText.indexOf(marker);
+      if (idx !== -1) {
+        displayText = displayText.substring(0, idx).trim();
+        break;
       }
+    }
+    if (!displayText && signal) {
+      displayText = signal.type === 'STORE_MEASUREMENT'
+        ? "Here are your check-in results."
+        : "Looks like we're ready to capture this.";
     }
 
     // Re-render with final markdown (signal-stripped)
@@ -373,20 +408,62 @@ permalink: /chat/
     renderMessage(msg.role, msg.content);
   });
 
-  // Handle SAVE_MOMENT signal — show confirmation popup
+  // Handle signals — show appropriate confirmation popup
   function handleSignal(signal) {
-    if (!signal || signal.type !== 'SAVE_MOMENT') return;
+    if (!signal) return;
+
+    if (signal.type === 'STORE_MEASUREMENT') {
+      return handleSurveySignal(signal);
+    }
+    if (signal.type !== 'SAVE_MOMENT') return;
 
     pendingSignal = signal;
 
     // Show moment summary in modal
     const data = signal.data || {};
     const summary = data.content || 'A moment from your conversation.';
-    const person = data.personName && data.personName !== 'Someone' ? ` with ${data.personName}` : '';
     captureModalSummary.textContent = summary;
 
     // Show modal, disable chat
     captureModal.style.display = 'flex';
+    messageInput.disabled = true;
+    sendButton.disabled = true;
+    sendButton.style.background = 'rgba(255,255,255,0.2)';
+    sendButton.style.cursor = 'not-allowed';
+  }
+
+  // Handle STORE_MEASUREMENT signal — show survey results modal
+  function handleSurveySignal(signal) {
+    pendingSignal = signal;
+    const data = signal.data || {};
+    const dimensions = data.dimensions || [];
+
+    // Build scores display
+    let scoresHtml = '';
+    for (const dim of dimensions) {
+      const barWidth = (dim.score / 10) * 100;
+      scoresHtml += `
+        <div style="margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span style="font-size: 0.9rem; color: #333; font-weight: 500;">${dim.name}</span>
+            <span style="font-size: 0.9rem; color: #7c3aed; font-weight: 600;">${dim.score}/10</span>
+          </div>
+          <div style="height: 6px; background: #f0e6ff; border-radius: 3px; overflow: hidden;">
+            <div style="height: 100%; width: ${barWidth}%; background: #7c3aed; border-radius: 3px;"></div>
+          </div>
+          ${dim.notes ? `<div style="font-size: 0.8rem; color: #888; margin-top: 0.25rem;">${dim.notes}</div>` : ''}
+        </div>
+      `;
+    }
+
+    if (data.notes) {
+      scoresHtml += `<div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem; color: #666;">${data.notes}</div>`;
+    }
+
+    surveyModalScores.innerHTML = scoresHtml;
+
+    // Show modal, disable chat
+    surveyModal.style.display = 'flex';
     messageInput.disabled = true;
     sendButton.disabled = true;
     sendButton.style.background = 'rgba(255,255,255,0.2)';
@@ -449,6 +526,50 @@ permalink: /chat/
   // Capture dismiss button
   captureDismissBtn.addEventListener('click', () => {
     captureModal.style.display = 'none';
+    pendingSignal = null;
+    messageInput.disabled = false;
+    messageInput.focus();
+    updateSendButton();
+  });
+
+  // Survey confirm button — save check-in results
+  surveyConfirmBtn.addEventListener('click', async () => {
+    surveyModal.style.display = 'none';
+    if (!pendingSignal) return;
+
+    const originalText = surveyConfirmBtn.textContent;
+    surveyConfirmBtn.textContent = 'Saving...';
+    surveyConfirmBtn.disabled = true;
+
+    try {
+      const response = await fetch('/api/survey-measurement-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, signal: pendingSignal })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showToast('Check-in saved!');
+      } else {
+        showToast('Failed to save check-in.', { type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error saving survey:', error);
+      showToast('Failed to save check-in.', { type: 'error' });
+    }
+
+    pendingSignal = null;
+    surveyConfirmBtn.textContent = originalText;
+    surveyConfirmBtn.disabled = false;
+    messageInput.disabled = false;
+    messageInput.focus();
+    updateSendButton();
+  });
+
+  // Survey dismiss button
+  surveyDismissBtn.addEventListener('click', () => {
+    surveyModal.style.display = 'none';
     pendingSignal = null;
     messageInput.disabled = false;
     messageInput.focus();

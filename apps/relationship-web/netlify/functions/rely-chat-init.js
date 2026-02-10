@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
+const { getOpenSurveyAction, hasUserCompleted } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/rely-chat-init
@@ -28,6 +29,24 @@ exports.handler = async (event) => {
         statusCode: 400,
         body: JSON.stringify({ success: false, error: 'Valid userId is required' })
       };
+    }
+
+    // Check for open survey action (survey mode)
+    const SURVEY_DEFINITION_ID = 'survey-rel-v1';
+    let surveyMode = null;
+    try {
+      const openAction = await getOpenSurveyAction(SURVEY_DEFINITION_ID);
+      if (openAction) {
+        const alreadyCompleted = await hasUserCompleted(openAction.id, userId);
+        if (!alreadyCompleted) {
+          surveyMode = {
+            actionId: openAction.id,
+            dimensions: openAction.focusDimensions || []
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[rely-chat-init] Survey check failed (non-fatal):', err.message);
     }
 
     // Fetch moments for context
@@ -115,13 +134,57 @@ Guidelines:
 - The synthesized content should feel like their voice, not yours
 - If uncertain about details, ask before summarizing`;
 
+    // Append survey mode prompt if active
+    let surveyPrompt = '';
+    if (surveyMode && surveyMode.dimensions.length > 0) {
+      const dimList = surveyMode.dimensions.join(', ');
+      surveyPrompt = `
+
+== SURVEY CHECK-IN MODE ==
+
+There is a weekly relationship check-in waiting for ${userName || 'this user'}. The focus dimensions this week are: ${dimList}.
+
+When the conversation begins, gently mention the check-in is available and ask if they'd like to do it now. Something like: "By the way, your weekly relationship check-in is ready. Want to go through it now, or would you rather just talk?"
+
+If they say "not now", "later", or want to talk about something else — drop it completely and continue as their supportive companion. Do not bring it up again unless they ask.
+
+If they engage with the survey:
+- Guide them through rating each dimension on a 1-10 scale
+- Ask about 1-2 dimensions at a time, not all at once
+- Be conversational — probe for context on notable scores (very high or very low)
+- Keep your warmth and groundedness — this isn't a clinical assessment
+- After collecting all ${surveyMode.dimensions.length} scores, summarize what you heard and ask if it looks right
+
+Once they confirm, emit the measurement signal:
+
+STORE_MEASUREMENT
+---
+{
+  "surveyActionId": "${surveyMode.actionId}",
+  "dimensions": [
+    { "name": "DimensionName", "score": 7, "notes": "Brief context they shared" }
+  ],
+  "notes": "Overall observation about the check-in"
+}
+
+After the signal, say something brief and grounded. Then return to normal conversation.`;
+    }
+
+    const fullPrompt = systemPrompt + surveyPrompt;
+
+    // Determine available modes for frontend
+    const availableModes = ['support'];
+    if (surveyMode) availableModes.push('survey');
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
-        systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-        tools: [] // Relly has no tools - signal-based
+        systemMessages: [{ type: 'text', text: fullPrompt, cache_control: { type: 'ephemeral' } }],
+        tools: [], // Relly has no tools - signal-based
+        availableModes,
+        surveyActionId: surveyMode?.actionId || null
       })
     };
 

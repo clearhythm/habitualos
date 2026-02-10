@@ -10,7 +10,7 @@ export default createChatStreamHandler({
   rely: {
     initEndpoint: "/api/rely-chat-init",
     toolExecuteEndpoint: null, // No tools - signal-based like Obi-Wai
-    signalPatterns: [/^SAVE_MOMENT\s*\n---/m],
+    signalPatterns: [/^SAVE_MOMENT\s*\n---/m, /^STORE_MEASUREMENT\s*\n---/m],
   },
 });
 

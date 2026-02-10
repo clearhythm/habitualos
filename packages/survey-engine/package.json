@@ -1,0 +1,9 @@
+{
+  "name": "@habitualos/survey-engine",
+  "version": "1.0.0",
+  "description": "Shared survey/measurement system for HabitualOS apps",
+  "main": "index.cjs",
+  "dependencies": {
+    "@habitualos/db-core": "workspace:*"
+  }
+}
