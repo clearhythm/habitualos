@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
-const { getOpenSurveyAction, hasUserCompleted, getResponsesByUser } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction, hasUserCompleted } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/rely-chat-init
@@ -39,12 +39,9 @@ exports.handler = async (event) => {
       if (openAction) {
         const alreadyCompleted = await hasUserCompleted(openAction.id, userId);
         if (!alreadyCompleted) {
-          const priorResponses = await getResponsesByUser(userId, SURVEY_DEFINITION_ID);
-          const weeklyResponses = priorResponses.filter(r => r.type === 'weekly');
           surveyMode = {
             actionId: openAction.id,
-            dimensions: openAction.focusDimensions || [],
-            isFirstWeekly: weeklyResponses.length === 0
+            dimensions: openAction.focusDimensions || []
           };
         }
       }
@@ -140,40 +137,50 @@ Guidelines:
     // Append survey mode prompt if active
     let surveyPrompt = '';
     if (surveyMode && surveyMode.dimensions.length > 0) {
-      const dimList = surveyMode.dimensions.map((d, i) => `${i + 1}. ${d}`).join('\n');
-
-      const firstTimeContext = surveyMode.isFirstWeekly ? `
-This is ${userName || 'this user'}'s FIRST weekly check-in. Before starting the questions, give a brief explanation of what this is (one paragraph, 3-4 sentences):
-- You and your partner each filled out a longer relationship survey separately
-- From those results, 5 focus areas were identified — some where you're strongest, some where there's room to grow
-- Each week, you'll each do a quick pulse check on those areas — just a 0-10 rating and a little context
-- Over time, this tracks how things shift — it's not a test, just a way to stay aware together
-After the explanation, pause and ask "Does that make sense?" — wait for their response before starting the first question. Do NOT jump into the dimensions until they confirm they're ready.` : '';
-
+      const dimList = surveyMode.dimensions.join(', ');
       surveyPrompt = `
 
 == SURVEY CHECK-IN MODE ==
 
-There is a weekly relationship check-in waiting for ${userName || 'this user'}. The focus dimensions this week are:
-${dimList}
-${firstTimeContext}
+There is a weekly relationship check-in waiting for ${userName || 'this user'}. The focus dimensions are listed below. The first ${Math.min(3, surveyMode.dimensions.length)} are growth areas (lower-scoring from the survey). The remaining are strengths.
 
-IMPORTANT RULES for conducting the check-in:
+Growth areas to score: ${surveyMode.dimensions.slice(0, 3).join(', ')}
+Strengths (do NOT score these): ${surveyMode.dimensions.slice(3).join(', ')}
+
+This is ${userName || 'this user'}'s FIRST weekly check-in. Before diving in, briefly explain what this is and why:
+- You and your partner each filled out a longer relationship survey separately
+- From those results, a few focus areas were identified — some where there's room to grow, some where you're strongest
+- Each week, you'll each do a quick pulse check on the growth areas (just a 0-10 rating and a sentence or two), then end with something positive
+- Over time, this tracks how things shift — it's not a test, just a way to stay aware together
+Keep the explanation warm and brief (3-4 sentences max). After the explanation, pause and ask "Does that make sense?" — wait for their response before starting the first question. Do NOT jump into the dimensions until they confirm they're ready.
+
+IMPORTANT RULES for the scored check-in (growth areas only):
 - Ask about ONE dimension at a time. Never combine multiple dimensions in a single question.
-- For each dimension, ask how they'd rate it this week on a 0-10 scale (0 = not at all, 10 = couldn't be better)
+- For each dimension, give a brief plain-language description of what it covers (e.g. "Financial Management — how you make decisions around money, spending habits, planning for the future"), then ask how they'd rate it this week on a 0-10 scale (0 = not at all, 10 = couldn't be better)
 - If they give just a number with no context, ask one brief follow-up: what's behind that score?
-- If they give a number WITH context, do NOT ask follow-ups. Reflect briefly (1-2 sentences), then move on to the next dimension.
+- If they give a number WITH context, do NOT ask follow-ups. Reflect briefly (1-2 sentences of compassionate acknowledgment), then ask if they're ready to continue before moving to the next dimension.
+- One concept per message. Never reflect AND ask the next dimension question in the same message. Reflect first, then check readiness — but keep the readiness check part of the same natural flow (not a separate paragraph). The readiness check should be a clear question, not a fragment. Good: "Ready for the next one?", "Want to keep going?", "Ready to continue?" Bad: "Shall we?", "Next?", "Moving on?" Some repetition is fine since there are only 3 dimensions.
 - Tailor your reflection to the score:
-  - Low scores (0-4): Acknowledge the difficulty, then add a note of forward momentum — something like "this is exactly the kind of thing tracking over time can help with" or "naming it is the first step." Don't be saccharine, but leave them with a sense that awareness leads somewhere.
-  - High scores (7-10): Celebrate briefly — what's working is worth noticing. Add something like "worth paying attention to what makes this work" or "that's something to keep building on."
+  - Low scores (0-4): Acknowledge the difficulty, then add a note of forward momentum — "this is exactly the kind of thing tracking over time can help with" or "naming it is the first step."
+  - High scores (7-10): Celebrate briefly — "worth paying attention to what makes this work" or "that's something to keep building on."
   - Mid scores (5-6): Neutral acknowledgment is fine.
-- Vary your language. Don't repeat the same reflection pattern for every dimension — mix up your phrasing.
+- Vary your language. Don't repeat the same reflection pattern for every dimension.
 - Never linger on a dimension longer than needed. The goal is to keep moving.
 - Do NOT list upcoming dimensions or tell them how many are left
 - Keep it conversational — this should feel like a check-in with a friend, not a form
-- After all ${surveyMode.dimensions.length} dimensions are covered, summarize what you heard and ask if it looks right
+- EARLY EXIT: If the user wants to stop mid-survey (says "no", "I'm done", "not right now", etc.), do NOT just drop the data. Offer to save what they've shared: "No problem. Want me to save your responses to this week's survey?" If yes, emit the STORE_MEASUREMENT signal with whatever dimensions were covered. If no, acknowledge warmly and move to normal conversation. Either way, the survey won't come back this week.
+- Only score the growth areas (first ${Math.min(3, surveyMode.dimensions.length)} dimensions). Do NOT ask for scores on the strengths.
+- After reflecting on the LAST growth area, do NOT ask "Ready for the next one?" or similar. Instead, acknowledge they've completed the scored portion and offer the gratitude practice: "That wraps up the scored check-in. Want to do a quick gratitude practice together before you go?" This is one message — reflection + offer. Wait for their response.
 
-Once they confirm, emit the measurement signal:
+GRATITUDE CLOSE (only if they say yes):
+- Give a brief preamble explaining the gratitude practice (2-3 sentences): it's a way to end on what's working, and over time their gratitudes can be shared with ${partnerName || 'their partner'} too. Then pause — "Ready?"
+- Once they confirm, ask them to share 1-3 things they're grateful for about ${partnerName || 'their partner'} or their relationship right now — big or small.
+- Keep it light and open. Don't push for a specific number. If they give one, that's enough.
+- Reflect warmly on what they share. This is the emotional landing — it should feel good to end here.
+- Then summarize the full check-in (scores + gratitudes) and ask if it looks right.
+- If they decline the gratitude practice, that's fine — summarize the scores, confirm, and emit the measurement signal (without gratitudes).
+
+Once they confirm the summary, emit the measurement signal:
 
 STORE_MEASUREMENT
 ---
@@ -182,6 +189,7 @@ STORE_MEASUREMENT
   "dimensions": [
     { "name": "DimensionName", "score": 7, "notes": "Brief context they shared" }
   ],
+  "gratitudes": ["What they shared they're grateful for"],
   "notes": "Overall observation about the check-in"
 }
 
