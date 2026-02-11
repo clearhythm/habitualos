@@ -161,6 +161,47 @@ permalink: /chat/
 
   let loadingMessageElement = null;
 
+  // Inject animations
+  (() => {
+    const style = document.createElement('style');
+    style.id = 'streaming-cursor-style';
+    style.textContent = '@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }';
+    document.head.appendChild(style);
+  })();
+  let thinkingTimer = null;
+  let thinkingInterval = null;
+  let thinkingTimeout = null;
+
+  const thinkingWords = ['Thinking', 'Considering', 'Reflecting', 'Pondering'];
+
+  function startThinkingCycle(span, startIndex) {
+    let wordIndex = startIndex || 0;
+    function typeWord() {
+      const word = thinkingWords[wordIndex % thinkingWords.length] + '...';
+      let charIndex = 0;
+      span.textContent = '\u00a0';
+      thinkingInterval = setInterval(() => {
+        charIndex++;
+        span.textContent = word.slice(0, charIndex);
+        if (charIndex >= word.length) {
+          clearInterval(thinkingInterval);
+          thinkingInterval = null;
+          wordIndex++;
+          thinkingTimeout = setTimeout(typeWord, 5000);
+        }
+      }, 60);
+    }
+    typeWord();
+  }
+
+  function stopThinkingCycle() {
+    clearTimeout(thinkingTimer);
+    clearInterval(thinkingInterval);
+    clearTimeout(thinkingTimeout);
+    thinkingInterval = null;
+    thinkingTimeout = null;
+  }
+
   // Capture modal elements
   const captureModal = document.getElementById('capture-modal');
   const captureModalSummary = document.getElementById('capture-modal-summary');
@@ -260,27 +301,29 @@ permalink: /chat/
     streamingStarted = false;
     const messageDiv = document.createElement('div');
     messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); align-self: flex-start; border-left: 3px solid #4c1d95; border-bottom-left-radius: 4px;';
-    messageDiv.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
+    messageDiv.innerHTML = '<span class="thinking-label" style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
     chatMessages.appendChild(messageDiv);
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     streamingMessageElement = messageDiv;
 
-    // Add cursor blink animation if not present
-    if (!document.getElementById('streaming-cursor-style')) {
-      const style = document.createElement('style');
-      style.id = 'streaming-cursor-style';
-      style.textContent = '@keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }';
-      document.head.appendChild(style);
-    }
+    // After 3s of no tokens, start cycling words
+    stopThinkingCycle();
+    thinkingTimer = setTimeout(() => {
+      const label = messageDiv.querySelector('.thinking-label');
+      if (label && !streamingStarted) {
+        startThinkingCycle(label, 1);
+      }
+    }, 3000);
   }
 
   function appendStreamingText(text) {
     if (!streamingMessageElement) return;
     streamingText += text;
 
-    // On first token, switch from "Listening..." to streaming mode
+    // On first token, switch from "Thinking..." to streaming mode
     if (!streamingStarted) {
       streamingStarted = true;
+      stopThinkingCycle();
       streamingMessageElement.style.borderLeftColor = '#4c1d95';
     }
 
@@ -295,7 +338,7 @@ permalink: /chat/
       }
     }
     if (displayText !== streamingText && !displayText) {
-      streamingMessageElement.innerHTML = '<span style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
+      streamingMessageElement.innerHTML = '<span class="thinking-label" style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
       return;
     }
 
@@ -394,14 +437,19 @@ permalink: /chat/
 
   // Initialize chat with opening message or load history
   if (chatHistory.length === 0) {
+    // Time-appropriate greeting
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 4 ? 'Happy late night' : hour < 12 ? 'Good morning' : hour < 13 ? 'Happy midday' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Happy late night';
+    const name = userName || 'friend';
+
     // For new chats, check survey status before showing greeting
-    let greeting = `Hey ${userName || 'friend'}. What's in your heart or mind today?`;
+    let greeting = `${timeGreeting}, ${name}. What's in your heart or mind today?`;
     try {
       const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
         const data = await res.json();
         if (data.hasSurvey) {
-          greeting = `Hey ${userName || 'friend'}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
+          greeting = `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
         }
       }
     } catch (e) { /* use default greeting */ }
@@ -458,13 +506,9 @@ permalink: /chat/
           <div style="height: 6px; background: #f0e6ff; border-radius: 3px; overflow: hidden;">
             <div style="height: 100%; width: ${pct}%; background: #7c3aed; border-radius: 3px;"></div>
           </div>
-          ${dim.notes ? `<div style="font-size: 0.8rem; color: #888; margin-top: 0.25rem;">${dim.notes}</div>` : ''}
+          ${dim.notes ? `<div style="font-size: 0.8rem; color: #888; margin-top: 0.25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${dim.notes}</div>` : ''}
         </div>
       `;
-    }
-
-    if (data.notes) {
-      scoresHtml += `<div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #eee; font-size: 0.85rem; color: #666;">${data.notes}</div>`;
     }
 
     surveyModalScores.innerHTML = scoresHtml;

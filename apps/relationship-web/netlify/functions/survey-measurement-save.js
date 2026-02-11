@@ -34,7 +34,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { dimensions, notes, surveyActionId } = signal.data;
+    const { dimensions, gratitudes, surveyActionId } = signal.data;
 
     if (!dimensions || !Array.isArray(dimensions) || dimensions.length === 0) {
       return {
@@ -70,7 +70,7 @@ exports.handler = async (event) => {
       type: 'weekly',
       scores,
       surveyActionId: surveyActionId || null,
-      notes: notes || null
+      gratitudes: Array.isArray(gratitudes) ? gratitudes : []
     });
 
     // Mark user as completed in survey action
