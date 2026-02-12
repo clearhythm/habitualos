@@ -40,10 +40,6 @@
   path = "/api/chat-stream"
   function = "chat-stream"
 
-[[edge_functions]]
-  path = "/api/agent-chat-stream"
-  function = "agent-chat-stream"
-
 # =============================================================================
 # Redirects
 # =============================================================================
