@@ -2,10 +2,9 @@
 # Build & Dev (Monorepo Configuration)
 # =============================================================================
 # When deployed, Netlify's "Package directory" should be set to "apps/relationship-web"
-# ignore_paths: packages/edge-functions is outside base, so shared changes need a file touch here
-
 [build]
   base = "apps/relationship-web"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/relationship-web/ packages/edge-functions/"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/relationship-web/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/relationship-web/netlify/edge-functions/_lib/ && pnpm --filter relationship-web build"
   publish = "_site"
   functions = "netlify/functions"

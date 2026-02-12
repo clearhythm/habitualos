@@ -1,2 +1,2 @@
-# Copied from packages/edge-functions at build time
-_lib/
+# _lib/ contains shared code copied from packages/edge-functions
+# Committed to git so Netlify edge function bundler can resolve imports
