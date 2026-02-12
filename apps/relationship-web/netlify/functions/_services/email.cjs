@@ -65,7 +65,7 @@ ${chatUrl}/chat/
             <p style="font-size: 1rem; color: #1f2937; margin: 0 0 1.5rem;">When you're ready, just open a chat and we'll walk through them together.</p>
             <a href="${chatUrl}/chat/" style="display: inline-block; padding: 0.75rem 1.75rem; background: #3b0f80; color: white; text-decoration: none; border-radius: 24px; font-weight: 600; font-size: 0.95rem;">Start Check-in</a>
           </div>
-          <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 1.5rem 0 0; text-align: center; background: transparent;"><span style="color: #ffffff;">Pidgerton</span> by HabitualOS<br/>Who puts a copyright on love?</p>
+          <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 1.5rem 0 0; text-align: center; background: transparent;"><span style="color: #ffffff;">Pidgerton</span> by HabitualOS<br/>Who wants to put a copyright on love?</p>
         </div>
       </div>
     `
