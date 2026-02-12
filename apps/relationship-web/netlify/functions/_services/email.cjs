@@ -50,10 +50,10 @@ ${chatUrl}/chat/
     html: `
       <div style="background: #7c3aed; padding: 2.5rem 1.5rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
         <div style="max-width: 480px; margin: 0 auto;">
-          <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 1.25rem;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 1.25rem; background: transparent;">
             <tr>
-              <td style="vertical-align: middle; font-size: 2rem; line-height: 1;">&#x1F437;</td>
-              <td style="vertical-align: middle; padding-left: 10px; font-size: 1.65rem; font-weight: 700; color: #ffffff; line-height: 1;">Pidgerton</td>
+              <td style="vertical-align: middle; font-size: 2rem; line-height: 1; background: transparent;">&#x1F437;</td>
+              <td style="vertical-align: middle; padding-left: 10px; font-size: 1.65rem; font-weight: 700; color: #ffffff; line-height: 1; background: transparent;">Pidgerton</td>
             </tr>
           </table>
           <div style="background: #f5f3ff; border-radius: 16px; padding: 2.5rem 2rem;">
@@ -65,7 +65,7 @@ ${chatUrl}/chat/
             <p style="font-size: 1rem; color: #1f2937; margin: 0 0 1.5rem;">When you're ready, just open a chat and we'll walk through them together.</p>
             <a href="${chatUrl}/chat/" style="display: inline-block; padding: 0.75rem 1.75rem; background: #3b0f80; color: white; text-decoration: none; border-radius: 24px; font-weight: 600; font-size: 0.95rem;">Start Check-in</a>
           </div>
-          <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 1.5rem 0 0; text-align: center;">Pidgerton by HabitualOS</p>
+          <p style="font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 1.5rem 0 0; text-align: center; background: transparent;"><span style="color: #ffffff;">Pidgerton</span> by HabitualOS<br/>Who puts a copyright on love?</p>
         </div>
       </div>
     `
