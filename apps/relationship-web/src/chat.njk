@@ -127,8 +127,9 @@ permalink: /chat/
 <!-- Survey Check-in Modal Overlay -->
 <div id="survey-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
   <div style="background: white; padding: 2.5rem 2rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-    <div style="font-size: 2rem; margin-bottom: 1rem;">📊</div>
-    <h3 style="margin: 0 0 0.75rem 0; font-size: 1.25rem; color: #1e0a3c;">Save check-in results?</h3>
+    <div style="font-size: 3.5rem;">🦥</div>
+    <h3 style="margin: 0; font-size: 1.25rem; color: #1e0a3c;">Save your replies?</h3>
+    <p style="margin: 0 0 1.5rem 0; font-size: 0.9rem; color: #666;">Here's what we'll save for you.</p>
     <div id="survey-modal-scores" style="margin: 0 0 1.5rem 0; text-align: left;"></div>
     <button
       id="survey-confirm-btn"
@@ -585,10 +586,8 @@ permalink: /chat/
 
   // Survey confirm button — save check-in results
   surveyConfirmBtn.addEventListener('click', async () => {
-    surveyModal.style.display = 'none';
     if (!pendingSignal) return;
 
-    const originalText = surveyConfirmBtn.textContent;
     surveyConfirmBtn.textContent = 'Saving...';
     surveyConfirmBtn.disabled = true;
 
@@ -601,21 +600,46 @@ permalink: /chat/
 
       const data = await response.json();
       if (data.success) {
-        showToast('Check-in saved!');
+        // Transition modal to completion state
+        const partners = { 'Erik': 'Marta', 'Marta': 'Erik' };
+        const partnerName = partners[userName] || 'your partner';
+        const modalInner = surveyModal.querySelector('div');
+        modalInner.innerHTML = `
+          <div style="font-size: 3.5rem;">🦥</div>
+          <h3 style="margin: 0; font-size: 1.25rem; color: #1e0a3c;">Check-in saved!</h3>
+          <p style="margin: 0 0 1.5rem 0; font-size: 0.9rem; color: #666; line-height: 1.4;">We'll check in with you again next week.</p>
+          <button
+            id="survey-done-btn"
+            style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
+          >Done</button>
+          <button
+            id="survey-new-chat-btn"
+            style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
+          >Start new chat</button>
+        `;
+        document.getElementById('survey-done-btn').addEventListener('click', () => {
+          clearChatHistory();
+          window.location.href = '/';
+        });
+        document.getElementById('survey-new-chat-btn').addEventListener('click', () => {
+          clearChatHistory();
+          window.location.reload();
+        });
       } else {
         showToast('Failed to save check-in.', { type: 'error' });
+        surveyModal.style.display = 'none';
+        surveyConfirmBtn.textContent = 'Save';
+        surveyConfirmBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error saving survey:', error);
       showToast('Failed to save check-in.', { type: 'error' });
+      surveyModal.style.display = 'none';
+      surveyConfirmBtn.textContent = 'Save';
+      surveyConfirmBtn.disabled = false;
     }
 
     pendingSignal = null;
-    surveyConfirmBtn.textContent = originalText;
-    surveyConfirmBtn.disabled = false;
-    messageInput.disabled = false;
-    messageInput.focus();
-    updateSendButton();
   });
 
   // Survey dismiss button

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
-const { getOpenSurveyAction, hasUserCompleted } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction, hasUserCompleted, getResponsesByUser } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/rely-chat-init
@@ -39,9 +39,13 @@ exports.handler = async (event) => {
       if (openAction) {
         const alreadyCompleted = await hasUserCompleted(openAction.id, userId);
         if (!alreadyCompleted) {
+          // Check if user has previous weekly responses
+          const pastResponses = await getResponsesByUser(userId, SURVEY_DEFINITION_ID);
+          const previousWeeklies = pastResponses.filter(r => r.type === 'weekly');
           surveyMode = {
             actionId: openAction.id,
-            dimensions: openAction.focusDimensions || []
+            dimensions: openAction.focusDimensions || [],
+            isFirstWeekly: previousWeeklies.length === 0
           };
         }
       }
@@ -147,12 +151,12 @@ There is a weekly relationship check-in waiting for ${userName || 'this user'}. 
 Growth areas to score: ${surveyMode.dimensions.slice(0, 3).join(', ')}
 Strengths (do NOT score these): ${surveyMode.dimensions.slice(3).join(', ')}
 
-This is ${userName || 'this user'}'s FIRST weekly check-in. Before diving in, briefly explain what this is and why:
+${surveyMode.isFirstWeekly ? `This is ${userName || 'this user'}'s FIRST weekly check-in. Before diving in, briefly explain what this is and why:
 - You and your partner each filled out a longer relationship survey separately
 - From those results, a few focus areas were identified — some where there's room to grow, some where you're strongest
 - Each week, you'll each do a quick pulse check on the growth areas (just a 0-10 rating and a sentence or two), then end with something positive
 - Over time, this tracks how things shift — it's not a test, just a way to stay aware together
-Keep the explanation warm and brief (3-4 sentences max). After the explanation, pause and ask "Does that make sense?" — wait for their response before starting the first question. Do NOT jump into the dimensions until they confirm they're ready.
+Keep the explanation warm and brief (3-4 sentences max). After the explanation, pause and ask "Does that make sense?" — wait for their response before starting the first question. Do NOT jump into the dimensions until they confirm they're ready.` : `${userName || 'This user'} has done this weekly check-in before — no need to explain the process. Greet them warmly, acknowledge it's check-in time, and ask if they're ready to jump in. Keep it brief (1-2 sentences). Wait for their response before starting the first dimension.`}
 
 IMPORTANT RULES for the scored check-in (growth areas only):
 - Ask about ONE dimension at a time. Never combine multiple dimensions in a single question.
