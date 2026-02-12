@@ -313,6 +313,9 @@ export function createChatStreamHandler(
         };
 
         try {
+          console.log("[chat-stream] Stream started, calling Anthropic API...");
+          send({ type: "token", text: "" }); // Diagnostic: confirm stream can send
+
           let continueLoop = true;
           let loopCount = 0;
           const maxLoops = 5; // Prevent infinite loops
@@ -321,6 +324,7 @@ export function createChatStreamHandler(
             loopCount++;
 
             // Stream Claude's response via raw fetch
+            console.log("[chat-stream] Loop", loopCount, "- calling Anthropic API");
             const eventStream = streamAnthropicMessages(apiKey, {
               model: "claude-sonnet-4-5-20250929",
               max_tokens: 2048,
@@ -452,12 +456,13 @@ export function createChatStreamHandler(
 
           controller.close();
         } catch (error) {
-          console.error("[chat-stream] Error:", error);
-          send({
-            type: "error",
-            error:
-              error instanceof Error ? error.message : "Unknown error occurred",
-          });
+          const errorMsg = error instanceof Error ? error.message : "Unknown error occurred";
+          console.error("[chat-stream] Error:", errorMsg);
+          try {
+            send({ type: "error", error: errorMsg });
+          } catch (sendErr) {
+            console.error("[chat-stream] Failed to send error event:", sendErr);
+          }
           controller.close();
         }
       },
