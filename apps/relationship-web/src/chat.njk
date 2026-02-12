@@ -436,24 +436,32 @@ permalink: /chat/
   `;
   chatMessages.appendChild(headerDiv);
 
+  // Check for pending survey — if chat is just a stale greeting (no user messages),
+  // clear it so we can show the survey greeting instead
+  let hasSurvey = false;
+  try {
+    const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      hasSurvey = !!data.hasSurvey;
+    }
+  } catch (e) { /* proceed without survey info */ }
+
+  const hasUserMessages = chatHistory.some(m => m.role === 'user');
+  if (hasSurvey && chatHistory.length > 0 && !hasUserMessages) {
+    clearChatHistory();
+    chatHistory = [];
+  }
+
   // Initialize chat with opening message or load history
   if (chatHistory.length === 0) {
-    // Time-appropriate greeting
     const hour = new Date().getHours();
     const timeGreeting = hour < 4 ? 'Happy late night' : hour < 12 ? 'Good morning' : hour < 13 ? 'Happy midday' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Happy late night';
     const name = userName || 'friend';
 
-    // For new chats, check survey status before showing greeting
-    let greeting = `${timeGreeting}, ${name}. What's in your heart or mind today?`;
-    try {
-      const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.hasSurvey) {
-          greeting = `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
-        }
-      }
-    } catch (e) { /* use default greeting */ }
+    let greeting = hasSurvey
+      ? `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`
+      : `${timeGreeting}, ${name}. What's in your heart or mind today?`;
 
     chatHistory.push({ role: 'assistant', content: greeting, timestamp: new Date().toISOString() });
     saveChatHistory(chatHistory);
