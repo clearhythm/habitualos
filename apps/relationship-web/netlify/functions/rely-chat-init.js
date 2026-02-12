@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId } = require('./_services/db-moments.cjs');
-const { getOpenSurveyAction, hasUserCompleted, getResponsesByUser } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction, getResponsesByUser } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/rely-chat-init
@@ -35,19 +35,16 @@ exports.handler = async (event) => {
     const SURVEY_DEFINITION_ID = 'survey-rel-v1';
     let surveyMode = null;
     try {
-      const openAction = await getOpenSurveyAction(SURVEY_DEFINITION_ID);
+      const openAction = await getOpenSurveyAction(SURVEY_DEFINITION_ID, userId);
       if (openAction) {
-        const alreadyCompleted = await hasUserCompleted(openAction.id, userId);
-        if (!alreadyCompleted) {
-          // Check if user has previous weekly responses
-          const pastResponses = await getResponsesByUser(userId, SURVEY_DEFINITION_ID);
-          const previousWeeklies = pastResponses.filter(r => r.type === 'weekly');
-          surveyMode = {
-            actionId: openAction.id,
-            dimensions: openAction.focusDimensions || [],
-            isFirstWeekly: previousWeeklies.length === 0
-          };
-        }
+        // Check if user has previous weekly responses
+        const pastResponses = await getResponsesByUser(userId, SURVEY_DEFINITION_ID);
+        const previousWeeklies = pastResponses.filter(r => r.type === 'weekly');
+        surveyMode = {
+          actionId: openAction.id,
+          dimensions: openAction.focusDimensions || [],
+          isFirstWeekly: previousWeeklies.length === 0
+        };
       }
     } catch (err) {
       console.warn('[rely-chat-init] Survey check failed (non-fatal):', err.message);
@@ -174,17 +171,9 @@ IMPORTANT RULES for the scored check-in (growth areas only):
 - Keep it conversational — this should feel like a check-in with a friend, not a form
 - EARLY EXIT: If the user wants to stop mid-survey (says "no", "I'm done", "not right now", etc.), do NOT just drop the data. Offer to save what they've shared: "No problem. Want me to save your responses to this week's survey?" If yes, emit the STORE_MEASUREMENT signal immediately with whatever dimensions were covered — do NOT show a summary or ask for confirmation first, just emit the signal and say something brief. If no, acknowledge warmly and move to normal conversation. Either way, the survey won't come back this week.
 - Only score the growth areas (first ${Math.min(3, surveyMode.dimensions.length)} dimensions). Do NOT ask for scores on the strengths.
-- After reflecting on the LAST growth area, do NOT ask "Ready for the next one?" or similar. Instead, acknowledge they've completed the scored portion and offer the gratitude practice: "That wraps up the scored check-in. Want to do a quick gratitude practice together before you go?" This is one message — reflection + offer. Wait for their response.
+- After reflecting on the LAST growth area, do NOT ask "Ready for the next one?" or similar. Instead, offer to save: "That's all three — want me to save your check-in?" If yes, emit the STORE_MEASUREMENT signal immediately — do NOT show a summary or ask for additional confirmation. If no, acknowledge warmly and move to normal conversation.
 
-GRATITUDE CLOSE (only if they say yes):
-- Give a brief preamble explaining the gratitude practice (2-3 sentences): it's a way to end on what's working, and over time their gratitudes can be shared with ${partnerName || 'their partner'} too. Then pause — "Ready?"
-- Once they confirm, ask them to share 1-3 things they're grateful for about ${partnerName || 'their partner'} or their relationship right now — big or small.
-- Keep it light and open. Don't push for a specific number. If they give one, that's enough.
-- Reflect warmly on what they share. This is the emotional landing — it should feel good to end here.
-- Then summarize the full check-in (scores + gratitudes) and ask if it looks right.
-- If they decline the gratitude practice, that's fine — summarize the scores, confirm, and emit the measurement signal (without gratitudes).
-
-Once they confirm the summary, emit the measurement signal:
+Once they confirm, emit the measurement signal:
 
 STORE_MEASUREMENT
 ---
@@ -192,8 +181,7 @@ STORE_MEASUREMENT
   "surveyActionId": "${surveyMode.actionId}",
   "dimensions": [
     { "name": "DimensionName", "score": 7, "notes": "Direct quote or close paraphrase in the user's own words — first person, their voice, not a summary" }
-  ],
-  "gratitudes": ["What they shared they're grateful for"]
+  ]
 }
 
 After the signal, say something brief and grounded. Then return to normal conversation.`;

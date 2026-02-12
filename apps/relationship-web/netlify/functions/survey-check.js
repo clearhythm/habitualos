@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { getOpenSurveyAction, hasUserCompleted } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction } = require('@habitualos/survey-engine');
 
 const SURVEY_DEFINITION_ID = 'survey-rel-v1';
 
@@ -19,20 +19,11 @@ exports.handler = async (event) => {
   }
 
   try {
-    const openAction = await getOpenSurveyAction(SURVEY_DEFINITION_ID);
-    if (!openAction) {
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hasSurvey: false })
-      };
-    }
-
-    const completed = await hasUserCompleted(openAction.id, userId);
+    const openAction = await getOpenSurveyAction(SURVEY_DEFINITION_ID, userId);
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ hasSurvey: !completed })
+      body: JSON.stringify({ hasSurvey: !!openAction })
     };
   } catch (error) {
     console.error('[survey-check] ERROR:', error);

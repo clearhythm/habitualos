@@ -7,10 +7,10 @@ const SURVEY_DEFINITION_ID = 'survey-rel-v1';
 /**
  * Netlify Scheduled Function — runs weekly.
  *
- * 1. Checks if an open survey action already exists (idempotent)
- * 2. If not, creates one with current focus dimensions
- * 3. Queries all users from the users table for email notifications
- * 4. Sends email notifications to each user with an email on file
+ * 1. Gets all users
+ * 2. For each user, checks if they already have an open action (idempotent)
+ * 3. If not, creates a per-user action with current focus dimensions
+ * 4. Sends email notifications
  *
  * Schedule configured in netlify.toml:
  *   [functions."survey-weekly-create"]
@@ -20,16 +20,6 @@ exports.handler = async (event) => {
   console.log('[survey-weekly-create] Running...');
 
   try {
-    // Check for existing open action (idempotent)
-    const existing = await getOpenSurveyAction(SURVEY_DEFINITION_ID);
-    if (existing) {
-      console.log(`[survey-weekly-create] Open action already exists: ${existing.id}. Skipping.`);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ success: true, skipped: true, existingActionId: existing.id })
-      };
-    }
-
     // Get current focus dimensions
     const focus = await getFocus(SURVEY_DEFINITION_ID);
     if (!focus || !focus.focusDimensions || focus.focusDimensions.length === 0) {
@@ -40,50 +30,59 @@ exports.handler = async (event) => {
       };
     }
 
-    // Create survey action
-    const { id } = await createSurveyAction({
-      surveyDefinitionId: SURVEY_DEFINITION_ID,
-      type: 'weekly',
-      focusDimensions: focus.focusDimensions
-    });
-    console.log(`[survey-weekly-create] Created action: ${id}`);
-
-    // Send email notifications (skip if Resend not configured)
-    let emailsSent = 0;
+    // Get all users
+    const users = await query({ collection: 'users' });
     const testEmailOnly = process.env.SURVEY_TEST_EMAIL;
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log('[survey-weekly-create] RESEND_API_KEY not set, skipping emails');
-    } else {
-      const { sendSurveyNotification } = require('./_services/email.cjs');
-      const users = await query({ collection: 'users' });
+    let actionsCreated = 0;
+    let actionsSkipped = 0;
+    let emailsSent = 0;
 
-      for (const user of users) {
-        const email = user._email;
-        const name = user.profile?.firstName || 'there';
+    for (const user of users) {
+      const userId = user.id;
+      const email = user._email;
+      const name = user.profile?.firstName || 'there';
 
-        if (!email) {
-          console.warn(`[survey-weekly-create] User ${user.id} has no email, skipping`);
-          continue;
-        }
+      // Check if user already has an open action (idempotent)
+      const existing = await getOpenSurveyAction(SURVEY_DEFINITION_ID, userId);
+      if (existing) {
+        console.log(`[survey-weekly-create] Open action exists for ${name} (${userId}): ${existing.id}. Skipping.`);
+        actionsSkipped++;
+        continue;
+      }
 
-        // If SURVEY_TEST_EMAIL is set, only send to that address
-        if (testEmailOnly && email !== testEmailOnly) {
-          console.log(`[survey-weekly-create] Test mode: skipping ${name} (${email})`);
-          continue;
-        }
+      // Create per-user survey action
+      const { id } = await createSurveyAction({
+        _userId: userId,
+        surveyDefinitionId: SURVEY_DEFINITION_ID,
+        type: 'weekly',
+        focusDimensions: focus.focusDimensions
+      });
+      console.log(`[survey-weekly-create] Created action ${id} for ${name} (${userId})`);
+      actionsCreated++;
 
-        try {
-          await sendSurveyNotification({
-            to: email,
-            name,
-            dimensions: focus.focusDimensions
-          });
-          emailsSent++;
-          console.log(`[survey-weekly-create] Email sent to ${name} (${email})`);
-        } catch (emailErr) {
-          console.error(`[survey-weekly-create] Failed to email ${name}:`, emailErr.message);
-        }
+      // Send email notification
+      if (!process.env.RESEND_API_KEY) continue;
+      if (!email) {
+        console.warn(`[survey-weekly-create] User ${userId} has no email, skipping notification`);
+        continue;
+      }
+      if (testEmailOnly && email !== testEmailOnly) {
+        console.log(`[survey-weekly-create] Test mode: skipping email for ${name} (${email})`);
+        continue;
+      }
+
+      try {
+        const { sendSurveyNotification } = require('./_services/email.cjs');
+        await sendSurveyNotification({
+          to: email,
+          name,
+          dimensions: focus.focusDimensions
+        });
+        emailsSent++;
+        console.log(`[survey-weekly-create] Email sent to ${name} (${email})`);
+      } catch (emailErr) {
+        console.error(`[survey-weekly-create] Failed to email ${name}:`, emailErr.message);
       }
     }
 
@@ -91,7 +90,8 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        actionId: id,
+        actionsCreated,
+        actionsSkipped,
         emailsSent,
         focusDimensions: focus.focusDimensions
       })

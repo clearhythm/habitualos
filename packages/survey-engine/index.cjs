@@ -8,7 +8,7 @@
 
 const { createSurveyDefinition, getSurveyDefinition } = require('./survey-definitions.cjs');
 const { createSurveyResponse, getResponsesBySurvey, getResponsesByUser, getLatestFullResponses } = require('./survey-responses.cjs');
-const { createSurveyAction, getOpenSurveyAction, markUserCompleted, hasUserCompleted } = require('./survey-actions.cjs');
+const { createSurveyAction, getOpenSurveyAction, markActionCompleted } = require('./survey-actions.cjs');
 const { getFocus, recalculateFocus } = require('./survey-focus.cjs');
 const { computeFocusDimensions } = require('./focus-algorithm.cjs');
 
@@ -26,8 +26,7 @@ module.exports = {
   // Actions
   createSurveyAction,
   getOpenSurveyAction,
-  markUserCompleted,
-  hasUserCompleted,
+  markActionCompleted,
 
   // Focus
   getFocus,

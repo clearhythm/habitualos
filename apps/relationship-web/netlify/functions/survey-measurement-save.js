@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { createSurveyResponse, markUserCompleted } = require('@habitualos/survey-engine');
+const { createSurveyResponse, markActionCompleted } = require('@habitualos/survey-engine');
 const { uniqueId } = require('@habitualos/db-core');
 
 /**
@@ -34,7 +34,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const { dimensions, gratitudes, surveyActionId } = signal.data;
+    const { dimensions, surveyActionId } = signal.data;
 
     if (!dimensions || !Array.isArray(dimensions) || dimensions.length === 0) {
       return {
@@ -69,14 +69,13 @@ exports.handler = async (event) => {
       surveyDefinitionId: 'survey-rel-v1',
       type: 'weekly',
       scores,
-      surveyActionId: surveyActionId || null,
-      gratitudes: Array.isArray(gratitudes) ? gratitudes : []
+      surveyActionId: surveyActionId || null
     });
 
-    // Mark user as completed in survey action
+    // Mark survey action as completed
     let actionUpdate = null;
     if (surveyActionId) {
-      actionUpdate = await markUserCompleted(surveyActionId, userId);
+      actionUpdate = await markActionCompleted(surveyActionId);
     }
 
     return {
