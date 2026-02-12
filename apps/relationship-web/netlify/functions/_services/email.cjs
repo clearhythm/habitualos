@@ -35,10 +35,10 @@ async function sendSurveyNotification({ to, name, dimensions }) {
   const { data, error } = await client.emails.send({
     from: process.env.RESEND_FROM_EMAIL || 'Pidgerton <noreply@pidgerton.com>',
     to,
-    subject: `Got a moment for your ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} check-in?`,
+    subject: `Got a moment for your ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} mini-survey?`,
     text: `Hey ${name},
 
-It's time for your weekly Pidgerton mini check-in. This week's focus areas:
+Your weekly mini-survey is ready. Here's the areas we'll focus on:
 
 ${dimensionList}
 
