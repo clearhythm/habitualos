@@ -305,174 +305,179 @@ export function createChatStreamHandler(
     // Add current user message
     messages.push({ role: "user", content: message });
 
-    // Create SSE stream
-    const stream = new ReadableStream({
-      async start(controller) {
-        const send = (data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        };
+    // Create SSE stream using TransformStream for reliable streaming on edge
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
 
-        try {
-          console.log("[chat-stream] Stream started, calling Anthropic API...");
-          send({ type: "token", text: "" }); // Diagnostic: confirm stream can send
+    const send = async (data: Record<string, unknown>) => {
+      await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+    };
 
-          let continueLoop = true;
-          let loopCount = 0;
-          const maxLoops = 5; // Prevent infinite loops
+    // Run the streaming logic in the background
+    (async () => {
+      try {
+        console.log("[chat-stream] Stream started, calling Anthropic API...");
 
-          while (continueLoop && loopCount < maxLoops) {
-            loopCount++;
+        let continueLoop = true;
+        let loopCount = 0;
+        const maxLoops = 5; // Prevent infinite loops
 
-            // Stream Claude's response via raw fetch
-            console.log("[chat-stream] Loop", loopCount, "- calling Anthropic API");
-            const eventStream = streamAnthropicMessages(apiKey, {
-              model: "claude-sonnet-4-5-20250929",
-              max_tokens: 2048,
-              system: systemMessages,
-              messages: messages,
-              tools: tools && tools.length > 0 ? tools : undefined,
+        while (continueLoop && loopCount < maxLoops) {
+          loopCount++;
+
+          // Stream Claude's response via raw fetch
+          console.log("[chat-stream] Loop", loopCount, "- calling Anthropic API");
+          const eventStream = streamAnthropicMessages(apiKey, {
+            model: "claude-sonnet-4-5-20250929",
+            max_tokens: 2048,
+            system: systemMessages,
+            messages: messages,
+            tools: tools && tools.length > 0 ? tools : undefined,
+          });
+
+          let fullText = "";
+          const contentBlocks: ContentBlock[] = [];
+          let currentBlockIndex = -1;
+          let currentToolInput = "";
+          let stopReason = "";
+
+          for await (const event of eventStream) {
+            if (event.type === "content_block_start" && event.content_block) {
+              currentBlockIndex = event.index ?? currentBlockIndex + 1;
+              const block = event.content_block;
+              if (block.type === "tool_use") {
+                contentBlocks.push({
+                  type: "tool_use",
+                  id: block.id,
+                  name: block.name,
+                  input: {},
+                });
+                currentToolInput = "";
+              } else {
+                contentBlocks.push({ type: "text", text: "" });
+              }
+            } else if (event.type === "content_block_delta" && event.delta) {
+              if (event.delta.type === "text_delta" && event.delta.text) {
+                await send({ type: "token", text: event.delta.text });
+                fullText += event.delta.text;
+                // Update the text block
+                const block = contentBlocks[event.index ?? currentBlockIndex];
+                if (block) {
+                  block.text = (block.text || "") + event.delta.text;
+                }
+              } else if (event.delta.type === "input_json_delta" && event.delta.partial_json) {
+                currentToolInput += event.delta.partial_json;
+              }
+            } else if (event.type === "content_block_stop") {
+              // Parse accumulated tool input JSON
+              const block = contentBlocks[event.index ?? currentBlockIndex];
+              if (block && block.type === "tool_use" && currentToolInput) {
+                try {
+                  block.input = JSON.parse(currentToolInput);
+                } catch {
+                  block.input = {};
+                }
+                currentToolInput = "";
+              }
+            } else if (event.type === "message_delta" && event.delta) {
+              stopReason = event.delta.stop_reason || "";
+            }
+          }
+
+          // Check for tool use
+          const toolUseBlock = contentBlocks.find(
+            (b) => b.type === "tool_use"
+          ) as ToolUseBlock | undefined;
+
+          if (toolUseBlock && stopReason === "tool_use" && config.toolExecuteEndpoint) {
+            await send({ type: "tool_start", tool: toolUseBlock.name });
+
+            // Build tool execute request body
+            let toolBody: Record<string, unknown> = {
+              userId,
+              toolUse: {
+                id: toolUseBlock.id,
+                name: toolUseBlock.name,
+                input: toolUseBlock.input,
+              },
+            };
+            if (chatType === "agent") {
+              toolBody.agentId = agentId;
+            }
+
+            // Execute tool via Node.js function
+            const toolResponse = await fetch(
+              `${baseUrl}${config.toolExecuteEndpoint}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(toolBody),
+              }
+            );
+
+            const toolData = await toolResponse.json();
+            const toolResult = toolData.result || { error: "Tool execution failed" };
+
+            await send({ type: "tool_complete", tool: toolUseBlock.name });
+
+            // Add assistant's response to messages
+            messages.push({
+              role: "assistant",
+              content: contentBlocks,
             });
 
-            let fullText = "";
-            const contentBlocks: ContentBlock[] = [];
-            let currentBlockIndex = -1;
-            let currentToolInput = "";
-            let stopReason = "";
-
-            for await (const event of eventStream) {
-              if (event.type === "content_block_start" && event.content_block) {
-                currentBlockIndex = event.index ?? currentBlockIndex + 1;
-                const block = event.content_block;
-                if (block.type === "tool_use") {
-                  contentBlocks.push({
-                    type: "tool_use",
-                    id: block.id,
-                    name: block.name,
-                    input: {},
-                  });
-                  currentToolInput = "";
-                } else {
-                  contentBlocks.push({ type: "text", text: "" });
-                }
-              } else if (event.type === "content_block_delta" && event.delta) {
-                if (event.delta.type === "text_delta" && event.delta.text) {
-                  send({ type: "token", text: event.delta.text });
-                  fullText += event.delta.text;
-                  // Update the text block
-                  const block = contentBlocks[event.index ?? currentBlockIndex];
-                  if (block) {
-                    block.text = (block.text || "") + event.delta.text;
-                  }
-                } else if (event.delta.type === "input_json_delta" && event.delta.partial_json) {
-                  currentToolInput += event.delta.partial_json;
-                }
-              } else if (event.type === "content_block_stop") {
-                // Parse accumulated tool input JSON
-                const block = contentBlocks[event.index ?? currentBlockIndex];
-                if (block && block.type === "tool_use" && currentToolInput) {
-                  try {
-                    block.input = JSON.parse(currentToolInput);
-                  } catch {
-                    block.input = {};
-                  }
-                  currentToolInput = "";
-                }
-              } else if (event.type === "message_delta" && event.delta) {
-                stopReason = event.delta.stop_reason || "";
-              }
-            }
-
-            // Check for tool use
-            const toolUseBlock = contentBlocks.find(
-              (b) => b.type === "tool_use"
-            ) as ToolUseBlock | undefined;
-
-            if (toolUseBlock && stopReason === "tool_use" && config.toolExecuteEndpoint) {
-              send({ type: "tool_start", tool: toolUseBlock.name });
-
-              // Build tool execute request body
-              let toolBody: Record<string, unknown> = {
-                userId,
-                toolUse: {
-                  id: toolUseBlock.id,
-                  name: toolUseBlock.name,
-                  input: toolUseBlock.input,
-                },
-              };
-              if (chatType === "agent") {
-                toolBody.agentId = agentId;
-              }
-
-              // Execute tool via Node.js function
-              const toolResponse = await fetch(
-                `${baseUrl}${config.toolExecuteEndpoint}`,
+            // Add tool result to messages
+            messages.push({
+              role: "user",
+              content: [
                 {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(toolBody),
-                }
-              );
+                  type: "tool_result",
+                  tool_use_id: toolUseBlock.id,
+                  content: JSON.stringify(toolResult),
+                },
+              ] as unknown as string,
+            });
 
-              const toolData = await toolResponse.json();
-              const toolResult = toolData.result || { error: "Tool execution failed" };
+            // Continue loop to get next response
+          } else {
+            // No tool use - check for signals and complete
+            continueLoop = false;
 
-              send({ type: "tool_complete", tool: toolUseBlock.name });
+            const signal = config.signalPatterns.length > 0
+              ? parseSignal(fullText, config.signalPatterns)
+              : null;
 
-              // Add assistant's response to messages
-              messages.push({
-                role: "assistant",
-                content: contentBlocks,
-              });
-
-              // Add tool result to messages
-              messages.push({
-                role: "user",
-                content: [
-                  {
-                    type: "tool_result",
-                    tool_use_id: toolUseBlock.id,
-                    content: JSON.stringify(toolResult),
-                  },
-                ] as unknown as string,
-              });
-
-              // Continue loop to get next response
-            } else {
-              // No tool use - check for signals and complete
-              continueLoop = false;
-
-              const signal = config.signalPatterns.length > 0
-                ? parseSignal(fullText, config.signalPatterns)
-                : null;
-
-              send({
-                type: "done",
-                fullResponse: fullText,
-                signal: signal,
-                hasSignal: signal !== null,
-              });
-            }
+            await send({
+              type: "done",
+              fullResponse: fullText,
+              signal: signal,
+              hasSignal: signal !== null,
+            });
           }
-
-          controller.close();
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : "Unknown error occurred";
-          console.error("[chat-stream] Error:", errorMsg);
-          try {
-            send({ type: "error", error: errorMsg });
-          } catch (sendErr) {
-            console.error("[chat-stream] Failed to send error event:", sendErr);
-          }
-          controller.close();
         }
-      },
-    });
 
-    return new Response(stream, {
+        await writer.close();
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : "Unknown error occurred";
+        console.error("[chat-stream] Error:", errorMsg);
+        try {
+          await send({ type: "error", error: errorMsg });
+        } catch (sendErr) {
+          console.error("[chat-stream] Failed to send error event:", sendErr);
+        }
+        try {
+          await writer.close();
+        } catch {
+          // Writer may already be closed
+        }
+      }
+    })();
+
+    return new Response(readable, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
       },
     });
   };
