@@ -31,6 +31,9 @@
 [functions."agent-chat"]
   timeout = 26
 
+[functions."discovery-scheduled"]
+  schedule = "0 13 * * 1-5"  # Weekdays at 1pm UTC (5am PT)
+
 # =============================================================================
 # Edge Functions
 # =============================================================================
