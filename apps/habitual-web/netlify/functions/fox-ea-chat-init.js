@@ -94,6 +94,51 @@ exports.handler = async (event) => {
       timeZone: timezone
     });
 
+    // Build review mode prompt (if pending drafts exist)
+    let reviewModePrompt = '';
+    if (pendingDrafts.length > 0) {
+      const reviewActions = openActions.filter(a => a.taskType === 'review' && a.state === 'open');
+      const reviewActionIds = reviewActions.map(a => a.id);
+
+      reviewModePrompt = `== RESEARCH REVIEW MODE ==
+
+You have ${pendingDrafts.length} research item${pendingDrafts.length > 1 ? 's' : ''} from your research agents awaiting the user's review.${reviewActionIds.length > 0 ? `
+Review action ID${reviewActionIds.length > 1 ? 's' : ''} to complete when done: ${reviewActionIds.join(', ')}` : ''}
+
+When the user is ready to review (or if you sense it's a good time to mention them), enter Research Review mode.
+
+PRESENTATION RULES:
+- Present items ONE AT A TIME. Never list them all at once.
+- For each item, share: what the company does, why it was recommended, the agent's fit score, and any notable details.
+- ALWAYS include a clickable link to the company's website using this exact HTML format:
+  <a href="https://[domain]" target="_blank">[Company Name] →</a>
+  This opens in a new tab so the user can glance at it and close it.
+- After presenting, ask the user what they think. Keep it conversational — "What do you think?" or "Does this one resonate?"
+- Wait for the user's response before calling submit_draft_review. NEVER call it preemptively.
+
+RECORDING FEEDBACK:
+After the user shares their thoughts, use submit_draft_review:
+- score (0-10): Based on the user's expressed interest level
+  8-10: User is excited, wants to learn more
+  5-7: Interested but has reservations
+  1-4: Not interested or significant concerns
+  0: Explicitly rejected
+- feedback: 1-2 sentence summary capturing what the user actually said (NEVER empty or generic)
+- user_tags: Optional tags that emerged from conversation (e.g., "too-large", "great-mission", "remote-friendly")
+
+FLOW:
+1. Present first item with link
+2. User reacts → record with submit_draft_review
+3. Acknowledge briefly, then present next item
+4. After all items reviewed, use complete_review_action with the review action ID${reviewActionIds.length > 0 ? ` (${reviewActionIds[0]})` : ''}
+5. Transition naturally back to normal conversation
+
+Pending items:
+${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })), null, 2)}
+
+`;
+    }
+
     // Build system prompt
     const systemPrompt = `You are an Executive Assistant with visibility across all projects and work.
 
@@ -121,41 +166,7 @@ ${Object.keys(actionsByAgent).length > 0 ? JSON.stringify(actionsByAgent, null, 
 Recent Work (what they've been doing):
 ${workLogsContext}
 
-${pendingDrafts.length > 0 ? `== RESEARCH REVIEW MODE ==
-
-You have ${pendingDrafts.length} research item${pendingDrafts.length > 1 ? 's' : ''} from your research agents awaiting the user's review.
-
-When the user is ready to review (or if you sense it's a good time to mention them), enter Research Review mode.
-
-PRESENTATION RULES:
-- Present items ONE AT A TIME. Never list them all at once.
-- For each item, share: what the company does, why it was recommended, the agent's fit score, and any notable details.
-- ALWAYS include a clickable link to the company's website using this exact HTML format:
-  <a href="https://[domain]" target="_blank">[Company Name] →</a>
-  This opens in a new tab so the user can glance at it and close it.
-- After presenting, ask the user what they think. Keep it conversational — "What do you think?" or "Does this one resonate?"
-- Wait for the user's response before calling submit_draft_review. NEVER call it preemptively.
-
-RECORDING FEEDBACK:
-After the user shares their thoughts, use submit_draft_review:
-- score (0-10): Based on the user's expressed interest level
-  8-10: User is excited, wants to learn more
-  5-7: Interested but has reservations
-  1-4: Not interested or significant concerns
-  0: Explicitly rejected
-- feedback: 1-2 sentence summary capturing what the user actually said (NEVER empty or generic)
-- user_tags: Optional tags that emerged from conversation (e.g., "too-large", "great-mission", "remote-friendly")
-
-FLOW:
-1. Present first item with link
-2. User reacts → record with submit_draft_review
-3. Acknowledge briefly, then present next item
-4. After all items reviewed, use complete_review_action with the review action ID
-5. Transition naturally back to normal conversation
-
-Pending items:
-${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })), null, 2)}
-` : ''}YOUR CAPABILITIES:
+${reviewModePrompt}YOUR CAPABILITIES:
 - Notice patterns across projects (overlap, imbalance, neglect)
 - Help prioritize when asked - but through questions, not mandates
 - Surface what seems most alive or urgent
