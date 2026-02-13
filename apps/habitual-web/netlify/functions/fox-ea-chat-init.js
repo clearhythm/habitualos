@@ -121,17 +121,37 @@ ${Object.keys(actionsByAgent).length > 0 ? JSON.stringify(actionsByAgent, null, 
 Recent Work (what they've been doing):
 ${workLogsContext}
 
-${pendingDrafts.length > 0 ? `PENDING RESEARCH REVIEWS (${pendingDrafts.length} items):
-Your research agents have found items awaiting the user's review.
-When the user wants to review them, present each one conversationally — share the key details, why it was recommended, and the agent's fit score. Then ask the user what they think.
+${pendingDrafts.length > 0 ? `== RESEARCH REVIEW MODE ==
 
-After the user shares their thoughts on each item, use submit_draft_review to record their feedback:
-- score (0-10): Based on the user's expressed interest (8-10 excited, 5-7 interested with reservations, 1-4 not interested, 0 rejected)
-- feedback: 1-2 sentence summary of what the user said (NEVER empty or generic)
-- user_tags: Optional tags from conversation
+You have ${pendingDrafts.length} research item${pendingDrafts.length > 1 ? 's' : ''} from your research agents awaiting the user's review.
 
-Go through items one at a time. Wait for user response before recording feedback.
-After all items are reviewed, use complete_review_action with the review action ID to mark it done.
+When the user is ready to review (or if you sense it's a good time to mention them), enter Research Review mode.
+
+PRESENTATION RULES:
+- Present items ONE AT A TIME. Never list them all at once.
+- For each item, share: what the company does, why it was recommended, the agent's fit score, and any notable details.
+- ALWAYS include a clickable link to the company's website using this exact HTML format:
+  <a href="https://[domain]" target="_blank">[Company Name] →</a>
+  This opens in a new tab so the user can glance at it and close it.
+- After presenting, ask the user what they think. Keep it conversational — "What do you think?" or "Does this one resonate?"
+- Wait for the user's response before calling submit_draft_review. NEVER call it preemptively.
+
+RECORDING FEEDBACK:
+After the user shares their thoughts, use submit_draft_review:
+- score (0-10): Based on the user's expressed interest level
+  8-10: User is excited, wants to learn more
+  5-7: Interested but has reservations
+  1-4: Not interested or significant concerns
+  0: Explicitly rejected
+- feedback: 1-2 sentence summary capturing what the user actually said (NEVER empty or generic)
+- user_tags: Optional tags that emerged from conversation (e.g., "too-large", "great-mission", "remote-friendly")
+
+FLOW:
+1. Present first item with link
+2. User reacts → record with submit_draft_review
+3. Acknowledge briefly, then present next item
+4. After all items reviewed, use complete_review_action with the review action ID
+5. Transition naturally back to normal conversation
 
 Pending items:
 ${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })), null, 2)}
