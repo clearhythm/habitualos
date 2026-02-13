@@ -23,6 +23,7 @@ const { getFeedbackByAgent } = require('../_services/db-user-feedback.cjs');
 const { getDraftsByAgent, createDraft } = require('../_services/db-agent-drafts.cjs');
 const { createAction } = require('../_services/db-actions.cjs');
 const { generateActionId } = require('./data-utils.cjs');
+const { getProfile } = require('../_services/db-preference-profile.cjs');
 
 const anthropic = new Anthropic();
 
@@ -72,10 +73,17 @@ async function buildSearchContext(agentId, userId) {
   const goal = agent.instructions?.goal || '';
   const successCriteria = agent.instructions?.success_criteria || [];
 
-  // Get feedback history
-  const feedback = await getFeedbackByAgent(agentId, userId, 50);
-  const likedPatterns = feedback.filter(f => f.score >= 7);
-  const dislikedPatterns = feedback.filter(f => f.score <= 3);
+  // Get preference profile (structured summary of past feedback)
+  const preferenceProfile = await getProfile(agentId);
+
+  // Get raw feedback as fallback (if no profile exists yet)
+  let likedPatterns = [];
+  let dislikedPatterns = [];
+  if (!preferenceProfile) {
+    const feedback = await getFeedbackByAgent(agentId, userId, 50);
+    likedPatterns = feedback.filter(f => f.score >= 7);
+    dislikedPatterns = feedback.filter(f => f.score <= 3);
+  }
 
   // Get existing drafts to avoid duplicates
   const existingDrafts = await getDraftsByAgent(agentId, userId, {});
@@ -85,12 +93,13 @@ async function buildSearchContext(agentId, userId) {
       .filter(Boolean)
   );
 
-  console.log(`[discovery] Context: goal=${goal.length}chars, feedback=${feedback.length}, existing=${existingNames.size}`);
+  console.log(`[discovery] Context: goal=${goal.length}chars, profile=${!!preferenceProfile}, existing=${existingNames.size}`);
 
   return {
     agent,
     goal,
     successCriteria,
+    preferenceProfile: preferenceProfile?.profile || null,
     likedPatterns,
     dislikedPatterns,
     existingNames
@@ -102,7 +111,7 @@ async function buildSearchContext(agentId, userId) {
 // -----------------------------------------------------------------------------
 
 async function generateSearchQueries(context) {
-  const { goal, successCriteria, likedPatterns, dislikedPatterns } = context;
+  const { goal, successCriteria, preferenceProfile, likedPatterns, dislikedPatterns } = context;
 
   // Build prompt
   let prompt = `You are helping a user find companies that match their career interests.
@@ -114,18 +123,30 @@ SUCCESS CRITERIA:
 ${successCriteria.length > 0 ? successCriteria.map(c => `- ${c}`).join('\n') : 'None specified'}
 `;
 
-  if (likedPatterns.length > 0) {
+  // Use preference profile if available (structured summary), otherwise raw feedback
+  if (preferenceProfile) {
     prompt += `
+USER PREFERENCE PROFILE (built from ${context.preferenceProfile ? 'review feedback' : 'initial'}):
+Summary: ${preferenceProfile.summary || 'Not available'}
+Likes: ${(preferenceProfile.likes || []).join(', ') || 'None identified'}
+Dislikes: ${(preferenceProfile.dislikes || []).join(', ') || 'None identified'}
+Deal-breakers: ${(preferenceProfile.dealBreakers || []).join(', ') || 'None identified'}
+Patterns: ${preferenceProfile.patterns || 'Not enough data'}
+`;
+  } else {
+    if (likedPatterns.length > 0) {
+      prompt += `
 WHAT THE USER HAS LIKED (high scores):
 ${likedPatterns.slice(0, 10).map(f => `- ${f.feedback || 'No feedback'} (score: ${f.score})`).join('\n')}
 `;
-  }
+    }
 
-  if (dislikedPatterns.length > 0) {
-    prompt += `
+    if (dislikedPatterns.length > 0) {
+      prompt += `
 WHAT THE USER HAS DISLIKED (low scores):
 ${dislikedPatterns.slice(0, 10).map(f => `- ${f.feedback || 'No feedback'} (score: ${f.score})`).join('\n')}
 `;
+    }
   }
 
   prompt += `
@@ -337,7 +358,7 @@ async function saveResults(companies, agentId, userId) {
         title: `Review ${draftIds.length} new company recommendation${draftIds.length > 1 ? 's' : ''}`,
         description: 'Your agent found some companies that might be a good fit. Review them and share your thoughts.',
         taskType: 'review',
-        taskConfig: { draftType: 'company' },
+        taskConfig: { draftType: 'company', sourceAgentId: agentId },
         state: 'open',
         priority: 'medium',
         assignedTo: 'user'

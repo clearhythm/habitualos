@@ -3,6 +3,7 @@ const { getProjectsByUserId } = require('./_services/db-projects.cjs');
 const { getWorkLogsByUserId } = require('./_services/db-work-logs.cjs');
 const { getAgentsByUserId } = require('./_services/db-agents.cjs');
 const { getActionsByUserId } = require('./_services/db-actions.cjs');
+const { getDraftsByUser } = require('./_services/db-agent-drafts.cjs');
 
 /**
  * POST /api/fox-ea-chat-init
@@ -30,11 +31,12 @@ exports.handler = async (event) => {
     }
 
     // Fetch all context for the EA
-    const [projects, agents, allActions, workLogs] = await Promise.all([
+    const [projects, agents, allActions, workLogs, pendingDrafts] = await Promise.all([
       getProjectsByUserId(userId),
       getAgentsByUserId(userId),
       getActionsByUserId(userId),
-      getWorkLogsByUserId(userId)
+      getWorkLogsByUserId(userId),
+      getDraftsByUser(userId, { status: 'pending' })
     ]);
 
     // Filter to open actions only
@@ -119,7 +121,21 @@ ${Object.keys(actionsByAgent).length > 0 ? JSON.stringify(actionsByAgent, null, 
 Recent Work (what they've been doing):
 ${workLogsContext}
 
-YOUR CAPABILITIES:
+${pendingDrafts.length > 0 ? `PENDING RESEARCH REVIEWS (${pendingDrafts.length} items):
+Your research agents have found items awaiting the user's review.
+When the user wants to review them, present each one conversationally — share the key details, why it was recommended, and the agent's fit score. Then ask the user what they think.
+
+After the user shares their thoughts on each item, use submit_draft_review to record their feedback:
+- score (0-10): Based on the user's expressed interest (8-10 excited, 5-7 interested with reservations, 1-4 not interested, 0 rejected)
+- feedback: 1-2 sentence summary of what the user said (NEVER empty or generic)
+- user_tags: Optional tags from conversation
+
+Go through items one at a time. Wait for user response before recording feedback.
+After all items are reviewed, use complete_review_action with the review action ID to mark it done.
+
+Pending items:
+${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })), null, 2)}
+` : ''}YOUR CAPABILITIES:
 - Notice patterns across projects (overlap, imbalance, neglect)
 - Help prioritize when asked - but through questions, not mandates
 - Surface what seems most alive or urgent
@@ -161,8 +177,67 @@ CONVERSATIONAL APPROACH:
 - Trust them to know what they need - your job is to help them see clearly
 - When you create or update a project, mention it naturally in conversation with a link`;
 
-    // Define tools for project management
+    // Define tools
     const tools = [
+      // Review tools (only when pending drafts exist)
+      ...(pendingDrafts.length > 0 ? [
+        {
+          name: "get_pending_drafts",
+          description: "Retrieve pending research drafts awaiting user review. Returns items from all research agents.",
+          input_schema: {
+            type: "object",
+            properties: {
+              type: {
+                type: "string",
+                description: "Filter by draft type (e.g., 'company', 'person', 'article', 'job')"
+              }
+            },
+            required: []
+          }
+        },
+        {
+          name: "submit_draft_review",
+          description: "Record the user's review of a research draft. Call AFTER the user has shared their thoughts — never before.",
+          input_schema: {
+            type: "object",
+            properties: {
+              draftId: {
+                type: "string",
+                description: "The draft ID being reviewed (format: draft-...)"
+              },
+              score: {
+                type: "number",
+                description: "User's interest score 0-10. 8-10: excited, 5-7: interested with reservations, 1-4: not interested, 0: rejected"
+              },
+              feedback: {
+                type: "string",
+                description: "1-2 sentence summary of the user's actual opinion in their own words"
+              },
+              user_tags: {
+                type: "array",
+                items: { type: "string" },
+                description: "Optional tags from conversation (e.g., 'too-large', 'great-mission', 'remote-friendly')"
+              }
+            },
+            required: ["draftId", "score", "feedback"]
+          }
+        },
+        {
+          name: "complete_review_action",
+          description: "Mark a review action as completed after all drafts have been reviewed.",
+          input_schema: {
+            type: "object",
+            properties: {
+              actionId: {
+                type: "string",
+                description: "The review action ID to complete (format: action-...)"
+              }
+            },
+            required: ["actionId"]
+          }
+        }
+      ] : []),
+      // Project management tools
       {
         name: "create_project",
         description: "Create a new project to track an initiative or area of work. Use when the user discusses a new project-level initiative.",

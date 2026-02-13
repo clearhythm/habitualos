@@ -9,6 +9,7 @@
 //   - createDraft(data) - Create a new draft
 //   - getDraftById(draftId) - Get single draft by ID
 //   - getDraftsByAgent(agentId, userId, filters?) - Get drafts for an agent
+//   - getDraftsByUser(userId, filters?) - Get drafts for a user across all agents
 //   - getDraftsByStatus(status) - Get all drafts with a specific status
 //   - getReconciledDrafts() - Get all drafts ready for reconciliation
 //   - updateDraft(draftId, updates) - Update draft fields
@@ -91,6 +92,43 @@ exports.getDraftsByAgent = async (agentId, userId, filters = {}) => {
 
   // Filter by userId (security)
   results = results.filter(draft => draft._userId === userId);
+
+  // Apply optional filters
+  if (filters.status) {
+    results = results.filter(draft => draft.status === filters.status);
+  }
+  if (filters.type) {
+    results = results.filter(draft => draft.type === filters.type);
+  }
+
+  // Sort by _createdAt descending (newest first)
+  results.sort((a, b) => {
+    const timeA = a._createdAt?._seconds || 0;
+    const timeB = b._createdAt?._seconds || 0;
+    return timeB - timeA;
+  });
+
+  // Apply limit
+  if (filters.limit && filters.limit > 0) {
+    results = results.slice(0, filters.limit);
+  }
+
+  return results;
+};
+
+/**
+ * Get all drafts for a user across all agents
+ * @param {string} userId - User ID
+ * @param {Object} filters - Optional filters { status?, type?, limit? }
+ * @returns {Promise<Array>} Array of drafts (newest first)
+ */
+exports.getDraftsByUser = async (userId, filters = {}) => {
+  const whereClause = `_userId::eq::${userId}`;
+
+  let results = await dbCore.query({
+    collection: 'agent-drafts',
+    where: whereClause
+  });
 
   // Apply optional filters
   if (filters.status) {

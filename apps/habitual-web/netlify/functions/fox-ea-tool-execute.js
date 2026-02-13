@@ -1,6 +1,10 @@
 require('dotenv').config();
 const { createProject, updateProject, getProject } = require('./_services/db-projects.cjs');
 const { generateProjectId } = require('./_utils/data-utils.cjs');
+const { getDraftsByUser, getDraftById, updateDraftStatus } = require('./_services/db-agent-drafts.cjs');
+const { createFeedback } = require('./_services/db-user-feedback.cjs');
+const { getAction, updateActionState } = require('./_services/db-actions.cjs');
+const { generatePreferenceProfile } = require('./_utils/preference-profile-generator.cjs');
 
 /**
  * Handle tool calls from Claude for Fox-EA
@@ -74,13 +78,112 @@ async function handleToolCall(toolUse, userId) {
     };
   }
 
+  // --- Review Tools ---
+
+  if (name === 'get_pending_drafts') {
+    const drafts = await getDraftsByUser(userId, {
+      status: 'pending',
+      type: input.type || undefined
+    });
+
+    return {
+      success: true,
+      count: drafts.length,
+      drafts: drafts.map(d => ({
+        id: d.id,
+        type: d.type,
+        agentId: d.agentId,
+        data: d.data
+      }))
+    };
+  }
+
+  if (name === 'submit_draft_review') {
+    const { draftId, score, feedback, user_tags } = input;
+
+    if (!draftId || !draftId.startsWith('draft-')) {
+      return { error: 'Invalid draft ID format' };
+    }
+    if (score === undefined || score === null || typeof score !== 'number') {
+      return { error: 'Score is required (0-10)' };
+    }
+    if (score < 0 || score > 10) {
+      return { error: 'Score must be between 0 and 10' };
+    }
+    if (!feedback || typeof feedback !== 'string' || feedback.trim().length === 0) {
+      return { error: 'Feedback summary is required' };
+    }
+
+    const draft = await getDraftById(draftId);
+    if (!draft) {
+      return { error: 'Draft not found' };
+    }
+    if (draft._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    const derivedStatus = score >= 5 ? 'accepted' : 'rejected';
+
+    // Store feedback with the draft's source agent ID (for discovery feedback loop)
+    const feedbackRecord = await createFeedback({
+      _userId: userId,
+      agentId: draft.agentId,
+      draftId: draftId,
+      type: draft.type,
+      score: score,
+      feedback: feedback,
+      status: derivedStatus,
+      user_tags: user_tags || []
+    });
+
+    await updateDraftStatus(draftId, 'reviewed');
+
+    return {
+      success: true,
+      feedbackId: feedbackRecord.id,
+      draftStatus: 'reviewed',
+      derivedStatus: derivedStatus
+    };
+  }
+
+  if (name === 'complete_review_action') {
+    const { actionId } = input;
+
+    if (!actionId || !actionId.startsWith('action-')) {
+      return { error: 'Invalid action ID format' };
+    }
+
+    const action = await getAction(actionId);
+    if (!action) {
+      return { error: 'Action not found' };
+    }
+    if (action._userId !== userId) {
+      return { error: 'Access denied' };
+    }
+
+    await updateActionState(actionId, 'completed');
+
+    // Trigger preference profile regeneration (fire-and-forget)
+    const sourceAgentId = action.taskConfig?.sourceAgentId;
+    if (sourceAgentId) {
+      generatePreferenceProfile(sourceAgentId, userId).catch(err => {
+        console.error('[fox-ea-tool-execute] Preference profile generation failed:', err.message);
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Review action completed'
+    };
+  }
+
   return { error: `Unknown tool: ${name}` };
 }
 
 /**
  * POST /api/fox-ea-tool-execute
  *
- * Executes Fox-EA tools (create_project, update_project).
+ * Executes Fox-EA tools (projects, draft review).
  * Called by edge function during streaming when tool use is detected.
  */
 exports.handler = async (event) => {

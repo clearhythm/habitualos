@@ -5,13 +5,15 @@
 An automated company discovery pipeline that searches the web for companies matching a user's career interests, creates drafts in Firestore for review, and lets the user review them conversationally via agent chat.
 
 **Pipeline flow:**
-1. Claude generates 3-5 search queries from agent goal + user feedback history
+1. Claude generates 3-5 search queries from agent goal + preference profile (or raw feedback)
 2. Tavily API searches the web (10 results per query)
 3. Claude extracts structured company data via tool_use
 4. Drafts saved to Firestore (status: pending)
-5. Review action created for the user
-6. User reviews drafts in agent chat → feedback stored → drafts marked reviewed
-7. Reconciler converts reviewed drafts to markdown files
+5. Review action created for the user (with `sourceAgentId` in taskConfig)
+6. Fox-EA detects pending drafts and presents them conversationally, one by one
+7. User reviews via Fox-EA chat → feedback stored (linked to source agent) → drafts marked reviewed
+8. Preference profile regenerated after review session completes
+9. Reconciler converts reviewed drafts to markdown files
 
 ## What's Running Now
 
@@ -22,7 +24,8 @@ An automated company discovery pipeline that searches the web for companies matc
   - Background function (returns 202, runs up to 15min)
   - POST with `{"userId":"u-mgpqwa49","agentId":"agent-mk3jq2dqjbfy"}`
 - **Sync endpoint**: `discovery-run.js` at `/api/discovery-run` — has 60s timeout but still hits Netlify's 26s gateway limit. Use the background version instead.
-- **Chat review**: Works via review action → agent chat with `submit_draft_review` tool
+- **Chat review**: Fox-EA detects pending drafts at init, presents them conversationally with `submit_draft_review` tool. Feedback stored with source agent's ID for the discovery feedback loop.
+- **Preference profile**: Generated after review sessions via `preference-profile-generator.cjs`. Discovery pipeline reads the profile to shape future search queries.
 - **Reconciler**: `reconciler-run.js` at `/api/reconciler-run` — converts reviewed drafts to markdown files (local mode only)
 
 ## Key Files
@@ -37,7 +40,11 @@ An automated company discovery pipeline that searches the web for companies matc
 | `netlify/functions/_services/db-user-feedback.cjs` | Feedback CRUD (collection: `user-feedback`) |
 | `netlify/functions/_utils/draft-reconciler.cjs` | Converts reviewed drafts → markdown files |
 | `netlify/functions/reconciler-run.js` | HTTP endpoint for reconciler |
-| `netlify/functions/agent-chat.js` | Chat endpoint with `submit_draft_review` + `get_pending_drafts` tools |
+| `netlify/functions/fox-ea-chat-init.js` | Fox-EA init — surfaces pending drafts + review tools |
+| `netlify/functions/fox-ea-tool-execute.js` | Fox-EA tool handler — review tools + project tools |
+| `netlify/functions/_services/db-preference-profile.cjs` | Preference profile CRUD (collection: `preference-profiles`) |
+| `netlify/functions/_utils/preference-profile-generator.cjs` | Claude-powered preference profile generation from feedback |
+| `netlify/functions/agent-chat.js` | Agent chat endpoint (still has review tools for legacy use) |
 
 ## Environment Variables
 
