@@ -53,10 +53,6 @@ export interface ChatTypeConfig {
 // Signal Parsing
 // ============================================================================
 
-function hasSignal(text: string, patterns: RegExp[]): boolean {
-  return patterns.some((pattern) => pattern.test(text.trim()));
-}
-
 function parseSignal(
   text: string,
   patterns: RegExp[]
@@ -316,8 +312,6 @@ export function createChatStreamHandler(
     // Run the streaming logic in the background
     (async () => {
       try {
-        console.log("[chat-stream] Stream started, calling Anthropic API...");
-
         let continueLoop = true;
         let loopCount = 0;
         const maxLoops = 5; // Prevent infinite loops
@@ -326,7 +320,6 @@ export function createChatStreamHandler(
           loopCount++;
 
           // Stream Claude's response via raw fetch
-          console.log("[chat-stream] Loop", loopCount, "- calling Anthropic API");
           const eventStream = streamAnthropicMessages(apiKey, {
             model: "claude-sonnet-4-5-20250929",
             max_tokens: 2048,
