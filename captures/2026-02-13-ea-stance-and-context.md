@@ -175,6 +175,23 @@ CONVERSATIONAL APPROACH:
 
 ---
 
+## Future: Model Comparison
+
+The stance instructions in this system are nuanced and layered: "editorial not encyclopedic," "internal tension not cross-project," "frame as curiosity not criticism," "offer an onramp not a question." These are 4+ behavioral constraints that can conflict with each other, and the model has to navigate them simultaneously.
+
+A key question: **is this design approach model-dependent?** Do these prompt-level behavioral instructions actually translate to different output across models, or would any frontier model follow them equally well?
+
+Worth testing: swap the backend model (currently Claude) for GPT-4o, Gemini, etc. and run the same system prompt + user data against each. The test isn't "which model is smarter" — it's "which model actually follows multi-layered behavioral instructions faithfully enough that iterating on them is productive." If changing one line in the stance prompt doesn't produce a measurably different response, the entire design process breaks down — you can't iterate on what you can't steer.
+
+This comparison would be honest, not promotional. If another model nails the stance instructions, that's worth knowing. The interesting finding isn't "X model is best" — it's "here's how much the model matters for this type of prompt design work, and here's where the differences show up."
+
+**Test plan:**
+- Same system prompt, same user data snapshot, same user message ("what's the haps?")
+- Compare: Does the model pick one thread or inventory everything? Does it lead with momentum? Does it surface internal tension? Does it offer a concrete onramp? Does it match the casual tone?
+- Document actual outputs side by side
+
+---
+
 ## Current Stance Prompt
 
 ```
