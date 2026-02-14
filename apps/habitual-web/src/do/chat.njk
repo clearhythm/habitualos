@@ -116,6 +116,7 @@ permalink: /do/chat/
   let streamingMessageElement = null;
   let streamingText = '';
   let streamingStarted = false;
+  let streamingToolEvents = [];
 
   // Local storage keys for work chat
   const WORK_CHAT_HISTORY_KEY = 'work_chat_history';
@@ -206,6 +207,21 @@ permalink: /do/chat/
     }
   }
 
+  function renderStreamingContent() {
+    if (!streamingMessageElement) return;
+
+    // Build tool status HTML
+    const toolHtml = streamingToolEvents.map(e =>
+      `<div style="font-size: 0.75rem; color: #6b7280; font-style: italic; margin: 0.5rem 0;">${e}</div>`
+    ).join('');
+
+    // Render: tool events first, then markdown content, then cursor
+    const contentHtml = window.marked && streamingText ? marked.parse(streamingText) : (streamingText || '');
+    const cursor = '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
+    streamingMessageElement.innerHTML = toolHtml + contentHtml + cursor;
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
   function appendStreamingText(text) {
     if (!streamingMessageElement) return;
     streamingText += text;
@@ -216,50 +232,47 @@ permalink: /do/chat/
       streamingMessageElement.style.borderLeftColor = '#9b59b6';
     }
 
-    // Update content with cursor at end
-    if (window.marked) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
-    } else {
-      streamingMessageElement.textContent = streamingText;
-    }
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    renderStreamingContent();
   }
 
   function showToolStatus(toolName, status) {
     if (!streamingMessageElement) return;
 
-    const statusText = status === 'start' ? `Using ${toolName}...` : `✓ ${toolName}`;
-    const statusSpan = document.createElement('div');
-    statusSpan.style.cssText = 'font-size: 0.75rem; color: #6b7280; font-style: italic; margin: 0.5rem 0;';
-    statusSpan.textContent = statusText;
-
-    const cursor = streamingMessageElement.querySelector('.streaming-cursor');
-    if (cursor) {
-      streamingMessageElement.insertBefore(statusSpan, cursor);
+    if (status === 'start') {
+      streamingToolEvents.push(`Using ${toolName}...`);
     } else {
-      streamingMessageElement.appendChild(statusSpan);
+      // Replace the "Using..." with the completed version
+      const pendingIdx = streamingToolEvents.findIndex(e => e === `Using ${toolName}...`);
+      if (pendingIdx !== -1) {
+        streamingToolEvents[pendingIdx] = `✓ ${toolName}`;
+      } else {
+        streamingToolEvents.push(`✓ ${toolName}`);
+      }
     }
-    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
+    renderStreamingContent();
   }
 
   function finalizeStreamingMessage() {
     if (!streamingMessageElement) return { text: '', displayText: '' };
 
-    // Remove cursor and finalize content
-    const cursor = streamingMessageElement.querySelector('.streaming-cursor');
-    if (cursor) cursor.remove();
+    // Build tool status HTML (preserved in final render)
+    const toolHtml = streamingToolEvents.map(e =>
+      `<div style="font-size: 0.75rem; color: #6b7280; font-style: italic; margin: 0.5rem 0;">${e}</div>`
+    ).join('');
 
-    // Re-render with final markdown
+    // Re-render with final markdown + tool events
     if (window.marked && streamingText) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText);
+      streamingMessageElement.innerHTML = toolHtml + marked.parse(streamingText);
     } else if (streamingText) {
-      streamingMessageElement.textContent = streamingText;
+      streamingMessageElement.innerHTML = toolHtml + streamingText;
     }
 
     const finalText = streamingText;
     streamingMessageElement = null;
     streamingText = '';
     streamingStarted = false;
+    streamingToolEvents = [];
 
     return { text: finalText, displayText: finalText };
   }
