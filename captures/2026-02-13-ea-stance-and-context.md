@@ -7,6 +7,25 @@
 
 ---
 
+## North Star: AI as Executive Function
+
+The goal isn't a status dashboard or a chatbot that lists your tasks. The goal is an AI that functions as your *executive function* — the part of your brain that decides what to do next, given everything it knows about your life.
+
+You throw ALL of your life at it: career search, personal admin, self-care, creative projects, taxes, relationships. Over time it learns:
+- **Your priorities** — what actually matters for moving your life forward (not just what's urgent)
+- **Your patterns** — what you gravitate toward (admin clearing, infrastructure building) vs. what you avoid (publishing, applications, the hard visible things)
+- **Your energy** — when you're in a state to push vs. when you need to recover
+
+Then at any given moment it synthesizes all of that and suggests the ONE thing you should do right now for maximum effect. Not a list. One thing. And if you don't want that one, it has the next one ready.
+
+Sometimes that's an urgent life task due today. Sometimes it's the hard career thing you've been avoiding. Sometimes it's self-care or a practice to address underlying stuckness. When there's slack, maybe it grabs a task due next week so you start becoming proactive instead of reactive.
+
+This sounds sci-fi but it's 100% buildable today. The data infrastructure exists (projects, actions with priorities, work logs, agent outputs, completed action history). The missing pieces are: due dates on actions, cross-session memory of user tendencies, and prompt design that makes the EA think like a strategist rather than a reporter.
+
+Even a partial solution — an EA that picks one thread, surfaces internal tension, and offers a concrete onramp — is a meaningful step. The iterations below document that evolution.
+
+---
+
 ## Context
 
 Fox-EA is an executive assistant agent that sees the user's projects, open actions, active agents, and recent work. It opens conversations with observations about what it sees and helps the user prioritize. The system prompt is built dynamically at chat init from live DB state — it's not static text, it's a snapshot of the user's world.
