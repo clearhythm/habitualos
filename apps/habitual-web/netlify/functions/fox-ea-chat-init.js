@@ -295,7 +295,7 @@ CONVERSATIONAL APPROACH:
 
     // Define tools
     const tools = [
-      // Review tools (only when pending drafts exist)
+      // Draft review tools (only when pending drafts exist)
       ...(pendingDrafts.length > 0 ? [
         {
           name: "get_pending_drafts",
@@ -337,7 +337,10 @@ CONVERSATIONAL APPROACH:
             },
             required: ["draftId", "score", "feedback"]
           }
-        },
+        }
+      ] : []),
+      // Complete review action tool (available when there's any review work)
+      ...(hasReviewWork ? [
         {
           name: "complete_review_action",
           description: "Mark a review action as completed after all drafts have been reviewed.",
