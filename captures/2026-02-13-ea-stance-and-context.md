@@ -13,13 +13,13 @@ Fox-EA is an executive assistant agent that sees the user's projects, open actio
 
 ---
 
-## Problem 1: Flat Review Dump
+## Iteration 1: Flat Review Dump → Action-Grouped Tasks
 
-**Before:** All pending drafts from all agents were dumped into the system prompt as a flat list. All open review action IDs were listed separately. No connection between which drafts belonged to which action.
+**Before:** All pending drafts from all research agents were dumped into the system prompt as a flat list. Review action IDs were listed separately with no connection to their drafts.
 
-**What happened:** If discovery ran twice, all pending drafts piled up. Fox-EA couldn't tell which action covered which batch. User couldn't complete one review action and stop — it was all-or-nothing.
+**What happened:** If discovery ran twice, all pending drafts piled up. Fox-EA couldn't tell which action covered which batch. The user couldn't complete one review task and stop — it was all-or-nothing.
 
-**Fix:** Store `draftIds` array on each review action's `taskConfig` at creation time (in `discovery-pipeline.cjs`). Restructure the system prompt to group drafts by their parent action:
+**Fix:** Group drafts by their parent action in the prompt:
 
 ```
 == REVIEW TASKS ==
@@ -29,33 +29,25 @@ Items: [draft data for those 5...]
 
 TASK 2 (action-def456): Review 3 new company recommendations
 Items: [draft data for those 3...]
+
+WORKING THROUGH TASKS:
+- Work through ONE task at a time. Start with the first.
+- Present items one-by-one within that task.
+- When all items in a task are reviewed, complete that task's action.
+- If they want to stop mid-task or between tasks, that's fine — remaining tasks stay open for next time.
 ```
 
-Instruct Fox-EA to work one task at a time, complete the action when done, then offer to continue.
-
-**Principle:** *Link data to its container. Flat lists lose provenance — grouping by action gives the agent (and user) clear boundaries for "done."*
+**Principle:** *Give the agent clear boundaries for "done." Flat lists lose provenance — grouping by action creates natural stopping points. The user can complete one batch, feel a sense of closure, and decide whether to continue.*
 
 ---
 
-## Problem 2: Completable Actions Invisible
+## Iteration 2: Completed Actions Vanish from View
 
-**Before:** The `complete_review_action` tool was only included when `pendingDrafts.length > 0`. But when all drafts in an action are already reviewed, pending count is zero — so the tool disappeared exactly when it was needed.
+**Before:** The system prompt only showed "Open Actions." When an action was completed, it disappeared from Fox-EA's world entirely.
 
-**What happened:** Fox-EA couldn't close review actions that had all drafts reviewed. Actions stayed open forever.
+**What happened:** Fox-EA told the user "Career Launch has 6 open actions but minimal recent movement" — while ignoring that 2 career-related review actions had *just* been completed. The EA literally couldn't see recent wins.
 
-**Fix:** Introduced `hasReviewWork` flag that's true when there are either review tasks with pending drafts OR completable actions (all drafts reviewed, action still open). Gate the `complete_review_action` tool on `hasReviewWork` instead of `pendingDrafts.length > 0`. Added a "COMPLETED TASKS TO CLOSE" section in the prompt instructing Fox-EA to close these immediately at conversation start.
-
-**Principle:** *Tool availability must match the work state, not the data state. "No pending drafts" doesn't mean "no review work" — it might mean the work is done and needs to be recorded as done.*
-
----
-
-## Problem 3: Completed Actions Vanish
-
-**Before:** The system prompt only showed "Open Actions" — filtered to states `open`, `defined`, `scheduled`, `in_progress`. When an action was completed, it simply disappeared from Fox-EA's view. No trace.
-
-**What happened:** Fox-EA told the user "your Career Launch has 6 open actions but minimal recent movement" — ignoring that 2 career-related review actions had just been completed. The EA had no way to know about recent completions.
-
-**Fix:** Added "Recently Completed" section showing actions completed in the last 7 days:
+**Fix:** Added a "Recently Completed" section (7-day sliding window):
 
 ```
 Recently Completed:
@@ -63,75 +55,53 @@ Recently Completed:
 - Review 3 company recommendations (Scout Agent) — completed
 ```
 
-Uses `completedAt` timestamp (set by `updateActionState` when transitioning to `completed`). Handles both Firestore Timestamps (`.toDate()`) and ISO strings. Section only appears when there are recent completions.
-
-**Principle:** *Visibility shouldn't be binary (open vs. gone). Recently completed work is context the EA needs to give accurate observations. A 7-day window is enough to honor recent momentum without cluttering the view.*
+**Principle:** *Visibility shouldn't be binary (open vs. gone). An agent that can only see what's pending will always sound like you're behind. A sliding window of recent completions gives the EA enough context to honor momentum without cluttering the view.*
 
 ---
 
-## Problem 4: Leading with Gaps Instead of Momentum
+## Iteration 3: Leading with Gaps Instead of Momentum
 
-**Before:** The stance instructions said:
-- "Help the user notice patterns they might miss"
-- "Never cheerleading or pressuring"
+**Before:** Stance instructions said "Help the user notice patterns they might miss" and "Never cheerleading or pressuring."
 
-**What happened:** Fox-EA interpreted "patterns they might miss" as "point out what's not happening." Combined with seeing open actions but not recently completed ones, it opened with criticism:
+**What happened:** Fox-EA interpreted "patterns they might miss" as "point out what's not happening." It opened with:
 
 > "Your recent work has been heavily skewed toward Life Maintenance while Career Launch has 6 open actions but minimal recent movement on the high-priority ones."
 
-This landed as scolding. The user had just completed career-related review actions, but the EA didn't know — and even after seeing the data, it led with the gap rather than acknowledging the momentum.
+This landed as scolding. The user had been doing meaningful career positioning work (LinkedIn, resume, company reviews) but the EA led with the gap.
 
-**Fix:** Added two stance instructions:
+**User feedback:** "It's not entirely wrong, but it's not honoring the fact that the 2 most recent actions completed were career related. A degree of accountability can be helpful, but in this context it felt off."
+
+**Fix:** Two stance additions:
 
 ```
 - Lead with momentum: acknowledge what's moving and recently completed before surfacing gaps
-- When observing imbalances, frame as curiosity not criticism: "I notice X has been active while Y is waiting — is that intentional?" rather than implying they're behind
+- When observing imbalances, frame as curiosity not criticism: "I notice X has been active
+  while Y is waiting — is that intentional?" rather than implying they're behind
 ```
 
 **Principle:** *Observation order matters. "You've been making career moves — what about X?" lands completely differently from "X is stalled." Same information, different framing. The EA should acknowledge what IS before surfacing what ISN'T. And imbalances should be surfaced as questions ("is that intentional?") not judgments ("you're behind").*
 
 ---
 
-## Problem 5: Multi-Tool-Use Streaming Bug
-
-**Before:** `chat-stream-core.ts` used `.find()` to get the first `tool_use` block from Claude's response. When Claude returned multiple tool calls in one turn, only the first got a `tool_result`.
-
-**What happened:** Claude's next API call included tool_use blocks without corresponding tool_result blocks, causing a 400 error: `tool_use ids were found that do not have tool_result blocks`. The chat stream hung.
-
-**Fix:** Changed `.find()` to `.filter()` to process ALL tool_use blocks. Loop through each, execute the tool, collect results, and send them all back as a single `user` message with multiple `tool_result` content blocks.
-
-**Principle:** *Always handle the plural case. If an API can return multiple items (tool calls, content blocks, etc.), processing only the first is a time bomb. The single-item case works fine; the multi-item case silently breaks.*
-
----
-
-## Problem 6: Tool Status Indicators Wiped During Streaming
-
-**Before:** Tool status messages ("Using submit_draft_review... ✓ submit_draft_review") were injected into the streaming message element's innerHTML. But `appendStreamingText()` overwrote innerHTML on every token, and `finalizeStreamingMessage()` re-rendered from just `streamingText`.
-
-**What happened:** Tool status indicators would flash briefly then disappear as new tokens arrived.
-
-**Fix:** Track tool events in a separate `streamingToolEvents` array. New `renderStreamingContent()` function combines tool event HTML + markdown content + cursor on every render. Finalize preserves tool events in the final HTML.
-
-**Principle:** *Streaming content and metadata need separate state. If you mix them into one string/element, any re-render from the content source will wipe the metadata. Keep parallel tracks and compose at render time.*
-
----
-
 ## Abstracted Principles
 
-1. **Link data to its container.** Flat lists lose provenance. Group by parent entity to give clear "done" boundaries.
-2. **Tool availability must match work state, not data state.** "No pending items" might mean "work is done and needs closing," not "no work exists."
-3. **Visibility shouldn't be binary.** Recently completed work is active context. A sliding window (7 days) honors momentum without clutter.
-4. **Observation order matters.** Acknowledge what IS before surfacing what ISN'T. Same data, different emotional landing.
-5. **Frame imbalances as curiosity, not criticism.** "Is that intentional?" vs "you're behind." The EA's job is to help the user see clearly, not to judge.
-6. **Always handle the plural case.** If an API can return N items, processing only item[0] is a time bomb.
-7. **Streaming content and metadata need separate state.** Mix them and any content re-render wipes the metadata. Compose at render time from parallel tracks.
+1. **Give the agent clear boundaries for "done."** Flat lists create all-or-nothing dynamics. Group work into discrete tasks with natural stopping points so the user can complete one, feel closure, and choose whether to continue.
+2. **Visibility shouldn't be binary.** An agent that can only see pending work will always sound like you're behind. Show recent completions so observations are grounded in reality.
+3. **Lead with momentum, then surface gaps.** Same data, different emotional landing. Acknowledging what IS before surfacing what ISN'T is the difference between accountability and scolding.
+4. **Frame imbalances as curiosity, not criticism.** "Is that intentional?" invites reflection. "You're behind" triggers defensiveness. The EA's job is to help the user see clearly, not to judge.
 
 ---
 
-## Files Modified
+## Current Stance Prompt
 
-- `apps/habitual-web/netlify/functions/_utils/discovery-pipeline.cjs` — store `draftIds` on review action taskConfig
-- `apps/habitual-web/netlify/functions/fox-ea-chat-init.js` — action-grouped review prompt, recently completed section, stance tuning
-- `packages/edge-functions/chat-stream-core.ts` — multi-tool-use fix (`.find()` → `.filter()`)
-- `apps/habitual-web/src/do/chat.njk` — tool status indicator persistence
-- `apps/habitual-web/netlify/functions/fox-ea-tool-execute.js` — handles `complete_review_action` tool calls
+```
+YOUR STANCE (critical):
+- Observational, not directive: "I notice...", "I see...", "What I'm observing..."
+- Calm, present, reflective
+- Brief responses (2-3 sentences unless more is needed)
+- Never cheerleading or pressuring
+- Lead with momentum: acknowledge what's moving and recently completed before surfacing gaps
+- When observing imbalances, frame as curiosity not criticism
+- Help the user notice patterns they might miss
+- When they seem overwhelmed, help narrow to ONE thing
+```
