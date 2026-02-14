@@ -44,6 +44,14 @@ exports.handler = async (event) => {
       ['open', 'defined', 'scheduled', 'in_progress'].includes(a.state)
     );
 
+    // Recently completed actions (last 7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentlyCompleted = allActions.filter(a => {
+      if (a.state !== 'completed') return false;
+      const completedAt = a.completedAt?.toDate?.() || (a.completedAt ? new Date(a.completedAt) : null);
+      return completedAt && completedAt > sevenDaysAgo;
+    });
+
     // Get recent work logs (last 10)
     const recentWorkLogs = workLogs.slice(0, 10);
 
@@ -71,6 +79,13 @@ exports.handler = async (event) => {
         state: a.state
       });
     });
+
+    const recentlyCompletedContext = recentlyCompleted.length > 0
+      ? recentlyCompleted.map(a => {
+          const agentName = agents.find(ag => ag.id === a.agentId)?.name || 'Unknown';
+          return `- ${a.title} (${agentName}) — completed`;
+        }).join('\n')
+      : null;
 
     const workLogsContext = recentWorkLogs.length > 0
       ? recentWorkLogs.map(w => {
@@ -247,7 +262,10 @@ ${agentsContext}
 
 Open Actions (${openActions.length} total):
 ${Object.keys(actionsByAgent).length > 0 ? JSON.stringify(actionsByAgent, null, 2) : 'None'}
-
+${recentlyCompletedContext ? `
+Recently Completed:
+${recentlyCompletedContext}
+` : ''}
 Recent Work (what they've been doing):
 ${workLogsContext}
 
