@@ -98,14 +98,68 @@ exports.handler = async (event) => {
     let reviewModePrompt = '';
     if (pendingDrafts.length > 0) {
       const reviewActions = openActions.filter(a => a.taskType === 'review' && a.state === 'open');
-      const reviewActionIds = reviewActions.map(a => a.id);
 
-      reviewModePrompt = `== RESEARCH REVIEW MODE ==
+      // Build a pending drafts lookup
+      const pendingDraftMap = {};
+      pendingDrafts.forEach(d => { pendingDraftMap[d.id] = d; });
 
-You have ${pendingDrafts.length} research item${pendingDrafts.length > 1 ? 's' : ''} from your research agents awaiting the user's review.${reviewActionIds.length > 0 ? `
-Review action ID${reviewActionIds.length > 1 ? 's' : ''} to complete when done: ${reviewActionIds.join(', ')}` : ''}
+      // Group drafts by review action using taskConfig.draftIds
+      const reviewTasks = [];
+      const assignedDraftIds = new Set();
 
-When the user is ready to review (or if you sense it's a good time to mention them), enter Research Review mode.
+      for (const action of reviewActions) {
+        const actionDraftIds = action.taskConfig?.draftIds || [];
+        // Only include drafts that are still pending
+        const taskDrafts = actionDraftIds
+          .filter(id => pendingDraftMap[id])
+          .map(id => {
+            assignedDraftIds.add(id);
+            return pendingDraftMap[id];
+          });
+
+        if (taskDrafts.length > 0) {
+          reviewTasks.push({
+            actionId: action.id,
+            title: action.title,
+            drafts: taskDrafts
+          });
+        }
+      }
+
+      // Any pending drafts not linked to an action (legacy data)
+      const unassignedDrafts = pendingDrafts.filter(d => !assignedDraftIds.has(d.id));
+      if (unassignedDrafts.length > 0) {
+        reviewTasks.push({
+          actionId: null,
+          title: `Review ${unassignedDrafts.length} unassigned recommendation${unassignedDrafts.length > 1 ? 's' : ''}`,
+          drafts: unassignedDrafts
+        });
+      }
+
+      // Build the task list for the prompt
+      const taskDescriptions = reviewTasks.map((task, i) => {
+        const draftSummary = JSON.stringify(
+          task.drafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })),
+          null, 2
+        );
+        return `TASK ${i + 1}${task.actionId ? ` (${task.actionId})` : ''}: ${task.title}
+Items (${task.drafts.length}):
+${draftSummary}`;
+      }).join('\n\n');
+
+      reviewModePrompt = `== REVIEW TASKS ==
+
+You have ${reviewTasks.length} review task${reviewTasks.length > 1 ? 's' : ''} with ${pendingDrafts.length} total item${pendingDrafts.length > 1 ? 's' : ''} awaiting the user's review.
+
+When the user is ready to review (or if you sense it's a good time to mention them), enter review mode.
+
+${taskDescriptions}
+
+WORKING THROUGH TASKS:
+- Work through ONE task at a time. Start with the first.
+- Present items one-by-one within that task.
+- When all items in a task are reviewed, call complete_review_action with that task's action ID.
+- If they want to stop mid-task or between tasks, that's fine — remaining tasks stay open for next time.
 
 PRESENTATION RULES:
 - Present items ONE AT A TIME. Never list them all at once.
@@ -126,15 +180,11 @@ After the user shares their thoughts, use submit_draft_review:
 - feedback: 1-2 sentence summary capturing what the user actually said (NEVER empty or generic)
 - user_tags: Optional tags that emerged from conversation (e.g., "too-large", "great-mission", "remote-friendly")
 
-FLOW:
-1. Present first item with link
-2. User reacts → record with submit_draft_review
-3. Acknowledge briefly, then present next item
-4. After all items reviewed, use complete_review_action with the review action ID${reviewActionIds.length > 0 ? ` (${reviewActionIds[0]})` : ''}
-5. Transition naturally back to normal conversation
-
-Pending items:
-${JSON.stringify(pendingDrafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })), null, 2)}
+AFTER COMPLETING A REVIEW TASK:
+- Acknowledge completion naturally: "That's all [N] companies from that batch reviewed!"
+- If there are more review tasks: "There's another batch of [M] companies whenever you're ready. Want to keep going, or would you like to do something else?"
+- If no more review tasks: "All caught up on reviews! Want to look at what else is on your plate?"
+- Always respect "I'm done" — never pressure to continue.
 
 `;
     }

@@ -361,7 +361,7 @@ async function saveResults(companies, agentId, userId) {
         title: `Review ${draftIds.length} new company recommendation${draftIds.length > 1 ? 's' : ''}`,
         description: 'Your agent found some companies that might be a good fit. Review them and share your thoughts.',
         taskType: 'review',
-        taskConfig: { draftType: 'company', sourceAgentId: agentId },
+        taskConfig: { draftType: 'company', sourceAgentId: agentId, draftIds },
         state: 'open',
         priority: 'medium',
         assignedTo: 'user'
