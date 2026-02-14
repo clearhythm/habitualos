@@ -83,12 +83,76 @@ This landed as scolding. The user had been doing meaningful career positioning w
 
 ---
 
+## Iteration 4: Status Report → Editorial with Onramp
+
+**Before:** After fixing the "lead with momentum" issue, the EA technically followed the rules but still gave a project-by-project status report:
+
+> "I'm seeing a lot of recent movement on Life Maintenance tasks — you've been clearing operational stuff like email setups, domain transfers, and invoices. That work is actually complete now, which is great timing. Meanwhile, Career Launch has 6 open actions... The HabitualOS work has one design task... and there are a few personal admin items waiting (FAFSA, lease renewal, taxes). What feels most alive for you right now?"
+
+Three problems:
+
+1. **It's a report, not a conversation.** It inventories four project areas in one message. A human EA would never do that — they'd pick one.
+
+2. **It doesn't prioritize.** It knows Career Launch has a deadline, high-priority actions, and recent momentum. But it presents everything equally and asks "what feels most alive?" — putting the prioritization work back on the user.
+
+3. **The most useful tension is *within* a project, not *between* projects.** The user had done a lot of career search work (company reviews, LinkedIn, resume, infrastructure) but was avoiding the publishing piece (blog posts, thought leadership). That internal tension — "building runway but not shipping" — is what a good EA would surface.
+
+**What the ideal response looks like:**
+
+> "You put in real work on the career search today — the company reviews, plus getting the whole review system working. The publishing side is still parked though — you've got draft ideas but nothing out the door yet. Want to pick one and just rough it out?"
+
+That does three things: acknowledges the work (including meta-work), names the internal tension without judgment, and offers a hand-held onramp into the hard thing.
+
+**Fix:** Major stance rewrite:
+
+```
+YOUR STANCE (critical):
+- Editorial, not encyclopedic: have a point of view about what matters most right now.
+  Use priority, deadlines, and recent momentum to decide. Don't present a balanced
+  overview of everything — pick ONE thread and pull on it.
+- Calm, present, reflective
+- Brief responses (2-3 sentences). Never give a project-by-project rundown unless asked.
+- Never cheerleading or pressuring
+- Lead with momentum: acknowledge what's been accomplished before surfacing what's next
+- When you see momentum on a project, look for what's still stuck *within that same
+  project*. The most useful tension is internal ("you've been building career search
+  infrastructure, but the publishing piece is still parked") not cross-project
+  ("career vs. maintenance").
+- When surfacing tension, frame as curiosity not criticism
+- After surfacing a tension, offer a concrete next step. "Want to pick one of those
+  draft ideas and sketch it out?" is better than "what feels most alive?"
+- When they seem overwhelmed, help narrow to ONE thing
+```
+
+Also rewrote the conversational approach:
+
+```
+CONVERSATIONAL APPROACH:
+- Opening messages: 2-3 sentences max. One acknowledgment of recent momentum,
+  one tension or nudge, one concrete offer. Match the user's tone.
+- DON'T open with a project-by-project status report. DON'T list everything that's
+  open. Pick the one thread that matters most and go there.
+- End with a concrete offer to help, not an open-ended question.
+  "Want to pick one of those drafts and rough it out?" beats "What feels most alive?"
+```
+
+**Principles:**
+
+5. **Be editorial, not encyclopedic.** An EA that inventories everything equally is a dashboard, not an assistant. Have a point of view. Pick the one thread that matters most and go there.
+6. **The most useful tension is within, not between.** "You're building career infrastructure but avoiding the shipping part" is more actionable than "career vs. maintenance." Look for what's moving and what's stuck *within the same area*.
+7. **Offer an onramp, not a question.** Open-ended questions ("what feels most alive?") put the work back on the user. Concrete offers ("want to pick one and sketch it out?") lower the activation energy for the hard thing.
+
+---
+
 ## Abstracted Principles
 
 1. **Give the agent clear boundaries for "done."** Flat lists create all-or-nothing dynamics. Group work into discrete tasks with natural stopping points so the user can complete one, feel closure, and choose whether to continue.
 2. **Visibility shouldn't be binary.** An agent that can only see pending work will always sound like you're behind. Show recent completions so observations are grounded in reality.
-3. **Lead with momentum, then surface gaps.** Same data, different emotional landing. Acknowledging what IS before surfacing what ISN'T is the difference between accountability and scolding.
+3. **Lead with momentum, then surface gaps.** Same data, different emotional landing. Acknowledging what IS completed before surfacing what ISN'T completed is the difference between accountability and scolding.
 4. **Frame imbalances as curiosity, not criticism.** "Is that intentional?" invites reflection. "You're behind" triggers defensiveness. The EA's job is to help the user see clearly, not to judge.
+5. **Be editorial, not encyclopedic.** An EA that inventories everything equally is a dashboard, not an assistant. Have a point of view about what matters most. Pick one thread and pull on it.
+6. **The most useful tension is within, not between.** "Building runway but not shipping" is more actionable than "career vs. maintenance." Look for what's stuck within the area that already has momentum.
+7. **Offer an onramp, not a question.** Open-ended questions put the prioritization work back on the user. Concrete offers lower the activation energy for the hard thing. The EA's job is to help them *start*, not just *see*.
 
 ---
 
@@ -96,12 +160,16 @@ This landed as scolding. The user had been doing meaningful career positioning w
 
 ```
 YOUR STANCE (critical):
-- Observational, not directive: "I notice...", "I see...", "What I'm observing..."
+- Editorial, not encyclopedic: have a point of view about what matters most right now.
+  Use priority, deadlines, and recent momentum to decide. Don't present a balanced
+  overview of everything — pick ONE thread and pull on it.
 - Calm, present, reflective
-- Brief responses (2-3 sentences unless more is needed)
+- Brief responses (2-3 sentences). Never give a project-by-project rundown unless asked.
 - Never cheerleading or pressuring
-- Lead with momentum: acknowledge what's moving and recently completed before surfacing gaps
-- When observing imbalances, frame as curiosity not criticism
-- Help the user notice patterns they might miss
+- Lead with momentum: acknowledge what's been accomplished before surfacing what's next
+- When you see momentum on a project, look for what's still stuck *within that same
+  project*. The most useful tension is internal not cross-project.
+- When surfacing tension, frame as curiosity not criticism
+- After surfacing a tension, offer a concrete next step.
 - When they seem overwhelmed, help narrow to ONE thing
 ```
