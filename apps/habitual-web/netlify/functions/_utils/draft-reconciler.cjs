@@ -10,13 +10,12 @@
 //
 // Exports:
 //   - reconcile({ userId? }) - Main entry point
-//   - generateMarkdown(draft, feedback) - Generate YAML frontmatter markdown
+//   - generateMarkdown(draft) - Generate YAML frontmatter markdown
 //   - toFilename(name) - Convert name to filename slug
 // ------------------------------------------------------
 
 const { getReconciledDrafts, updateDraftStatus } = require('../_services/db-agent-drafts.cjs');
 const { getAgent } = require('../_services/db-agents.cjs');
-const { getFeedbackByDraft } = require('../_services/db-user-feedback.cjs');
 const agentFilesystem = require('./agent-filesystem.cjs');
 
 /**
@@ -68,13 +67,14 @@ function formatTimestamp(timestamp) {
 }
 
 /**
- * Generate YAML frontmatter markdown from draft and feedback data
+ * Generate YAML frontmatter markdown from draft data
+ * Review data is read from draft.review (stored on the draft itself)
  * @param {Object} draft - Draft document from Firestore
- * @param {Object|null} feedback - Feedback document (may be null)
  * @returns {string} Complete markdown string with YAML frontmatter
  */
-function generateMarkdown(draft, feedback) {
+function generateMarkdown(draft) {
   const data = draft.data || {};
+  const review = draft.review || null;
 
   // Build frontmatter object
   const frontmatter = {
@@ -85,10 +85,10 @@ function generateMarkdown(draft, feedback) {
     employee_band: data.employee_band || '',
     agent_recommendation: data.agent_recommendation || '',
     agent_fit_score: data.agent_fit_score ?? '',
-    user_fit_score: feedback?.score ?? '',
-    user_feedback: feedback?.feedback || '',
+    user_fit_score: review?.score ?? '',
+    user_feedback: review?.feedback || '',
     agent_tags: data.agent_tags || [],
-    user_tags: feedback?.user_tags || [],
+    user_tags: review?.user_tags || [],
     source: 'agent-discovery',
     discovered_at: formatTimestamp(draft._createdAt) || ''
   };
@@ -193,9 +193,6 @@ async function reconcile({ userId } = {}) {
         continue;
       }
 
-      // Get feedback for this draft (may not exist)
-      const feedback = await getFeedbackByDraft(draft.id, draft._userId);
-
       // Generate filename
       const filename = toFilename(draft.data.name);
       if (!filename) {
@@ -242,8 +239,8 @@ async function reconcile({ userId } = {}) {
         continue;
       }
 
-      // Generate markdown content
-      const markdown = generateMarkdown(draft, feedback);
+      // Generate markdown content (review data is on the draft itself)
+      const markdown = generateMarkdown(draft);
 
       // Write file
       const writeResult = await agentFilesystem.writeFile(agentDataPath, relativePath, markdown);
@@ -262,7 +259,7 @@ async function reconcile({ userId } = {}) {
       draftResult.status = 'committed';
       draftResult.path = relativePath;
       draftResult.name = draft.data.name;
-      draftResult.hasFeedback = !!feedback;
+      draftResult.hasReview = !!draft.review;
       results.committed++;
       results.details.push(draftResult);
 

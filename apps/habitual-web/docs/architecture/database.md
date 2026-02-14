@@ -136,6 +136,59 @@ Results from scheduled task execution.
 }
 ```
 
+### agent-drafts
+Content drafts that discovery agents produce for user review.
+
+```javascript
+{
+  id: "draft-{random}",
+  _userId: "u-{timestamp}-{random}",
+  agentId: "agent-{random}",           // Source discovery agent
+  type: "company" | "person" | "article" | "job",
+  status: "pending" | "reviewed" | "committed",
+  data: {                               // Type-specific payload
+    name: "Spring Health",
+    domain: "springhealth.com",
+    // ...
+  },
+  review: {                             // Populated when user reviews
+    score: 7,                           // 0-10 user fit assessment
+    feedback: "Love the mission...",
+    status: "accepted" | "rejected",    // accepted (score>=5) | rejected (score<5)
+    user_tags: ["great-mission"],
+    reviewedAt: "2026-02-13T..."
+  },
+  _createdAt: Timestamp,
+  _updatedAt: Timestamp
+}
+```
+
+**Status flow:** `pending` → `reviewed` → `committed`
+
+User review data is stored in the `review` field on the draft itself. Fox-EA presents drafts one-by-one and records feedback via `submit_draft_review`.
+
+### preference-profiles
+Structured preference profiles generated from review feedback.
+
+```javascript
+{
+  id: "pref-{agentId}",                // One per discovery agent
+  _userId: "u-{timestamp}-{random}",
+  agentId: "agent-{random}",
+  profile: {
+    summary: "Looking for early-stage health/wellness companies...",
+    likes: ["mission-driven", "coaching/wellness"],
+    dislikes: ["adtech", "crypto"],
+    dealBreakers: ["fully onsite"],
+    patterns: "Consistently scores coaching companies 8+..."
+  },
+  reviewCount: 15,
+  _updatedAt: Timestamp
+}
+```
+
+Regenerated after each review session completes. Used by discovery pipeline to refine search queries.
+
 ### practice-logs
 Individual practice check-in records (Practice system).
 
@@ -201,6 +254,8 @@ Saved conversations for practice discovery (Practice system).
 - **Practices**: `practice-{random}`
 - **Practice Chats**: `pc-{timestamp}-{random}`
 - **Task Outputs**: `task-output-{timestamp}-{random}`
+- **Drafts**: `draft-{random}`
+- **Preference Profiles**: `pref-{agentId}`
 
 ## Common Patterns
 

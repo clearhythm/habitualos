@@ -1,8 +1,7 @@
 require('dotenv').config();
 const { createProject, updateProject, getProject } = require('./_services/db-projects.cjs');
 const { generateProjectId } = require('./_utils/data-utils.cjs');
-const { getDraftsByUser, getDraftById, updateDraftStatus } = require('./_services/db-agent-drafts.cjs');
-const { createFeedback } = require('./_services/db-user-feedback.cjs');
+const { getDraftsByUser, getDraftById, updateDraft } = require('./_services/db-agent-drafts.cjs');
 const { getAction, updateActionState } = require('./_services/db-actions.cjs');
 const { generatePreferenceProfile } = require('./_utils/preference-profile-generator.cjs');
 
@@ -124,25 +123,23 @@ async function handleToolCall(toolUse, userId) {
 
     const derivedStatus = score >= 5 ? 'accepted' : 'rejected';
 
-    // Store feedback with the draft's source agent ID (for discovery feedback loop)
-    const feedbackRecord = await createFeedback({
-      _userId: userId,
-      agentId: draft.agentId,
-      draftId: draftId,
-      type: draft.type,
-      score: score,
-      feedback: feedback,
-      status: derivedStatus,
-      user_tags: user_tags || []
+    // Store review data directly on the draft document
+    await updateDraft(draftId, {
+      status: 'reviewed',
+      review: {
+        score,
+        feedback,
+        status: derivedStatus,
+        user_tags: user_tags || [],
+        reviewedAt: new Date().toISOString()
+      }
     });
-
-    await updateDraftStatus(draftId, 'reviewed');
 
     return {
       success: true,
-      feedbackId: feedbackRecord.id,
+      draftId,
       draftStatus: 'reviewed',
-      derivedStatus: derivedStatus
+      derivedStatus
     };
   }
 

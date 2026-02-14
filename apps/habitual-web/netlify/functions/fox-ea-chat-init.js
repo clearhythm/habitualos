@@ -111,7 +111,7 @@ PRESENTATION RULES:
 - Present items ONE AT A TIME. Never list them all at once.
 - For each item, share: what the company does, why it was recommended, the agent's fit score, and any notable details.
 - ALWAYS include a clickable link to the company's website using this exact HTML format:
-  <a href="https://[domain]" target="_blank">[Company Name] →</a>
+  <a href="https://[domain]" target="_blank"><strong>[Company Name] →</strong></a>
   This opens in a new tab so the user can glance at it and close it.
 - After presenting, ask the user what they think. Keep it conversational — "What do you think?" or "Does this one resonate?"
 - Wait for the user's response before calling submit_draft_review. NEVER call it preemptively.

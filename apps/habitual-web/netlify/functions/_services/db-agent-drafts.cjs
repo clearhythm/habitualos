@@ -28,13 +28,20 @@
 //       domain: "springhealth.com",
 //       ...
 //     },
+//     review: {                      // populated when user reviews the draft
+//       score: 7,                    // 0-10 user fit assessment
+//       feedback: "Love the mission...",
+//       status: "accepted",          // accepted (score>=5) | rejected (score<5)
+//       user_tags: ["great-mission"],
+//       reviewedAt: "2026-02-13T..."
+//     },
 //     _createdAt: Firestore timestamp,
 //     _updatedAt: Firestore timestamp
 //   }
 //
 // Status Flow:
 //   pending -> reviewed -> committed
-//   User sentiment is captured in user-feedback collection, not in status.
+//   User review data is stored in the review field on the draft itself.
 // ------------------------------------------------------
 
 const dbCore = require('@habitualos/db-core');
@@ -160,7 +167,7 @@ exports.getDraftsByUser = async (userId, filters = {}) => {
  * @returns {Promise<Object>} Result
  */
 exports.updateDraft = async (draftId, updates) => {
-  const allowedFields = ['status', 'data'];
+  const allowedFields = ['status', 'data', 'review'];
   const safeUpdates = {};
 
   for (const field of allowedFields) {

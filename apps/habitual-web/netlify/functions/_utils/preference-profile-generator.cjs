@@ -7,7 +7,7 @@
 // ------------------------------------------------------
 
 const Anthropic = require('@anthropic-ai/sdk');
-const { getFeedbackByAgent } = require('../_services/db-user-feedback.cjs');
+const { getDraftsByAgent } = require('../_services/db-agent-drafts.cjs');
 const { getProfile, saveProfile } = require('../_services/db-preference-profile.cjs');
 
 const anthropic = new Anthropic();
@@ -21,25 +21,29 @@ const anthropic = new Anthropic();
 async function generatePreferenceProfile(agentId, userId) {
   console.log(`[preference-profile] Generating for agent=${agentId}, user=${userId}`);
 
-  // Fetch all feedback for this agent
-  const allFeedback = await getFeedbackByAgent(agentId, userId);
+  // Fetch reviewed drafts (which have feedback stored on them)
+  const reviewedDrafts = await getDraftsByAgent(agentId, userId, { status: 'reviewed' });
 
-  if (allFeedback.length === 0) {
-    console.log('[preference-profile] No feedback found, skipping generation');
+  if (reviewedDrafts.length === 0) {
+    console.log('[preference-profile] No reviewed drafts found, skipping generation');
     return null;
   }
 
   // Fetch current profile (if exists)
   const currentProfile = await getProfile(agentId);
 
-  // Build prompt for Claude
-  const feedbackSummary = allFeedback.map(f =>
-    `- ${f.feedback || 'No feedback'} (score: ${f.score}/10, type: ${f.type}, tags: ${(f.user_tags || []).join(', ') || 'none'})`
-  ).join('\n');
+  // Build prompt from draft review data
+  const feedbackSummary = reviewedDrafts
+    .filter(d => d.review)
+    .map(d => {
+      const r = d.review;
+      const name = d.data?.name || 'Unknown';
+      return `- ${name}: ${r.feedback || 'No feedback'} (score: ${r.score}/10, type: ${d.type}, tags: ${(r.user_tags || []).join(', ') || 'none'})`;
+    }).join('\n');
 
   let prompt = `Analyze this user's feedback history on research recommendations and generate a structured preference profile.
 
-FEEDBACK HISTORY (${allFeedback.length} reviews, newest first):
+FEEDBACK HISTORY (${reviewedDrafts.length} reviews, newest first):
 ${feedbackSummary}
 `;
 
@@ -87,10 +91,10 @@ Return ONLY the JSON object, no other text.`;
   // Save the profile
   const saved = await saveProfile(agentId, userId, {
     profile,
-    reviewCount: allFeedback.length
+    reviewCount: reviewedDrafts.length
   });
 
-  console.log(`[preference-profile] Saved profile with ${allFeedback.length} reviews`);
+  console.log(`[preference-profile] Saved profile with ${reviewedDrafts.length} reviews`);
   return saved;
 }
 

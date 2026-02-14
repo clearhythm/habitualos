@@ -37,7 +37,7 @@ An automated company discovery pipeline that searches the web for companies matc
 | `netlify/functions/discovery-run.js` | Manual trigger (sync, limited by gateway timeout) |
 | `netlify/functions/_utils/discovery-pipeline.cjs` | Core pipeline: search queries → Tavily → Claude extraction → save drafts |
 | `netlify/functions/_services/db-agent-drafts.cjs` | Drafts CRUD (collection: `agent-drafts`) |
-| `netlify/functions/_services/db-user-feedback.cjs` | Feedback CRUD (collection: `user-feedback`) |
+| ~~`netlify/functions/_services/db-user-feedback.cjs`~~ | ~~Removed — feedback now stored on draft.review~~ |
 | `netlify/functions/_utils/draft-reconciler.cjs` | Converts reviewed drafts → markdown files |
 | `netlify/functions/reconciler-run.js` | HTTP endpoint for reconciler |
 | `netlify/functions/fox-ea-chat-init.js` | Fox-EA init — surfaces pending drafts + review tools |
@@ -126,6 +126,6 @@ pending → reviewed → committed
 ```
 
 - `pending`: Created by discovery pipeline, awaiting user review
-- `reviewed`: User reviewed via chat (has feedback record in `user-feedback`)
+- `reviewed`: User reviewed via chat (review data stored on `draft.review` field)
 - `committed`: Reconciler converted to markdown file
 - Legacy statuses `accepted`/`rejected` still exist in old data; reconciler handles them

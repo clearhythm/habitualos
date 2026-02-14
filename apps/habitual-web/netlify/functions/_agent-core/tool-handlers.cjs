@@ -7,8 +7,7 @@
 
 const { getAction, updateActionState } = require('../_services/db-actions.cjs');
 const { createNote, getNotesByAgent, getNoteById, updateNote } = require('../_services/db-agent-notes.cjs');
-const { getDraftsByAgent, getDraftById, updateDraftStatus } = require('../_services/db-agent-drafts.cjs');
-const { createFeedback } = require('../_services/db-user-feedback.cjs');
+const { getDraftsByAgent, getDraftById, updateDraft } = require('../_services/db-agent-drafts.cjs');
 const { incrementAgentActionCount } = require('../_services/db-agents.cjs');
 const agentFilesystem = require('../_utils/agent-filesystem.cjs');
 
@@ -392,24 +391,23 @@ async function handleSubmitDraftReview(input, userId, agentId) {
   // Derive status from score
   const derivedStatus = score >= 5 ? 'accepted' : 'rejected';
 
-  const feedbackRecord = await createFeedback({
-    _userId: userId,
-    agentId: agentId,
-    draftId: draftId,
-    type: draft.type,
-    score: score,
-    feedback: feedback,
-    status: derivedStatus,
-    user_tags: user_tags || []
+  // Store review data directly on the draft document
+  await updateDraft(draftId, {
+    status: 'reviewed',
+    review: {
+      score,
+      feedback,
+      status: derivedStatus,
+      user_tags: user_tags || [],
+      reviewedAt: new Date().toISOString()
+    }
   });
-
-  await updateDraftStatus(draftId, 'reviewed');
 
   return {
     success: true,
-    feedbackId: feedbackRecord.id,
+    draftId,
     draftStatus: 'reviewed',
-    derivedStatus: derivedStatus,
+    derivedStatus,
     shouldSaveChat: true
   };
 }

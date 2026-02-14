@@ -19,7 +19,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 const { getAgent } = require('../_services/db-agents.cjs');
-const { getFeedbackByAgent } = require('../_services/db-user-feedback.cjs');
+// Feedback is read from reviewed drafts (review field on agent-drafts)
 const { getDraftsByAgent, createDraft } = require('../_services/db-agent-drafts.cjs');
 const { createAction } = require('../_services/db-actions.cjs');
 const { generateActionId } = require('./data-utils.cjs');
@@ -76,11 +76,14 @@ async function buildSearchContext(agentId, userId) {
   // Get preference profile (structured summary of past feedback)
   const preferenceProfile = await getProfile(agentId);
 
-  // Get raw feedback as fallback (if no profile exists yet)
+  // Get raw feedback from reviewed drafts as fallback (if no profile exists yet)
   let likedPatterns = [];
   let dislikedPatterns = [];
   if (!preferenceProfile) {
-    const feedback = await getFeedbackByAgent(agentId, userId, 50);
+    const reviewedDrafts = await getDraftsByAgent(agentId, userId, { status: 'reviewed' });
+    const feedback = reviewedDrafts
+      .filter(d => d.review)
+      .map(d => ({ score: d.review.score, feedback: d.review.feedback, user_tags: d.review.user_tags, name: d.data?.name }));
     likedPatterns = feedback.filter(f => f.score >= 7);
     dislikedPatterns = feedback.filter(f => f.score <= 3);
   }

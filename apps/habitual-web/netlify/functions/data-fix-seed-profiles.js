@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { getActionsByUserId, updateAction } = require('./_services/db-actions.cjs');
 const { getAgent } = require('./_services/db-agents.cjs');
-const { getFeedbackByAgent } = require('./_services/db-user-feedback.cjs');
+const { getDraftsByAgent } = require('./_services/db-agent-drafts.cjs');
 const { getProfile, saveProfile } = require('./_services/db-preference-profile.cjs');
 const Anthropic = require('@anthropic-ai/sdk');
 
@@ -41,7 +41,7 @@ exports.handler = async (event) => {
 
     // --- Step 2: Seed preference profile ---
     const agent = await getAgent(AGENT_ID);
-    const feedback = await getFeedbackByAgent(AGENT_ID, USER_ID);
+    const reviewedDrafts = await getDraftsByAgent(AGENT_ID, USER_ID, { status: 'reviewed' });
     const existingProfile = await getProfile(AGENT_ID);
 
     const goal = agent?.instructions?.goal || '';
@@ -56,12 +56,13 @@ Success Criteria:
 ${successCriteria.map(c => `- ${c}`).join('\n') || 'None specified'}
 `;
 
-    if (feedback.length > 0) {
-      const feedbackSummary = feedback.map(f =>
-        `- ${f.feedback || 'No feedback'} (score: ${f.score}/10, tags: ${(f.user_tags || []).join(', ') || 'none'})`
+    const draftsWithReview = reviewedDrafts.filter(d => d.review);
+    if (draftsWithReview.length > 0) {
+      const feedbackSummary = draftsWithReview.map(d =>
+        `- ${d.data?.name || 'Unknown'}: ${d.review.feedback || 'No feedback'} (score: ${d.review.score}/10, tags: ${(d.review.user_tags || []).join(', ') || 'none'})`
       ).join('\n');
       prompt += `
-EXISTING FEEDBACK (${feedback.length} reviews):
+EXISTING FEEDBACK (${draftsWithReview.length} reviews):
 ${feedbackSummary}
 `;
     }
@@ -91,11 +92,11 @@ Return ONLY the JSON object, no other text.`;
       const profile = JSON.parse(match[0]);
       await saveProfile(AGENT_ID, USER_ID, {
         profile,
-        reviewCount: feedback.length
+        reviewCount: draftsWithReview.length
       });
       results.profileSeeded = true;
       results.profile = profile;
-      console.log(`[data-fix] Seeded preference profile with ${feedback.length} reviews`);
+      console.log(`[data-fix] Seeded preference profile with ${draftsWithReview.length} reviews`);
     }
 
     return {
