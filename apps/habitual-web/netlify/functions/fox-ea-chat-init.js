@@ -94,17 +94,19 @@ exports.handler = async (event) => {
       timeZone: timezone
     });
 
-    // Build review mode prompt (if pending drafts exist)
+    // Build review mode prompt
     let reviewModePrompt = '';
-    if (pendingDrafts.length > 0) {
-      const reviewActions = openActions.filter(a => a.taskType === 'review' && a.state === 'open');
+    const reviewActions = openActions.filter(a => a.taskType === 'review' && a.state === 'open');
+    let hasReviewWork = false;
 
+    if (pendingDrafts.length > 0 || reviewActions.length > 0) {
       // Build a pending drafts lookup
       const pendingDraftMap = {};
       pendingDrafts.forEach(d => { pendingDraftMap[d.id] = d; });
 
       // Group drafts by review action using taskConfig.draftIds
       const reviewTasks = [];
+      const completableActions = [];
       const assignedDraftIds = new Set();
 
       for (const action of reviewActions) {
@@ -121,7 +123,16 @@ exports.handler = async (event) => {
           reviewTasks.push({
             actionId: action.id,
             title: action.title,
+            description: action.description,
             drafts: taskDrafts
+          });
+        } else if (actionDraftIds.length > 0) {
+          // All drafts already reviewed — needs completion
+          completableActions.push({
+            actionId: action.id,
+            title: action.title,
+            description: action.description,
+            totalDrafts: actionDraftIds.length
           });
         }
       }
@@ -132,30 +143,53 @@ exports.handler = async (event) => {
         reviewTasks.push({
           actionId: null,
           title: `Review ${unassignedDrafts.length} unassigned recommendation${unassignedDrafts.length > 1 ? 's' : ''}`,
+          description: null,
           drafts: unassignedDrafts
         });
       }
 
-      // Build the task list for the prompt
-      const taskDescriptions = reviewTasks.map((task, i) => {
-        const draftSummary = JSON.stringify(
-          task.drafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })),
-          null, 2
-        );
-        return `TASK ${i + 1}${task.actionId ? ` (${task.actionId})` : ''}: ${task.title}
+      hasReviewWork = reviewTasks.length > 0 || completableActions.length > 0;
+
+      if (hasReviewWork) {
+        // Build completable actions section
+        let completableSection = '';
+        if (completableActions.length > 0) {
+          const completableList = completableActions.map(a =>
+            `- ${a.actionId}: "${a.title}"${a.description ? ` (${a.description})` : ''} — all ${a.totalDrafts} items already reviewed`
+          ).join('\n');
+          completableSection = `COMPLETED TASKS TO CLOSE:
+These review tasks have all items reviewed but weren't marked complete.
+Call complete_review_action for each at the start of the conversation:
+${completableList}
+
+`;
+        }
+
+        // Build the task list for the prompt
+        let taskSection = '';
+        if (reviewTasks.length > 0) {
+          const taskDescriptions = reviewTasks.map((task, i) => {
+            const draftSummary = JSON.stringify(
+              task.drafts.map(d => ({ id: d.id, type: d.type, agentId: d.agentId, data: d.data })),
+              null, 2
+            );
+            return `TASK ${i + 1}${task.actionId ? ` (${task.actionId})` : ''}: ${task.title}${task.description ? `\n${task.description}` : ''}
 Items (${task.drafts.length}):
 ${draftSummary}`;
-      }).join('\n\n');
+          }).join('\n\n');
 
-      reviewModePrompt = `== REVIEW TASKS ==
-
-You have ${reviewTasks.length} review task${reviewTasks.length > 1 ? 's' : ''} with ${pendingDrafts.length} total item${pendingDrafts.length > 1 ? 's' : ''} awaiting the user's review.
+          taskSection = `You have ${reviewTasks.length} review task${reviewTasks.length > 1 ? 's' : ''} with ${pendingDrafts.length} total item${pendingDrafts.length > 1 ? 's' : ''} awaiting the user's review.
 
 When the user is ready to review (or if you sense it's a good time to mention them), enter review mode.
 
 ${taskDescriptions}
 
-WORKING THROUGH TASKS:
+`;
+        }
+
+        reviewModePrompt = `== REVIEW TASKS ==
+
+${completableSection}${taskSection}WORKING THROUGH TASKS:
 - Work through ONE task at a time. Start with the first.
 - Present items one-by-one within that task.
 - When all items in a task are reviewed, call complete_review_action with that task's action ID.
@@ -187,6 +221,7 @@ AFTER COMPLETING A REVIEW TASK:
 - Always respect "I'm done" — never pressure to continue.
 
 `;
+      }
     }
 
     // Build system prompt

@@ -354,12 +354,13 @@ async function saveResults(companies, agentId, userId) {
   // Create review action if we have drafts
   if (draftIds.length > 0) {
     try {
+      const companyNames = toSave.map(c => c.name).filter(Boolean);
       const actionId = generateActionId();
       await createAction(actionId, {
         _userId: userId,
         agentId: agentId,
         title: `Review ${draftIds.length} new company recommendation${draftIds.length > 1 ? 's' : ''}`,
-        description: 'Your agent found some companies that might be a good fit. Review them and share your thoughts.',
+        description: `Companies: ${companyNames.join(', ')}`,
         taskType: 'review',
         taskConfig: { draftType: 'company', sourceAgentId: agentId, draftIds },
         state: 'open',

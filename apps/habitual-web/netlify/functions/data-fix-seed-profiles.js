@@ -26,7 +26,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const results = { patchedActions: 0, profileSeeded: false };
+    const results = { patchedActions: 0, backfilledDraftIds: 0, profileSeeded: false };
 
     // --- Step 1: Patch existing review actions with sourceAgentId ---
     const allActions = await getActionsByUserId(USER_ID);
@@ -37,6 +37,29 @@ exports.handler = async (event) => {
       await updateAction(action.id, { taskConfig: updatedConfig });
       console.log(`[data-fix] Patched action ${action.id} with sourceAgentId`);
       results.patchedActions++;
+    }
+
+    // --- Step 1b: Backfill draftIds on open review actions that are missing them ---
+    const openReviewActions = allActions.filter(a =>
+      a.taskType === 'review' &&
+      ['open', 'defined', 'scheduled', 'in_progress'].includes(a.state) &&
+      !a.taskConfig?.draftIds
+    );
+
+    if (openReviewActions.length > 0) {
+      // Get all pending drafts for the agent
+      const pendingDrafts = await getDraftsByAgent(AGENT_ID, USER_ID, { status: 'pending' });
+      const unassignedDraftIds = pendingDrafts.map(d => d.id);
+
+      // Distribute evenly across actions, or assign all to first if only one
+      for (const action of openReviewActions) {
+        const updatedConfig = { ...action.taskConfig, sourceAgentId: AGENT_ID, draftIds: unassignedDraftIds };
+        await updateAction(action.id, { taskConfig: updatedConfig });
+        console.log(`[data-fix] Backfilled ${unassignedDraftIds.length} draftIds on action ${action.id}`);
+        results.backfilledDraftIds++;
+        // Assign all pending drafts to the first action, then clear for subsequent
+        unassignedDraftIds.length = 0;
+      }
     }
 
     // --- Step 2: Seed preference profile ---

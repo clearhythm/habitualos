@@ -377,41 +377,52 @@ export function createChatStreamHandler(
             }
           }
 
-          // Check for tool use
-          const toolUseBlock = contentBlocks.find(
+          // Check for tool use — handle ALL tool_use blocks in the response
+          const toolUseBlocks = contentBlocks.filter(
             (b) => b.type === "tool_use"
-          ) as ToolUseBlock | undefined;
+          ) as ToolUseBlock[];
 
-          if (toolUseBlock && stopReason === "tool_use" && config.toolExecuteEndpoint) {
-            await send({ type: "tool_start", tool: toolUseBlock.name });
+          if (toolUseBlocks.length > 0 && stopReason === "tool_use" && config.toolExecuteEndpoint) {
+            // Execute each tool call and collect results
+            const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
 
-            // Build tool execute request body
-            let toolBody: Record<string, unknown> = {
-              userId,
-              toolUse: {
-                id: toolUseBlock.id,
-                name: toolUseBlock.name,
-                input: toolUseBlock.input,
-              },
-            };
-            if (chatType === "agent") {
-              toolBody.agentId = agentId;
-            }
+            for (const toolUseBlock of toolUseBlocks) {
+              await send({ type: "tool_start", tool: toolUseBlock.name });
 
-            // Execute tool via Node.js function
-            const toolResponse = await fetch(
-              `${baseUrl}${config.toolExecuteEndpoint}`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(toolBody),
+              // Build tool execute request body
+              let toolBody: Record<string, unknown> = {
+                userId,
+                toolUse: {
+                  id: toolUseBlock.id,
+                  name: toolUseBlock.name,
+                  input: toolUseBlock.input,
+                },
+              };
+              if (chatType === "agent") {
+                toolBody.agentId = agentId;
               }
-            );
 
-            const toolData = await toolResponse.json();
-            const toolResult = toolData.result || { error: "Tool execution failed" };
+              // Execute tool via Node.js function
+              const toolResponse = await fetch(
+                `${baseUrl}${config.toolExecuteEndpoint}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(toolBody),
+                }
+              );
 
-            await send({ type: "tool_complete", tool: toolUseBlock.name });
+              const toolData = await toolResponse.json();
+              const toolResult = toolData.result || { error: "Tool execution failed" };
+
+              await send({ type: "tool_complete", tool: toolUseBlock.name });
+
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: toolUseBlock.id,
+                content: JSON.stringify(toolResult),
+              });
+            }
 
             // Add assistant's response to messages
             messages.push({
@@ -419,17 +430,11 @@ export function createChatStreamHandler(
               content: contentBlocks,
             });
 
-            // Add tool result to messages
+            // Add ALL tool results in a single user message
             messages.push({
               role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: toolUseBlock.id,
-                  content: JSON.stringify(toolResult),
-                },
-              ] as unknown as string,
-            });
+              content: toolResults,
+            } as unknown as ChatMessage);
 
             // Continue loop to get next response
           } else {
