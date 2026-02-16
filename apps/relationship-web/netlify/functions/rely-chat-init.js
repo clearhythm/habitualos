@@ -19,9 +19,18 @@ exports.handler = async (event) => {
   try {
     const { userId, timezone = 'America/Los_Angeles', userName, replyToMomentId } = JSON.parse(event.body);
 
-    // Derive partner name (Erik ↔ Marta)
+    // Derive partner name and pronouns (Erik ↔ Marta)
     const PARTNERS = { 'Erik': 'Marta', 'Marta': 'Erik' };
+    const PRONOUNS = {
+      'Erik': { label: 'he/him', they: 'he', them: 'him', their: 'his', theirs: 'his' },
+      'Marta': { label: 'she/her', they: 'she', them: 'her', their: 'her', theirs: 'hers' }
+    };
+    const DEFAULT_P = { label: 'they/them', they: 'they', them: 'them', their: 'their', theirs: 'theirs' };
     const partnerName = PARTNERS[userName] || null;
+    const userP = PRONOUNS[userName] || DEFAULT_P;
+    const partnerP = PRONOUNS[partnerName] || DEFAULT_P;
+    const userPronouns = userP.label;
+    const partnerPronouns = partnerP.label;
 
     // Validate inputs
     if (!userId || typeof userId !== 'string' || !userId.startsWith('u-')) {
@@ -93,10 +102,11 @@ Your voice:
 - Never refer to yourself by name or refer to this service/app
 - Never generalize about "people" — this is their specific experience
 - Match their energy: if they're celebrating, celebrate with them; if they're hurting, be present
+- Use each person's pronouns (listed in context) — never default to "they" when you know the person
 
 User's context:
-${userName ? `- Speaking with: ${userName}` : ''}
-${partnerName ? `- Their partner: ${partnerName}` : ''}
+${userName ? `- Speaking with: ${userName} (${userPronouns})` : ''}
+${partnerName ? `- Partner: ${partnerName} (${partnerPronouns})` : ''}
 - Current time: ${timeOfDay}, ${dayOfWeek}
 - Total moments captured: ${momentCount}
 - People mentioned before: ${recentPeople.length > 0 ? recentPeople.join(', ') : 'None yet'}
@@ -208,7 +218,8 @@ After the signal, say something brief and grounded. Then return to normal conver
 
 == REPLY MODE ==
 
-${userName} is replying to a moment shared by ${replyMoment.addedBy || partnerName || 'their partner'}.
+${userName} (${userPronouns}) is replying to a moment shared by ${replyMoment.addedBy || partnerName || userP.their + ' partner'} (${partnerPronouns}).
+When referring to ${partnerName || 'the partner'}, use ${partnerP.they}/${partnerP.them}/${partnerP.their} — never "they."
 
 The moment:
 - Type: ${replyMoment.type || 'unknown'}
@@ -216,20 +227,20 @@ The moment:
 - Content: "${replyMoment.content}"
 
 Your role in reply mode:
-- Help them sit with what their partner shared
-- What stands out to them? What might have been hard for their partner?
-- What do they want to acknowledge, affirm, or say?
-- Help them craft a loving, present response — in their voice, not yours
+- Help ${userName} sit with what ${partnerName || userP.their + ' partner'} shared
+- What stands out to ${userName}? What might have been hard for ${partnerName || userP.their + ' partner'}?
+- What does ${userP.they} want to acknowledge, affirm, or say?
+- Help ${userName} craft a loving, present response — in ${userP.their} voice, not yours
 - A few sentences is plenty for a reply
 - Don't steer toward capturing a new moment — this is about responding to an existing one
 
-When they're ready, confirm the reply and emit:
+When ${userP.they}'s ready, confirm the reply and emit:
 
 SEND_REPLY
 ---
 {
   "momentId": "${replyMoment.id}",
-  "content": "[their reply, in their voice — warm, direct, and brief]"
+  "content": "[${userName}'s reply, in ${userP.their} voice — warm, direct, and brief]"
 }
 
 After the signal, say something brief and grounded. No fanfare.`;

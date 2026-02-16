@@ -521,7 +521,9 @@ permalink: /chat/
 
     let greeting;
     if (replyMoment) {
-      greeting = `${timeGreeting}, ${name}. I see ${replyMoment.addedBy || 'your partner'} shared something. What stands out to you about what they wrote?`;
+      const sharerName = replyMoment.addedBy || 'your partner';
+      const sharerPronoun = { 'Erik': 'he', 'Marta': 'she' }[sharerName] || 'they';
+      greeting = `${timeGreeting}, ${name}. I see ${sharerName} shared something. What stands out to you about what ${sharerPronoun} wrote?`;
     } else if (hasSurvey) {
       greeting = `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
     } else {
@@ -985,7 +987,11 @@ permalink: /chat/
   document.getElementById('reset-chat-btn').addEventListener('click', () => {
     if (confirm('Start a fresh conversation? This will clear your current chat.')) {
       clearChatHistory();
-      window.location.reload();
+      if (replyToMomentId) {
+        window.location.href = '/chat/';
+      } else {
+        window.location.reload();
+      }
     }
   });
 

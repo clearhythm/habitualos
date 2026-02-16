@@ -100,11 +100,10 @@ permalink: /
           `;
         } else if (isPartnerMoment) {
           replyHtml = `
-            <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.08);">
-              <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem;">Reply: </span>
-              <a href="/chat/?replyTo=${m.id}" style="color: rgba(255,255,255,0.6); font-size: 0.8rem; text-decoration: none;">Chat</a>
-              <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem; margin: 0 0.25rem;">|</span>
-              <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem; cursor: default;" title="Coming soon">Write</span>
+            <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;">
+              <span style="color: rgba(255,255,255,0.3); font-size: 0.8rem;">Reply :</span>
+              <a href="/chat/?replyTo=${m.id}" style="color: rgba(255,255,255,0.6); font-size: 0.8rem; text-decoration: none; background: rgba(255,255,255,0.08); padding: 0.25rem 0.6rem; border-radius: 6px;">🍵 Chat</a>
+              <a style="color: rgba(255,255,255,0.35); font-size: 0.8rem; text-decoration: none; cursor: default; background: rgba(255,255,255,0.04); padding: 0.25rem 0.6rem; border-radius: 6px;" title="Coming soon">↪️ Write</a>
             </div>
           `;
         }
