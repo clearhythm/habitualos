@@ -459,9 +459,11 @@ permalink: /chat/
       }
     } catch (e) { /* proceed without moment details */ }
 
-    // In reply mode, always start fresh
-    clearChatHistory();
-    chatHistory = [];
+    // In reply mode, start fresh unless resuming a saved chat
+    if (!getChatId()) {
+      clearChatHistory();
+      chatHistory = [];
+    }
   }
 
   // Add header to chat messages area
@@ -648,15 +650,18 @@ permalink: /chat/
     const isAppend = existingChatId && lastSavedIndex > 0;
 
     try {
+      const payload = {
+        userId,
+        messages: isAppend ? newMessages : chatHistory,
+        chatId: existingChatId,
+        mode: isAppend ? 'append' : 'create'
+      };
+      if (replyToMomentId) payload.replyToMomentId = replyToMomentId;
+
       const response = await fetch('/api/relational-chat-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          messages: isAppend ? newMessages : chatHistory,
-          chatId: existingChatId,
-          mode: isAppend ? 'append' : 'create'
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json();
@@ -941,17 +946,20 @@ permalink: /chat/
       saveBtn.disabled = true;
 
       // Save relational chat to backend (only new messages for append)
+      const savePayload = {
+        userId,
+        messages: isAppend ? newMessages : chatHistory,
+        chatId: existingChatId,
+        mode: isAppend ? 'append' : 'create'
+      };
+      if (replyToMomentId) savePayload.replyToMomentId = replyToMomentId;
+
       const response = await fetch('/api/relational-chat-save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          userId,
-          messages: isAppend ? newMessages : chatHistory,
-          chatId: existingChatId,
-          mode: isAppend ? 'append' : 'create'
-        })
+        body: JSON.stringify(savePayload)
       });
 
       const data = await response.json();
@@ -1095,6 +1103,15 @@ permalink: /chat/
 
   // Load a saved chat into the current view
   function loadSavedChat(chat) {
+    // If this is a reply-mode chat, save to reply localStorage keys and navigate
+    if (chat.replyToMomentId) {
+      localStorage.setItem('relational_chat_history_reply', JSON.stringify(chat.messages || []));
+      localStorage.setItem('relational_chat_id_reply', chat.id);
+      localStorage.setItem('relational_last_saved_index_reply', String((chat.messages || []).length));
+      window.location.href = `/chat/?replyTo=${chat.replyToMomentId}`;
+      return;
+    }
+
     // Clear current messages display (except header)
     while (chatMessages.children.length > 1) {
       chatMessages.removeChild(chatMessages.lastChild);

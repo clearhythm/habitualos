@@ -18,7 +18,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, messages, chatId: existingChatId, mode } = JSON.parse(event.body);
+    const { userId, messages, chatId: existingChatId, mode, replyToMomentId } = JSON.parse(event.body);
 
     if (!userId) {
       return {
@@ -42,11 +42,13 @@ exports.handler = async (event) => {
       chatId = existingChatId;
     } else {
       chatId = chatService.generateChatId();
-      await chatService.createChat(chatId, {
+      const chatDoc = {
         _userId: userId,
         messages: encryptedMessages,
         savedAt: new Date().toISOString()
-      });
+      };
+      if (replyToMomentId) chatDoc.replyToMomentId = replyToMomentId;
+      await chatService.createChat(chatId, chatDoc);
     }
 
     return {
