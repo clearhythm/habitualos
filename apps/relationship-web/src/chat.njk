@@ -162,6 +162,7 @@ permalink: /chat/
 <script type="module">
   import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
+  import { createModal } from '/assets/js/components/modal.js';
 
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
   const userId = getUserId();
@@ -627,10 +628,25 @@ permalink: /chat/
 
       const result = await response.json();
       if (result.success) {
-        // Clear reply-mode chat history
         clearChatHistory();
-        showToast('Reply sent!');
-        setTimeout(() => { window.location.href = '/'; }, 1200);
+
+        if (result.sunPoints > 0) {
+          // Show sun points award modal
+          const modal = createModal({
+            id: 'sun-points-modal',
+            emoji: '☀️',
+            title: `+${result.sunPoints} — Reply sent!`,
+            subtitle: 'You both earned sun points for showing up.',
+            confirmLabel: 'Nice'
+          });
+          modal.confirmBtn.addEventListener('click', () => {
+            window.location.href = '/';
+          });
+          modal.show();
+        } else {
+          showToast('Reply sent!');
+          setTimeout(() => { window.location.href = '/'; }, 1200);
+        }
       } else {
         showToast('Failed to save reply.', { type: 'error' });
       }

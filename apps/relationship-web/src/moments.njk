@@ -107,7 +107,7 @@ permalink: /moments/
         const replyDate = new Date(m.reply.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         replyHtml = `
           <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 0.3rem;">${m.reply.repliedBy || ''} replied ${replyDate}</div>
+            <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 0.3rem;">${m.reply.sunPoints ? `+${m.reply.sunPoints} — ` : ''}${m.reply.repliedBy || ''} replied ${replyDate}</div>
             <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.4; font-style: italic;">${m.reply.content}</p>
           </div>
         `;

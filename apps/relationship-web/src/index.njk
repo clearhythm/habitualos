@@ -5,7 +5,7 @@ permalink: /
 ---
 
 <div style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
-  <h1 style="color: white; font-size: 3rem; margin-bottom: 0.5rem;">🌧️ Rainy, 58°</h1>
+  <h1 id="weather-display" style="color: white; font-size: 3rem; margin-bottom: 0.5rem;">🌧️ Rainy, 58°</h1>
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0;">
     <!-- Capture card -->
@@ -57,10 +57,46 @@ permalink: /
 
 <script type="module">
   import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
+  import { animateText } from '/assets/js/components/text-animate.js';
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
 
   const userId = getUserId();
   const userName = getFirstName();
+
+  // Dynamic weather display
+  const weatherEl = document.getElementById('weather-display');
+  const WEATHER_CACHE_KEY = 'pidgerton_weather';
+
+  // Show cached weather immediately (seed default on first visit)
+  const defaultWeather = { emoji: '🌧️', label: 'Rainy', temp: 58 };
+  try {
+    const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
+    if (cached) {
+      weatherEl.textContent = `${cached.emoji} ${cached.label}, ${cached.temp}°`;
+    } else {
+      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(defaultWeather));
+    }
+  } catch (e) { /* use default */ }
+
+  // Async fetch fresh weather
+  (async () => {
+    try {
+      const res = await fetch('/api/weather-current');
+      const data = await res.json();
+      if (!data.success) return;
+
+      const fresh = { emoji: data.emoji, label: data.label, temp: data.temp };
+      const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) || 'null');
+      const changed = !cached || cached.temp !== fresh.temp || cached.label !== fresh.label;
+
+      if (changed) {
+        weatherEl.textContent = fresh.emoji + ' ';
+        await animateText(weatherEl, `${fresh.label}, ${fresh.temp}°`, { speed: 35, clearFirst: false });
+      }
+
+      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(fresh));
+    } catch (e) { /* keep cached/default */ }
+  })();
 
   // Fetch recent moments with replies
   try {
@@ -94,7 +130,7 @@ permalink: /
           const replyDate = new Date(m.reply.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           replyHtml = `
             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
-              <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 0.3rem;">${m.reply.repliedBy || ''} replied ${replyDate}</div>
+              <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 0.3rem;">${m.reply.sunPoints ? `+${m.reply.sunPoints} — ` : ''}${m.reply.repliedBy || ''} replied ${replyDate}</div>
               <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.4; font-style: italic;">${m.reply.content}</p>
             </div>
           `;
