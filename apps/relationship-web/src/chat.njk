@@ -116,53 +116,13 @@ permalink: /chat/
   </div>
 </div>
 
-<!-- "Ready to Capture?" Modal Overlay -->
-<div id="capture-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
-  <div style="background: white; padding: 2.5rem 2rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-    <div style="font-size: 2rem; margin-bottom: 1rem;">👒</div>
-    <h3 id="capture-modal-title" style="margin: 0 0 0.75rem 0; font-size: 1.25rem; color: #1e0a3c;">Ready to capture this?</h3>
-    <p id="capture-modal-summary" style="margin: 0 0 1.5rem 0; font-size: 0.95rem; color: #666; line-height: 1.5; text-align: left;"></p>
-    <button
-      id="capture-confirm-btn"
-      style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
-    >
-      Capture
-    </button>
-    <button
-      id="capture-dismiss-btn"
-      style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
-    >
-      No, keep talking
-    </button>
-  </div>
-</div>
-
-<!-- Survey Check-in Modal Overlay -->
-<div id="survey-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
-  <div style="background: white; padding: 2.5rem 2rem; border-radius: 12px; text-align: center; max-width: 420px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
-    <div style="font-size: 3.5rem;">🦥</div>
-    <h3 style="margin: 0; font-size: 1.25rem; color: #1e0a3c;">Save your replies?</h3>
-    <p style="margin: 0 0 1.5rem 0; font-size: 0.9rem; color: #666;">Here's what we'll save for you.</p>
-    <div id="survey-modal-scores" style="margin: 0 0 1.5rem 0; text-align: left;"></div>
-    <button
-      id="survey-confirm-btn"
-      style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
-    >
-      Save
-    </button>
-    <button
-      id="survey-dismiss-btn"
-      style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
-    >
-      Keep chatting
-    </button>
-  </div>
-</div>
 
 <script type="module">
   import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   import { showToast } from '/assets/js/components/chat-toast.js';
   import { createModal } from '/assets/js/components/modal.js';
+  import { animateText } from '/assets/js/components/text-animate.js';
+  import { getPartner, getPronouns } from '/assets/js/config/partners.js';
 
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
   const userId = getUserId();
@@ -189,51 +149,47 @@ permalink: /chat/
     document.head.appendChild(style);
   })();
   let thinkingTimer = null;
-  let thinkingInterval = null;
-  let thinkingTimeout = null;
+  let thinkingCancelled = false;
 
   const thinkingWords = ['Thinking', 'Considering', 'Reflecting', 'Pondering'];
 
   function startThinkingCycle(span, startIndex) {
+    thinkingCancelled = false;
     let wordIndex = startIndex || 0;
-    function typeWord() {
-      const word = thinkingWords[wordIndex % thinkingWords.length] + '...';
-      let charIndex = 0;
-      span.textContent = '\u00a0';
-      thinkingInterval = setInterval(() => {
-        charIndex++;
-        span.textContent = word.slice(0, charIndex);
-        if (charIndex >= word.length) {
-          clearInterval(thinkingInterval);
-          thinkingInterval = null;
-          wordIndex++;
-          thinkingTimeout = setTimeout(typeWord, 5000);
-        }
-      }, 60);
+    async function cycle() {
+      while (!thinkingCancelled) {
+        const word = thinkingWords[wordIndex % thinkingWords.length] + '...';
+        span.textContent = '\u00a0';
+        await animateText(span, word, { speed: 60 });
+        wordIndex++;
+        await new Promise(r => { thinkingTimer = setTimeout(r, 5000); });
+      }
     }
-    typeWord();
+    cycle();
   }
 
   function stopThinkingCycle() {
+    thinkingCancelled = true;
     clearTimeout(thinkingTimer);
-    clearInterval(thinkingInterval);
-    clearTimeout(thinkingTimeout);
-    thinkingInterval = null;
-    thinkingTimeout = null;
   }
 
-  // Capture modal elements
-  const captureModal = document.getElementById('capture-modal');
-  const captureModalSummary = document.getElementById('capture-modal-summary');
-  const captureConfirmBtn = document.getElementById('capture-confirm-btn');
-  const captureDismissBtn = document.getElementById('capture-dismiss-btn');
+  // Create modals via shared component
+  const captureModalObj = createModal({
+    id: 'capture-modal',
+    emoji: '👒',
+    title: 'Ready to capture this?',
+    confirmLabel: 'Capture',
+    dismissLabel: 'No, keep talking'
+  });
+  const surveyModalObj = createModal({
+    id: 'survey-modal',
+    emoji: '🦥',
+    title: 'Save your replies?',
+    subtitle: "Here's what we'll save for you.",
+    confirmLabel: 'Save',
+    dismissLabel: 'Keep chatting'
+  });
   let pendingSignal = null;
-
-  // Survey modal elements
-  const surveyModal = document.getElementById('survey-modal');
-  const surveyModalScores = document.getElementById('survey-modal-scores');
-  const surveyConfirmBtn = document.getElementById('survey-confirm-btn');
-  const surveyDismissBtn = document.getElementById('survey-dismiss-btn');
 
   // Streaming state
   let streamingMessageElement = null;
@@ -525,7 +481,7 @@ permalink: /chat/
     let greeting;
     if (replyMoment) {
       const sharerName = replyMoment.addedBy || 'your partner';
-      const sharerPronoun = { 'Erik': 'he', 'Marta': 'she' }[sharerName] || 'they';
+      const sharerPronoun = getPronouns(sharerName).they;
       greeting = `${timeGreeting}, ${name}. I see ${sharerName} shared something. What stands out to you about what ${sharerPronoun} wrote?`;
     } else if (hasSurvey) {
       greeting = `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
@@ -559,10 +515,10 @@ permalink: /chat/
     // Show moment summary in modal
     const data = signal.data || {};
     const summary = data.content || 'A moment from your conversation.';
-    captureModalSummary.textContent = summary;
+    captureModalObj.contentEl.innerHTML = `<p style="margin: 0 0 1rem 0; font-size: 0.95rem; color: #666; line-height: 1.5; text-align: left;">${summary}</p>`;
 
     // Show modal, disable chat
-    captureModal.style.display = 'flex';
+    captureModalObj.show();
     messageInput.disabled = true;
     sendButton.disabled = true;
     sendButton.style.background = 'rgba(255,255,255,0.2)';
@@ -593,10 +549,10 @@ permalink: /chat/
       `;
     }
 
-    surveyModalScores.innerHTML = scoresHtml;
+    surveyModalObj.contentEl.innerHTML = `<div style="margin: 0 0 1rem 0; text-align: left;">${scoresHtml}</div>`;
 
     // Show modal, disable chat
-    surveyModal.style.display = 'flex';
+    surveyModalObj.show();
     messageInput.disabled = true;
     sendButton.disabled = true;
     sendButton.style.background = 'rgba(255,255,255,0.2)';
@@ -695,8 +651,8 @@ permalink: /chat/
   }
 
   // Capture confirm button — save chat then redirect to capture page
-  captureConfirmBtn.addEventListener('click', async () => {
-    captureModal.style.display = 'none';
+  captureModalObj.confirmBtn.addEventListener('click', async () => {
+    captureModalObj.hide();
     if (!pendingSignal) return;
 
     const signalData = pendingSignal.data || {};
@@ -713,8 +669,8 @@ permalink: /chat/
   });
 
   // Capture dismiss button
-  captureDismissBtn.addEventListener('click', () => {
-    captureModal.style.display = 'none';
+  captureModalObj.dismissBtn.addEventListener('click', () => {
+    captureModalObj.hide();
     pendingSignal = null;
     messageInput.disabled = false;
     messageInput.focus();
@@ -722,11 +678,11 @@ permalink: /chat/
   });
 
   // Survey confirm button — save check-in results
-  surveyConfirmBtn.addEventListener('click', async () => {
+  surveyModalObj.confirmBtn.addEventListener('click', async () => {
     if (!pendingSignal) return;
 
-    surveyConfirmBtn.textContent = 'Saving...';
-    surveyConfirmBtn.disabled = true;
+    surveyModalObj.confirmBtn.textContent = 'Saving...';
+    surveyModalObj.confirmBtn.disabled = true;
 
     try {
       const response = await fetch('/api/survey-measurement-save', {
@@ -737,51 +693,45 @@ permalink: /chat/
 
       const data = await response.json();
       if (data.success) {
-        // Transition modal to completion state
-        const partners = { 'Erik': 'Marta', 'Marta': 'Erik' };
-        const partnerName = partners[userName] || 'your partner';
-        const modalInner = surveyModal.querySelector('div');
-        modalInner.innerHTML = `
-          <div style="font-size: 3.5rem;">🦥</div>
-          <h3 style="margin: 0; font-size: 1.25rem; color: #1e0a3c;">Check-in saved!</h3>
-          <p style="margin: 0 0 1.5rem 0; font-size: 0.9rem; color: #666; line-height: 1.4;">We'll check in with you again next week.</p>
-          <button
-            id="survey-done-btn"
-            style="padding: 0.75rem 2rem; background: #7c3aed; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);"
-          >Done</button>
-          <button
-            id="survey-new-chat-btn"
-            style="display: block; margin: 1.25rem auto 0; padding: 0.5rem 1rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;"
-          >Start new chat</button>
-        `;
-        document.getElementById('survey-done-btn').addEventListener('click', () => {
+        // Replace with completion modal
+        surveyModalObj.hide();
+        const doneModal = createModal({
+          id: 'survey-done-modal',
+          emoji: '🦥',
+          title: 'Check-in saved!',
+          subtitle: "We'll check in with you again next week.",
+          confirmLabel: 'Done',
+          dismissLabel: 'Start new chat'
+        });
+        doneModal.confirmBtn.addEventListener('click', () => {
           clearChatHistory();
           window.location.href = '/';
         });
-        document.getElementById('survey-new-chat-btn').addEventListener('click', () => {
+        doneModal.dismissBtn.addEventListener('click', () => {
           clearChatHistory();
           window.location.reload();
         });
+        doneModal.show();
       } else {
         showToast('Failed to save check-in.', { type: 'error' });
-        surveyModal.style.display = 'none';
-        surveyConfirmBtn.textContent = 'Save';
-        surveyConfirmBtn.disabled = false;
+        surveyModalObj.hide();
+        surveyModalObj.confirmBtn.textContent = 'Save';
+        surveyModalObj.confirmBtn.disabled = false;
       }
     } catch (error) {
       console.error('Error saving survey:', error);
       showToast('Failed to save check-in.', { type: 'error' });
-      surveyModal.style.display = 'none';
-      surveyConfirmBtn.textContent = 'Save';
-      surveyConfirmBtn.disabled = false;
+      surveyModalObj.hide();
+      surveyModalObj.confirmBtn.textContent = 'Save';
+      surveyModalObj.confirmBtn.disabled = false;
     }
 
     pendingSignal = null;
   });
 
   // Survey dismiss button
-  surveyDismissBtn.addEventListener('click', () => {
-    surveyModal.style.display = 'none';
+  surveyModalObj.dismissBtn.addEventListener('click', () => {
+    surveyModalObj.hide();
     pendingSignal = null;
     messageInput.disabled = false;
     messageInput.focus();

@@ -4,8 +4,7 @@ const { createReply, getReplyForMoment } = require('./_services/db-replies.cjs')
 const { addPoints, getTodayPoints } = require('./_services/db-sun-points.cjs');
 const { applyDelta, getBonusTier } = require('./_services/db-weather.cjs');
 const dbCore = require('@habitualos/db-core');
-
-const PARTNERS = { 'Erik': 'Marta', 'Marta': 'Erik' };
+const { PARTNERS } = require('./_services/partners.cjs');
 
 // Points by moment type
 const POINTS_BY_TYPE = {

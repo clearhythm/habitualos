@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getMomentsByUserId, getMoment } = require('./_services/db-moments.cjs');
 const { getOpenSurveyAction, getResponsesByUser } = require('@habitualos/survey-engine');
+const { getPartner, getPronouns } = require('./_services/partners.cjs');
 
 /**
  * POST /api/rely-chat-init
@@ -19,16 +20,10 @@ exports.handler = async (event) => {
   try {
     const { userId, timezone = 'America/Los_Angeles', userName, replyToMomentId } = JSON.parse(event.body);
 
-    // Derive partner name and pronouns (Erik ↔ Marta)
-    const PARTNERS = { 'Erik': 'Marta', 'Marta': 'Erik' };
-    const PRONOUNS = {
-      'Erik': { label: 'he/him', they: 'he', them: 'him', their: 'his', theirs: 'his' },
-      'Marta': { label: 'she/her', they: 'she', them: 'her', their: 'her', theirs: 'hers' }
-    };
-    const DEFAULT_P = { label: 'they/them', they: 'they', them: 'them', their: 'their', theirs: 'theirs' };
-    const partnerName = PARTNERS[userName] || null;
-    const userP = PRONOUNS[userName] || DEFAULT_P;
-    const partnerP = PRONOUNS[partnerName] || DEFAULT_P;
+    // Derive partner name and pronouns
+    const partnerName = getPartner(userName);
+    const userP = getPronouns(userName);
+    const partnerP = getPronouns(partnerName);
     const userPronouns = userP.label;
     const partnerPronouns = partnerP.label;
 
