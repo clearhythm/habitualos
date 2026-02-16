@@ -1007,15 +1007,16 @@ permalink: /chat/
     }
   });
 
-  // Handle reset chat button
+  // Handle reset chat button — always resets to clean default state
   document.getElementById('reset-chat-btn').addEventListener('click', () => {
     if (confirm('Start a fresh conversation? This will clear your current chat.')) {
-      clearChatHistory();
-      if (replyToMomentId) {
-        window.location.href = '/chat/';
-      } else {
-        window.location.reload();
-      }
+      // Clear both default and reply localStorage keys
+      ['', '_reply'].forEach(suffix => {
+        localStorage.removeItem('relational_chat_history' + suffix);
+        localStorage.removeItem('relational_chat_id' + suffix);
+        localStorage.removeItem('relational_last_saved_index' + suffix);
+      });
+      window.location.href = '/chat/';
     }
   });
 

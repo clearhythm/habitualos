@@ -5,7 +5,7 @@ permalink: /
 ---
 
 <div style="max-width: 800px; margin: 0 auto; padding: 2rem; text-align: center;">
-  <h1 id="weather-display" style="color: white; font-size: 3rem; margin-bottom: 0.5rem;">🌧️ Rainy, 58°</h1>
+  <h1 id="weather-display" style="color: white; font-size: 3rem; margin-bottom: 0.5rem;">Loading...</h1>
 
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 3rem 0;">
     <!-- Capture card -->
@@ -67,16 +67,16 @@ permalink: /
   const weatherEl = document.getElementById('weather-display');
   const WEATHER_CACHE_KEY = 'pidgerton_weather';
 
-  // Show cached weather immediately (seed default on first visit)
-  const defaultWeather = { emoji: '🌧️', label: 'Rainy', temp: 58 };
+  // Show cached weather immediately if available
+  let isFirstVisit = false;
   try {
     const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
     if (cached) {
       weatherEl.textContent = `${cached.emoji} ${cached.label}, ${cached.temp}°`;
     } else {
-      localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(defaultWeather));
+      isFirstVisit = true;
     }
-  } catch (e) { /* use default */ }
+  } catch (e) { isFirstVisit = true; }
 
   // Async fetch fresh weather
   (async () => {
@@ -86,12 +86,18 @@ permalink: /
       if (!data.success) return;
 
       const fresh = { emoji: data.emoji, label: data.label, temp: data.temp };
-      const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) || 'null');
-      const changed = !cached || cached.temp !== fresh.temp || cached.label !== fresh.label;
 
-      if (changed) {
+      if (isFirstVisit) {
+        // First visit: animate in from "Loading..." state
         weatherEl.textContent = fresh.emoji + ' ';
         await animateText(weatherEl, `${fresh.label}, ${fresh.temp}°`, { speed: 35, clearFirst: false });
+      } else {
+        const cached = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) || 'null');
+        const changed = !cached || cached.temp !== fresh.temp || cached.label !== fresh.label;
+        if (changed) {
+          weatherEl.textContent = fresh.emoji + ' ';
+          await animateText(weatherEl, `${fresh.label}, ${fresh.temp}°`, { speed: 35, clearFirst: false });
+        }
       }
 
       localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(fresh));
