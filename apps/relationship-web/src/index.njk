@@ -56,14 +56,15 @@ permalink: /
 </div>
 
 <script type="module">
-  import { isSignedIn, getUserId } from '/assets/js/auth/auth.js';
+  import { isSignedIn, getUserId, getFirstName } from '/assets/js/auth/auth.js';
   if (!isSignedIn()) { location.href = '/signin/'; throw new Error('redirecting'); }
 
   const userId = getUserId();
+  const userName = getFirstName();
 
-  // Fetch recent moments
+  // Fetch recent moments with replies
   try {
-    const res = await fetch('/api/moment-list?limit=5');
+    const res = await fetch('/api/moment-list?limit=5&includeReplies=true');
     const data = await res.json();
 
     const listEl = document.getElementById('moments-list');
@@ -83,6 +84,31 @@ permalink: /
         const addedBy = m.addedBy || '';
         const date = new Date(m.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+        // Check if this is partner's moment and has no reply yet
+        const isPartnerMoment = addedBy && addedBy !== userName;
+        const hasReply = !!m.reply;
+
+        // Reply section
+        let replyHtml = '';
+        if (hasReply) {
+          const replyDate = new Date(m.reply.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          replyHtml = `
+            <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
+              <div style="color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 0.3rem;">${m.reply.repliedBy || ''} replied ${replyDate}</div>
+              <p style="margin: 0; color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.4; font-style: italic;">${m.reply.content}</p>
+            </div>
+          `;
+        } else if (isPartnerMoment) {
+          replyHtml = `
+            <div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.08);">
+              <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem;">Reply: </span>
+              <a href="/chat/?replyTo=${m.id}" style="color: rgba(255,255,255,0.6); font-size: 0.8rem; text-decoration: none;">Chat</a>
+              <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem; margin: 0 0.25rem;">|</span>
+              <span style="color: rgba(255,255,255,0.2); font-size: 0.8rem; cursor: default;" title="Coming soon">Write</span>
+            </div>
+          `;
+        }
+
         item.innerHTML = `
           <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
             <span class="moment-badge ${badgeClass}">${typeLabel}</span>
@@ -90,6 +116,7 @@ permalink: /
             <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem; margin-left: auto;">${date}</span>
           </div>
           <p style="margin: 0; color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;">${m.content}</p>
+          ${replyHtml}
         `;
 
         listEl.appendChild(item);

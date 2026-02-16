@@ -41,6 +41,8 @@ export interface RequestBody {
   // General params
   timezone?: string;
   userName?: string;
+  // Reply mode
+  replyToMomentId?: string;
 }
 
 export interface ChatTypeConfig {
@@ -213,6 +215,8 @@ export function createChatStreamHandler(
       // General
       timezone,
       userName,
+      // Reply mode
+      replyToMomentId,
     } = body;
 
     // Get chat type configuration
@@ -261,6 +265,7 @@ export function createChatStreamHandler(
     } else {
       // For other chat types (fox-ea, obi-wai, rely, etc.)
       initBody = { userId, timezone, userName };
+      if (replyToMomentId) initBody.replyToMomentId = replyToMomentId;
     }
 
     // Initialize chat session - get system prompt and tools from Node.js function

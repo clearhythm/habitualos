@@ -29,6 +29,19 @@ permalink: /chat/
   #message-input {
     color: #1e0a3c;
   }
+
+  .moment-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .moment-badge-happy { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+  .moment-badge-sad { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+  .moment-badge-hard { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
 </style>
 
 <!-- Chat Container -->
@@ -154,6 +167,11 @@ permalink: /chat/
   const userId = getUserId();
   const userName = getFirstName();
 
+  // Reply mode detection
+  const urlParams = new URLSearchParams(window.location.search);
+  const replyToMomentId = urlParams.get('replyTo');
+  let replyMoment = null;
+
   const chatMessages = document.getElementById('chat-messages-inner');
   const chatMessagesContainer = document.getElementById('chat-messages');
   const chatForm = document.getElementById('chat-form');
@@ -225,10 +243,11 @@ permalink: /chat/
   const THEME_COLOR = '#7c3aed'; // Purple
   const THEME_COLOR_DARK = '#4c1d95'; // Deep purple
 
-  // Local storage keys for relational chat
-  const RELATIONAL_CHAT_HISTORY_KEY = 'relational_chat_history';
-  const RELATIONAL_CHAT_ID_KEY = 'relational_chat_id';
-  const RELATIONAL_LAST_SAVED_INDEX_KEY = 'relational_last_saved_index';
+  // Local storage keys for relational chat (reply mode uses separate keys)
+  const REPLY_SUFFIX = replyToMomentId ? '_reply' : '';
+  const RELATIONAL_CHAT_HISTORY_KEY = 'relational_chat_history' + REPLY_SUFFIX;
+  const RELATIONAL_CHAT_ID_KEY = 'relational_chat_id' + REPLY_SUFFIX;
+  const RELATIONAL_LAST_SAVED_INDEX_KEY = 'relational_last_saved_index' + REPLY_SUFFIX;
 
   function saveChatHistory(history) {
     localStorage.setItem(RELATIONAL_CHAT_HISTORY_KEY, JSON.stringify(history));
@@ -330,7 +349,7 @@ permalink: /chat/
 
     // Filter out signal text — don't render anything from signals onward
     let displayText = streamingText;
-    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT'];
+    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT', 'SEND_REPLY'];
     for (const marker of signalMarkers) {
       const idx = displayText.indexOf(marker);
       if (idx !== -1) {
@@ -361,7 +380,7 @@ permalink: /chat/
 
     // Strip signal text from display and stored content
     let displayText = streamingText;
-    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT'];
+    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT', 'SEND_REPLY'];
     for (const marker of signalMarkers) {
       const idx = displayText.indexOf(marker);
       if (idx !== -1) {
@@ -370,9 +389,13 @@ permalink: /chat/
       }
     }
     if (!displayText && signal) {
-      displayText = signal.type === 'STORE_MEASUREMENT'
-        ? "Here are your check-in results."
-        : "Looks like we're ready to capture this.";
+      if (signal.type === 'STORE_MEASUREMENT') {
+        displayText = "Here are your check-in results.";
+      } else if (signal.type === 'SEND_REPLY') {
+        displayText = "Sending your reply now.";
+      } else {
+        displayText = "Looks like we're ready to capture this.";
+      }
     }
 
     // Re-render with final markdown (signal-stripped)
@@ -426,31 +449,68 @@ permalink: /chat/
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
 
+  // Reply mode: fetch moment details for context banner
+  if (replyToMomentId) {
+    try {
+      const res = await fetch(`/api/moment-list?limit=100`);
+      const data = await res.json();
+      if (data.success && data.moments) {
+        replyMoment = data.moments.find(m => m.id === replyToMomentId);
+      }
+    } catch (e) { /* proceed without moment details */ }
+
+    // In reply mode, always start fresh
+    clearChatHistory();
+    chatHistory = [];
+  }
+
   // Add header to chat messages area
   const headerDiv = document.createElement('div');
   headerDiv.style.cssText = 'text-align: center; padding: 2rem 1rem 1rem 1rem; margin-bottom: 1rem;';
-  headerDiv.innerHTML = `
-    <div style="font-size: 3rem; margin-bottom: .5rem;">🐽</div>
-    <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: white; font-weight: 600;">Chat</h1>
-    <p style="margin: 0; font-size: 0.95rem; color: rgba(255,255,255,0.6);">Get support from one who knows.<br/>Your chats stay 100% private.</p>
-  `;
+
+  if (replyMoment) {
+    // Reply mode: context banner
+    const momentDate = new Date(replyMoment.occurredAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const badgeClass = `moment-badge-${replyMoment.type || 'happy'}`;
+    headerDiv.innerHTML = `
+      <div style="font-size: 3rem; margin-bottom: .5rem;">🐽</div>
+      <h1 style="margin: 0 0 0.75rem 0; font-size: 1.5rem; color: white; font-weight: 600;">Replying to ${replyMoment.addedBy || 'partner'}</h1>
+      <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 1rem 1.25rem; text-align: left; margin: 0 auto; max-width: 500px;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+          <span class="moment-badge ${badgeClass}">${replyMoment.type || 'happy'}</span>
+          <span style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">${replyMoment.addedBy || ''}</span>
+          <span style="color: rgba(255,255,255,0.35); font-size: 0.8rem; margin-left: auto;">${momentDate}</span>
+        </div>
+        <p style="margin: 0; color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.5;">${replyMoment.content}</p>
+      </div>
+      <a href="/" style="display: inline-block; margin-top: 0.75rem; color: rgba(255,255,255,0.5); font-size: 0.85rem; text-decoration: none;">Cancel</a>
+    `;
+  } else {
+    // Normal mode: standard header
+    headerDiv.innerHTML = `
+      <div style="font-size: 3rem; margin-bottom: .5rem;">🐽</div>
+      <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem; color: white; font-weight: 600;">Chat</h1>
+      <p style="margin: 0; font-size: 0.95rem; color: rgba(255,255,255,0.6);">Get support from one who knows.<br/>Your chats stay 100% private.</p>
+    `;
+  }
   chatMessages.appendChild(headerDiv);
 
-  // Check for pending survey — if chat is just a stale greeting (no user messages),
-  // clear it so we can show the survey greeting instead
+  // Check for pending survey (skip in reply mode)
   let hasSurvey = false;
-  try {
-    const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
-    if (res.ok) {
-      const data = await res.json();
-      hasSurvey = !!data.hasSurvey;
-    }
-  } catch (e) { /* proceed without survey info */ }
+  if (!replyToMomentId) {
+    try {
+      const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        hasSurvey = !!data.hasSurvey;
+      }
+    } catch (e) { /* proceed without survey info */ }
 
-  const hasUserMessages = chatHistory.some(m => m.role === 'user');
-  if (hasSurvey && chatHistory.length > 0 && !hasUserMessages) {
-    clearChatHistory();
-    chatHistory = [];
+    const hasUserMessages = chatHistory.some(m => m.role === 'user');
+    if (hasSurvey && chatHistory.length > 0 && !hasUserMessages) {
+      clearChatHistory();
+      chatHistory = [];
+    }
   }
 
   // Initialize chat with opening message or load history
@@ -459,9 +519,14 @@ permalink: /chat/
     const timeGreeting = hour < 4 ? 'Happy late night' : hour < 12 ? 'Good morning' : hour < 13 ? 'Happy midday' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Happy late night';
     const name = userName || 'friend';
 
-    let greeting = hasSurvey
-      ? `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`
-      : `${timeGreeting}, ${name}. What's in your heart or mind today?`;
+    let greeting;
+    if (replyMoment) {
+      greeting = `${timeGreeting}, ${name}. I see ${replyMoment.addedBy || 'your partner'} shared something. What stands out to you about what they wrote?`;
+    } else if (hasSurvey) {
+      greeting = `${timeGreeting}, ${name}. There's a weekly mini-survey assigned to you. Ready to take it now?`;
+    } else {
+      greeting = `${timeGreeting}, ${name}. What's in your heart or mind today?`;
+    }
 
     chatHistory.push({ role: 'assistant', content: greeting, timestamp: new Date().toISOString() });
     saveChatHistory(chatHistory);
@@ -476,6 +541,9 @@ permalink: /chat/
   function handleSignal(signal) {
     if (!signal) return;
 
+    if (signal.type === 'SEND_REPLY') {
+      return handleReplySignal(signal);
+    }
     if (signal.type === 'STORE_MEASUREMENT') {
       return handleSurveySignal(signal);
     }
@@ -528,6 +596,44 @@ permalink: /chat/
     sendButton.disabled = true;
     sendButton.style.background = 'rgba(255,255,255,0.2)';
     sendButton.style.cursor = 'not-allowed';
+  }
+
+  // Handle SEND_REPLY signal — save reply and navigate back
+  async function handleReplySignal(signal) {
+    const data = signal.data || {};
+    const momentId = data.momentId || replyToMomentId;
+    const content = data.content;
+
+    if (!momentId || !content) {
+      showToast('Reply could not be saved.', { type: 'error' });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/moment-reply-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          momentId,
+          content,
+          repliedBy: userName
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // Clear reply-mode chat history
+        clearChatHistory();
+        showToast('Reply sent!');
+        setTimeout(() => { window.location.href = '/'; }, 1200);
+      } else {
+        showToast('Failed to save reply.', { type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error saving reply:', error);
+      showToast('Failed to save reply.', { type: 'error' });
+    }
   }
 
   // Save chat and get chatId (for linking moment back to conversation)
@@ -674,6 +780,7 @@ permalink: /chat/
         userName,
         message,
         timezone: userTimezone,
+        replyToMomentId: replyToMomentId || undefined,
         chatHistory: chatHistory.slice(0, -1).map(msg => ({
           role: msg.role,
           content: msg.content

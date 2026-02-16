@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { getMomentsByUserId } = require('./_services/db-moments.cjs');
+const { getMomentsByUserId, getMoment } = require('./_services/db-moments.cjs');
 const { getOpenSurveyAction, getResponsesByUser } = require('@habitualos/survey-engine');
 
 /**
@@ -17,7 +17,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, timezone = 'America/Los_Angeles', userName } = JSON.parse(event.body);
+    const { userId, timezone = 'America/Los_Angeles', userName, replyToMomentId } = JSON.parse(event.body);
 
     // Derive partner name (Erik ↔ Marta)
     const PARTNERS = { 'Erik': 'Marta', 'Marta': 'Erik' };
@@ -187,11 +187,64 @@ STORE_MEASUREMENT
 After the signal, say something brief and grounded. Then return to normal conversation.`;
     }
 
-    const fullPrompt = systemPrompt + surveyPrompt;
+    // Reply mode prompt — when user is replying to a partner's moment
+    let replyPrompt = '';
+    let replyMode = null;
+    if (replyToMomentId) {
+      try {
+        const replyMoment = await getMoment(replyToMomentId);
+        if (replyMoment) {
+          const momentDate = new Date(replyMoment.occurredAt).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+          replyMode = {
+            momentId: replyMoment.id,
+            addedBy: replyMoment.addedBy,
+            type: replyMoment.type,
+            content: replyMoment.content
+          };
+          replyPrompt = `
+
+== REPLY MODE ==
+
+${userName} is replying to a moment shared by ${replyMoment.addedBy || partnerName || 'their partner'}.
+
+The moment:
+- Type: ${replyMoment.type || 'unknown'}
+- Shared: ${momentDate}
+- Content: "${replyMoment.content}"
+
+Your role in reply mode:
+- Help them sit with what their partner shared
+- What stands out to them? What might have been hard for their partner?
+- What do they want to acknowledge, affirm, or say?
+- Help them craft a loving, present response — in their voice, not yours
+- A few sentences is plenty for a reply
+- Don't steer toward capturing a new moment — this is about responding to an existing one
+
+When they're ready, confirm the reply and emit:
+
+SEND_REPLY
+---
+{
+  "momentId": "${replyMoment.id}",
+  "content": "[their reply, in their voice — warm, direct, and brief]"
+}
+
+After the signal, say something brief and grounded. No fanfare.`;
+        }
+      } catch (err) {
+        console.warn('[rely-chat-init] Reply moment fetch failed (non-fatal):', err.message);
+      }
+    }
+
+    const fullPrompt = systemPrompt + surveyPrompt + replyPrompt;
 
     // Determine available modes for frontend
     const availableModes = ['support'];
     if (surveyMode) availableModes.push('survey');
+    if (replyMode) availableModes.push('reply');
 
     return {
       statusCode: 200,
@@ -201,7 +254,8 @@ After the signal, say something brief and grounded. Then return to normal conver
         systemMessages: [{ type: 'text', text: fullPrompt, cache_control: { type: 'ephemeral' } }],
         tools: [], // Relly has no tools - signal-based
         availableModes,
-        surveyActionId: surveyMode?.actionId || null
+        surveyActionId: surveyMode?.actionId || null,
+        replyMode: replyMode || null
       })
     };
 
