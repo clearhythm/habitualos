@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { createProject, updateProject, getProject } = require('./_services/db-projects.cjs');
-const { generateProjectId } = require('./_utils/data-utils.cjs');
+const { createAction } = require('./_services/db-actions.cjs');
+const { generateProjectId, generateActionId } = require('./_utils/data-utils.cjs');
 const { getDraftsByUser, getDraftById, updateDraft } = require('./_services/db-agent-drafts.cjs');
 const { getAction, updateActionState } = require('./_services/db-actions.cjs');
 const { generatePreferenceProfile } = require('./_utils/preference-profile-generator.cjs');
@@ -10,6 +11,46 @@ const { generatePreferenceProfile } = require('./_utils/preference-profile-gener
  */
 async function handleToolCall(toolUse, userId) {
   const { name, input } = toolUse;
+
+  if (name === 'create_action') {
+    const { title, description, priority, taskType, taskConfig, agentId } = input;
+
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return { error: 'Title is required' };
+    }
+
+    const actionId = generateActionId();
+    const actionData = {
+      _userId: userId,
+      agentId: agentId || null,
+      projectId: null,
+      goalId: null,
+      title: title.trim(),
+      description: description || '',
+      state: 'open',
+      priority: priority || 'medium',
+      taskType: taskType || 'scheduled',
+      assignedTo: 'user',
+      taskConfig: taskConfig || {},
+      scheduleTime: null,
+      dueDate: null,
+      startedAt: null,
+      completedAt: null,
+      dismissedAt: null,
+      dismissedReason: null,
+      errorMessage: null,
+      type: null,
+      content: null
+    };
+
+    await createAction(actionId, actionData);
+
+    return {
+      success: true,
+      message: `Created action: "${title.trim()}"`,
+      action: { id: actionId, title: title.trim(), state: 'open', priority: priority || 'medium' }
+    };
+  }
 
   if (name === 'create_project') {
     const { name: projectName, description, success_criteria, timeline, status } = input;

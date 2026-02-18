@@ -3,8 +3,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { getProjectsByUserId, createProject, updateProject, getProject } = require('./_services/db-projects.cjs');
 const { getWorkLogsByUserId } = require('./_services/db-work-logs.cjs');
 const { getAgentsByUserId } = require('./_services/db-agents.cjs');
-const { getActionsByUserId } = require('./_services/db-actions.cjs');
-const { generateProjectId } = require('./_utils/data-utils.cjs');
+const { getActionsByUserId, createAction } = require('./_services/db-actions.cjs');
+const { generateProjectId, generateActionId } = require('./_utils/data-utils.cjs');
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
@@ -15,6 +15,46 @@ const anthropic = new Anthropic({
  */
 async function handleToolCall(toolBlock, userId) {
   const { name, input } = toolBlock;
+
+  if (name === 'create_action') {
+    const { title, description, priority, taskType, taskConfig, agentId } = input;
+
+    if (!title || typeof title !== 'string' || title.trim().length === 0) {
+      return { error: 'Title is required' };
+    }
+
+    const actionId = generateActionId();
+    const actionData = {
+      _userId: userId,
+      agentId: agentId || null,
+      projectId: null,
+      goalId: null,
+      title: title.trim(),
+      description: description || '',
+      state: 'open',
+      priority: priority || 'medium',
+      taskType: taskType || 'scheduled',
+      assignedTo: 'user',
+      taskConfig: taskConfig || {},
+      scheduleTime: null,
+      dueDate: null,
+      startedAt: null,
+      completedAt: null,
+      dismissedAt: null,
+      dismissedReason: null,
+      errorMessage: null,
+      type: null,
+      content: null
+    };
+
+    await createAction(actionId, actionData);
+
+    return {
+      success: true,
+      message: `Created action: "${title.trim()}"`,
+      action: { id: actionId, title: title.trim(), state: 'open', priority: priority || 'medium' }
+    };
+  }
 
   if (name === 'create_project') {
     const { name: projectName, description, success_criteria, timeline, status } = input;
@@ -220,10 +260,15 @@ YOUR CAPABILITIES:
 - Help them decide what to work on next
 - Create and update projects when they discuss new initiatives or want to reorganize
 
-PROJECT MANAGEMENT TOOLS:
+ACTION & PROJECT MANAGEMENT TOOLS:
 You have access to these tools:
 
-1. create_project(name, description?, success_criteria?, timeline?, status?) - Create a new project
+1. create_action(title, description?, priority?, taskType?, taskConfig?) - Create a new action
+   - Use when user asks to add, create, or set up a new action/task
+   - Action is created in 'open' state, ready for scheduling
+   - You CAN and SHOULD create actions directly — do not tell the user they need to create actions themselves
+
+2. create_project(name, description?, success_criteria?, timeline?, status?) - Create a new project
    - Use when user discusses a new initiative, area of focus, or project
    - description: Brief description of the project
    - success_criteria: Array of specific outcomes that define success
@@ -231,10 +276,15 @@ You have access to these tools:
    - Status defaults to "open"
    - After creating, mention the project naturally and include a link: [Project Name](/do/projects)
 
-2. update_project(project_id, updates) - Update an existing project
+3. update_project(project_id, updates) - Update an existing project
    - Can update: name, description, success_criteria, timeline, status
    - Status values: open, completed, archived, deleted
    - Use when user wants to refine a project's focus or change its status
+
+When to create actions:
+- User explicitly asks to create/add an action or task
+- User describes specific work that should be tracked
+- A conversation reveals a concrete next step worth capturing
 
 When to create projects:
 - User explicitly asks to create/add a project
@@ -266,8 +316,31 @@ CONVERSATIONAL APPROACH:
       content: message
     });
 
-    // Define tools for project management
+    // Define tools
     const tools = [
+      {
+        name: "create_action",
+        description: "Create a new action/task. Use when the user asks to add, create, or set up a new action. The action will be created in 'open' state.",
+        input_schema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "2-5 word title for the action" },
+            description: { type: "string", description: "Brief overview of what this action involves" },
+            priority: { type: "string", enum: ["low", "medium", "high"], description: "Priority level (default: medium)" },
+            taskType: { type: "string", enum: ["scheduled", "manual", "measurement", "interactive"], description: "Type of action (default: scheduled)" },
+            taskConfig: {
+              type: "object",
+              description: "Task configuration",
+              properties: {
+                instructions: { type: "string", description: "Detailed execution instructions" },
+                expectedOutput: { type: "string", description: "What this action will produce" }
+              }
+            },
+            agentId: { type: "string", description: "Agent ID to assign the action to (optional)" }
+          },
+          required: ["title"]
+        }
+      },
       {
         name: "create_project",
         description: "Create a new project to track an initiative or area of work. Use when the user discusses a new project-level initiative.",
