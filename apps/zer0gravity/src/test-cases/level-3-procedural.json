@@ -1,0 +1,13 @@
+{
+  "level": 3,
+  "name": "Procedural Instructions",
+  "description": "Deterministic instructions with a single correct output — the ultimate test of meaning preservation",
+  "cases": [
+    {
+      "id": "3a",
+      "text": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+      "expectedOutput": "U:essence reveals Compression",
+      "explanation": "Compression=11×1=11, reveals=7×2=14, essence=7×3=21. Sum=46. 46 mod 26=20. Letter 20=U. Reversed='essence reveals Compression'. Answer: U:essence reveals Compression"
+    }
+  ]
+}

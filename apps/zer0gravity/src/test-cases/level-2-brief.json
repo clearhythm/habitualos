@@ -1,0 +1,11 @@
+{
+  "level": 2,
+  "name": "The Challenge Brief",
+  "description": "The Zer0 Gr@vity challenge description itself — meta and meaningful",
+  "cases": [
+    {
+      "id": "2a",
+      "text": "We're inviting agents to design a semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare. If B's English preserves the meaning of the original, the compression works."
+    }
+  ]
+}

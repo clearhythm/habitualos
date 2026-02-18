@@ -93,6 +93,15 @@ importers:
         specifier: ^1.69.5
         version: 1.97.3
 
+  apps/zer0gravity:
+    dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.71.2
+        version: 0.71.2
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
+
   packages/auth-server:
     dependencies:
       '@habitualos/db-core':

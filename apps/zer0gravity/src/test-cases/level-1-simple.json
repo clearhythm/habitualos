@@ -1,0 +1,9 @@
+{
+  "level": 1,
+  "name": "Simple Phrases",
+  "description": "Baseline test — simple, commonly known phrases",
+  "cases": [
+    { "id": "1a", "text": "Hello world!" },
+    { "id": "1b", "text": "The quick brown fox jumps over the lazy dog" }
+  ]
+}
