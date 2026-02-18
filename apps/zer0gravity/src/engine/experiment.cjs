@@ -12,6 +12,9 @@ const { scoreAll } = require('./scorer.cjs');
 
 const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
 
+// Use dedicated API key if available, otherwise fall back to shared key
+const API_KEY = process.env.ZER0GRAVITY_API_KEY || process.env.ANTHROPIC_API_KEY;
+
 /**
  * Count tokens for a given text using the Anthropic API.
  */
@@ -48,7 +51,7 @@ async function runExperiment({
   model = DEFAULT_MODEL,
   testCaseId = 'unknown'
 }) {
-  const anthropic = new Anthropic();
+  const anthropic = new Anthropic({ apiKey: API_KEY });
   const startTime = Date.now();
   const totalUsage = { input: 0, output: 0 };
 

@@ -128,10 +128,12 @@ async function main() {
     process.exit(1);
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('ANTHROPIC_API_KEY not found. Check your .env file.');
+  const apiKey = process.env.ZER0GRAVITY_API_KEY || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.error('No API key found. Set ZER0GRAVITY_API_KEY or ANTHROPIC_API_KEY in .env');
     process.exit(1);
   }
+  console.error(`[zer0gravity] Using ${process.env.ZER0GRAVITY_API_KEY ? 'ZER0GRAVITY_API_KEY' : 'ANTHROPIC_API_KEY (shared)'}`);
 
   const testCaseSets = loadTestCases(args.all ? null : args.level);
   const encodingSystem = loadEncoding(args.encoding);
