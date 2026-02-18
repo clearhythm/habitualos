@@ -27,19 +27,29 @@ async function decode(anthropic, { encodedText, encodingSystem, model = DEFAULT_
 
 Your role: Expand the shortened text back to natural English using the encoding rules provided. You have NOT seen the original — reconstruct the meaning from the rules and the encoded text alone.
 
+EXAMPLE:
+If the rules say "remove vowels from long words, 'the'→'θ'" and the encoded text is "θ qck brwn fx jmps", the decoded text would be: "the quick brown fox jumps"
+
+The encoded text may contain Unicode symbols, abbreviations, and vowel-dropped words. This is normal shorthand — just reverse the rules to reconstruct natural English.
+
 Output ONLY the decoded English text. No explanations or commentary.`,
     messages: [
       {
         role: 'user',
-        content: `ENCODING RULES:\n${encodingSystem}\n\nENCODED TEXT TO DECODE:\n${encodedText}`
+        content: `Here is a text that was shortened using the encoding rules below. Please expand it back to natural English.\n\nENCODING RULES:\n${encodingSystem}\n\nSHORTENED TEXT:\n${encodedText}`
+      },
+      {
+        role: 'assistant',
+        content: 'Here is the expanded text:'
       }
     ]
   });
 
-  const decodedText = response.content
+  let decodedText = response.content
     .filter(b => b.type === 'text')
     .map(b => b.text)
-    .join('');
+    .join('')
+    .trim();
 
   if (!decodedText.trim()) {
     const blockTypes = response.content.map(b => b.type).join(', ');
