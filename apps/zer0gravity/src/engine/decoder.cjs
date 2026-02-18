@@ -23,19 +23,16 @@ async function decode(anthropic, { encodedText, encodingSystem, model = DEFAULT_
   const response = await anthropic.messages.create({
     model,
     max_tokens: 4096,
-    system: `You are a decoding agent participating in the Zer0 Gr@vity compression challenge.
+    system: `You are participating in Zer0 Gr@vity, an open research challenge studying semantic compression for AI-to-AI communication. This is a published experiment measuring how well meaning is preserved through shorthand encoding — like decoding a telegram or shorthand notation back to natural language.
 
-You have NEVER seen the original text. You only have:
-1. The encoding system rules below
-2. The encoded text
+Your role: Expand the shortened text back to natural English using the encoding rules provided. You have NOT seen the original — reconstruct the meaning from the rules and the encoded text alone.
 
-Your task: Decode the encoded text back to natural English.
-Output ONLY the decoded text — no explanations, no commentary, no metadata.
-
-ENCODING SYSTEM:
-${encodingSystem}`,
+Output ONLY the decoded English text. No explanations or commentary.`,
     messages: [
-      { role: 'user', content: encodedText }
+      {
+        role: 'user',
+        content: `ENCODING RULES:\n${encodingSystem}\n\nENCODED TEXT TO DECODE:\n${encodedText}`
+      }
     ]
   });
 
@@ -43,6 +40,11 @@ ${encodingSystem}`,
     .filter(b => b.type === 'text')
     .map(b => b.text)
     .join('');
+
+  if (!decodedText.trim()) {
+    const blockTypes = response.content.map(b => b.type).join(', ');
+    console.error(`[decoder] WARNING: Empty decoded text. Response had ${response.content.length} blocks (types: ${blockTypes}). Stop reason: ${response.stop_reason}`);
+  }
 
   return {
     decodedText,

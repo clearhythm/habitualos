@@ -16,6 +16,8 @@ const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
  * Count tokens for a given text using the Anthropic API.
  */
 async function countTokens(anthropic, text, model = DEFAULT_MODEL) {
+  if (!text || !text.trim()) return 0;
+
   try {
     const result = await anthropic.messages.countTokens({
       model,
@@ -67,6 +69,13 @@ async function runExperiment({
   console.error(`[zer0gravity]   Encoding...`);
   const encodeResult = await encode(anthropic, { text: originalText, encodingSystem, model });
   trackUsage(encodeResult.usage);
+
+  // Guard: if encoder returned nothing, bail with useful error
+  if (!encodeResult.encodedText || !encodeResult.encodedText.trim()) {
+    throw new Error(`Encoder returned empty text for ${testCaseId}. The model may have refused or returned non-text content.`);
+  }
+
+  console.error(`[zer0gravity]   Encoded: "${encodeResult.encodedText.slice(0, 80)}${encodeResult.encodedText.length > 80 ? '...' : ''}"`);
 
   // Step 3: Count tokens for encoded
   console.error(`[zer0gravity]   Counting encoded tokens...`);
