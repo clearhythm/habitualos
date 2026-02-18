@@ -4,6 +4,7 @@
   "private": true,
   "description": "Zer0 Gr@vity — Semantic compression scoring engine for agent-to-agent communication",
   "scripts": {
+    "start": "node server.cjs",
     "experiment": "node cli.cjs run",
     "experiment:all": "node cli.cjs run --all"
   },

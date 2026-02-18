@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zer0 Gr@vity</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141f;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --text-dim: #8888a0;
+    --accent: #6c5ce7;
+    --accent-dim: #4a3db5;
+    --green: #2ecc71;
+    --yellow: #f1c40f;
+    --red: #e74c3c;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 { font-size: 1.4rem; font-weight: 600; }
+  header h1 span { color: var(--accent); }
+  header .subtitle { color: var(--text-dim); font-size: 0.8rem; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    border-bottom: 2px solid transparent;
+    font-family: var(--mono);
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Run panel */
+  .run-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .input-group { margin-bottom: 1rem; }
+  .input-group label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  textarea, select, input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    border-radius: 4px;
+    resize: vertical;
+  }
+  textarea:focus, select:focus { border-color: var(--accent); outline: none; }
+
+  textarea.encoding { min-height: 120px; }
+  textarea.text-input { min-height: 80px; }
+
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.4rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-dim); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+
+  /* Results */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.8rem;
+  }
+  .result-id { font-weight: 600; font-size: 0.9rem; }
+  .result-total { font-size: 1.4rem; font-weight: 700; }
+  .result-total .max { color: var(--text-dim); font-size: 0.9rem; font-weight: 400; }
+
+  .score-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+  }
+  .score-label { width: 110px; color: var(--text-dim); text-align: right; flex-shrink: 0; }
+  .score-bar {
+    flex: 1;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+  }
+  .score-value { width: 50px; text-align: right; font-size: 0.75rem; flex-shrink: 0; }
+
+  .text-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .text-block label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+  }
+  .text-block pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.6rem;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 150px;
+    overflow-y: auto;
+    line-height: 1.4;
+  }
+
+  .detail-row {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Status */
+  .status {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    padding: 0.5rem 0;
+  }
+  .status.running { color: var(--yellow); }
+  .status.error { color: var(--red); }
+
+  /* History panel */
+  .history-list { list-style: none; }
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .history-item:hover { background: var(--surface); }
+  .history-meta { color: var(--text-dim); font-size: 0.7rem; }
+
+  .empty { color: var(--text-dim); font-size: 0.8rem; padding: 2rem; text-align: center; }
+
+  @media (max-width: 700px) {
+    .run-grid { grid-template-columns: 1fr; }
+    .text-compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Zer0 Gr<span>@</span>vity</h1>
+  <span class="subtitle">semantic compression engine</span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-panel="run">Run</button>
+  <button class="tab" data-panel="results">Results</button>
+</div>
+
+<div id="run" class="panel active">
+  <div class="run-grid">
+    <div>
+      <div class="input-group">
+        <label>Test Case</label>
+        <select id="testCaseSelect">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Text to Compress</label>
+        <textarea id="inputText" class="text-input" placeholder="Select a test case or enter custom text..."></textarea>
+      </div>
+      <div class="input-group">
+        <label>Encoding System</label>
+        <textarea id="encodingSystem" class="encoding">VOWEL_DROP: Remove all vowels from words longer than 3 letters.
+COMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.
+PRESERVE: Keep numbers, proper nouns, and punctuation unchanged.
+COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.</textarea>
+      </div>
+      <div class="btn-row">
+        <button id="runBtn" onclick="runExperiment()">Run Experiment</button>
+        <button id="runAllBtn" onclick="runAll()" style="background: var(--surface); border: 1px solid var(--border);">Run All Levels</button>
+        <span id="status" class="status"></span>
+      </div>
+    </div>
+    <div id="liveResult">
+      <div class="empty">Run an experiment to see results</div>
+    </div>
+  </div>
+</div>
+
+<div id="results" class="panel">
+  <div id="resultsList"></div>
+</div>
+
+<script>
+let testCases = [];
+let allResults = [];
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+    if (tab.dataset.panel === 'results') loadResults();
+  });
+});
+
+// Load test cases
+async function loadTestCases() {
+  const res = await fetch('/api/test-cases');
+  testCases = await res.json();
+  const select = document.getElementById('testCaseSelect');
+  select.innerHTML = '<option value="custom">Custom text</option>';
+  testCases.forEach(level => {
+    level.cases.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify(c);
+      const preview = c.text.length > 50 ? c.text.slice(0, 50) + '...' : c.text;
+      opt.textContent = `L${level.level} ${c.id}: ${preview}`;
+      select.appendChild(opt);
+    });
+  });
+}
+
+document.getElementById('testCaseSelect').addEventListener('change', function() {
+  if (this.value === 'custom') {
+    document.getElementById('inputText').value = '';
+    return;
+  }
+  const tc = JSON.parse(this.value);
+  document.getElementById('inputText').value = tc.text;
+});
+
+function setStatus(msg, type = '') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+function scoreColor(score, max) {
+  const pct = score / max;
+  if (pct >= 0.7) return 'var(--green)';
+  if (pct >= 0.4) return 'var(--yellow)';
+  return 'var(--red)';
+}
+
+function renderResult(r, container) {
+  const card = document.createElement('div');
+  card.className = 'result-card';
+
+  const scores = [
+    { label: 'Efficiency', score: r.scores.tokenEfficiency, max: 40 },
+    { label: 'Semantic', score: r.scores.semanticPreservation, max: 40 },
+    { label: 'Learnability', score: r.scores.learnability, max: 15 },
+    { label: 'Implementability', score: r.scores.implementability, max: 5 },
+  ];
+
+  const bars = scores.map(s => `
+    <div class="score-bar-row">
+      <span class="score-label">${s.label}</span>
+      <div class="score-bar">
+        <div class="score-fill" style="width: ${(s.score / s.max) * 100}%; background: ${scoreColor(s.score, s.max)}"></div>
+      </div>
+      <span class="score-value">${s.score}/${s.max}</span>
+    </div>
+  `).join('');
+
+  const compress = r.details?.compressionPercent ?? Math.round(r.compressionRatio * 100);
+
+  card.innerHTML = `
+    <div class="result-header">
+      <span class="result-id">${r.testCaseId}</span>
+      <span class="result-total">${r.total} <span class="max">/ 100</span></span>
+    </div>
+    ${bars}
+    <div class="text-compare">
+      <div class="text-block">
+        <label>Original (${r.originalTokens} tokens)</label>
+        <pre>${esc(r.originalText)}</pre>
+      </div>
+      <div class="text-block">
+        <label>Encoded (${r.encodedTokens} tokens, ${compress}%)</label>
+        <pre>${esc(r.encodedText)}</pre>
+      </div>
+      <div class="text-block">
+        <label>Decoded</label>
+        <pre>${esc(r.decodedText)}</pre>
+      </div>
+    </div>
+    <div class="detail-row">
+      ${r.details?.semanticReasoning ? '<b>Semantic:</b> ' + esc(r.details.semanticReasoning) : ''}
+      ${r.metadata?.durationMs ? ' &middot; ' + (r.metadata.durationMs / 1000).toFixed(1) + 's' : ''}
+    </div>
+  `;
+
+  container.appendChild(card);
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function runExperiment() {
+  const text = document.getElementById('inputText').value.trim();
+  const encoding = document.getElementById('encodingSystem').value.trim();
+  if (!text) { setStatus('Enter text first', 'error'); return; }
+  if (!encoding) { setStatus('Enter encoding system', 'error'); return; }
+
+  const select = document.getElementById('testCaseSelect');
+  let testCaseId = 'custom';
+  if (select.value !== 'custom') {
+    try { testCaseId = JSON.parse(select.value).id; } catch(e) {}
+  }
+
+  document.getElementById('runBtn').disabled = true;
+  setStatus('Running encode → decode → score...', 'running');
+  document.getElementById('liveResult').innerHTML = '<div class="empty" style="color: var(--yellow)">Experiment in progress... (~15-20s)</div>';
+
+  try {
+    const res = await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, encodingSystem: encoding, testCaseId })
+    });
+    const result = await res.json();
+
+    if (result.error) {
+      setStatus('Error: ' + result.error, 'error');
+      document.getElementById('liveResult').innerHTML = `<div class="empty" style="color: var(--red)">${esc(result.error)}</div>`;
+      return;
+    }
+
+    setStatus('Done');
+    const container = document.getElementById('liveResult');
+    container.innerHTML = '';
+    renderResult(result, container);
+  } catch (e) {
+    setStatus('Error: ' + e.message, 'error');
+  } finally {
+    document.getElementById('runBtn').disabled = false;
+  }
+}
+
+async function runAll() {
+  const encoding = document.getElementById('encodingSystem').value.trim();
+  if (!encoding) { setStatus('Enter encoding system', 'error'); return; }
+
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runAllBtn').disabled = true;
+  const container = document.getElementById('liveResult');
+  container.innerHTML = '';
+
+  let completed = 0;
+  const allCases = testCases.flatMap(level => level.cases);
+  setStatus(`Running 0/${allCases.length}...`, 'running');
+
+  for (const tc of allCases) {
+    try {
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: tc.text, encodingSystem: encoding, testCaseId: tc.id })
+      });
+      const result = await res.json();
+      completed++;
+      setStatus(`Running ${completed}/${allCases.length}...`, 'running');
+      if (!result.error) renderResult(result, container);
+    } catch (e) {
+      completed++;
+      setStatus(`Error on ${tc.id}: ${e.message}`, 'error');
+    }
+  }
+
+  setStatus(`Done — ${completed} experiments`);
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runAllBtn').disabled = false;
+}
+
+async function loadResults() {
+  const res = await fetch('/api/results');
+  const saved = await res.json();
+  const container = document.getElementById('resultsList');
+
+  if (saved.length === 0) {
+    container.innerHTML = '<div class="empty">No saved results yet. Run an experiment first.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  for (const { filename, data } of saved) {
+    if (data.error) continue;
+    renderResult(data, container);
+  }
+}
+
+// Init
+loadTestCases();
+</script>
+</body>
+</html>
