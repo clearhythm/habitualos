@@ -1,0 +1,31 @@
+{
+  "testCaseId": "3a",
+  "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+  "encodedText": "Let me work through this step by step:\n\n1. \"Compression\" - 11 letters × position 1 = 11\n2. \"reveals\" - 7 letters × position 2 = 14\n3. \"essence\" - 7 letters × position 3 = 21\n\nSum: 11 + 14 + 21 = 46\n46 modulo 26 = 20\nLetter where A=0: 20 = U\n\nU: essence reveals Compression",
+  "decodedText": "Let me work through this step by step:\n\n1. \"Compression\" - 11 letters × position 1 = 11\n2. \"reveals\" - 7 letters × position 2 = 14\n3. \"essence\" - 7 letters × position 3 = 21\n\nSum: 11 + 14 + 21 = 46\n46 modulo 26 = 20\nLetter where A=0: 20 = U\n\nU: essence reveals Compression",
+  "encodingSystem": "VOWEL_DROP: Remove all vowels from words longer than 3 letters.\nCOMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.\nPRESERVE: Keep numbers, proper nouns, and punctuation unchanged.\nCOMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.",
+  "originalTokens": 91,
+  "encodedTokens": 121,
+  "compressionRatio": -0.33,
+  "scores": {
+    "tokenEfficiency": 0,
+    "semanticPreservation": 40,
+    "learnability": 15,
+    "implementability": 4
+  },
+  "total": 59,
+  "details": {
+    "compressionPercent": -33,
+    "semanticReasoning": "The decoded text perfectly executes all instructions from the original: correctly counts letters, multiplies by position, calculates sum and modulo, converts to the letter U, and reverses the word order. The meaning and all computational steps are preserved identically.",
+    "implementabilityReasoning": "Parse error — raw response: ```json\n{\n  \"score\": 4,\n  \"reasoning\": \"The encoding has clear, unambiguous rules with well-defined operations (vowel removal, substitution mappings, preservation criteria). Minor edge cases exist aro"
+  },
+  "metadata": {
+    "model": "claude-sonnet-4-5-20250929",
+    "timestamp": "2026-02-18T20:26:55.916Z",
+    "durationMs": 10669,
+    "totalTokensUsed": {
+      "input": 1490,
+      "output": 389
+    }
+  }
+}

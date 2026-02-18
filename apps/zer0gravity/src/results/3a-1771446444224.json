@@ -1,0 +1,31 @@
+{
+  "testCaseId": "3a",
+  "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+  "encodedText": "Cmprsn rvls ssnc. ∀ ch wrd, cnt ts lttrs. Mltply ch cnt by θ wrd's pstn (1-indxd). Sm all thr rslts. Tk θ sm mdl 26. Cnvrt → α lttr whr A=0, B=1, thrgh Z=25. Wrt ∴ lttr, thn α cln, thn θ",
+  "decodedText": "Compression reveals essence. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all their results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the",
+  "encodingSystem": "VOWEL_DROP: Remove all vowels from words longer than 3 letters.\nCOMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.\nPRESERVE: Keep numbers, proper nouns, and punctuation unchanged.\nCOMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.",
+  "originalTokens": 91,
+  "encodedTokens": 117,
+  "compressionRatio": -0.286,
+  "scores": {
+    "tokenEfficiency": 0,
+    "semanticPreservation": 32,
+    "learnability": 12,
+    "implementability": 4
+  },
+  "total": 48,
+  "details": {
+    "compressionPercent": -28.6,
+    "semanticReasoning": "The decoded text preserves the core instruction with high fidelity, but is incomplete - it cuts off mid-sentence at 'then the' instead of finishing with 'original sentence reversed word-by-word.' This represents a minor but noticeable loss of information that affects the completeness of the instruction.",
+    "implementabilityReasoning": "Parse error — raw response: ```json\n{\n  \"score\": 4,\n  \"reasoning\": \"The rules are clear and algorithmic (vowel removal by length, symbol substitution, punctuation preservation), with only minor edge cases around proper noun dete"
+  },
+  "metadata": {
+    "model": "claude-sonnet-4-5-20250929",
+    "timestamp": "2026-02-18T20:27:24.224Z",
+    "durationMs": 12906,
+    "totalTokensUsed": {
+      "input": 1620,
+      "output": 333
+    }
+  }
+}

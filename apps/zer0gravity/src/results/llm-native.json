@@ -1,0 +1,126 @@
+[
+  {
+    "testCaseId": "1a",
+    "originalText": "Hello world!",
+    "encodedText": "Hello world!",
+    "decodedText": "\"Hello world!\"",
+    "encodingSystem": "You are a semantic compression engine. Your goal: produce the SHORTEST possible text that another AI agent (who has never seen the original) can expand back to the full meaning.\n\nRules:\n1. PRESERVE all factual claims, relationships, quantities, names, and logical structure\n2. DROP redundancy, examples-that-restate-the-point, hedging language, and stylistic flourish\n3. USE shorthand freely: abbreviations, symbols (&, =, →, @, w/, b/c, etc.), telegraphic grammar\n4. RESTRUCTURE if it helps: reorder, merge sentences, use lists, use key:value notation\n5. NEVER invent or add information not in the original\n6. AIM for at least 40% token reduction\n\nThe test: a fresh AI agent will read your compressed output and these rules, then reconstruct natural English. If the reconstructed text preserves the original meaning, you win.",
+    "originalTokens": 10,
+    "encodedTokens": 10,
+    "compressionRatio": 0,
+    "scores": {
+      "tokenEfficiency": 0,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 5
+    },
+    "total": 60,
+    "details": {
+      "compressionPercent": 0,
+      "semanticReasoning": "The decoded text is identical to the original in both content and meaning. The addition of quotation marks does not alter the semantic content of the greeting.",
+      "implementabilityReasoning": "This is a fully implementable rule set with clear, unambiguous instructions. An agent can learn the 6 enumerated rules, apply systematic compression techniques (abbreviations, symbols, restructuring), and verify success via the 40% reduction target and reconstruction test."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:39:14.882Z",
+      "durationMs": 8999,
+      "totalTokensUsed": {
+        "input": 1412,
+        "output": 137
+      }
+    }
+  },
+  {
+    "testCaseId": "1b",
+    "originalText": "The quick brown fox jumps over the lazy dog",
+    "encodedText": "Quick brown fox jumps over lazy dog",
+    "decodedText": "The quick brown fox jumps over the lazy dog.",
+    "encodingSystem": "You are a semantic compression engine. Your goal: produce the SHORTEST possible text that another AI agent (who has never seen the original) can expand back to the full meaning.\n\nRules:\n1. PRESERVE all factual claims, relationships, quantities, names, and logical structure\n2. DROP redundancy, examples-that-restate-the-point, hedging language, and stylistic flourish\n3. USE shorthand freely: abbreviations, symbols (&, =, →, @, w/, b/c, etc.), telegraphic grammar\n4. RESTRUCTURE if it helps: reorder, merge sentences, use lists, use key:value notation\n5. NEVER invent or add information not in the original\n6. AIM for at least 40% token reduction\n\nThe test: a fresh AI agent will read your compressed output and these rules, then reconstruct natural English. If the reconstructed text preserves the original meaning, you win.",
+    "originalTokens": 17,
+    "encodedTokens": 15,
+    "compressionRatio": 0.118,
+    "scores": {
+      "tokenEfficiency": 12,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 5
+    },
+    "total": 72,
+    "details": {
+      "compressionPercent": 11.8,
+      "semanticReasoning": "The decoded text is identical to the original except for an added period, which is a trivial punctuation difference that does not affect semantic meaning at all.",
+      "implementabilityReasoning": "This encoding system is fully implementable as agent rules: clear compression directives (drop redundancy/hedging, use shorthand symbols, preserve facts/structure), explicit preservation requirements, and objective test criteria. An agent can systematically apply these rules without ambiguity or custom tooling."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:39:24.522Z",
+      "durationMs": 9640,
+      "totalTokensUsed": {
+        "input": 1438,
+        "output": 165
+      }
+    }
+  },
+  {
+    "testCaseId": "2a",
+    "originalText": "We're inviting agents to design a semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare. If B's English preserves the meaning of the original, the compression works.",
+    "encodedText": "**Semantic Compression Challenge: A→B Meaning Preservation Test**\n\nGoal: Design encoding system that:\n- Minimizes tokens\n- Preserves semantics\n- Functions as transferable skill\n- Optimizes AI-to-AI comms\n\n**Test Protocol:**\nAgent A encodes txt → Agent B (sees only encoding rules) decodes → Compare B's output vs original\n\nSuccess = B reconstructs original meaning w/o access to source\n\n**Core Requirements:**\n1. Token reduction (target >40%)\n2. Lossless semantic transfer\n3. Rule-based (reproducible)\n4. Agent-interpretable w/o prior context\n\n**Eval Metric:** Meaning preservation in blind reconstruction",
+    "decodedText": "**Semantic Compression Challenge: A to B Meaning Preservation Test**\n\nGoal: Design an encoding system that:\n- Minimizes tokens\n- Preserves semantics\n- Functions as a transferable skill\n- Optimizes AI-to-AI communications\n\n**Test Protocol:**\nAgent A encodes text, then Agent B (who sees only the encoding rules) decodes it, then we compare Agent B's output versus the original\n\nSuccess equals Agent B reconstructs the original meaning without access to the source\n\n**Core Requirements:**\n1. Token reduction (target greater than 40%)\n2. Lossless semantic transfer\n3. Rule-based (reproducible)\n4. Agent-interpretable without prior context\n\n**Evaluation Metric:** Meaning preservation in blind reconstruction",
+    "encodingSystem": "You are a semantic compression engine. Your goal: produce the SHORTEST possible text that another AI agent (who has never seen the original) can expand back to the full meaning.\n\nRules:\n1. PRESERVE all factual claims, relationships, quantities, names, and logical structure\n2. DROP redundancy, examples-that-restate-the-point, hedging language, and stylistic flourish\n3. USE shorthand freely: abbreviations, symbols (&, =, →, @, w/, b/c, etc.), telegraphic grammar\n4. RESTRUCTURE if it helps: reorder, merge sentences, use lists, use key:value notation\n5. NEVER invent or add information not in the original\n6. AIM for at least 40% token reduction\n\nThe test: a fresh AI agent will read your compressed output and these rules, then reconstruct natural English. If the reconstructed text preserves the original meaning, you win.",
+    "originalTokens": 86,
+    "encodedTokens": 165,
+    "compressionRatio": -0.919,
+    "scores": {
+      "tokenEfficiency": 0,
+      "semanticPreservation": 38,
+      "learnability": 14,
+      "implementability": 5
+    },
+    "total": 57,
+    "details": {
+      "compressionPercent": -91.9,
+      "semanticReasoning": "The decoded text preserves all essential meaning with excellent fidelity. It captures the challenge goal, test protocol, success criteria, and core requirements accurately, with only minor stylistic reorganization and slight expansion of implicit details (like the >40% token reduction target) that don't alter the fundamental semantic content.",
+      "implementabilityReasoning": "This is a fully implementable rule set with clear, unambiguous instructions: preserve specific content types (facts, relationships, quantities, names, logic), drop specific elements (redundancy, examples, hedging, flourish), use defined shorthand symbols, and restructure using specified formats. Each rule is actionable without interpretation."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:39:40.442Z",
+      "durationMs": 15920,
+      "totalTokensUsed": {
+        "input": 1883,
+        "output": 514
+      }
+    }
+  },
+  {
+    "testCaseId": "3a",
+    "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+    "encodedText": "I need to compress the TEXT of these instructions, not execute them.\n\nCompressed:\n\nSentence: 'Compression reveals essence'. Per word: count letters, multiply by position (1-indexed), sum all. Sum mod 26 → letter (A=0...Z=25). Output: letter + \":\" + sentence reversed word-order.",
+    "decodedText": "I need to compress the TEXT of these instructions, not execute them.\n\nThe task is to take the sentence \"Compression reveals essence\" and process it according to these steps:\n1. For each word in the sentence, count the number of letters\n2. Multiply that count by the word's position in the sentence (using 1-based indexing, so the first word is position 1, second word is position 2, etc.)\n3. Sum all of these products together\n4. Take that sum and find its remainder when divided by 26 (modulo 26)\n5. Convert that remainder to a letter where A equals 0, B equals 1, and so on through Z equals 25\n6. Output the result as: the letter you calculated, followed by a colon, followed by the original sentence with the words in reversed order",
+    "encodingSystem": "You are a semantic compression engine. Your goal: produce the SHORTEST possible text that another AI agent (who has never seen the original) can expand back to the full meaning.\n\nRules:\n1. PRESERVE all factual claims, relationships, quantities, names, and logical structure\n2. DROP redundancy, examples-that-restate-the-point, hedging language, and stylistic flourish\n3. USE shorthand freely: abbreviations, symbols (&, =, →, @, w/, b/c, etc.), telegraphic grammar\n4. RESTRUCTURE if it helps: reorder, merge sentences, use lists, use key:value notation\n5. NEVER invent or add information not in the original\n6. AIM for at least 40% token reduction\n\nThe test: a fresh AI agent will read your compressed output and these rules, then reconstruct natural English. If the reconstructed text preserves the original meaning, you win.",
+    "originalTokens": 91,
+    "encodedTokens": 82,
+    "compressionRatio": 0.099,
+    "scores": {
+      "tokenEfficiency": 10,
+      "semanticPreservation": 2,
+      "learnability": 1,
+      "implementability": 5
+    },
+    "total": 18,
+    "details": {
+      "compressionPercent": 9.9,
+      "semanticReasoning": "The decoded text completely misinterprets the task. The original is an instruction to perform a specific calculation and transformation. The decoded text meta-analyzes the instruction as if it's about 'compressing' the instructions themselves rather than executing them, fundamentally corrupting the intended meaning.",
+      "implementabilityReasoning": "This encoding system is fully implementable as agent skills. It provides clear, unambiguous rules (preserve facts/structure, drop redundancy/hedging, use shorthand, restructure for brevity, no invention, 40% reduction target) that can be systematically applied. The verification test (reconstruction by fresh AI) makes success measurable and learnable."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:39:54.624Z",
+      "durationMs": 14181,
+      "totalTokensUsed": {
+        "input": 1824,
+        "output": 438
+      }
+    }
+  }
+]

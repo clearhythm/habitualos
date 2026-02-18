@@ -1,0 +1,31 @@
+{
+  "testCaseId": "3a",
+  "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+  "encodedText": "J: essence reveals Compression",
+  "decodedText": "I apologize, but I don't see any encoded text to decode in your message. You've provided:\n\n\"J: essence reveals Compression\"\n\nThis appears to be either:\n1. A label or header\n2. Already decoded text\n3. An incomplete encoding\n\nCould you please provide the actual encoded text that needs to be decoded? It should contain elements like:\n- Vowel-dropped words (e.g., \"cmprssn\" for \"compression\")\n- Symbol substitutions (θ, =, &, →, ∘, α, ∈, ∴, ∀, ⊕, ⊙)\n- Word separators (|) where needed\n\nOnce you provide the encoded text, I'll decode it following the encoding system rules you've specified.",
+  "encodingSystem": "VOWEL_DROP: Remove all vowels from words longer than 3 letters.\nCOMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.\nPRESERVE: Keep numbers, proper nouns, and punctuation unchanged.\nCOMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.",
+  "originalTokens": 91,
+  "encodedTokens": 13,
+  "compressionRatio": 0.857,
+  "scores": {
+    "tokenEfficiency": 40,
+    "semanticPreservation": 0,
+    "learnability": 0,
+    "implementability": 4
+  },
+  "total": 44,
+  "details": {
+    "compressionPercent": 85.7,
+    "semanticReasoning": "The decoded text completely fails to recognize that 'J: essence reveals Compression' IS the answer to the encoding task. Instead of understanding this as the decoded output, the agent mistakenly treats it as incomplete input and requests the encoded text, demonstrating total failure to preserve the original instruction's meaning.",
+    "implementabilityReasoning": "Parse error — raw response: ```json\n{\n  \"score\": 4,\n  \"reasoning\": \"The encoding system has clear, deterministic rules that an agent could learn and apply consistently. The minor edge case is defining 'proper nouns' (requires NL"
+  },
+  "metadata": {
+    "model": "claude-sonnet-4-5-20250929",
+    "timestamp": "2026-02-18T20:03:35.442Z",
+    "durationMs": 12400,
+    "totalTokensUsed": {
+      "input": 1336,
+      "output": 352
+    }
+  }
+}

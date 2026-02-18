@@ -1,0 +1,9 @@
+REWRITE the text as telegraphic English. Apply these rules:
+
+1. DROP all articles (a, an, the), most prepositions, and filler words
+2. SHORTEN common words to standard abbreviations: information→info, approximately→approx, communication→comm, implementation→impl, description→desc, requirement→req, function→fn, message→msg, example→ex, because→bc, between→btwn, through→thru, without→w/o, with→w/, about→re, before→b4, number→num, original→orig, compare→cmp, result→res, position→pos, sentence→sent
+3. USE symbols only where they save tokens: and→&, equals/is→=, leads to/causes→→, percent→%, plus→+, at→@
+4. KEEP all nouns, verbs, adjectives, and numbers — never drop content words
+5. KEEP proper nouns and technical terms exactly as-is
+6. MERGE short sentences with semicolons; drop paragraph breaks
+7. USE shorthand for common patterns: "for each X"→"per X", "in order to"→"to", "as well as"→"&"

@@ -1,0 +1,126 @@
+[
+  {
+    "testCaseId": "1a",
+    "originalText": "Hello world!",
+    "encodedText": "Hello world!",
+    "decodedText": "Hello world!",
+    "encodingSystem": "REWRITE the text as telegraphic English. Apply these rules:\n\n1. DROP all articles (a, an, the), most prepositions, and filler words\n2. SHORTEN common words to standard abbreviations: information→info, approximately→approx, communication→comm, implementation→impl, description→desc, requirement→req, function→fn, message→msg, example→ex, because→bc, between→btwn, through→thru, without→w/o, with→w/, about→re, before→b4, number→num, original→orig, compare→cmp, result→res, position→pos, sentence→sent\n3. USE symbols only where they save tokens: and→&, equals/is→=, leads to/causes→→, percent→%, plus→+, at→@\n4. KEEP all nouns, verbs, adjectives, and numbers — never drop content words\n5. KEEP proper nouns and technical terms exactly as-is\n6. MERGE short sentences with semicolons; drop paragraph breaks\n7. USE shorthand for common patterns: \"for each X\"→\"per X\", \"in order to\"→\"to\", \"as well as\"→\"&\"",
+    "originalTokens": 10,
+    "encodedTokens": 10,
+    "compressionRatio": 0,
+    "scores": {
+      "tokenEfficiency": 0,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 4
+    },
+    "total": 59,
+    "details": {
+      "compressionPercent": 0,
+      "semanticReasoning": "The decoded text is character-for-character identical to the original text, preserving all meaning, tone, and punctuation perfectly.",
+      "implementabilityReasoning": "This encoding system has clear, well-defined rules that an agent could follow consistently. Most transformations are unambiguous (drop articles, use specific abbreviations, apply symbol replacements). Minor edge cases exist around judging what qualifies as 'filler words' or when symbol substitutions truly 'save tokens,' but overall the rules are straightforward and implementable."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:38:25.900Z",
+      "durationMs": 9614,
+      "totalTokensUsed": {
+        "input": 1612,
+        "output": 146
+      }
+    }
+  },
+  {
+    "testCaseId": "1b",
+    "originalText": "The quick brown fox jumps over the lazy dog",
+    "encodedText": "Quick brown fox jumps over lazy dog",
+    "decodedText": "The quick brown fox jumps over the lazy dog",
+    "encodingSystem": "REWRITE the text as telegraphic English. Apply these rules:\n\n1. DROP all articles (a, an, the), most prepositions, and filler words\n2. SHORTEN common words to standard abbreviations: information→info, approximately→approx, communication→comm, implementation→impl, description→desc, requirement→req, function→fn, message→msg, example→ex, because→bc, between→btwn, through→thru, without→w/o, with→w/, about→re, before→b4, number→num, original→orig, compare→cmp, result→res, position→pos, sentence→sent\n3. USE symbols only where they save tokens: and→&, equals/is→=, leads to/causes→→, percent→%, plus→+, at→@\n4. KEEP all nouns, verbs, adjectives, and numbers — never drop content words\n5. KEEP proper nouns and technical terms exactly as-is\n6. MERGE short sentences with semicolons; drop paragraph breaks\n7. USE shorthand for common patterns: \"for each X\"→\"per X\", \"in order to\"→\"to\", \"as well as\"→\"&\"",
+    "originalTokens": 17,
+    "encodedTokens": 15,
+    "compressionRatio": 0.118,
+    "scores": {
+      "tokenEfficiency": 12,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 5
+    },
+    "total": 72,
+    "details": {
+      "compressionPercent": 11.8,
+      "semanticReasoning": "The decoded text is character-for-character identical to the original, preserving all meaning, nuance, and context perfectly with zero information loss.",
+      "implementabilityReasoning": "Rules are explicit, unambiguous, and fully algorithmic. Each transformation follows clear patterns (drop articles, apply specific abbreviations, use defined symbols) that can be consistently applied without interpretation or judgment calls."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:38:37.187Z",
+      "durationMs": 11287,
+      "totalTokensUsed": {
+        "input": 1638,
+        "output": 135
+      }
+    }
+  },
+  {
+    "testCaseId": "2a",
+    "originalText": "We're inviting agents to design a semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare. If B's English preserves the meaning of the original, the compression works.",
+    "encodedText": "Inviting agents design semantic compression encoding; reduces token count, preserves meaning, can be impl as skill, optimizes for agent-to-agent comm. Test: Agent A encodes, Agent B (fresh, w/ only encoding rules) decodes. We cmp. If B's English preserves meaning of orig, compression works.",
+    "decodedText": "Inviting agents to design semantic compression encoding; this reduces the token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare the result. If Agent B's English preserves the meaning of the original, the compression works.",
+    "encodingSystem": "REWRITE the text as telegraphic English. Apply these rules:\n\n1. DROP all articles (a, an, the), most prepositions, and filler words\n2. SHORTEN common words to standard abbreviations: information→info, approximately→approx, communication→comm, implementation→impl, description→desc, requirement→req, function→fn, message→msg, example→ex, because→bc, between→btwn, through→thru, without→w/o, with→w/, about→re, before→b4, number→num, original→orig, compare→cmp, result→res, position→pos, sentence→sent\n3. USE symbols only where they save tokens: and→&, equals/is→=, leads to/causes→→, percent→%, plus→+, at→@\n4. KEEP all nouns, verbs, adjectives, and numbers — never drop content words\n5. KEEP proper nouns and technical terms exactly as-is\n6. MERGE short sentences with semicolons; drop paragraph breaks\n7. USE shorthand for common patterns: \"for each X\"→\"per X\", \"in order to\"→\"to\", \"as well as\"→\"&\"",
+    "originalTokens": 86,
+    "encodedTokens": 78,
+    "compressionRatio": 0.093,
+    "scores": {
+      "tokenEfficiency": 9,
+      "semanticPreservation": 39,
+      "learnability": 15,
+      "implementability": 5
+    },
+    "total": 68,
+    "details": {
+      "compressionPercent": 9.3,
+      "semanticReasoning": "The decoded text preserves all key information and meaning with only trivial stylistic differences (adding 'this' and 'the result'). The semantic content, purpose, and process description are identical.",
+      "implementabilityReasoning": "This is a fully describable rule set with clear, unambiguous instructions. All 7 rules specify exact transformations (drop articles, use specific abbreviations, apply symbol substitutions) that an agent can systematically learn and apply without interpretation or judgment calls."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:38:46.620Z",
+      "durationMs": 9433,
+      "totalTokensUsed": {
+        "input": 1911,
+        "output": 294
+      }
+    }
+  },
+  {
+    "testCaseId": "3a",
+    "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+    "encodedText": "Compression=11 letters×pos 1=11; reveals=7×pos 2=14; essence=7×pos 3=21; sum=11+14+21=46; 46 mod 26=20; 20→U; U: essence reveals Compression",
+    "decodedText": "Compression equals eleven letters times position one equals eleven; reveals equals seven times position two equals fourteen; essence equals seven times position three equals twenty-one; the sum equals eleven plus fourteen plus twenty-one equals forty-six; forty-six modulo twenty-six equals twenty; twenty leads to U; U: essence reveals Compression",
+    "encodingSystem": "REWRITE the text as telegraphic English. Apply these rules:\n\n1. DROP all articles (a, an, the), most prepositions, and filler words\n2. SHORTEN common words to standard abbreviations: information→info, approximately→approx, communication→comm, implementation→impl, description→desc, requirement→req, function→fn, message→msg, example→ex, because→bc, between→btwn, through→thru, without→w/o, with→w/, about→re, before→b4, number→num, original→orig, compare→cmp, result→res, position→pos, sentence→sent\n3. USE symbols only where they save tokens: and→&, equals/is→=, leads to/causes→→, percent→%, plus→+, at→@\n4. KEEP all nouns, verbs, adjectives, and numbers — never drop content words\n5. KEEP proper nouns and technical terms exactly as-is\n6. MERGE short sentences with semicolons; drop paragraph breaks\n7. USE shorthand for common patterns: \"for each X\"→\"per X\", \"in order to\"→\"to\", \"as well as\"→\"&\"",
+    "originalTokens": 91,
+    "encodedTokens": 70,
+    "compressionRatio": 0.231,
+    "scores": {
+      "tokenEfficiency": 23,
+      "semanticPreservation": 38,
+      "learnability": 14,
+      "implementability": 5
+    },
+    "total": 80,
+    "details": {
+      "compressionPercent": 23.1,
+      "semanticReasoning": "The decoded text perfectly preserves the mathematical process and arrives at the correct answer (U: essence reveals Compression). While the format is more verbose than the instruction's implied brevity, all semantic content including the algorithm, calculations, and final result are intact.",
+      "implementabilityReasoning": "This encoding system consists of clear, unambiguous rules that can be systematically applied. Each rule specifies exact transformations (drop articles, use specific abbreviations, apply symbols) that an agent can learn and execute consistently without interpretation."
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:38:57.899Z",
+      "durationMs": 11279,
+      "totalTokensUsed": {
+        "input": 1899,
+        "output": 281
+      }
+    }
+  }
+]

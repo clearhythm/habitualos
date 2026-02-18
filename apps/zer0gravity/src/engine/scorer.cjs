@@ -59,7 +59,11 @@ Respond with ONLY a JSON object: {"score": <number>, "reasoning": "<1-2 sentence
     .join('');
 
   try {
-    const result = JSON.parse(text);
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    }
+    const result = JSON.parse(cleaned);
     return {
       score: Math.min(Math.max(Math.round(result.score), 0), 40),
       reasoning: result.reasoning || '',
@@ -112,7 +116,11 @@ Respond with ONLY a JSON object: {"score": <number>, "reasoning": "<1-2 sentence
     .join('');
 
   try {
-    const result = JSON.parse(text);
+    let cleaned = text.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    }
+    const result = JSON.parse(cleaned);
     return {
       score: Math.min(Math.max(Math.round(result.score), 0), 5),
       reasoning: result.reasoning || '',

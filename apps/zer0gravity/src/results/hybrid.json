@@ -1,0 +1,126 @@
+[
+  {
+    "testCaseId": "1a",
+    "originalText": "Hello world!",
+    "encodedText": "Hello world!",
+    "decodedText": "Hello world!",
+    "encodingSystem": "Apply these compression rules in order:\n\nPHASE 1 — Mechanical:\n- Drop articles (a, an, the) unless they disambiguate\n- Drop filler: \"in order to\"→\"to\", \"as well as\"→\"&\", \"the fact that\"→(drop)\n- Standard abbreviations: info, approx, comm, impl, desc, fn, msg, ex, bc, btwn, thru, w/o, w/\n- Symbols: and→&, is/equals→=, to/toward→→, percent→%\n\nPHASE 2 — Semantic (your judgment):\n- If two sentences say the same thing differently, keep the more concise one\n- If an example restates the preceding point, drop it unless the example adds concrete detail\n- Merge related short sentences with semicolons\n- Restructure for density (key:value, lists) where it helps\n\nCONSTRAINT: Never drop named entities, numbers, negations, or conditional logic.\nOUTPUT: Only the compressed text, nothing else.",
+    "originalTokens": 10,
+    "encodedTokens": 10,
+    "compressionRatio": 0,
+    "scores": {
+      "tokenEfficiency": 0,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 0
+    },
+    "total": 55,
+    "details": {
+      "compressionPercent": 0,
+      "semanticReasoning": "The decoded text is identical to the original text in every way—same words, punctuation, and meaning with zero loss of information or nuance.",
+      "implementabilityReasoning": "Parse error — raw response: # Encoding System Evaluation\n\n**Task**: Assess implementability as agent skill (rule set agent can learn & apply)\n\n**Score 0-5**:\n- 5: Fully describable as simple, unambiguous rule set\n- 4: Clear rule"
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:40:18.095Z",
+      "durationMs": 13718,
+      "totalTokensUsed": {
+        "input": 1495,
+        "output": 212
+      }
+    }
+  },
+  {
+    "testCaseId": "1b",
+    "originalText": "The quick brown fox jumps over the lazy dog",
+    "encodedText": "quick brown fox jumps over lazy dog",
+    "decodedText": "the quick brown fox jumps over the lazy dog",
+    "encodingSystem": "Apply these compression rules in order:\n\nPHASE 1 — Mechanical:\n- Drop articles (a, an, the) unless they disambiguate\n- Drop filler: \"in order to\"→\"to\", \"as well as\"→\"&\", \"the fact that\"→(drop)\n- Standard abbreviations: info, approx, comm, impl, desc, fn, msg, ex, bc, btwn, thru, w/o, w/\n- Symbols: and→&, is/equals→=, to/toward→→, percent→%\n\nPHASE 2 — Semantic (your judgment):\n- If two sentences say the same thing differently, keep the more concise one\n- If an example restates the preceding point, drop it unless the example adds concrete detail\n- Merge related short sentences with semicolons\n- Restructure for density (key:value, lists) where it helps\n\nCONSTRAINT: Never drop named entities, numbers, negations, or conditional logic.\nOUTPUT: Only the compressed text, nothing else.",
+    "originalTokens": 17,
+    "encodedTokens": 15,
+    "compressionRatio": 0.118,
+    "scores": {
+      "tokenEfficiency": 12,
+      "semanticPreservation": 40,
+      "learnability": 15,
+      "implementability": 5
+    },
+    "total": 72,
+    "details": {
+      "compressionPercent": 11.8,
+      "semanticReasoning": "The decoded text is semantically identical to the original. The only difference is capitalization of the first letter, which does not affect meaning in any way.",
+      "implementabilityReasoning": "Parse error — raw response: # Token Budget System - Technical Spec\n\n## Overview\nBudget system controls LLM token consumption via declared limits in prompts; enforces limits, tracks usage, provides feedback to users & agents.\n\n##"
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:40:39.565Z",
+      "durationMs": 21470,
+      "totalTokensUsed": {
+        "input": 1521,
+        "output": 581
+      }
+    }
+  },
+  {
+    "testCaseId": "2a",
+    "originalText": "We're inviting agents to design a semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare. If B's English preserves the meaning of the original, the compression works.",
+    "encodedText": "We're inviting agents to design semantic compression encoding that reduces token count, preserves meaning, can be implemented as skill, & optimizes for agent-to-agent comm. Test: Agent A encodes, Agent B (fresh, w/ only encoding rules) decodes. We compare. If B's English preserves meaning of original, compression works.",
+    "decodedText": "We're inviting agents to design semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test works as follows: Agent A encodes the text, Agent B (who is fresh and has only the encoding rules) decodes the text. We compare the results. If Agent B's English preserves the meaning of the original, the compression works.",
+    "encodingSystem": "Apply these compression rules in order:\n\nPHASE 1 — Mechanical:\n- Drop articles (a, an, the) unless they disambiguate\n- Drop filler: \"in order to\"→\"to\", \"as well as\"→\"&\", \"the fact that\"→(drop)\n- Standard abbreviations: info, approx, comm, impl, desc, fn, msg, ex, bc, btwn, thru, w/o, w/\n- Symbols: and→&, is/equals→=, to/toward→→, percent→%\n\nPHASE 2 — Semantic (your judgment):\n- If two sentences say the same thing differently, keep the more concise one\n- If an example restates the preceding point, drop it unless the example adds concrete detail\n- Merge related short sentences with semicolons\n- Restructure for density (key:value, lists) where it helps\n\nCONSTRAINT: Never drop named entities, numbers, negations, or conditional logic.\nOUTPUT: Only the compressed text, nothing else.",
+    "originalTokens": 86,
+    "encodedTokens": 80,
+    "compressionRatio": 0.07,
+    "scores": {
+      "tokenEfficiency": 7,
+      "semanticPreservation": 38,
+      "learnability": 14,
+      "implementability": 2
+    },
+    "total": 61,
+    "details": {
+      "compressionPercent": 7,
+      "semanticReasoning": "The decoded text preserves all essential meaning and context with only trivial additions like 'the text' and 'works as follows' that clarify rather than change meaning. The core concept, process, and success criteria are identical.",
+      "implementabilityReasoning": "Parse error — raw response: # Text Compression System Evaluation\n\n**Score: 2/5**\n\n**Reasoning:** Rules are mostly describable but require significant judgment calls (semantic compression, \"helps\" determination, disambiguate asse"
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:40:51.752Z",
+      "durationMs": 12187,
+      "totalTokensUsed": {
+        "input": 1804,
+        "output": 359
+      }
+    }
+  },
+  {
+    "testCaseId": "3a",
+    "originalText": "Take the sentence: 'Compression reveals essence'. For each word, count its letters. Multiply each count by the word's position (1-indexed). Sum all three results. Take the sum modulo 26. Convert to a letter where A=0, B=1, through Z=25. Write that letter, then a colon, then the original sentence reversed word-by-word.",
+    "encodedText": "Compression: 11 letters × 1 = 11\nreveals: 7 letters × 2 = 14\nessence: 7 letters × 3 = 21\nSum: 11 + 14 + 21 = 46\n46 mod 26 = 20\nLetter at position 20: U\n\nU: essence reveals Compression",
+    "decodedText": "Compression: 11 letters multiplied by 1 equals 11\nreveals: 7 letters multiplied by 2 equals 14\nessence: 7 letters multiplied by 3 equals 21\nSum: 11 plus 14 plus 21 equals 46\n46 modulo 26 equals 20\nLetter at position 20: U\n\nU: essence reveals Compression",
+    "encodingSystem": "Apply these compression rules in order:\n\nPHASE 1 — Mechanical:\n- Drop articles (a, an, the) unless they disambiguate\n- Drop filler: \"in order to\"→\"to\", \"as well as\"→\"&\", \"the fact that\"→(drop)\n- Standard abbreviations: info, approx, comm, impl, desc, fn, msg, ex, bc, btwn, thru, w/o, w/\n- Symbols: and→&, is/equals→=, to/toward→→, percent→%\n\nPHASE 2 — Semantic (your judgment):\n- If two sentences say the same thing differently, keep the more concise one\n- If an example restates the preceding point, drop it unless the example adds concrete detail\n- Merge related short sentences with semicolons\n- Restructure for density (key:value, lists) where it helps\n\nCONSTRAINT: Never drop named entities, numbers, negations, or conditional logic.\nOUTPUT: Only the compressed text, nothing else.",
+    "originalTokens": 91,
+    "encodedTokens": 91,
+    "compressionRatio": 0,
+    "scores": {
+      "tokenEfficiency": 0,
+      "semanticPreservation": 38,
+      "learnability": 14,
+      "implementability": 3
+    },
+    "total": 55,
+    "details": {
+      "compressionPercent": 0,
+      "semanticReasoning": "The decoded text correctly interprets and executes all instructions, arriving at the exact same final output 'U: essence reveals Compression'. The intermediate working shown in the decoded version adds clarity without changing the core meaning or result.",
+      "implementabilityReasoning": "Parse error — raw response: # Encoding System Evaluation\n\n**Score: 3/5**\n\n**Reasoning:** System has clear mechanical rules (Phase 1) but Phase 2 requires subjective judgment (\"your judgment\", \"where it helps\"). Agent must decide"
+    },
+    "metadata": {
+      "model": "claude-sonnet-4-5-20250929",
+      "timestamp": "2026-02-18T20:41:03.863Z",
+      "durationMs": 12111,
+      "totalTokensUsed": {
+        "input": 1826,
+        "output": 341
+      }
+    }
+  }
+]

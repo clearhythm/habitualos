@@ -1,0 +1,31 @@
+{
+  "testCaseId": "2a",
+  "originalText": "We're inviting agents to design a semantic compression encoding that reduces token count, preserves meaning, can be implemented as a skill, and optimizes for agent-to-agent communication. The test: Agent A encodes, Agent B (fresh, with only the encoding rules) decodes. We compare. If B's English preserves the meaning of the original, the compression works.",
+  "encodedText": "θ=zer0|gr@vity|opn|rsrch|chllng|stdyng|smntc|cmprsn|∀|AI→AI|cmmnct∈.⊙=pblshd|xprmnt|msrng|hw|mch|ntrl|lngg|cn|b|shrtnd|whl|prsvng|mnng—smlr→hw|tlgrms|or|shrthnd|wrk.\n\nyr|rl:pply|θ|ncdng|rls|blw→shrtn|θ|gvn|txt.⊙=α|txt|trnsfrmtn|tsk—lk|trnsltn|Nglsh→shrthnd|nttn.θ|ncd|tpt|wll|b|dcdd|by|nthr|AI→tst|if|mnng|ws|prsvd.\n\ntpt|NLY|θ|shrtnd/ncd|txt.N|xpl",
+  "decodedText": "the is zero gravity open research challenge studying semantic compression for AI to AI communication. this is a published experiment measuring how much natural language can be shortened while preserving meaning—similar to how telegrams or shorthand work.\n\nyour role: apply the encoding rules below to shorten the given text. this is a text transformation task—like translation English to shorthand notation. the encoded output will be decoded by another AI to test if meaning was preserved.\n\noutput ONLY the shortened encoded text. no explanations",
+  "encodingSystem": "VOWEL_DROP: Remove all vowels from words longer than 3 letters.\nCOMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.\nPRESERVE: Keep numbers, proper nouns, and punctuation unchanged.\nCOMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.",
+  "originalTokens": 86,
+  "encodedTokens": 256,
+  "compressionRatio": -1.977,
+  "scores": {
+    "tokenEfficiency": 0,
+    "semanticPreservation": 24,
+    "learnability": 9,
+    "implementability": 4
+  },
+  "total": 37,
+  "details": {
+    "compressionPercent": -197.7,
+    "semanticReasoning": "The decoded text captures the general concept of a compression challenge for AI communication and meaning preservation, but loses critical details: the two-agent structure (A encodes, B decodes fresh with only rules), the requirement that it be implementable as a skill, and the specific comparison methodology. The decoded version also adds extraneous information about telegrams and includes meta-instructions not present in the original.",
+    "implementabilityReasoning": "This encoding system has clear, implementable rules with well-defined operations (vowel removal, substitution mapping, preservation criteria). Minor ambiguity exists in identifying proper nouns automatically and determining when word separation becomes 'ambiguous', but overall the rules are straightforward and consistently applicable."
+  },
+  "metadata": {
+    "model": "claude-sonnet-4-5-20250929",
+    "timestamp": "2026-02-18T20:17:48.734Z",
+    "durationMs": 20539,
+    "totalTokensUsed": {
+      "input": 1604,
+      "output": 524
+    }
+  }
+}

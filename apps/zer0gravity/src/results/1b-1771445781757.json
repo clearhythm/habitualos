@@ -1,0 +1,31 @@
+{
+  "testCaseId": "1b",
+  "originalText": "The quick brown fox jumps over the lazy dog",
+  "encodedText": "θ qck brwn fx jmps ovr θ lzy dg",
+  "decodedText": "the quick brown fox jumps over the lazy dog",
+  "encodingSystem": "VOWEL_DROP: Remove all vowels from words longer than 3 letters.\nCOMMON_SUBS: Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'.\nPRESERVE: Keep numbers, proper nouns, and punctuation unchanged.\nCOMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguous.",
+  "originalTokens": 17,
+  "encodedTokens": 26,
+  "compressionRatio": -0.529,
+  "scores": {
+    "tokenEfficiency": 0,
+    "semanticPreservation": 40,
+    "learnability": 15,
+    "implementability": 4
+  },
+  "total": 59,
+  "details": {
+    "compressionPercent": -52.9,
+    "semanticReasoning": "Parse error — raw response: ```json\n{\n  \"score\": 40,\n  \"reasoning\": \"The decoded text is semantically identical to the original; the only difference is capitalization of the first letter, which does not affect meaning in any way",
+    "implementabilityReasoning": "Parse error — raw response: ```json\n{\n  \"score\": 4,\n  \"reasoning\": \"The rules are clear and algorithmic (vowel removal, string replacement, whitespace handling), making them implementable as agent skills. Minor edge cases exist "
+  },
+  "metadata": {
+    "model": "claude-sonnet-4-5-20250929",
+    "timestamp": "2026-02-18T20:16:21.757Z",
+    "durationMs": 8858,
+    "totalTokensUsed": {
+      "input": 1143,
+      "output": 171
+    }
+  }
+}

@@ -14,49 +14,38 @@ Run the compression engine against all 3 test levels with 2-3 encoding approache
 
 ## Encoding Approaches to Test
 
-### Approach 1: Abbreviation
+**Updated based on Phase 1 findings:** Unicode symbols (θ, ∀, ⊕) cost MORE tokens than the English words they replace. Emoji would be even worse. All approaches below use plain ASCII and focus on token-aware compression.
 
-```
-RULES:
-1. Remove vowels from words longer than 3 letters
-2. Replace common words: 'the'→'θ', 'is'→'=', 'and'→'&', 'to'→'→', 'of'→'∘', 'a'→'α', 'in'→'∈', 'that'→'∴', 'for'→'∀', 'with'→'⊕', 'this'→'⊙'
-3. Keep numbers, proper nouns, and punctuation unchanged
-4. Remove unnecessary whitespace, use '|' as separator where ambiguous
-```
+### Approach 1: Telegraphic
 
-### Approach 2: Symbolic/Emoji
+Plain-English compression using abbreviations and structural tightening. No Unicode, no emoji — everything stays in ASCII token-space.
 
-```
-RULES:
-1. Replace concrete nouns with representative emoji where unambiguous (e.g., 'world'→'🌍', 'dog'→'🐕')
-2. Replace action verbs with arrows or operators (e.g., 'jumps'→'⬆', 'reveals'→'→', 'compress'→'⊂')
-3. Replace adjectives with intensity markers: positive→'+', negative→'-', neutral→'~'
-4. Keep structural words that define relationships (prepositions, conjunctions) as single-letter codes: over→'o/', under→'u/', between→'b/'
-5. Numbers and proper nouns stay as-is
-6. Sentence boundaries marked with '||'
-```
+File: `src/encodings/telegraphic.txt`
 
-### Approach 3: Structural/Telegraphic
+### Approach 2: LLM-Native
 
-```
-RULES:
-1. Rewrite as key-value pairs where possible: "SUBJ: fox | ACT: jump | OBJ: dog | MOD: quick,brown,lazy"
-2. Strip all rhetorical flourish, hedging, and narrative flow
-3. Preserve factual claims, quantities, and proper nouns exactly
-4. For instructions/procedures, use numbered steps with minimal words
-5. For arguments/positions, use CLAIM/EVIDENCE/CONCLUSION structure
-```
+Give Claude minimal rules and maximum freedom to decide what to keep/drop. The encoding system describes the *goal* rather than mechanical rules.
+
+File: `src/encodings/llm-native.txt`
+
+### Approach 3: Hybrid
+
+Mechanical phase (deterministic rules) + semantic phase (Claude's judgment). Combines predictability with flexibility.
+
+File: `src/encodings/hybrid.txt`
 
 ## Test Matrix
 
-| Level | Approach 1 (Abbrev) | Approach 2 (Symbolic) | Approach 3 (Structural) |
-|-------|---------------------|----------------------|------------------------|
+| Level | Telegraphic | LLM-Native | Hybrid |
+|-------|-------------|------------|--------|
 | 1a: "Hello world!" | ✓ | ✓ | ✓ |
 | 1b: "Quick brown fox..." | ✓ | ✓ | ✓ |
 | 2a: Challenge brief | ✓ | ✓ | ✓ |
 | 3a: Procedural | ✓ | ✓ | ✓ |
 
 **Total experiments: 12** (4 test cases × 3 approaches)
+
+We also have baseline data from Phase 1 (default vowel-drop + Unicode encoding) for comparison.
 
 ## Deliverables
 
@@ -81,17 +70,17 @@ Update `level-3-procedural.json` with the correct expected output.
 ### 2. Encoding System Files
 
 Create encoding approach files at:
-- `apps/zer0gravity/src/encodings/abbreviation.txt`
-- `apps/zer0gravity/src/encodings/symbolic.txt`
-- `apps/zer0gravity/src/encodings/structural.txt`
+- `apps/zer0gravity/src/encodings/telegraphic.txt`
+- `apps/zer0gravity/src/encodings/llm-native.txt`
+- `apps/zer0gravity/src/encodings/hybrid.txt`
 
 ### 3. Run All Experiments
 
 ```bash
 # Run each approach against each level
-node cli.cjs run --all --encoding src/encodings/abbreviation.txt --output src/results/abbreviation.json
-node cli.cjs run --all --encoding src/encodings/symbolic.txt --output src/results/symbolic.json
-node cli.cjs run --all --encoding src/encodings/structural.txt --output src/results/structural.json
+node cli.cjs run --all --encoding src/encodings/telegraphic.txt --output src/results/telegraphic.json
+node cli.cjs run --all --encoding src/encodings/llm-native.txt --output src/results/llm-native.json
+node cli.cjs run --all --encoding src/encodings/hybrid.txt --output src/results/hybrid.json
 ```
 
 ### 4. Results Analysis

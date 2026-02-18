@@ -1,0 +1,16 @@
+Apply these compression rules in order:
+
+PHASE 1 — Mechanical:
+- Drop articles (a, an, the) unless they disambiguate
+- Drop filler: "in order to"→"to", "as well as"→"&", "the fact that"→(drop)
+- Standard abbreviations: info, approx, comm, impl, desc, fn, msg, ex, bc, btwn, thru, w/o, w/
+- Symbols: and→&, is/equals→=, to/toward→→, percent→%
+
+PHASE 2 — Semantic (your judgment):
+- If two sentences say the same thing differently, keep the more concise one
+- If an example restates the preceding point, drop it unless the example adds concrete detail
+- Merge related short sentences with semicolons
+- Restructure for density (key:value, lists) where it helps
+
+CONSTRAINT: Never drop named entities, numbers, negations, or conditional logic.
+OUTPUT: Only the compressed text, nothing else.
