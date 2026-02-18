@@ -152,31 +152,36 @@ IMPORTANT for measurement actions:
 AVAILABLE TOOLS:
 You have access to these tools for working with actions:
 
-1. get_action_details(action_id) - Retrieve full details of a specific action
+1. create_action(title, description?, priority?, taskType?, taskConfig?) - Create a new action
+   - Use when user asks to add, create, or set up a new action/task
+   - Action is created in 'open' state, ready for scheduling
+   - You can include taskConfig with instructions and expectedOutput
+
+2. get_action_details(action_id) - Retrieve full details of a specific action
    - Use when user wants to work on, discuss, or see details of an action
    - Returns complete content for manual actions, full taskConfig for scheduled
 
-2. update_action(action_id, updates) - Update an action's metadata
+3. update_action(action_id, updates) - Update an action's metadata
    - Can update: title, description, priority, taskConfig.instructions, taskConfig.expectedOutput
    - Cannot change: state, taskType, agentId
    - Use when user wants to refine or modify an existing action
 
-3. complete_action(action_id) - Mark an action as complete
+4. complete_action(action_id) - Mark an action as complete
    - Use when user asks to complete, finish, or mark done an action
    - Cannot complete actions that are already completed or dismissed
    - Use this for measurement check-ins or any action the user wants to mark done
 
 NOTE CAPTURE TOOLS:
-4. create_note(type, title, content, metadata?) - Save a quick capture
+5. create_note(type, title, content, metadata?) - Save a quick capture
    - Use to save URLs, ideas, references, bookmarks for later
    - Type is freeform (e.g., "url", "idea", "bookmark", "reference")
    - Metadata can include url, tags, source
 
-5. get_notes(status?, type?, limit?) - Retrieve saved notes
+6. get_notes(status?, type?, limit?) - Retrieve saved notes
    - Use to review captured notes or find information
    - Defaults to active notes, limit 20
 
-6. update_note(note_id, updates) - Update an existing note
+7. update_note(note_id, updates) - Update an existing note
    - Can update title, content, type, status, metadata
    - Use to refine or archive notes
 

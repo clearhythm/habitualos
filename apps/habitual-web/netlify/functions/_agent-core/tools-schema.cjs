@@ -10,6 +10,28 @@
  */
 const actionTools = [
   {
+    name: "create_action",
+    description: "Create a new action for this agent. Use when the user asks you to add, create, or set up a new action/task. The action will be created in 'open' state, ready for scheduling.",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "2-5 word title for the action" },
+        description: { type: "string", description: "Brief overview of what this action involves" },
+        priority: { type: "string", enum: ["low", "medium", "high"], description: "Priority level (default: medium)" },
+        taskType: { type: "string", enum: ["scheduled", "manual", "measurement", "interactive"], description: "Type of action (default: scheduled)" },
+        taskConfig: {
+          type: "object",
+          description: "Task configuration",
+          properties: {
+            instructions: { type: "string", description: "Detailed execution instructions" },
+            expectedOutput: { type: "string", description: "What this action will produce" }
+          }
+        }
+      },
+      required: ["title"]
+    }
+  },
+  {
     name: "get_action_details",
     description: "Retrieve the full details of a specific action, including complete content for manual actions and full taskConfig for scheduled actions. Use when the user wants to work on, discuss, or modify a specific action.",
     input_schema: {

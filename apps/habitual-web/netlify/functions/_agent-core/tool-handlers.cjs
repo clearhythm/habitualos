@@ -5,7 +5,8 @@
  * Includes action management, note capture, filesystem, and review tools.
  */
 
-const { getAction, updateActionState } = require('../_services/db-actions.cjs');
+const { getAction, updateActionState, createAction } = require('../_services/db-actions.cjs');
+const { generateActionId } = require('../_utils/data-utils.cjs');
 const { createNote, getNotesByAgent, getNoteById, updateNote } = require('../_services/db-agent-notes.cjs');
 const { getDraftsByAgent, getDraftById, updateDraft } = require('../_services/db-agent-drafts.cjs');
 const { incrementAgentActionCount } = require('../_services/db-agents.cjs');
@@ -23,6 +24,10 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
   const { name, input } = toolBlock;
 
   // Action tools
+  if (name === 'create_action') {
+    return handleCreateAction(input, userId, agentId);
+  }
+
   if (name === 'get_action_details') {
     return handleGetActionDetails(input, userId);
   }
@@ -74,6 +79,54 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
 }
 
 // --- Action Tool Handlers ---
+
+async function handleCreateAction(input, userId, agentId) {
+  const { title, description, priority, taskType, taskConfig } = input;
+
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    return { error: 'Title is required' };
+  }
+
+  const actionId = generateActionId();
+
+  const actionData = {
+    _userId: userId,
+    agentId: agentId,
+    projectId: null,
+    goalId: null,
+    title: title.trim(),
+    description: description || '',
+    state: 'open',
+    priority: priority || 'medium',
+    taskType: taskType || 'scheduled',
+    assignedTo: 'user',
+    taskConfig: taskConfig || {},
+    scheduleTime: null,
+    dueDate: null,
+    startedAt: null,
+    completedAt: null,
+    dismissedAt: null,
+    dismissedReason: null,
+    errorMessage: null,
+    type: null,
+    content: null
+  };
+
+  await createAction(actionId, actionData);
+
+  return {
+    success: true,
+    message: `Created action: "${title.trim()}"`,
+    action: {
+      id: actionId,
+      title: title.trim(),
+      description: description || '',
+      priority: priority || 'medium',
+      taskType: taskType || 'scheduled',
+      state: 'open'
+    }
+  };
+}
 
 async function handleGetActionDetails(input, userId) {
   const actionId = input.action_id;
