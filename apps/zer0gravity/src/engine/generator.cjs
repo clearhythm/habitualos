@@ -30,6 +30,7 @@ Field names use l33t styling (one substitution per word: e→3 or a→@).
 
 ### Optional Fields (include when meaningful)
 
+- @uthor: Author name or attribution. Include if the author is identifiable from the text.
 - st@nce: Epistemic posture. MUST be one of: speculative / empirical / prescriptive / exploratory
 - nov3lty: What is new here, 1-3 items. List format.
 - t@gs: Semantic anchors for clustering/retrieval. List format.

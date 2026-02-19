@@ -157,7 +157,7 @@ function parseZG(text) {
 function formatBlock(fields, version = '0.1') {
   const fieldOrder = [
     'id', 'titl3', 'int3nt', 'th3me', 'r3levance', 'cl@ims',
-    'st@nce', 'nov3lty', 't@gs', 'rel@tions', 'audi3nce', '@ctions', '3mbed'
+    '@uthor', 'st@nce', 'nov3lty', 't@gs', 'rel@tions', 'audi3nce', '@ctions', '3mbed'
   ];
 
   // Find max field name length for alignment

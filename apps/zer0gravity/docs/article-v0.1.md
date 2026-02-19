@@ -5,6 +5,7 @@ int3nt:     proposal
 th3me:      Articles should carry structured semantic abstracts so agents can parse meaning without processing full prose
 r3levance:  Agents waste tokens on RAG chunking when they only need claims, intent, and relevance encoded as structured fields
 cl@ims:     [prose compression fights BPE tokenizers and loses; Unicode symbols cost more tokens than ASCII; LLMs expand text when asked to compress; agents need structured claims not compressed paragraphs; semantic skeletons enable free parsing and cheap embedding; distillation beats compression for agent consumption; ZG blocks create a dual-audience publishing layer]
+@uthor:     Erik Willekens
 st@nce:     exploratory
 nov3lty:    [ZG microformat with ASCII delimiters; distill-then-embed pipeline; tiered agent consumption path]
 t@gs:       [semantic-compression; agent-abstracts; meaning-skeleton; structured-data; microformats]
@@ -57,6 +58,7 @@ int3nt:     proposal
 th3me:      Articles should carry structured semantic abstracts for agent consumption
 r3levance:  A meaning skeleton makes content indexable, embeddable, and retrievable without processing full prose
 cl@ims:     [compression fights the tokenizer and loses; agents need structured claims not shorter prose; a semantic skeleton is more useful than a compressed paragraph; embedding the skeleton produces cleaner vectors than embedding the article]
+@uthor:     Erik Willekens
 st@nce:     exploratory
 nov3lty:    [ZG microformat; distill-then-embed pipeline; dual-audience publishing]
 t@gs:       [semantic-compression; agent-abstracts; meaning-skeleton; vector-linkage]
@@ -71,7 +73,7 @@ rel@tions:  [RAG; argument-mapping; structured-data; microformats]
 
 **Readable field names with l33t styling.** Each field gets one character substitution (e→3 or a→@), matching the Zer0 Gr@vity brand. `titl3`, `int3nt`, `cl@ims` — distinctive but still legible.
 
-**6 required fields, 7 optional.** The required set captures the minimum viable meaning: what is this (id, titl3), what does it do (int3nt), what does it claim (th3me, cl@ims), and why it matters (r3levance). Optional fields add nuance when it's useful: stance, novelty, tags, relations, audience, actions, and an embed URL.
+**6 required fields, 8 optional.** The required set captures the minimum viable meaning: what is this (id, titl3), what does it do (int3nt), what does it claim (th3me, cl@ims), and why it matters (r3levance). Optional fields add nuance when it's useful: author, stance, novelty, tags, relations, audience, actions, and an embed URL.
 
 **Semicolon-separated lists.** `[claim one; claim two; claim three]` — brackets delimit, semicolons separate. Commas stay available for use within items.
 
@@ -117,7 +119,7 @@ It is a semantic publishing contract. Each article becomes three things simultan
 
 ## What happens next
 
-This is v0.1. The format is intentionally minimal — 13 fields total, most optional. The graph of real usage will teach us what to evolve: what fields earn their place, what's missing, what's noise.
+This is v0.1. The format is intentionally minimal — 14 fields total, most optional. The graph of real usage will teach us what to evolve: what fields earn their place, what's missing, what's noise.
 
 If you write articles that agents should be able to find, understand, and act on — try adding a ZG block. The spec is open, the parser is free, and the question at the center of this is the same one that started it: *what is the minimum representation of meaning?*
 

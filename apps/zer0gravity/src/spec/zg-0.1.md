@@ -73,10 +73,11 @@ cl@ims:  [first claim; second claim; third claim]
 | `r3levance` | One sentence: why this matters. | `A semantic abstract makes indexing cheaper and retrieval clearer` |
 | `cl@ims` | 3-7 explicit propositions. List format. | `[agents waste tokens on glue; meaning reduces to claims; ZG is a publishable layer]` |
 
-### Optional (7)
+### Optional (8)
 
 | Field | Description | Example |
 |-------|-------------|---------|
+| `@uthor` | Author name or attribution. | `Erik Willekens` |
 | `st@nce` | Epistemic posture: `speculative` / `empirical` / `prescriptive` / `exploratory` | `exploratory` |
 | `nov3lty` | What is new here. List format, 1-3 items. | `[ZG microformat; distill-then-embed pipeline]` |
 | `t@gs` | Semantic anchors for clustering and retrieval. List format. | `[semantic-compression; agent-abstracts]` |
@@ -95,6 +96,7 @@ int3nt:     proposal
 th3me:      Agents need meaning-skeletons not prose to link ideas and act reliably
 r3levance:  A semantic abstract makes indexing cheaper and retrieval clearer
 cl@ims:     [agents waste tokens on rhetorical glue; meaning can be represented as claims and relations; ZG blocks are a publishable semantic layer; embedding ZG enables graph linkage; artistry belongs in the prose layer]
+@uthor:     Erik Willekens
 st@nce:     exploratory
 nov3lty:    [ZG microformat; distill-then-embed pipeline; dual-audience publishing]
 t@gs:       [semantic-compression; agent-abstracts; meaning-skeleton; vector-linkage]
