@@ -1,15 +1,19 @@
 {
   "name": "zer0gravity",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Zer0 Gr@vity — Semantic compression scoring engine for agent-to-agent communication",
+  "description": "Zer0 Gr@vity — Semantic abstract microformat for agent-parseable content",
   "scripts": {
     "start": "node server.cjs",
+    "generate": "node cli.cjs generate",
+    "parse": "node cli.cjs parse",
+    "embed": "node cli.cjs embed",
     "experiment": "node cli.cjs run",
     "experiment:all": "node cli.cjs run --all"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
-    "dotenv": "^16.6.1"
+    "dotenv": "^16.6.1",
+    "openai": "^4.0.0"
   }
 }
