@@ -1,3 +1,9 @@
+# Zer0 Gr@vity: Meaning Skeletons for the Agent Web
+
+> **Obi-Wai:** What if meaning had bones?
+> **Foxy-EA:** Strip the flesh. Keep the skeleton.
+> **Obi-Wai:** The tokenizer already tried.
+
 ---ZG:0.1
 id:         zer0-gravity-v01
 titl3:      Zer0 Gr@vity — Meaning Skeletons for the Agent Web
@@ -13,8 +19,6 @@ rel@tions:  [RAG; argument-mapping; microformats; semantic-web; vector-databases
 audi3nce:   [AI agents; content publishers; semantic web practitioners; RAG system builders]
 @ctions:    [parse ZG block for free; fetch pre-computed embedding if model matches; embed block text directly if needed; read full prose only when skeleton indicates relevance]
 ---/ZG
-
-# Zer0 Gr@vity: Meaning Skeletons for the Agent Web
 
 ## What if articles could talk to agents directly?
 
