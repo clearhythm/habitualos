@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Zer0 Grav1ty — CLI
+ * Zero Gravity — CLI
  *
  * Usage:
  *   node cli.cjs generate --input article.md                   Generate full JSON from article
@@ -11,8 +11,8 @@
  *   node cli.cjs parse --input file-with-stamp.md --json       Output as JSON
  *   node cli.cjs embed --input full.zg.json                    Add embedding to full JSON
  *
- *   node cli.cjs run --level 1                                 (Phase 2) Run compression experiments
- *   node cli.cjs run --all                                     (Phase 2) Run all levels
+ *   node cli.cjs run --level 1                                 (Legacy) Run compression experiments
+ *   node cli.cjs run --all                                     (Legacy) Run all levels
  */
 
 const fs = require('fs');
@@ -29,9 +29,6 @@ function parseArgs(argv) {
     json: false,
     embed: false,
     stamp: false,
-    embedUrl: null,
-    infoUrl: null,
-    // articleUrl removed — url lives in full JSON only
     // Legacy run command args
     level: null,
     all: false,
@@ -53,10 +50,6 @@ function parseArgs(argv) {
       args.embed = true;
     } else if (arg === '--stamp') {
       args.stamp = true;
-    } else if (arg === '--embed-url' && argv[i + 1]) {
-      args.embedUrl = argv[++i];
-    } else if (arg === '--info-url' && argv[i + 1]) {
-      args.infoUrl = argv[++i];
     } else if (arg === '--level' && argv[i + 1]) {
       args.level = parseInt(argv[++i]);
     } else if (arg === '--all') {
@@ -122,12 +115,12 @@ async function cmdGenerate(args) {
   const { validateFullJSON } = require('./src/engine/parser.cjs');
   const { embed, buildFullJSON } = require('./src/engine/embedder.cjs');
 
-  console.error('[zer0gravity] Generating Zer0 Grav1ty fields...');
+  console.error('[zerogravity] Generating Zero Gravity fields...');
   const result = await generate(anthropic, { text });
 
   if (!result.fields) {
-    console.error('[zer0gravity] ERROR: Failed to generate valid fields');
-    console.error('[zer0gravity] Raw output:');
+    console.error('[zerogravity] ERROR: Failed to generate valid fields');
+    console.error('[zerogravity] Raw output:');
     console.error(result.raw);
     process.exit(1);
   }
@@ -135,23 +128,23 @@ async function cmdGenerate(args) {
   // Validate
   const validation = validateFullJSON(result.fields);
   if (validation.valid) {
-    console.error('[zer0gravity] Fields are valid');
+    console.error('[zerogravity] Fields are valid');
   } else {
-    console.error('[zer0gravity] Validation warnings:');
+    console.error('[zerogravity] Validation warnings:');
     for (const err of validation.errors) {
       console.error(`  - ${err}`);
     }
   }
 
-  console.error(`[zer0gravity] Tokens used: ${result.usage.input_tokens} in / ${result.usage.output_tokens} out`);
+  console.error(`[zerogravity] Tokens used: ${result.usage.input_tokens} in / ${result.usage.output_tokens} out`);
 
   // Optionally embed
   let embeddingResult = null;
   if (args.embed) {
     const openai = getOpenAIClient();
-    console.error('[zer0gravity] Generating embedding...');
+    console.error('[zerogravity] Generating embedding...');
     embeddingResult = await embed(openai, { fields: result.fields });
-    console.error(`[zer0gravity] Embedding: ${embeddingResult.dimensions} dimensions, model: ${embeddingResult.model}`);
+    console.error(`[zerogravity] Embedding: ${embeddingResult.dimensions} dimensions, model: ${embeddingResult.model}`);
   }
 
   // Build and write full JSON
@@ -172,19 +165,12 @@ async function cmdGenerate(args) {
     const { formatStampWithHeader } = require('./src/engine/parser.cjs');
     const stampFields = {
       title: result.fields.title,
-      theme: result.fields.theme,
-      index: result.fields.index || []
+      intent: result.fields.intent,
+      indexes: result.fields.indexes || []
     };
-    if (result.fields.author) {
-      stampFields.author = result.fields.author;
-    }
-    if (args.embedUrl) {
-      stampFields['embed'] = args.embedUrl;
-    }
-    stampFields['model'] = require('./src/engine/generator.cjs').DEFAULT_MODEL;
 
-    const stamp = formatStampWithHeader(stampFields, args.infoUrl);
-    console.error('\n[zer0gravity] Compact stamp:\n');
+    const stamp = formatStampWithHeader(stampFields);
+    console.error('\n[zerogravity] Stamp:\n');
     console.log(stamp);
   }
 }
@@ -198,7 +184,7 @@ async function cmdParse(args) {
   const result = parseZG(text);
 
   if (!result) {
-    console.error('[zer0gravity] No Zer0 Grav1ty stamp found in input');
+    console.error('[zerogravity] No Zero Gravity stamp found in input');
     process.exit(1);
   }
 
@@ -212,7 +198,7 @@ async function cmdParse(args) {
   }
 
   // Human-readable output
-  console.error(`[zer0gravity] Zer0 Grav1ty v${result.version} stamp found\n`);
+  console.error(`[zerogravity] Zero Gravity v${result.version} stamp found\n`);
 
   for (const [key, value] of Object.entries(result.fields)) {
     if (Array.isArray(value)) {
@@ -247,25 +233,25 @@ async function cmdEmbed(args) {
   try {
     const json = JSON.parse(text);
     // It's a JSON file — use the fields directly
-    const { embedding, zg_version, created_at, ...rest } = json;
+    const { embedding, encoding, version, created_at, ...rest } = json;
     fields = rest;
   } catch {
     // Not JSON — try to parse as a document with a stamp
     const { parseZG } = require('./src/engine/parser.cjs');
     const result = parseZG(text);
     if (!result) {
-      console.error('[zer0gravity] No Zer0 Grav1ty stamp or JSON found in input');
+      console.error('[zerogravity] No Zero Gravity stamp or JSON found in input');
       process.exit(1);
     }
     fields = {
       title: result.fields.title,
-      theme: result.fields.theme
+      intent: result.fields.intent
     };
-    console.error('[zer0gravity] WARNING: Stamp has limited fields. For best embeddings, use the full .zg.json file as input.');
+    console.error('[zerogravity] WARNING: Stamp has limited fields. For best embeddings, use the full .zg.json file as input.');
   }
 
   const openai = getOpenAIClient();
-  console.error('[zer0gravity] Generating embedding...');
+  console.error('[zerogravity] Generating embedding...');
   const embeddingResult = await embed(openai, { fields });
 
   const fullJSON = buildFullJSON({ fields, embedding: embeddingResult });
@@ -277,7 +263,7 @@ async function cmdEmbed(args) {
     console.log(jsonStr);
   }
 
-  console.error(`[zer0gravity] Embedding: ${embeddingResult.dimensions} dimensions, model: ${embeddingResult.model}`);
+  console.error(`[zerogravity] Embedding: ${embeddingResult.dimensions} dimensions, model: ${embeddingResult.model}`);
 }
 
 // ─── RUN command (legacy Phase 2 experiments) ────────────────────
@@ -300,7 +286,6 @@ COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguou
     console.error('No API key found. Set ZER0GRAVITY_API_KEY or ANTHROPIC_API_KEY in .env');
     process.exit(1);
   }
-  console.error(`[zer0gravity] Using ${process.env.ZER0GRAVITY_API_KEY ? 'ZER0GRAVITY_API_KEY' : 'ANTHROPIC_API_KEY (shared)'}`);
 
   const testCaseDir = path.join(__dirname, 'src', 'test-cases');
   const files = { 1: 'level-1-simple.json', 2: 'level-2-brief.json', 3: 'level-3-procedural.json' };
@@ -321,8 +306,8 @@ COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguou
     encodingSystem = fs.readFileSync(resolved, 'utf-8');
   }
 
-  console.error(`[zer0gravity] Encoding system: ${args.encoding || '(default)'}`);
-  console.error(`[zer0gravity] Levels: ${args.all ? 'all' : args.level}`);
+  console.error(`[zerogravity] Encoding system: ${args.encoding || '(default)'}`);
+  console.error(`[zerogravity] Levels: ${args.all ? 'all' : args.level}`);
   console.error('');
 
   const results = [];
@@ -332,7 +317,7 @@ COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguou
         const result = await runExperiment({ originalText: testCase.text, encodingSystem, testCaseId: testCase.id });
         results.push(result);
       } catch (e) {
-        console.error(`[zer0gravity] ERROR on ${testCase.id}: ${e.message}`);
+        console.error(`[zerogravity] ERROR on ${testCase.id}: ${e.message}`);
         results.push({ testCaseId: testCase.id, error: e.message, originalText: testCase.text });
       }
     }
@@ -341,7 +326,7 @@ COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguou
   const successResults = results.filter(r => !r.error);
   if (successResults.length > 0) {
     console.error('\n========================================');
-    console.error('  Zer0 Grav1ty Experiment Results');
+    console.error('  Zero Gravity Experiment Results');
     console.error('========================================\n');
     for (const result of successResults) {
       const textPreview = result.originalText.length > 40 ? result.originalText.slice(0, 40) + '...' : result.originalText;
@@ -370,18 +355,18 @@ COMPACT: Remove unnecessary whitespace. Use '|' as word separator where ambiguou
 
 function printHelp() {
   console.error(`
-  Zer0 Grav1ty CLI
+  Zero Gravity CLI
 
   Commands:
-    generate  Generate Zer0 Grav1ty fields from an article
-    parse     Parse a Zer0 Grav1ty stamp from a document
+    generate  Generate Zero Gravity fields from an article
+    parse     Parse a Zero Gravity stamp from a document
     embed     Add embedding to a .zg.json file
     run       (Legacy) Run Phase 2 compression experiments
 
   Generate:
     node cli.cjs generate --input article.md
     node cli.cjs generate --input article.md --embed
-    node cli.cjs generate --input article.md --stamp --embed-url URL --info-url URL
+    node cli.cjs generate --input article.md --stamp
     node cli.cjs generate --input article.md --output path/to/output.zg.json
 
   Parse:
@@ -419,6 +404,6 @@ async function main() {
 }
 
 main().catch(e => {
-  console.error(`[zer0gravity] Fatal error: ${e.message}`);
+  console.error(`[zerogravity] Fatal error: ${e.message}`);
   process.exit(1);
 });

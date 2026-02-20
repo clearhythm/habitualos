@@ -1,21 +1,18 @@
 /**
- * Zer0 Grav1ty — Stamp Parser
+ * Zero Gravity — Stamp Parser
  *
- * Pure JavaScript parser for Zer0 Grav1ty v0.1 stamps and full JSON.
+ * Pure JavaScript parser for Zero Gravity v0.1 stamps and full JSON.
  * No external dependencies. No API calls.
  */
 
-// Matches the data block: --zg:0.1 ... --/zg
-const ZG_BLOCK_REGEX = /^--zg:(\d+\.\d+)\s*\n([\s\S]*?)\n--\/zg\s*$/m;
+// Matches the data block: ---BEGIN ZERO GRAVITY--- ... ---END ZERO GRAVITY---
+const ZG_BLOCK_REGEX = /---BEGIN ZERO GRAVITY---\n([\s\S]*?)\n---END ZERO GRAVITY---/;
 
-// Stamp fields
-const STAMP_REQUIRED_FIELDS = ['title', 'theme', 'index'];
+// Stamp required fields
+const STAMP_REQUIRED_FIELDS = ['encoding', 'version', 'title', 'intent', 'indexes'];
 
-// Full JSON required fields
-const JSON_REQUIRED_FIELDS = ['id', 'intent', 'theme', 'relevance', 'claims'];
-
-// Fields that are lists in the stamp
-const LIST_FIELDS = ['index', 'claims'];
+// Full JSON required fields (from generator output)
+const JSON_REQUIRED_FIELDS = ['id', 'intent', 'relevance', 'claims'];
 
 // Controlled vocabularies
 const VALID_INTENTS = ['proposal', 'critique', 'synthesis', 'report', 'design'];
@@ -25,7 +22,7 @@ const VALID_STANCES = ['speculative', 'empirical', 'prescriptive', 'exploratory'
  * Extract a data block from text.
  *
  * @param {string} text - Full document text
- * @returns {{ raw: string, version: string, body: string } | null}
+ * @returns {{ raw: string, body: string } | null}
  */
 function extractBlock(text) {
   const match = text.match(ZG_BLOCK_REGEX);
@@ -33,29 +30,28 @@ function extractBlock(text) {
 
   return {
     raw: match[0],
-    version: match[1],
-    body: match[2]
+    body: match[1]
   };
 }
 
 /**
- * Parse a list value: "[item1; item2; item3]" → ["item1", "item2", "item3"]
+ * Strip surrounding quotes from a string value.
  *
  * @param {string} value
- * @returns {string[]}
+ * @returns {string}
  */
-function parseList(value) {
+function stripQuotes(value) {
   const trimmed = value.trim();
-  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) {
-    return [trimmed];
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    return trimmed.slice(1, -1);
   }
-  const inner = trimmed.slice(1, -1);
-  return inner.split(';').map(item => item.trim()).filter(item => item.length > 0);
+  return trimmed;
 }
 
 /**
  * Parse the body of a data block into fields.
- * Each line is: + fieldname: value
+ * YAML-style: key: "value" for strings, key:\n  - "item" for lists.
  *
  * @param {string} body - Block body (content between delimiters)
  * @returns {Object} Parsed fields
@@ -63,32 +59,44 @@ function parseList(value) {
 function parseBlock(body) {
   const fields = {};
   const lines = body.split('\n');
+  let i = 0;
 
-  for (const line of lines) {
+  while (i < lines.length) {
+    const line = lines[i];
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed) { i++; continue; }
 
-    // Strip the + prefix
-    let fieldLine = trimmed;
-    if (fieldLine.startsWith('+ ')) {
-      fieldLine = fieldLine.slice(2);
-    } else if (fieldLine.startsWith('+')) {
-      fieldLine = fieldLine.slice(1).trim();
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx === -1) { i++; continue; }
+
+    const key = trimmed.slice(0, colonIdx).trim();
+    const afterColon = trimmed.slice(colonIdx + 1).trim();
+
+    if (!key) { i++; continue; }
+
+    // Check if this is a multi-line list (key: with nothing after, followed by - items)
+    if (afterColon === '') {
+      const items = [];
+      i++;
+      while (i < lines.length) {
+        const nextLine = lines[i];
+        const nextTrimmed = nextLine.trim();
+        if (nextTrimmed.startsWith('- ')) {
+          items.push(stripQuotes(nextTrimmed.slice(2)));
+          i++;
+        } else {
+          break;
+        }
+      }
+      if (items.length > 0) {
+        fields[key] = items;
+      }
+      continue;
     }
 
-    const colonIdx = fieldLine.indexOf(':');
-    if (colonIdx === -1) continue;
-
-    const key = fieldLine.slice(0, colonIdx).trim();
-    const value = fieldLine.slice(colonIdx + 1).trim();
-
-    if (!key) continue;
-
-    if (LIST_FIELDS.includes(key)) {
-      fields[key] = parseList(value);
-    } else {
-      fields[key] = value;
-    }
+    // Single-value field
+    fields[key] = stripQuotes(afterColon);
+    i++;
   }
 
   return fields;
@@ -108,19 +116,20 @@ function validateStamp(fields) {
       errors.push(`Missing required stamp field: ${field}`);
     } else if (typeof fields[field] === 'string' && fields[field].trim() === '') {
       errors.push(`Required stamp field is empty: ${field}`);
+    } else if (Array.isArray(fields[field]) && fields[field].length === 0) {
+      errors.push(`Required stamp field is empty: ${field}`);
     }
   }
 
-  // Validate embed URL format (optional field)
-  if (fields['embed'] && !fields['embed'].startsWith('http')) {
-    errors.push(`embed should be a URL: "${fields['embed']}"`);
+  if (fields.encoding && fields.encoding !== 'zero-gravity') {
+    errors.push(`Unexpected encoding: "${fields.encoding}" (expected "zero-gravity")`);
   }
 
   return { valid: errors.length === 0, errors };
 }
 
 /**
- * Validate full JSON fields.
+ * Validate full JSON fields (from generator output).
  *
  * @param {Object} json - Parsed full JSON
  * @returns {{ valid: boolean, errors: string[] }}
@@ -162,7 +171,7 @@ function validateFullJSON(json) {
 }
 
 /**
- * Extract and parse a Zer0 Grav1ty stamp from text in one step.
+ * Extract and parse a Zero Gravity stamp from text in one step.
  *
  * @param {string} text - Full document text
  * @returns {{ version: string, fields: Object, raw: string, validation: { valid: boolean, errors: string[] } } | null}
@@ -175,7 +184,7 @@ function parseZG(text) {
   const validation = validateStamp(fields);
 
   return {
-    version: extracted.version,
+    version: fields.version || '0.1',
     fields,
     raw: extracted.raw,
     validation
@@ -183,29 +192,33 @@ function parseZG(text) {
 }
 
 /**
- * Format fields into a Zer0 Grav1ty stamp string (data block only).
+ * Format fields into a Zero Gravity stamp string (data block only).
  *
- * @param {Object} fields - Stamp fields
+ * @param {Object} fields - Stamp fields (title, intent, indexes)
  * @param {string} [version='0.1']
  * @returns {string}
  */
 function formatStamp(fields, version = '0.1') {
-  const fieldOrder = ['title', 'author', 'theme', 'index', 'embed', 'model'];
+  const lines = [
+    '---BEGIN ZERO GRAVITY---',
+    'encoding: "zero-gravity"',
+    `version: "${version}"`
+  ];
 
-  const lines = [`--zg:${version}`];
-
-  for (const key of fieldOrder) {
-    const value = fields[key];
-    if (value === undefined) continue;
-
-    if (Array.isArray(value)) {
-      lines.push(`+ ${key}: [${value.join('; ')}]`);
-    } else {
-      lines.push(`+ ${key}: ${value}`);
+  if (fields.title) {
+    lines.push(`title: "${fields.title}"`);
+  }
+  if (fields.intent) {
+    lines.push(`intent: "${fields.intent}"`);
+  }
+  if (Array.isArray(fields.indexes) && fields.indexes.length > 0) {
+    lines.push('indexes:');
+    for (const item of fields.indexes) {
+      lines.push(`  - "${item}"`);
     }
   }
 
-  lines.push('--/zg');
+  lines.push('---END ZERO GRAVITY---');
   return lines.join('\n');
 }
 
@@ -213,25 +226,25 @@ function formatStamp(fields, version = '0.1') {
  * Format a complete stamp with visual header.
  *
  * @param {Object} fields - Stamp fields
- * @param {string} [infoUrl] - URL for the "what's this?" link
+ * @param {string} [infoUrl] - URL for the "learn more" link
  * @param {string} [version='0.1']
  * @returns {string}
  */
 function formatStampWithHeader(fields, infoUrl, version = '0.1') {
-  const header = 'Zer0 Grav1ty';
+  const header = '🪐 Zero Gravity';
   const tagline = infoUrl
-    ? `Agent summary for the semantic web | [what's this?](${infoUrl})`
-    : 'Agent summary for the semantic web';
+    ? `Semantic encoding for AI agents | [learn more](${infoUrl})`
+    : 'Semantic encoding for AI agents';
 
   const dataBlock = formatStamp(fields, version);
 
-  return `${header}\n${tagline}\n${dataBlock}`;
+  return `${header}\n${tagline}\n\n${dataBlock}`;
 }
 
 module.exports = {
   extractBlock,
   parseBlock,
-  parseList,
+  stripQuotes,
   parseZG,
   validateStamp,
   validateFullJSON,
@@ -240,7 +253,6 @@ module.exports = {
   ZG_BLOCK_REGEX,
   STAMP_REQUIRED_FIELDS,
   JSON_REQUIRED_FIELDS,
-  LIST_FIELDS,
   VALID_INTENTS,
   VALID_STANCES
 };

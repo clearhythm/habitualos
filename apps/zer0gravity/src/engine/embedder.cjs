@@ -1,11 +1,10 @@
 /**
- * Zer0 Grav1ty — Embedder
+ * Zero Gravity — Embedder
  *
- * Generates vector embeddings via OpenAI for Zer0 Grav1ty content.
+ * Generates vector embeddings via OpenAI for Zero Gravity content.
  * Embeds the semantic skeleton (field values), not the full article.
  *
- * Also provides buildFullJSON() to assemble the complete JSON
- * that lives at the zg-full URL.
+ * Also provides buildFullJSON() to assemble the complete output JSON.
  */
 
 const crypto = require('crypto');
@@ -33,9 +32,11 @@ function hashText(text) {
 function fieldsToEmbeddingText(fields) {
   const parts = [];
   if (fields.title) parts.push(`Title: ${fields.title}`);
-  if (fields.theme) parts.push(`Theme: ${fields.theme}`);
-  if (fields.relevance) parts.push(`Relevance: ${fields.relevance}`);
   if (fields.intent) parts.push(`Intent: ${fields.intent}`);
+  if (fields.relevance) parts.push(`Relevance: ${fields.relevance}`);
+  if (Array.isArray(fields.indexes)) {
+    parts.push(`Indexes: ${fields.indexes.join('; ')}`);
+  }
   if (Array.isArray(fields.claims)) {
     parts.push(`Claims: ${fields.claims.join('; ')}`);
   }
@@ -49,7 +50,7 @@ function fieldsToEmbeddingText(fields) {
 }
 
 /**
- * Generate an embedding for Zer0 Grav1ty fields.
+ * Generate an embedding for Zero Gravity fields.
  *
  * @param {Object} openai - OpenAI SDK client
  * @param {Object} options
@@ -78,7 +79,7 @@ async function embed(openai, { fields, model = DEFAULT_MODEL, dimensions = DEFAU
 }
 
 /**
- * Build the full JSON that lives at the zg-full URL.
+ * Build the full output JSON.
  * Merges all fields with an optional embedding.
  *
  * @param {Object} options
@@ -88,7 +89,8 @@ async function embed(openai, { fields, model = DEFAULT_MODEL, dimensions = DEFAU
  */
 function buildFullJSON({ fields, embedding = null }) {
   const result = {
-    zg_version: '0.1',
+    encoding: 'zero-gravity',
+    version: '0.1',
     ...fields,
     created_at: new Date().toISOString()
   };
