@@ -1,76 +1,70 @@
 /**
- * Zer0 Gr@vity — ZG Block Generator
+ * Zer0 Grav1ty — Full JSON Generator
  *
- * Takes article text and produces a ZG v0.1 block using Claude.
- * Follows the same API pattern as encoder.cjs.
+ * Takes article text and produces a Zer0 Grav1ty v0.1 full JSON using Claude.
+ * The full JSON contains all semantic fields. The stamp is derived from it.
  */
-
-const { parseZG, formatBlock } = require('./parser.cjs');
 
 const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
 
-const SYSTEM_PROMPT = `You are a ZG (Zer0 Gr@vity) block generator. Your job is to distill an article into a structured semantic abstract using the ZG v0.1 microformat.
+const SYSTEM_PROMPT = `You are a Zer0 Grav1ty generator. Your job is to distill an article into a structured semantic abstract.
 
-OUTPUT ONLY THE ZG BLOCK. No explanations, no commentary, no markdown fences.
+OUTPUT ONLY VALID JSON. No explanations, no commentary, no markdown fences.
 
-## ZG v0.1 Format
+## Required Fields
 
-A ZG block is delimited by ---ZG:0.1 and ---/ZG. Each field is on its own line as "fieldname:  value". Lists use [item1; item2; item3] syntax.
+- id: A URL-safe slug for this article (lowercase, hyphens, alphanumeric only)
+- title: Short article title
+- intent: What the article does. MUST be one of: proposal / critique / synthesis / report / design
+- theme: One-sentence core point. The single most important idea.
+- relevance: One sentence: why this matters
+- claims: Array of 3-7 explicit propositions the article makes
+- index: Array of 2-4 index entries for the stamp. Each entry should capture one of three things: (1) unique key phrases — distinctive terms that make this article findable in semantic search, (2) argument distillation — core claims as indexable propositions, (3) notable snippets — specific quotes or formulations worth preserving. Mix all three freely.
 
-Field names use l33t styling (one substitution per word: e→3 or a→@).
+## Optional Fields (include when meaningful)
 
-### Required Fields (all must be present)
+- author: Author name or attribution. Include if identifiable from the text.
+- stance: Epistemic posture. MUST be one of: speculative / empirical / prescriptive / exploratory
+- novelty: Array of 1-3 items describing what is new here
+- tags: Array of semantic anchors for clustering/retrieval
+- relations: Array of adjacent ideas, frameworks, schools of thought
+- audience: Array describing who this is for
+- actions: Array of suggested agent actions or processing hints
 
-- id: A URL-safe slug for this article (lowercase, hyphens, alphanumeric)
-- titl3: Short article title
-- int3nt: What the article does. MUST be one of: proposal / critique / synthesis / report / design
-- th3me: One-sentence core point. The single most important idea.
-- r3levance: One sentence: why this matters
-- cl@ims: 3-7 explicit propositions the article makes. List format.
+## Example Output
 
-### Optional Fields (include when meaningful)
+{
+  "id": "zer0-gravity-v01",
+  "title": "Zer0 Grav1ty — Meaning Skeletons for the Agent Web",
+  "author": "Erik Willekens",
+  "intent": "proposal",
+  "theme": "Agents need meaning-skeletons not prose to link ideas and act reliably",
+  "relevance": "A semantic abstract makes indexing cheaper and retrieval clearer",
+  "index": ["distillation beats compression", "agents need structure not prose", "meaning has bones"],
+  "claims": [
+    "agents waste tokens on rhetorical glue",
+    "meaning can be represented as claims and relations",
+    "ZG blocks are a publishable semantic layer",
+    "embedding a semantic skeleton produces cleaner vectors than embedding full prose"
+  ],
+  "stance": "exploratory",
+  "novelty": ["Zer0 Grav1ty microformat", "distill-then-embed pipeline", "dual-audience publishing"],
+  "tags": ["semantic-compression", "agent-abstracts", "meaning-skeleton"],
+  "relations": ["RAG", "argument-mapping", "structured-data"],
+  "audience": ["AI agents", "developers", "semantic web practitioners"],
+  "actions": ["parse stamp for free", "embed stamp fields or fetch pre-computed vector", "read prose only when relevant"]
+}
 
-- @uthor: Author name or attribution. Include if the author is identifiable from the text.
-- st@nce: Epistemic posture. MUST be one of: speculative / empirical / prescriptive / exploratory
-- nov3lty: What is new here, 1-3 items. List format.
-- t@gs: Semantic anchors for clustering/retrieval. List format.
-- rel@tions: Adjacent ideas, frameworks, schools of thought. List format.
-- audi3nce: Who this is for. List format.
-- @ctions: Suggested agent actions or processing hints. List format.
-
-### Formatting
-
-- Align colons with consistent spacing for visual clarity
-- Lists: [item1; item2; item3]
-- No nesting, no multi-line values
-
-## Example
-
----ZG:0.1
-id:         zer0-gravity-v01
-titl3:      Zer0 Gr@vity — Meaning Skeletons for the Agent Web
-int3nt:     proposal
-th3me:      Agents need meaning-skeletons not prose to link ideas and act reliably
-r3levance:  A semantic abstract makes indexing cheaper and retrieval clearer
-cl@ims:     [agents waste tokens on rhetorical glue; meaning can be represented as claims and relations; ZG blocks are a publishable semantic layer; embedding ZG enables graph linkage; artistry belongs in the prose layer]
-st@nce:     exploratory
-nov3lty:    [ZG microformat; distill-then-embed pipeline; dual-audience publishing]
-t@gs:       [semantic-compression; agent-abstracts; meaning-skeleton]
-rel@tions:  [RAG, argument-mapping, structured-data]
-audi3nce:   [AI agents, developers, semantic web practitioners]
-@ctions:    [index ZG blocks; embed for retrieval; fetch prose only when needed]
----/ZG
-
-Now distill the provided article into a ZG v0.1 block.`;
+Now distill the provided article.`;
 
 /**
- * Generate a ZG block from article text using Claude.
+ * Generate Zer0 Grav1ty fields from article text using Claude.
  *
  * @param {Object} anthropic - Anthropic SDK client
  * @param {Object} options
  * @param {string} options.text - Article text to distill
  * @param {string} [options.model] - Claude model to use
- * @returns {Promise<{block: string, parsed: Object|null, validation: Object|null, usage: Object}>}
+ * @returns {Promise<{fields: Object|null, raw: string, usage: Object}>}
  */
 async function generate(anthropic, { text, model = DEFAULT_MODEL }) {
   const response = await anthropic.messages.create({
@@ -82,29 +76,29 @@ async function generate(anthropic, { text, model = DEFAULT_MODEL }) {
     ]
   });
 
-  const block = response.content
+  const raw = response.content
     .filter(b => b.type === 'text')
     .map(b => b.text)
     .join('')
     .trim();
 
-  if (!block) {
+  if (!raw) {
     console.error(`[generator] WARNING: Empty response. Stop reason: ${response.stop_reason}`);
-    return { block: '', parsed: null, validation: null, usage: response.usage };
+    return { fields: null, raw: '', usage: response.usage };
   }
 
-  // Parse and validate the generated block
-  const result = parseZG(block);
-
-  if (!result) {
-    console.error('[generator] WARNING: Generated text does not contain a valid ZG block');
-    return { block, parsed: null, validation: null, usage: response.usage };
+  // Parse JSON
+  let fields;
+  try {
+    fields = JSON.parse(raw);
+  } catch (e) {
+    console.error(`[generator] WARNING: Response is not valid JSON: ${e.message}`);
+    return { fields: null, raw, usage: response.usage };
   }
 
   return {
-    block: result.raw,
-    parsed: result.fields,
-    validation: result.validation,
+    fields,
+    raw,
     usage: response.usage
   };
 }

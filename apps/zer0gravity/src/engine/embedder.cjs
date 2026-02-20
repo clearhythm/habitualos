@@ -1,8 +1,11 @@
 /**
- * Zer0 Gr@vity — ZG Block Embedder
+ * Zer0 Grav1ty — Embedder
  *
- * Takes a ZG block and generates a vector embedding via OpenAI.
- * Embeds the semantic skeleton (ZG block text), not the full article.
+ * Generates vector embeddings via OpenAI for Zer0 Grav1ty content.
+ * Embeds the semantic skeleton (field values), not the full article.
+ *
+ * Also provides buildFullJSON() to assemble the complete JSON
+ * that lives at the zg-full URL.
  */
 
 const crypto = require('crypto');
@@ -21,34 +24,80 @@ function hashText(text) {
 }
 
 /**
- * Generate an embedding for a ZG block.
+ * Build a text representation of the fields for embedding.
+ * Concatenates the semantic fields into a clean text block.
+ *
+ * @param {Object} fields - Full JSON fields
+ * @returns {string}
+ */
+function fieldsToEmbeddingText(fields) {
+  const parts = [];
+  if (fields.title) parts.push(`Title: ${fields.title}`);
+  if (fields.theme) parts.push(`Theme: ${fields.theme}`);
+  if (fields.relevance) parts.push(`Relevance: ${fields.relevance}`);
+  if (fields.intent) parts.push(`Intent: ${fields.intent}`);
+  if (Array.isArray(fields.claims)) {
+    parts.push(`Claims: ${fields.claims.join('; ')}`);
+  }
+  if (Array.isArray(fields.tags)) {
+    parts.push(`Tags: ${fields.tags.join(', ')}`);
+  }
+  if (Array.isArray(fields.relations)) {
+    parts.push(`Relations: ${fields.relations.join(', ')}`);
+  }
+  return parts.join('\n');
+}
+
+/**
+ * Generate an embedding for Zer0 Grav1ty fields.
  *
  * @param {Object} openai - OpenAI SDK client
  * @param {Object} options
- * @param {string} options.blockText - The raw ZG block text (between delimiters, inclusive)
- * @param {string} options.zgId - The ZG block id field
+ * @param {Object} options.fields - Full JSON fields
  * @param {string} [options.model] - Embedding model
  * @param {number} [options.dimensions] - Vector dimensions
- * @returns {Promise<{zg_id: string, zg_version: string, model: string, dimensions: number, input_hash: string, created_at: string, vector: number[]}>}
+ * @returns {Promise<{model: string, dimensions: number, input_hash: string, vector: number[]}>}
  */
-async function embed(openai, { blockText, zgId, model = DEFAULT_MODEL, dimensions = DEFAULT_DIMENSIONS }) {
+async function embed(openai, { fields, model = DEFAULT_MODEL, dimensions = DEFAULT_DIMENSIONS }) {
+  const inputText = fieldsToEmbeddingText(fields);
+
   const response = await openai.embeddings.create({
     model,
-    input: blockText,
+    input: inputText,
     dimensions
   });
 
   const vector = response.data[0].embedding;
 
   return {
-    zg_id: zgId,
-    zg_version: '0.1',
     model,
     dimensions,
-    input_hash: hashText(blockText),
-    created_at: new Date().toISOString(),
+    input_hash: hashText(inputText),
     vector
   };
 }
 
-module.exports = { embed, hashText, DEFAULT_MODEL, DEFAULT_DIMENSIONS };
+/**
+ * Build the full JSON that lives at the zg-full URL.
+ * Merges all fields with an optional embedding.
+ *
+ * @param {Object} options
+ * @param {Object} options.fields - Generated fields
+ * @param {Object} [options.embedding] - Embedding result from embed()
+ * @returns {Object} Full JSON structure
+ */
+function buildFullJSON({ fields, embedding = null }) {
+  const result = {
+    zg_version: '0.1',
+    ...fields,
+    created_at: new Date().toISOString()
+  };
+
+  if (embedding) {
+    result.embedding = embedding;
+  }
+
+  return result;
+}
+
+module.exports = { embed, buildFullJSON, fieldsToEmbeddingText, hashText, DEFAULT_MODEL, DEFAULT_DIMENSIONS };

@@ -1,22 +1,28 @@
 /**
- * Zer0 Gr@vity — ZG Block Parser
+ * Zer0 Grav1ty — Stamp Parser
  *
- * Pure JavaScript parser for ZG v0.1 blocks.
+ * Pure JavaScript parser for Zer0 Grav1ty v0.1 stamps and full JSON.
  * No external dependencies. No API calls.
  */
 
-const ZG_BLOCK_REGEX = /^---ZG:(\d+\.\d+)\s*\n([\s\S]*?)\n---\/ZG\s*$/m;
+// Matches the data block: --zg:0.1 ... --/zg
+const ZG_BLOCK_REGEX = /^--zg:(\d+\.\d+)\s*\n([\s\S]*?)\n--\/zg\s*$/m;
 
-const REQUIRED_FIELDS = ['id', 'titl3', 'int3nt', 'th3me', 'r3levance', 'cl@ims'];
+// Stamp fields
+const STAMP_REQUIRED_FIELDS = ['title', 'theme', 'index'];
 
-const LIST_FIELDS = ['cl@ims', 'nov3lty', 't@gs', 'rel@tions', 'audi3nce', '@ctions'];
+// Full JSON required fields
+const JSON_REQUIRED_FIELDS = ['id', 'intent', 'theme', 'relevance', 'claims'];
 
+// Fields that are lists in the stamp
+const LIST_FIELDS = ['index', 'claims'];
+
+// Controlled vocabularies
 const VALID_INTENTS = ['proposal', 'critique', 'synthesis', 'report', 'design'];
-
 const VALID_STANCES = ['speculative', 'empirical', 'prescriptive', 'exploratory'];
 
 /**
- * Extract a ZG block from text.
+ * Extract a data block from text.
  *
  * @param {string} text - Full document text
  * @returns {{ raw: string, version: string, body: string } | null}
@@ -48,7 +54,8 @@ function parseList(value) {
 }
 
 /**
- * Parse the body of a ZG block into field key-value pairs.
+ * Parse the body of a data block into fields.
+ * Each line is: + fieldname: value
  *
  * @param {string} body - Block body (content between delimiters)
  * @returns {Object} Parsed fields
@@ -61,11 +68,19 @@ function parseBlock(body) {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const colonIdx = trimmed.indexOf(':');
+    // Strip the + prefix
+    let fieldLine = trimmed;
+    if (fieldLine.startsWith('+ ')) {
+      fieldLine = fieldLine.slice(2);
+    } else if (fieldLine.startsWith('+')) {
+      fieldLine = fieldLine.slice(1).trim();
+    }
+
+    const colonIdx = fieldLine.indexOf(':');
     if (colonIdx === -1) continue;
 
-    const key = trimmed.slice(0, colonIdx).trim();
-    const value = trimmed.slice(colonIdx + 1).trim();
+    const key = fieldLine.slice(0, colonIdx).trim();
+    const value = fieldLine.slice(colonIdx + 1).trim();
 
     if (!key) continue;
 
@@ -80,54 +95,74 @@ function parseBlock(body) {
 }
 
 /**
- * Validate a parsed ZG block.
+ * Validate a parsed stamp.
  *
- * @param {Object} parsed - Parsed fields from parseBlock
+ * @param {Object} fields - Parsed fields from parseBlock
  * @returns {{ valid: boolean, errors: string[] }}
  */
-function validateBlock(parsed) {
+function validateStamp(fields) {
   const errors = [];
 
-  // Check required fields
-  for (const field of REQUIRED_FIELDS) {
-    if (!parsed[field]) {
-      errors.push(`Missing required field: ${field}`);
-    } else if (Array.isArray(parsed[field]) && parsed[field].length === 0) {
-      errors.push(`Required field is empty: ${field}`);
-    } else if (typeof parsed[field] === 'string' && parsed[field].trim() === '') {
-      errors.push(`Required field is empty: ${field}`);
+  for (const field of STAMP_REQUIRED_FIELDS) {
+    if (!fields[field]) {
+      errors.push(`Missing required stamp field: ${field}`);
+    } else if (typeof fields[field] === 'string' && fields[field].trim() === '') {
+      errors.push(`Required stamp field is empty: ${field}`);
     }
   }
 
-  // Validate int3nt values
-  if (parsed['int3nt'] && !VALID_INTENTS.includes(parsed['int3nt'])) {
-    errors.push(`Invalid int3nt value: "${parsed['int3nt']}". Must be one of: ${VALID_INTENTS.join(', ')}`);
-  }
-
-  // Validate st@nce values (if present)
-  if (parsed['st@nce'] && !VALID_STANCES.includes(parsed['st@nce'])) {
-    errors.push(`Invalid st@nce value: "${parsed['st@nce']}". Must be one of: ${VALID_STANCES.join(', ')}`);
-  }
-
-  // Validate cl@ims count
-  if (Array.isArray(parsed['cl@ims'])) {
-    if (parsed['cl@ims'].length < 3) {
-      errors.push(`cl@ims should have at least 3 items (found ${parsed['cl@ims'].length})`);
-    } else if (parsed['cl@ims'].length > 7) {
-      errors.push(`cl@ims should have at most 7 items (found ${parsed['cl@ims'].length})`);
-    }
-  }
-
-  // Validate id format
-  if (parsed['id'] && !/^[a-z0-9-]+$/.test(parsed['id'])) {
-    errors.push(`id must be lowercase alphanumeric with hyphens: "${parsed['id']}"`);
+  // Validate embed URL format (optional field)
+  if (fields['embed'] && !fields['embed'].startsWith('http')) {
+    errors.push(`embed should be a URL: "${fields['embed']}"`);
   }
 
   return { valid: errors.length === 0, errors };
 }
 
 /**
- * Extract and parse a ZG block from text in one step.
+ * Validate full JSON fields.
+ *
+ * @param {Object} json - Parsed full JSON
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+function validateFullJSON(json) {
+  const errors = [];
+
+  for (const field of JSON_REQUIRED_FIELDS) {
+    if (json[field] === undefined || json[field] === null) {
+      errors.push(`Missing required field: ${field}`);
+    } else if (typeof json[field] === 'string' && json[field].trim() === '') {
+      errors.push(`Required field is empty: ${field}`);
+    } else if (Array.isArray(json[field]) && json[field].length === 0) {
+      errors.push(`Required field is empty: ${field}`);
+    }
+  }
+
+  if (json.intent && !VALID_INTENTS.includes(json.intent)) {
+    errors.push(`Invalid intent value: "${json.intent}". Must be one of: ${VALID_INTENTS.join(', ')}`);
+  }
+
+  if (json.stance && !VALID_STANCES.includes(json.stance)) {
+    errors.push(`Invalid stance value: "${json.stance}". Must be one of: ${VALID_STANCES.join(', ')}`);
+  }
+
+  if (Array.isArray(json.claims)) {
+    if (json.claims.length < 3) {
+      errors.push(`claims should have at least 3 items (found ${json.claims.length})`);
+    } else if (json.claims.length > 7) {
+      errors.push(`claims should have at most 7 items (found ${json.claims.length})`);
+    }
+  }
+
+  if (json.id && !/^[a-z0-9-]+$/.test(json.id)) {
+    errors.push(`id must be lowercase alphanumeric with hyphens: "${json.id}"`);
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Extract and parse a Zer0 Grav1ty stamp from text in one step.
  *
  * @param {string} text - Full document text
  * @returns {{ version: string, fields: Object, raw: string, validation: { valid: boolean, errors: string[] } } | null}
@@ -137,7 +172,7 @@ function parseZG(text) {
   if (!extracted) return null;
 
   const fields = parseBlock(extracted.body);
-  const validation = validateBlock(fields);
+  const validation = validateStamp(fields);
 
   return {
     version: extracted.version,
@@ -148,38 +183,49 @@ function parseZG(text) {
 }
 
 /**
- * Format a fields object back into a ZG block string.
+ * Format fields into a Zer0 Grav1ty stamp string (data block only).
  *
- * @param {Object} fields - Parsed fields
+ * @param {Object} fields - Stamp fields
  * @param {string} [version='0.1']
  * @returns {string}
  */
-function formatBlock(fields, version = '0.1') {
-  const fieldOrder = [
-    'id', 'titl3', 'int3nt', 'th3me', 'r3levance', 'cl@ims',
-    '@uthor', 'st@nce', 'nov3lty', 't@gs', 'rel@tions', 'audi3nce', '@ctions', '3mbed'
-  ];
+function formatStamp(fields, version = '0.1') {
+  const fieldOrder = ['title', 'author', 'theme', 'index', 'embed', 'model'];
 
-  // Find max field name length for alignment
-  const presentFields = fieldOrder.filter(f => fields[f] !== undefined);
-  const maxLen = Math.max(...presentFields.map(f => f.length));
-
-  const lines = [`---ZG:${version}`];
+  const lines = [`--zg:${version}`];
 
   for (const key of fieldOrder) {
     const value = fields[key];
     if (value === undefined) continue;
 
-    const padding = ' '.repeat(maxLen - key.length + 1);
     if (Array.isArray(value)) {
-      lines.push(`${key}:${padding}[${value.join('; ')}]`);
+      lines.push(`+ ${key}: [${value.join('; ')}]`);
     } else {
-      lines.push(`${key}:${padding}${value}`);
+      lines.push(`+ ${key}: ${value}`);
     }
   }
 
-  lines.push('---/ZG');
+  lines.push('--/zg');
   return lines.join('\n');
+}
+
+/**
+ * Format a complete stamp with visual header.
+ *
+ * @param {Object} fields - Stamp fields
+ * @param {string} [infoUrl] - URL for the "what's this?" link
+ * @param {string} [version='0.1']
+ * @returns {string}
+ */
+function formatStampWithHeader(fields, infoUrl, version = '0.1') {
+  const header = 'Zer0 Grav1ty';
+  const tagline = infoUrl
+    ? `Agent summary for the semantic web | [what's this?](${infoUrl})`
+    : 'Agent summary for the semantic web';
+
+  const dataBlock = formatStamp(fields, version);
+
+  return `${header}\n${tagline}\n${dataBlock}`;
 }
 
 module.exports = {
@@ -187,10 +233,13 @@ module.exports = {
   parseBlock,
   parseList,
   parseZG,
-  validateBlock,
-  formatBlock,
+  validateStamp,
+  validateFullJSON,
+  formatStamp,
+  formatStampWithHeader,
   ZG_BLOCK_REGEX,
-  REQUIRED_FIELDS,
+  STAMP_REQUIRED_FIELDS,
+  JSON_REQUIRED_FIELDS,
   LIST_FIELDS,
   VALID_INTENTS,
   VALID_STANCES

@@ -2,7 +2,7 @@
   "name": "zer0gravity",
   "version": "0.2.0",
   "private": true,
-  "description": "Zer0 Gr@vity — Semantic abstract microformat for agent-parseable content",
+  "description": "Zer0 Grav1ty — Semantic abstract microformat for agent-parseable content",
   "scripts": {
     "start": "node server.cjs",
     "generate": "node cli.cjs generate",
