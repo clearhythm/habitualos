@@ -18,7 +18,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load env from monorepo root
+// Load env: app-local first, then monorepo root as fallback
+require('dotenv').config({ path: path.resolve(__dirname, '.env') });
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 function parseArgs(argv) {
