@@ -114,9 +114,9 @@ function getOpenAIClient() {
 async function cmdGenerate(args) {
   const text = readInput(args.input);
   const anthropic = getAnthropicClient();
-  const { generate } = require('./src/engine/generator.cjs');
-  const { validateFullJSON } = require('./src/engine/parser.cjs');
-  const { embed, buildFullJSON } = require('./src/engine/embedder.cjs');
+  const { generate } = require('zero-gravity/src/generator.cjs');
+  const { validateFullJSON } = require('zero-gravity/src/parser.cjs');
+  const { embed, buildFullJSON } = require('zero-gravity/src/embedder.cjs');
 
   console.error('[zerogravity] Generating Zero Gravity fields...');
   const result = await generate(anthropic, { text });
@@ -165,8 +165,8 @@ async function cmdGenerate(args) {
 
   // Output stamp if requested
   if (args.stamp) {
-    const { formatStampWithHeader } = require('./src/engine/parser.cjs');
-    const { DEFAULT_MODEL } = require('./src/engine/generator.cjs');
+    const { formatStampWithHeader } = require('zero-gravity/src/parser.cjs');
+    const { DEFAULT_MODEL } = require('zero-gravity/src/generator.cjs');
     const stampFields = {
       author: result.fields.author,
       title: result.fields.title,
@@ -186,7 +186,7 @@ async function cmdGenerate(args) {
 
 async function cmdParse(args) {
   const text = readInput(args.input);
-  const { parseZG } = require('./src/engine/parser.cjs');
+  const { parseZG } = require('zero-gravity/src/parser.cjs');
 
   const result = parseZG(text);
 
@@ -233,7 +233,7 @@ async function cmdParse(args) {
 
 async function cmdEmbed(args) {
   const text = readInput(args.input);
-  const { embed, buildFullJSON } = require('./src/engine/embedder.cjs');
+  const { embed, buildFullJSON } = require('zero-gravity/src/embedder.cjs');
 
   // Input can be either a .zg.json file or a document with a stamp
   let fields;
@@ -244,7 +244,7 @@ async function cmdEmbed(args) {
     fields = rest;
   } catch {
     // Not JSON — try to parse as a document with a stamp
-    const { parseZG } = require('./src/engine/parser.cjs');
+    const { parseZG } = require('zero-gravity/src/parser.cjs');
     const result = parseZG(text);
     if (!result) {
       console.error('[zerogravity] No Zero Gravity stamp or JSON found in input');
