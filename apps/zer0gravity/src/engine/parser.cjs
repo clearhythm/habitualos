@@ -9,7 +9,7 @@
 const ZG_BLOCK_REGEX = /---BEGIN ZERO GRAVITY---\n([\s\S]*?)\n---END ZERO GRAVITY---/;
 
 // Stamp required fields
-const STAMP_REQUIRED_FIELDS = ['encoding', 'version', 'title', 'intent', 'indexes'];
+const STAMP_REQUIRED_FIELDS = ['encoding', 'version', 'title', 'intent', 'metaindex'];
 
 // Full JSON required fields (from generator output)
 const JSON_REQUIRED_FIELDS = ['id', 'intent', 'relevance', 'claims'];
@@ -194,7 +194,7 @@ function parseZG(text) {
 /**
  * Format fields into a Zero Gravity stamp string (data block only).
  *
- * @param {Object} fields - Stamp fields (title, intent, indexes)
+ * @param {Object} fields - Stamp fields
  * @param {string} [version='0.1']
  * @returns {string}
  */
@@ -205,17 +205,28 @@ function formatStamp(fields, version = '0.1') {
     `version: "${version}"`
   ];
 
+  // Optional: author (before title per field order)
+  if (fields.author) {
+    lines.push(`author: "${fields.author}"`);
+  }
   if (fields.title) {
     lines.push(`title: "${fields.title}"`);
   }
   if (fields.intent) {
     lines.push(`intent: "${fields.intent}"`);
   }
-  if (Array.isArray(fields.indexes) && fields.indexes.length > 0) {
-    lines.push('indexes:');
-    for (const item of fields.indexes) {
+  if (Array.isArray(fields.metaindex) && fields.metaindex.length > 0) {
+    lines.push('metaindex:');
+    for (const item of fields.metaindex) {
       lines.push(`  - "${item}"`);
     }
+  }
+  // Optional: model, manifest (after metaindex per field order)
+  if (fields.model) {
+    lines.push(`model: "${fields.model}"`);
+  }
+  if (fields.manifest) {
+    lines.push(`manifest: "${fields.manifest}"`);
   }
 
   lines.push('---END ZERO GRAVITY---');
@@ -230,11 +241,9 @@ function formatStamp(fields, version = '0.1') {
  * @param {string} [version='0.1']
  * @returns {string}
  */
-function formatStampWithHeader(fields, infoUrl, version = '0.1') {
-  const header = '🪐 Zero Gravity';
-  const tagline = infoUrl
-    ? `Semantic encoding for AI agents | [learn more](${infoUrl})`
-    : 'Semantic encoding for AI agents';
+function formatStampWithHeader(fields, infoUrl = 'https://github.com/clearhythm/zero-gravity', version = '0.1') {
+  const header = '🪐 Zero Gravity Stamp';
+  const tagline = `Semantic pre-filtering for agents | [learn more](${infoUrl})`;
 
   const dataBlock = formatStamp(fields, version);
 

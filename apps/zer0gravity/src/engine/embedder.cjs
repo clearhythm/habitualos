@@ -34,8 +34,8 @@ function fieldsToEmbeddingText(fields) {
   if (fields.title) parts.push(`Title: ${fields.title}`);
   if (fields.intent) parts.push(`Intent: ${fields.intent}`);
   if (fields.relevance) parts.push(`Relevance: ${fields.relevance}`);
-  if (Array.isArray(fields.indexes)) {
-    parts.push(`Indexes: ${fields.indexes.join('; ')}`);
+  if (Array.isArray(fields.metaindex)) {
+    parts.push(`Metaindex: ${fields.metaindex.join('; ')}`);
   }
   if (Array.isArray(fields.claims)) {
     parts.push(`Claims: ${fields.claims.join('; ')}`);

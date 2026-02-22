@@ -18,10 +18,11 @@ OUTPUT ONLY VALID JSON. No explanations, no commentary, no markdown fences.
 - intent: What the article does. MUST be one of: proposal / critique / synthesis / report / design
 - relevance: One sentence: why this matters
 - claims: Array of 3-7 explicit propositions the article makes
-- indexes: Array of 4-8 semantic fragments for the stamp. Each entry should capture one of three things: (1) unique key phrases — distinctive terms that make this article findable in semantic search, (2) argument distillation — core claims as indexable propositions, (3) notable snippets — specific quotes or formulations worth preserving. Mix all three freely. Include the author name as an entry if identifiable.
+- metaindex: Array of 4-8 semantic fragments for the stamp. Each entry should capture one of three things: (1) unique key phrases — distinctive terms that make this article findable in semantic search, (2) argument distillation — core claims as indexable propositions, (3) notable snippets — specific quotes or formulations worth preserving. Mix all three freely. Include the author name as an entry if identifiable.
 
 ## Optional Fields (include when meaningful)
 
+- author: Author name if identifiable, or the company/website if not
 - stance: Epistemic posture. MUST be one of: speculative / empirical / prescriptive / exploratory
 - novelty: Array of 1-3 items describing what is new here
 - tags: Array of semantic anchors for clustering/retrieval
@@ -33,10 +34,11 @@ OUTPUT ONLY VALID JSON. No explanations, no commentary, no markdown fences.
 
 {
   "id": "zero-gravity-v01",
+  "author": "Erik Burns",
   "title": "Zero Gravity — A Semantic Bootstrap for the Agentic Web",
   "intent": "proposal",
   "relevance": "A semantic abstract makes indexing cheaper and retrieval clearer",
-  "indexes": ["Erik Burns", "semantic bootstrap for agents", "token gravity", "agents need structure not prose", "meaning has bones"],
+  "metaindex": ["Erik Burns", "semantic bootstrap for agents", "token gravity", "agents need structure not prose", "meaning has bones"],
   "claims": [
     "agents waste tokens on rhetorical glue",
     "meaning can be represented as claims and relations",

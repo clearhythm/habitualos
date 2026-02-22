@@ -22,13 +22,13 @@ A Zero Gravity stamp has two parts: a visual header and a data block. The stamp 
 ### Visual Header
 
 ```
-🪐 Zero Gravity
-Semantic encoding for AI agents | [learn more](https://github.com/.../zg-0.1.md)
+🪐 Zero Gravity Stamp
+Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
 ```
 
-- **Line 1**: Brand name with planet emoji
-- **Line 2**: Tagline + optional "learn more" link to the spec
-- This is presentation — not parsed by agents
+- **Line 1**: "Zero Gravity Stamp" with planet emoji
+- **Line 2**: Tagline + "learn more" link to the repo/spec
+- This is markdown presentation — not parsed by agents
 
 ### Data Block
 
@@ -36,14 +36,17 @@ Semantic encoding for AI agents | [learn more](https://github.com/.../zg-0.1.md)
 ---BEGIN ZERO GRAVITY---
 encoding: "zero-gravity"
 version: "0.1"
+author: "Erik Burns"
 title: "Zero Gravity — A Semantic Bootstrap for the Agentic Web"
 intent: "Introduce a lightweight semantic declaration layer for reducing redundant agent embedding"
-indexes:
+metaindex:
   - "Erik Burns"
   - "semantic bootstrap for agents"
   - "token gravity"
   - "agents need structure not prose"
   - "meaning has bones"
+model: "claude-sonnet-4-5"
+manifest: "https://github.com/clearhythm/zero-gravity/blob/main/data/zero-gravity-v01.zg.json"
 ---END ZERO GRAVITY---
 ```
 
@@ -54,20 +57,22 @@ indexes:
 ### Complete Stamp
 
 ```
-🪐 Zero Gravity
-Semantic encoding for AI agents | [learn more](https://github.com/.../zg-0.1.md)
+🪐 Zero Gravity Stamp
+Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
 
 ---BEGIN ZERO GRAVITY---
 encoding: "zero-gravity"
 version: "0.1"
+author: "Erik Burns"
 title: "Zero Gravity — A Semantic Bootstrap for the Agentic Web"
 intent: "Introduce a lightweight semantic declaration layer for reducing redundant agent embedding"
-indexes:
+metaindex:
   - "Erik Burns"
   - "semantic bootstrap for agents"
   - "token gravity"
   - "agents need structure not prose"
   - "meaning has bones"
+model: "claude-sonnet-4-5"
 ---END ZERO GRAVITY---
 ```
 
@@ -88,7 +93,7 @@ key: "value"
 List values use multi-line format with indented dash entries:
 
 ```
-indexes:
+metaindex:
   - "first entry"
   - "second entry"
   - "third entry"
@@ -98,21 +103,35 @@ indexes:
 - Each list item is on its own line, indented, prefixed with `- `
 - Item values are quoted with double quotes
 
-## Stamp Fields (5)
+## Stamp Fields
 
 These fields appear in the stamp — the compact block that lives in articles.
 
-| Field | Required | Description | Example |
-|-------|----------|-------------|---------|
-| `encoding` | yes | Always `"zero-gravity"`. Identifies the encoding format. | `zero-gravity` |
-| `version` | yes | Version string. | `0.1` |
-| `title` | yes | Article title | `Zero Gravity — A Semantic Bootstrap for the Agentic Web` |
-| `intent` | yes | What the article is trying to get you to think or do. One sentence. | `Introduce a lightweight semantic declaration layer for reducing redundant agent embedding` |
-| `indexes` | yes | 4-8 semantic fragments for vectorization. List format. | See below |
+### Required
 
-### `indexes` — the signature field
+| Field | Description | Example |
+|-------|-------------|---------|
+| `encoding` | Always `"zero-gravity"`. Identifies the encoding format. | `zero-gravity` |
+| `version` | Version string. | `0.1` |
+| `title` | Article title | `Zero Gravity — A Semantic Bootstrap for the Agentic Web` |
+| `intent` | What the article is trying to get you to think or do. One sentence. | `Introduce a lightweight semantic declaration layer for reducing redundant agent embedding` |
+| `metaindex` | 4-8 semantic fragments for vectorization. List format. | See below |
 
-Unlike tags or keywords that describe the surface, index entries carry the propositional core. Each entry should capture one of three things:
+### Optional
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `author` | Author name, or the company/website if not identifiable. Placed before title. | `Erik Burns` |
+| `model` | What model generated this stamp. Model name or `manual`. | `claude-sonnet-4-5` |
+| `manifest` | URL to embeddings or other published resources. | `https://example.com/embed.json` |
+
+### Field Order
+
+`encoding` → `version` → `author` → `title` → `intent` → `metaindex` → `model` → `manifest`
+
+### `metaindex` — the signature field
+
+Unlike tags or keywords that describe the surface, metaindex entries carry the propositional core. Each entry should capture one of three things:
 
 1. **Unique key phrases** — distinctive terms and concepts that make this article findable in semantic search. Not generic keywords — the phrases that are unique to this piece.
 2. **Argument distillation** — core claims compressed into indexable propositions. What does the article actually argue?
@@ -120,7 +139,7 @@ Unlike tags or keywords that describe the surface, index entries carry the propo
 
 Mix all three freely. Include the author name as an entry if identifiable. This is everything an agent would need to vectorize and store this article for semantic retrieval.
 
-The stamp is self-contained. An agent can parse `intent` + `indexes` and know what the article argues — no fetches required.
+The stamp is self-contained. An agent can parse `intent` + `metaindex` and know what the article argues — no fetches required.
 
 ## Full JSON Fields
 
@@ -133,6 +152,7 @@ The generator produces a full JSON containing the complete semantic skeleton. Th
 | `encoding` | yes | Always `"zero-gravity"` |
 | `version` | yes | Version string, e.g. `"0.1"` |
 | `id` | yes | Stable slug identifier. Lowercase, hyphens, alphanumeric. |
+| `author` | no | Author name or company/website |
 | `title` | yes | Article title |
 
 ### Semantic Core
@@ -142,7 +162,7 @@ The generator produces a full JSON containing the complete semantic skeleton. Th
 | `intent` | yes | What the article does: `proposal` / `critique` / `synthesis` / `report` / `design` |
 | `relevance` | yes | One sentence: why this matters |
 | `claims` | yes | 3-7 explicit propositions. Array. |
-| `indexes` | yes | 4-8 semantic fragments. Array. |
+| `metaindex` | yes | 4-8 semantic fragments. Array. |
 
 ### Context
 
@@ -173,6 +193,7 @@ The embedding object is the pre-computed vector. The v0.1 reference implementati
   "encoding": "zero-gravity",
   "version": "0.1",
   "id": "zero-gravity-v01",
+  "author": "Erik Burns",
   "title": "Zero Gravity — A Semantic Bootstrap for the Agentic Web",
   "intent": "proposal",
   "relevance": "A meaning skeleton makes content indexable, embeddable, and retrievable without processing full prose",
@@ -182,7 +203,7 @@ The embedding object is the pre-computed vector. The v0.1 reference implementati
     "a semantic skeleton is more useful than a compressed paragraph",
     "embedding the skeleton produces cleaner vectors than embedding the article"
   ],
-  "indexes": [
+  "metaindex": [
     "Erik Burns",
     "semantic bootstrap for agents",
     "token gravity",
@@ -208,9 +229,9 @@ The embedding object is the pre-computed vector. The v0.1 reference implementati
 
 ## Agent Consumption Flow
 
-1. **Parse the stamp** — free, instant, no API calls. Get title, intent, and indexes.
-2. **Assess relevance from indexes** — the 4-8 index entries give the agent enough signal to decide whether to go deeper.
-3. **Embed or fetch** — the stamp fields are clean, noise-free input for any embedding API. Or fetch a pre-computed vector if one is published alongside the article.
+1. **Parse the stamp** — free, instant, no API calls. Get title, intent, and metaindex.
+2. **Assess relevance from metaindex** — the 4-8 entries give the agent enough signal to decide whether to go deeper.
+3. **Embed or fetch** — the stamp fields are clean, noise-free input for any embedding API. Or fetch a pre-computed vector via the manifest URL.
 4. **Read the full article** — only if the stamp indicates relevance. Most articles won't need full processing.
 
 ## Parsing Rules
@@ -226,10 +247,3 @@ The embedding object is the pre-computed vector. The v0.1 reference implementati
 ### Full JSON
 
 Standard JSON parsing. Validate: `id`, `intent`, `relevance`, and `claims` (with 3-7 items) are required.
-
-## Future Direction
-
-- **Embedding manifests.** Future versions could serve a manifest with vectors from multiple providers (OpenAI, Cohere, Voyage, etc.) so agents grab the representation matching their model.
-- **Script tag / sidecar.** Export the stamp as `<script type="application/zero-gravity">` for HTML-native consumption, or as a `.zg.json` sidecar file.
-- **Native HTML.** If stamps become a web standard, the format could collapse to native meta elements. The stamp is the bootstrap — a format that works today, inside articles, without waiting for browser vendors.
-- **Discovery.** A registry of Zero Gravity-stamped articles, enabling semantic search across publishers.

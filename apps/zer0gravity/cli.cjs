@@ -29,6 +29,7 @@ function parseArgs(argv) {
     json: false,
     embed: false,
     stamp: false,
+    manifest: null,
     // Legacy run command args
     level: null,
     all: false,
@@ -50,6 +51,8 @@ function parseArgs(argv) {
       args.embed = true;
     } else if (arg === '--stamp') {
       args.stamp = true;
+    } else if (arg === '--manifest' && argv[i + 1]) {
+      args.manifest = argv[++i];
     } else if (arg === '--level' && argv[i + 1]) {
       args.level = parseInt(argv[++i]);
     } else if (arg === '--all') {
@@ -163,10 +166,14 @@ async function cmdGenerate(args) {
   // Output stamp if requested
   if (args.stamp) {
     const { formatStampWithHeader } = require('./src/engine/parser.cjs');
+    const { DEFAULT_MODEL } = require('./src/engine/generator.cjs');
     const stampFields = {
+      author: result.fields.author,
       title: result.fields.title,
       intent: result.fields.intent,
-      indexes: result.fields.indexes || []
+      metaindex: result.fields.metaindex || [],
+      model: DEFAULT_MODEL,
+      manifest: args.manifest || undefined
     };
 
     const stamp = formatStampWithHeader(stampFields);
