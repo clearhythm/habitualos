@@ -23,7 +23,7 @@ A Zero Gravity stamp has two parts: a visual header and a data block. The stamp 
 
 ```
 🪐 Zero Gravity Stamp
-Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
+Semantic encoding for agents | [learn more](https://github.com/clearhythm/zero-gravity) »
 ```
 
 - **Line 1**: "Zero Gravity Stamp" with planet emoji
@@ -58,7 +58,7 @@ manifest: "https://github.com/clearhythm/zero-gravity/blob/main/data/zero-gravit
 
 ```
 🪐 Zero Gravity Stamp
-Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
+Semantic encoding for agents | [learn more](https://github.com/clearhythm/zero-gravity) »
 
 ---BEGIN ZERO GRAVITY---
 encoding: "zero-gravity"

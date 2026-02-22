@@ -8,7 +8,7 @@ Output ONLY the stamp. No commentary, no explanations.
 
 ```
 🪐 Zero Gravity Stamp
-Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
+Semantic encoding for agents | [learn more](https://github.com/clearhythm/zero-gravity) »
 
 ---BEGIN ZERO GRAVITY---
 encoding: "zero-gravity"
@@ -72,7 +72,7 @@ Given an article about microservices migration patterns, you might produce:
 
 ```
 🪐 Zero Gravity Stamp
-Semantic pre-filtering for agents | [learn more](https://github.com/clearhythm/zero-gravity)
+Semantic encoding for agents | [learn more](https://github.com/clearhythm/zero-gravity) »
 
 ---BEGIN ZERO GRAVITY---
 encoding: "zero-gravity"

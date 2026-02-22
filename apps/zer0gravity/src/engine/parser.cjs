@@ -243,7 +243,7 @@ function formatStamp(fields, version = '0.1') {
  */
 function formatStampWithHeader(fields, infoUrl = 'https://github.com/clearhythm/zero-gravity', version = '0.1') {
   const header = '🪐 Zero Gravity Stamp';
-  const tagline = `Semantic pre-filtering for agents | [learn more](${infoUrl})`;
+  const tagline = `Semantic encoding for agents | [learn more](${infoUrl}) »`;
 
   const dataBlock = formatStamp(fields, version);
 
