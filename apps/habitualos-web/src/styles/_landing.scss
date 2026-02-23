@@ -1,0 +1,289 @@
+// Hero section
+.hero {
+  padding: $space-2xl 0;
+  text-align: center;
+
+  @media (min-width: $breakpoint-md) {
+    padding: 4rem 0 3rem;
+  }
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: $space-md;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 2.5rem;
+  }
+}
+
+.hero-tagline {
+  font-size: $font-size-xl;
+  color: $color-text-muted;
+  max-width: 600px;
+  margin: 0 auto $space-xl;
+  line-height: 1.5;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+.hero-cta {
+  display: flex;
+  gap: $space-md;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+// Section structure
+.section {
+  padding: $space-2xl 0;
+  border-top: 1px solid $color-border;
+
+  html[data-theme="dark"] & {
+    border-top-color: $dark-color-border;
+  }
+}
+
+.section-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: $color-primary;
+  margin-bottom: $space-md;
+}
+
+.section-title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  margin-bottom: $space-md;
+}
+
+.section-intro {
+  font-size: $font-size-lg;
+  color: $color-text-muted;
+  max-width: 640px;
+  margin-bottom: $space-xl;
+  line-height: 1.7;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+// System cards (HabitualOS + Pidgerton)
+.system-card {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 16px;
+  padding: $space-xl;
+  margin-bottom: $space-xl;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+  }
+}
+
+.system-card-header {
+  margin-bottom: $space-lg;
+}
+
+.system-name {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  margin-bottom: $space-sm;
+}
+
+.system-subtitle {
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+.system-body {
+  display: grid;
+  gap: $space-xl;
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.system-description {
+  p {
+    margin-bottom: $space-md;
+    line-height: 1.7;
+  }
+}
+
+.system-details {
+  h4 {
+    font-size: $font-size-base;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: $space-sm;
+
+    html[data-theme="dark"] & {
+      color: $dark-color-text-muted;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin-left: 0;
+    margin-bottom: $space-md;
+    padding: 0;
+  }
+
+  li {
+    padding: $space-xs 0;
+    padding-left: $space-md;
+    position: relative;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    border-bottom: 1px solid $color-border;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: $color-primary;
+    }
+
+    html[data-theme="dark"] & {
+      color: $dark-color-text-muted;
+      border-bottom-color: $dark-color-border;
+    }
+  }
+}
+
+// Tech stack grid
+.stack-grid {
+  display: grid;
+  gap: $space-md;
+  grid-template-columns: 1fr;
+
+  @media (min-width: $breakpoint-sm) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.stack-item {
+  background: $color-bg-muted;
+  border-radius: 8px;
+  padding: $space-md;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg-muted;
+  }
+}
+
+.stack-item-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+  margin-bottom: $space-xs;
+}
+
+.stack-item-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+// Approach principles
+.principles {
+  display: grid;
+  gap: $space-lg;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.principle {
+  padding: $space-lg;
+  border-left: 3px solid $color-primary;
+
+  html[data-theme="dark"] & {
+    border-left-color: lighten($color-primary, 10%);
+  }
+}
+
+.principle-title {
+  font-weight: 600;
+  margin-bottom: $space-sm;
+}
+
+.principle-body {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+  line-height: 1.6;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+// Writing/articles section
+.writing-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.writing-item {
+  padding: $space-md 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  html[data-theme="dark"] & {
+    border-bottom-color: $dark-color-border;
+  }
+}
+
+.writing-item a {
+  font-size: $font-size-lg;
+  font-weight: 500;
+}
+
+.writing-meta {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-xs;
+  margin-bottom: 0;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}

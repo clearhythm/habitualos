@@ -1,0 +1,20 @@
+{
+  "name": "habitualos-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
+    "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
+    "eleventy:build": "eleventy",
+    "eleventy:serve": "eleventy --serve --port=8081",
+    "dev": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
+    "build": "sass src/styles/main.scss:_site/css/main.css --style=compressed && eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "sass": "^1.69.5"
+  }
+}
