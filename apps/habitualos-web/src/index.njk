@@ -1,0 +1,255 @@
+---
+layout: base.njk
+title: HabitualOS — Agentic AI for Real Life
+description: An agentic AI platform built and used daily to explore how AI agents can handle operational work while preserving human judgment and agency.
+---
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container-narrow">
+    <h1 class="hero-title">HabitualOS</h1>
+    <p class="hero-tagline">
+      Agentic AI for real life — daily productivity tools and relationship support,
+      built and used in production to understand how AI agents actually behave when
+      stakes are real.
+    </p>
+    <div class="hero-cta">
+      <a href="https://www.linkedin.com/in/erikburns" class="btn btn-primary" target="_blank" rel="noopener">
+        Follow on LinkedIn
+      </a>
+      <a href="#systems" class="btn btn-ghost">See the Work</a>
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<section class="section" id="about">
+  <div class="container-narrow">
+    <p class="section-label">About</p>
+    <h2 class="section-title">Built to be used, not demoed</h2>
+    <p class="section-intro">
+      Most agentic AI exists as demos or developer previews. HabitualOS is different:
+      I'm the primary user, and these tools handle real daily work.
+    </p>
+    <p>
+      The premise is simple: the best way to understand agentic AI is to live with it.
+      When an agent manages your actual task load, the gaps in design quality become
+      immediately visible. When AI supports your real relationship dynamics, the failure
+      modes that don't show up in benchmarks surface quickly.
+    </p>
+    <p>
+      HabitualOS is a personal R&D platform with two deployed systems. It's also
+      becoming a shared infrastructure for building agentic apps focused on human
+      empowerment and internal growth — which is why it's a monorepo.
+    </p>
+    <p>
+      The work spans multi-agent orchestration, conversational UX patterns, structured
+      agent signal protocols, and the problem of building AI systems that treat humans
+      as collaborators rather than endpoints.
+    </p>
+  </div>
+</section>
+
+<!-- Systems -->
+<section class="section" id="systems">
+  <div class="container">
+    <p class="section-label">Systems</p>
+    <h2 class="section-title">Two deployed apps, one platform</h2>
+
+    <!-- HabitualOS app card -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <h3 class="system-name">HabitualOS</h3>
+        <p class="system-subtitle">Agentic daily productivity — executive function support and habit tracking</p>
+      </div>
+      <div class="system-body">
+        <div class="system-description">
+          <p>
+            A multi-agent system that handles the operational overhead of daily work.
+            Multiple specialized agents manage different concerns: task creation and
+            scheduling, practice tracking, progress monitoring, and daily check-ins.
+          </p>
+          <p>
+            The system uses a structured signal protocol for agent output — agents don't
+            just respond with text, they emit typed signals like <code>GENERATE_ACTIONS</code>
+            (create a scheduled task), <code>GENERATE_ASSET</code> (produce a deliverable now),
+            or <code>STORE_MEASUREMENT</code> (record a check-in data point). This keeps agent
+            behavior constrained and auditable.
+          </p>
+          <p>
+            The practice component tracks habit consistency and generates insights from
+            patterns over time. The Do component handles task management through
+            conversational interfaces — you describe what needs to happen, agents
+            structure it into scheduled actions.
+          </p>
+        </div>
+        <div class="system-details">
+          <h4>Technical patterns</h4>
+          <ul>
+            <li>Multi-agent orchestration with typed signal protocol</li>
+            <li>Agent tool use: get_action_details, update_action for autonomous task management</li>
+            <li>Conversational UX for creating and scheduling work</li>
+            <li>Prompt caching for high-frequency agent interactions</li>
+            <li>Long-context memory for session continuity</li>
+            <li>Practice tracking with AI-generated pattern insights</li>
+          </ul>
+          <h4>Stack</h4>
+          <ul>
+            <li>Claude API (tool use, structured outputs, streaming)</li>
+            <li>Node.js + Netlify Functions</li>
+            <li>Google Firestore (user-partitioned)</li>
+            <li>11ty + Nunjucks frontend</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pidgerton card -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <h3 class="system-name">Pidgerton</h3>
+        <p class="system-subtitle">Relationship support — journaling, pattern recognition, and AI-assisted reflection for navigating relational dynamics</p>
+      </div>
+      <div class="system-body">
+        <div class="system-description">
+          <p>
+            A conversational journaling tool built for two people navigating complex
+            relational dynamics together. Captures relationship moments through chat
+            (no forms), identifies patterns across history, and offers AI-assisted
+            reflection prompts.
+          </p>
+          <p>
+            Named with intention. The whimsy is a deliberate design choice: AI in
+            intimate contexts needs a different sensibility than enterprise software.
+            Warmth and playfulness aren't decoration — they're part of what makes
+            the tool approachable for emotionally charged material.
+          </p>
+          <p>
+            This is active territory in wellness tech. Relationship support apps are
+            an underexplored application of agentic AI, and building one in a real
+            relationship produces signal that a mock dataset can't.
+          </p>
+        </div>
+        <div class="system-details">
+          <h4>Technical patterns</h4>
+          <ul>
+            <li>Conversation-driven moment capture (no structured forms)</li>
+            <li>Temporal pattern recognition across relationship history</li>
+            <li>Survey engine for structured check-ins between partners</li>
+            <li>Privacy-first data architecture (fully user-partitioned)</li>
+            <li>Export and reflection history</li>
+          </ul>
+          <h4>Domain relevance</h4>
+          <ul>
+            <li>Wellness tech and relationship support apps</li>
+            <li>High-stakes conversational AI (emotional context)</li>
+            <li>Human-centered agent design patterns</li>
+            <li>Longitudinal context and memory across sessions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stack -->
+<section class="section" id="stack">
+  <div class="container">
+    <p class="section-label">Stack</p>
+    <h2 class="section-title">Technologies</h2>
+    <p class="section-intro">
+      Production systems, not toy demos. Everything below is running in deployed apps
+      handling real workloads.
+    </p>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <p class="stack-item-label">Claude API</p>
+        <p class="stack-item-desc">Tool use, structured outputs, prompt caching, extended thinking, streaming responses</p>
+      </div>
+      <div class="stack-item">
+        <p class="stack-item-label">Multi-agent orchestration</p>
+        <p class="stack-item-desc">Typed signal protocols, agent-to-agent handoffs, long-context memory, autonomous scheduling</p>
+      </div>
+      <div class="stack-item">
+        <p class="stack-item-label">Node.js + Netlify Functions</p>
+        <p class="stack-item-desc">Serverless backend, edge functions for streaming, scheduled cron agents</p>
+      </div>
+      <div class="stack-item">
+        <p class="stack-item-label">Google Firestore</p>
+        <p class="stack-item-desc">Real-time database, user-partitioned data architecture, service layer pattern</p>
+      </div>
+      <div class="stack-item">
+        <p class="stack-item-label">11ty + Nunjucks</p>
+        <p class="stack-item-desc">Static site generation, local-first where possible, modular template architecture</p>
+      </div>
+      <div class="stack-item">
+        <p class="stack-item-label">Zero Gravity</p>
+        <p class="stack-item-desc">Semantic microformat for agent-parseable content — structured metadata that preserves document readability</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Approach -->
+<section class="section" id="approach">
+  <div class="container-narrow">
+    <p class="section-label">Approach</p>
+    <h2 class="section-title">How I think about this work</h2>
+
+    <div class="principles">
+      <div class="principle">
+        <p class="principle-title">AI as collaborator, not oracle</p>
+        <p class="principle-body">
+          Agents surface options and handle operational overhead.
+          Humans decide. The goal is to amplify judgment, not replace it.
+          Systems that obscure this boundary fail in high-stakes contexts.
+        </p>
+      </div>
+      <div class="principle">
+        <p class="principle-title">Build in contexts that matter</p>
+        <p class="principle-body">
+          Demo apps optimize for impressiveness. Production tools optimize
+          for reliability. Using these systems daily means the failure modes
+          that don't show up in benchmarks become immediately visible.
+        </p>
+      </div>
+      <div class="principle">
+        <p class="principle-title">Structured outputs constrain behavior</p>
+        <p class="principle-body">
+          Typed agent signals and tool use schemas make agent behavior
+          predictable and auditable. Freeform text generation is a last resort,
+          not a default.
+        </p>
+      </div>
+      <div class="principle">
+        <p class="principle-title">Context and memory change the product</p>
+        <p class="principle-body">
+          Agents that know your history, patterns, and preferences are categorically
+          different from stateless chatbots. Long-context memory and session
+          continuity aren't features — they're the foundation.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Writing -->
+<section class="section" id="writing">
+  <div class="container-narrow">
+    <p class="section-label">Writing</p>
+    <h2 class="section-title">Articles and notes</h2>
+    <p class="section-intro">
+      I write about what I learn building these systems.
+      Most of it lives on LinkedIn for now.
+    </p>
+    <ul class="writing-list">
+      <li class="writing-item">
+        <a href="https://www.linkedin.com/in/erikburns" target="_blank" rel="noopener">
+          Follow on LinkedIn for updates
+        </a>
+        <p class="writing-meta">Articles on agentic AI, conversational UX, and building with Claude</p>
+      </li>
+    </ul>
+  </div>
+</section>

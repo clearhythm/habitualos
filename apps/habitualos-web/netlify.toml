@@ -1,0 +1,9 @@
+# =============================================================================
+# Netlify Configuration for habitualos-web (landing page)
+# Set "Base directory" to "apps/habitualos-web" in Netlify UI.
+# =============================================================================
+[build]
+  base = "apps/habitualos-web"
+  ignore = "cd $(git rev-parse --show-toplevel) && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/habitualos-web/"
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitualos-web build"
+  publish = "_site"

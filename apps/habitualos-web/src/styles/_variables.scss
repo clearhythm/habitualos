@@ -1,0 +1,41 @@
+// Colors
+$color-primary: #2563eb;
+$color-primary-dark: #1e40af;
+$color-success: #10b981;
+$color-warning: #f59e0b;
+$color-danger: #ef4444;
+$color-text: #1f2937;
+$color-text-muted: #6b7280;
+$color-bg: #ffffff;
+$color-bg-muted: #f3f4f6;
+$color-border: #e5e7eb;
+
+// Dark mode colors
+$dark-color-text: #e5e7eb;
+$dark-color-text-muted: #9ca3af;
+$dark-color-bg: #1f2937;
+$dark-color-bg-muted: #111827;
+$dark-color-border: #374151;
+$dark-color-border-hover: #4b5563;
+
+// Spacing (8px base unit)
+$space-xs: 0.25rem;
+$space-sm: 0.5rem;
+$space-md: 1rem;
+$space-lg: 1.5rem;
+$space-xl: 2rem;
+$space-2xl: 3rem;
+
+// Typography
+$font-family: system-ui, -apple-system, sans-serif;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.25rem;
+$font-size-2xl: 1.5rem;
+$font-size-3xl: 2rem;
+
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
