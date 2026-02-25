@@ -1,17 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title or "HabitualOS" }}</title>
   <meta name="description" content="{{ description or 'An agentic AI platform built and used daily to explore how AI agents can handle operational work while preserving human judgment and agency.' }}">
   <link rel="stylesheet" href="/css/main.css">
-  <script>
-    (function() {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-    })();
-  </script>
 </head>
 <body>
   {% include "nav.njk" %}
@@ -27,34 +21,5 @@
   </footer>
 
   <script src="/scripts/navigation.js"></script>
-  <script>
-    (function() {
-      const toggle = document.getElementById('theme-toggle');
-      const icon = document.getElementById('theme-icon');
-      const text = document.getElementById('theme-text');
-      const html = document.documentElement;
-
-      function updateToggle() {
-        const currentTheme = html.getAttribute('data-theme');
-        if (currentTheme === 'dark') {
-          icon.textContent = '☀️';
-          text.textContent = 'Light Mode';
-        } else {
-          icon.textContent = '🌙';
-          text.textContent = 'Dark Mode';
-        }
-      }
-
-      toggle.addEventListener('click', () => {
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        updateToggle();
-      });
-
-      updateToggle();
-    })();
-  </script>
 </body>
 </html>

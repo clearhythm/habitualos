@@ -1,11 +1,11 @@
 // Hero section
 .hero {
-  padding: $space-2xl 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-
-  @media (min-width: $breakpoint-md) {
-    padding: 4rem 0 3rem;
-  }
+  padding: $space-2xl 0;
 }
 
 .hero-title {

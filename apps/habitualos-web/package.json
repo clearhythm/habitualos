@@ -7,7 +7,7 @@
     "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve --port=8081",
-    "dev": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
+    "start": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
     "build": "sass src/styles/main.scss:_site/css/main.css --style=compressed && eleventy"
   },
   "dependencies": {
