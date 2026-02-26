@@ -68,7 +68,7 @@
   padding-bottom: 8vh;
 
   html[data-theme="dark"] & {
-    background: linear-gradient(to bottom, #161d2e, #060810);
+    background: linear-gradient(to bottom, #0d1230, #060810);
   }
 }
 
@@ -109,7 +109,7 @@
   background: #fafbff;
 
   html[data-theme="dark"] & {
-    background: linear-gradient(to bottom, #141b28, #0c1220);
+    background: linear-gradient(to bottom, #1a1035, #060810);
   }
 }
 
@@ -117,7 +117,7 @@ section.section:nth-of-type(even) {
   background: #eeeffe;
 
   html[data-theme="dark"] & {
-    background: linear-gradient(to bottom, #161030, #0d0819);
+    background: linear-gradient(to bottom, #0d1230, #060810);
   }
 }
 
