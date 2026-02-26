@@ -68,6 +68,10 @@ description: An agentic AI platform built and used daily to explore how AI agent
         <p class="stack-item-desc">Semantic microformat for agent-parseable content, structured metadata that preserves document readability</p>
       </a>
     </div>
+
+    <div class="stack-ship">
+      <img src="/images/habitual_ship.png" alt="" class="stack-ship-img">
+    </div>
   </div>
 </section>
 
@@ -77,112 +81,80 @@ description: An agentic AI platform built and used daily to explore how AI agent
     <h2 class="section-title">Habitual Apps</h2>
     <p class="section-intro">Below are three live production apps that were built using HabitualOS. Each explores a different dimension of using agentic AI in daily life.</p>
 
-    <!-- HabitualOS app card -->
+    <!-- Habitual app card -->
     <div class="system-card">
-      <div class="screenshot-gallery">
-        <img src="/images/habitualos-screenshot.png" alt="HabitualOS" class="screenshot-main">
-        <div class="screenshot-thumbs">
-          <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb active">
-          <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb">
-          <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb">
-        </div>
-      </div>
       <div class="system-card-header">
-        <h3 class="system-name">HabitualOS</h3>
+        <h3 class="system-name">Habitual</h3>
         <p class="system-subtitle">Agentic daily productivity, executive function support and habit tracking</p>
       </div>
-      <div class="system-body">
-        <div class="system-description">
-          <p>
-            A multi-agent system that handles the operational overhead of daily work.
-            Multiple specialized agents manage different concerns: task creation and
-            scheduling, practice tracking, progress monitoring, and daily check-ins.
-          </p>
-          <p>
-            The system uses a structured signal protocol for agent output. Agents don't
-            just respond with text, they emit typed signals like <code>GENERATE_ACTIONS</code>
-            (create a scheduled task), <code>GENERATE_ASSET</code> (produce a deliverable now),
-            or <code>STORE_MEASUREMENT</code> (record a check-in data point). This keeps agent
-            behavior constrained and auditable.
-          </p>
-          <p>
-            The practice component tracks habit consistency and generates insights from
-            patterns over time. The Do component handles task management through
-            conversational interfaces: you describe what needs to happen, agents
-            structure it into scheduled actions.
-          </p>
+      <div class="system-card-body">
+        <div class="system-card-media">
+          <div class="screenshot-gallery">
+            <img src="/images/habitualos-screenshot.png" alt="Habitual" class="screenshot-main">
+            <div class="screenshot-thumbs">
+              <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb active">
+              <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb">
+              <img src="/images/habitualos-screenshot.png" alt="" class="screenshot-thumb">
+            </div>
+          </div>
         </div>
-        <div class="system-details">
-          <h4>Technical patterns</h4>
-          <ul>
-            <li>Multi-agent orchestration with typed signal protocol</li>
-            <li>Agent tool use: get_action_details, update_action for autonomous task management</li>
-            <li>Conversational UX for creating and scheduling work</li>
-            <li>Prompt caching for high-frequency agent interactions</li>
-            <li>Long-context memory for session continuity</li>
-            <li>Practice tracking with AI-generated pattern insights</li>
-          </ul>
-          <h4>Stack</h4>
-          <ul>
-            <li>Claude API (tool use, structured outputs, streaming)</li>
-            <li>Node.js + Netlify Functions</li>
-            <li>Google Firestore (user-partitioned)</li>
-            <li>11ty + Nunjucks frontend</li>
-          </ul>
+        <div class="system-card-content">
+          <div class="system-description">
+            <p>
+              A multi-agent productivity system used daily. Agents handle task creation,
+              scheduling, practice tracking, and check-ins — emitting typed signals like
+              <code>GENERATE_ACTIONS</code> and <code>STORE_MEASUREMENT</code> rather than
+              unstructured text, keeping behavior constrained and auditable.
+            </p>
+          </div>
+          <div class="system-details">
+            <h4>Technical highlights</h4>
+            <ul>
+              <li>Multi-agent orchestration with typed signal protocol</li>
+              <li>Conversational UX for creating and scheduling work</li>
+              <li>Long-context memory for session continuity</li>
+              <li>Practice tracking with AI-generated pattern insights</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Pidgerton card -->
     <div class="system-card">
-      <div class="screenshot-gallery">
-        <img src="/images/pidgerton-1.png" alt="Pidgerton" class="screenshot-main">
-        <div class="screenshot-thumbs">
-          <img src="/images/pidgerton-1.png" alt="" class="screenshot-thumb active">
-          <img src="/images/pidgerton-2.png" alt="" class="screenshot-thumb">
-          <img src="/images/pidgerton-3.png" alt="" class="screenshot-thumb">
-        </div>
-      </div>
       <div class="system-card-header">
         <h3 class="system-name">Pidgerton</h3>
         <p class="system-subtitle">Relationship support: journaling, pattern recognition, and AI-assisted reflection for navigating relational dynamics</p>
       </div>
-      <div class="system-body">
-        <div class="system-description">
-          <p>
-            A conversational journaling tool built for two people navigating complex
-            relational dynamics together. Captures relationship moments through chat
-            (no forms), identifies patterns across history, and offers AI-assisted
-            reflection prompts.
-          </p>
-          <p>
-            Named with intention. The whimsy is a deliberate design choice: AI in
-            intimate contexts needs a different sensibility than enterprise software.
-            Warmth and playfulness aren't decoration. They're part of what makes
-            the tool approachable for emotionally charged material.
-          </p>
-          <p>
-            This is active territory in wellness tech. Relationship support apps are
-            an underexplored application of agentic AI, and building one in a real
-            relationship produces signal that a mock dataset can't.
-          </p>
+      <div class="system-card-body">
+        <div class="system-card-media">
+          <div class="screenshot-gallery">
+            <img src="/images/pidgerton-screenshot.png" alt="Pidgerton" class="screenshot-main">
+            <div class="screenshot-thumbs">
+              <img src="/images/pidgerton-1.png" alt="" class="screenshot-thumb active">
+              <img src="/images/pidgerton-2.png" alt="" class="screenshot-thumb">
+              <img src="/images/pidgerton-3.png" alt="" class="screenshot-thumb">
+            </div>
+          </div>
         </div>
-        <div class="system-details">
-          <h4>Technical patterns</h4>
-          <ul>
-            <li>Conversation-driven moment capture (no structured forms)</li>
-            <li>Temporal pattern recognition across relationship history</li>
-            <li>Survey engine for structured check-ins between partners</li>
-            <li>Privacy-first data architecture (fully user-partitioned)</li>
-            <li>Export and reflection history</li>
-          </ul>
-          <h4>Domain relevance</h4>
-          <ul>
-            <li>Wellness tech and relationship support apps</li>
-            <li>High-stakes conversational AI (emotional context)</li>
-            <li>Human-centered agent design patterns</li>
-            <li>Longitudinal context and memory across sessions</li>
-          </ul>
+        <div class="system-card-content">
+          <div class="system-description">
+            <p>
+              A conversational journaling tool for two people navigating complex relational
+              dynamics. Captures relationship moments through chat rather than forms,
+              identifies patterns across history, and offers AI-assisted reflection prompts.
+              Built in a real relationship — the only dataset that teaches anything.
+            </p>
+          </div>
+          <div class="system-details">
+            <h4>Technical highlights</h4>
+            <ul>
+              <li>Conversation-driven moment capture (no structured forms)</li>
+              <li>Temporal pattern recognition across relationship history</li>
+              <li>Privacy-first, fully user-partitioned data architecture</li>
+              <li>High-stakes conversational AI in emotional context</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -193,36 +165,22 @@ description: An agentic AI platform built and used daily to explore how AI agent
         <h3 class="system-name">Zero Gravity</h3>
         <p class="system-subtitle">A lightweight semantic encoding framework for publishers and AI agents</p>
       </div>
-      <div class="system-body">
+      <div class="system-card-body">
         <div class="system-description">
           <p>
-            A microformat specification and CLI tool that makes content simultaneously
-            readable by humans and parseable by AI agents, without sacrificing either.
-            Documents annotated with Zero Gravity carry structured semantic metadata
-            that agents can act on without stripping meaning from the prose.
-          </p>
-          <p>
-            The core problem: agents reading unstructured text have to infer context,
-            intent, and relationships that a human writer already knows. Zero Gravity
-            surfaces that structure explicitly, in a format that doesn't make the
-            document worse to read.
-          </p>
-          <p>
-            Used in HabitualOS to give agents richer context about tasks, practices,
-            and intent, without requiring structured database records for everything.
+            A microformat spec and CLI tool that makes content simultaneously readable
+            by humans and parseable by AI agents. Agents reading unstructured text have
+            to infer context a human writer already knows — Zero Gravity surfaces that
+            structure explicitly, without making the document worse to read.
           </p>
         </div>
         <div class="system-details">
-          <h4>What it does</h4>
+          <h4>Technical highlights</h4>
           <ul>
             <li>Semantic annotation that survives human editing</li>
             <li>Agent-parseable metadata embedded in plain text</li>
             <li>CLI tooling for encoding and validating documents</li>
-            <li>Spec designed for both publisher workflows and AI pipelines</li>
-          </ul>
-          <h4>Read more</h4>
-          <ul>
-            <li><a href="https://livinginterface.substack.com/p/zero-gravity-a-semantic-bootstrap">Zero Gravity on Living Interface (Substack)</a></li>
+            <li><a href="https://livinginterface.substack.com/p/zero-gravity-a-semantic-bootstrap">Zero Gravity on Living Interface</a></li>
           </ul>
         </div>
       </div>
@@ -267,7 +225,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
       </div>
       <div class="principle">
         <span class="principle-number">4</span>
-        <p class="principle-title">Embodiment and productivity are inseparable</p>
+        <p class="principle-title">Embodiment fuels productivity</p>
         <p class="principle-body">
           Productivity without embodiment leads to burnout. Embodiment without
           direction goes nowhere. As AI takes on more cognitive overhead, the human's
