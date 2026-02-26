@@ -470,6 +470,9 @@ section.section:nth-of-type(even) {
 }
 
 .writing-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-md;
   padding: $space-md 0;
   border-bottom: 1px solid $color-border;
 
@@ -480,6 +483,13 @@ section.section:nth-of-type(even) {
   html[data-theme="dark"] & {
     border-bottom-color: $dark-color-border;
   }
+}
+
+.writing-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .writing-item a {
