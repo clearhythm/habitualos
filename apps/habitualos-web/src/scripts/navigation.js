@@ -41,6 +41,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = lightbox.querySelector('.lightbox-img');
+
+  function openLightbox(src) {
+    lightboxImg.src = src;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.screenshot-main').forEach(img => {
+    img.addEventListener('click', () => openLightbox(img.src));
+  });
+
+  lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
   const toggle = document.getElementById('sidemenu-toggle');
   const menuLinks = document.querySelectorAll('.sidemenu-main a');
 

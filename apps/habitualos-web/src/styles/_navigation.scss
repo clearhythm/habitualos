@@ -156,7 +156,13 @@
   opacity: 0.7;
 }
 
-.sidemenu-linkedin {
+.sidemenu-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sidemenu-external-link {
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.9rem;
   text-decoration: underline;
@@ -165,6 +171,11 @@
     color: #fff;
     text-decoration: underline;
   }
+}
+
+.sidemenu-footer-copy {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.8rem;
 }
 
 .sidemenu-right {

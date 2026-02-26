@@ -173,6 +173,7 @@ section.section:nth-of-type(even) {
   display: block;
   border: 1px solid $color-border;
   margin-bottom: $space-sm;
+  cursor: zoom-in;
 
   html[data-theme="dark"] & {
     border-color: $dark-color-border;
@@ -505,5 +506,51 @@ section.section:nth-of-type(even) {
 
   html[data-theme="dark"] & {
     color: $dark-color-text-muted;
+  }
+}
+
+// Lightbox
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  cursor: zoom-out;
+
+  &.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0;
+
+  &:hover {
+    opacity: 1;
   }
 }
