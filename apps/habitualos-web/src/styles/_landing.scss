@@ -1,16 +1,54 @@
-// Story image
-.story-image-wrap {
-  position: relative;
-  max-width: 480px;
-  margin: 0 auto $space-xl;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+// Story beats
+.story-beats {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3xl;
 }
 
-.story-image {
-  width: 100%;
-  display: block;
-  opacity: 0.75;
+.story-beat {
+  display: grid;
+  gap: $space-xl;
+  align-items: center;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: 2fr 3fr;
+
+    &:nth-child(even) .story-beat-image {
+      order: 2;
+    }
+
+    &:nth-child(even) .story-beat-text {
+      order: 1;
+    }
+  }
+}
+
+.story-beat-image {
+  mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, black 40%, transparent 100%);
+
+  img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    display: block;
+    opacity: 0.85;
+    margin: 0 auto;
+  }
+}
+
+.story-beat-title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  margin-bottom: $space-sm;
+}
+
+.story-beat-text {
+  p {
+    font-size: $font-size-lg;
+    line-height: 1.7;
+    margin: 0;
+  }
 }
 
 // Hero section
@@ -28,6 +66,10 @@
   justify-content: center;
   text-align: center;
   padding-bottom: 8vh;
+
+  html[data-theme="dark"] & {
+    background: linear-gradient(to bottom, #161d2e, #060810);
+  }
 }
 
 .hero-title {
@@ -62,23 +104,23 @@
 }
 
 // Section structure
-// About=2nd(even)=lighter, Systems=3rd(odd)=darker, Stack=4th(even)=lighter...
 .section {
-  padding: $space-xl 0;
-  background: $color-bg-muted;
+  padding: 4rem 0 7rem;
+  background: #fafbff;
 
   html[data-theme="dark"] & {
-    background: $dark-color-bg-muted;
+    background: linear-gradient(to bottom, #141b28, #0c1220);
   }
 }
 
 section.section:nth-of-type(even) {
-  background: $color-bg;
+  background: #eeeffe;
 
   html[data-theme="dark"] & {
-    background: $dark-color-bg;
+    background: linear-gradient(to bottom, #161030, #0d0819);
   }
 }
+
 
 .section-label {
   font-size: $font-size-sm;
@@ -90,7 +132,7 @@ section.section:nth-of-type(even) {
 }
 
 .section-title {
-  font-size: $font-size-3xl;
+  font-size: 2.75rem;
   font-weight: 700;
   margin-bottom: $space-md;
 }
@@ -264,7 +306,7 @@ section.section:nth-of-type(even) {
 }
 
 .stack-item {
-  background: $color-bg-muted;
+  background: #ffffff;
   border-radius: 8px;
   padding: $space-md;
   position: relative;
