@@ -8,6 +8,17 @@ window.addEventListener('scroll', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.screenshot-gallery').forEach(gallery => {
+    const main = gallery.querySelector('.screenshot-main');
+    gallery.querySelectorAll('.screenshot-thumb').forEach(thumb => {
+      thumb.addEventListener('click', function() {
+        main.src = this.src;
+        gallery.querySelectorAll('.screenshot-thumb').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  });
+
   const toggle = document.getElementById('sidemenu-toggle');
   const menuLinks = document.querySelectorAll('.sidemenu-main a');
 

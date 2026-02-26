@@ -14,34 +14,32 @@
 }
 
 .navbar.active {
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #111;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
 
-  html[data-theme="dark"] & {
-    background-color: $dark-color-bg;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  }
+.navbar-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 0.4rem;
 }
 
 .navbar-brand {
+  display: inline-flex;
+  align-items: center;
   font-size: 1.5rem;
   font-weight: 600;
-  color: #333;
+  color: #fff;
   text-decoration: none;
   margin: 0 auto;
-
-  html[data-theme="dark"] & {
-    color: $dark-color-text;
-  }
 }
 
 .navbar-brand:hover {
   text-decoration: none;
 }
 
-.navbar.active .navbar-brand {
-  color: #333;
-}
 
 .sidemenu .toggle {
   width: 24px;
@@ -59,16 +57,12 @@
   position: absolute;
   height: 3px;
   width: 24px;
-  background: #333;
+  background: #fff;
   border-radius: 1px;
   opacity: 1;
   left: 0;
   transform: rotate(0deg);
   transition: 0.25s ease-in-out;
-
-  html[data-theme="dark"] & {
-    background: $dark-color-text;
-  }
 }
 
 .sidemenu .toggle span:nth-child(1) { top: 0px; width: 85%; }

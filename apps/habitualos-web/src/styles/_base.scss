@@ -7,12 +7,14 @@
 }
 
 html {
+  scroll-padding-top: 80px;
+  scroll-behavior: smooth;
   min-height: 100vh;
-  background: linear-gradient(to bottom, #EBEDFD, #FDFCF3 70%, #B5DAFF);
-  transition: background 0.3s ease;
+  // Bottom overscroll bounce matches last section (even = $color-bg)
+  background: $color-bg;
 
   &[data-theme="dark"] {
-    background: linear-gradient(to bottom, #1a1b26, #1f2937 70%, #111827);
+    background: $dark-color-bg;
   }
 }
 
@@ -26,9 +28,12 @@ body {
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  // Top overscroll bounce matches hero gradient start
+  background: linear-gradient(to bottom, #EBEDFD, #FDFCF3 70%, #B5DAFF);
 
   html[data-theme="dark"] & {
     color: $dark-color-text;
+    background: linear-gradient(to bottom, #1a1b26, #1f2937 70%, #111827);
   }
 }
 

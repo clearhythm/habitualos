@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
-    "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
+    "sass:build": "sass src/styles/main.scss:src/css/main.css --style=compressed",
+    "sass:watch": "sass src/styles/main.scss:src/css/main.css --watch",
     "eleventy:build": "eleventy",
-    "eleventy:serve": "eleventy --serve --port=8081",
+    "eleventy:serve": "eleventy --serve --port=8080",
     "start": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
-    "build": "sass src/styles/main.scss:_site/css/main.css --style=compressed && eleventy"
+    "build": "sass src/styles/main.scss:src/css/main.css --style=compressed && eleventy"
   },
   "dependencies": {
-    "@11ty/eleventy": "^2.0.1"
+    "@11ty/eleventy": "^3.0.0"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

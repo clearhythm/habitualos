@@ -7,57 +7,120 @@ description: An agentic AI platform built and used daily to explore how AI agent
 <!-- Hero -->
 <section class="hero">
   <div class="container-narrow">
+    <img src="/images/habitualos_vortex2.png" alt="" class="hero-ring">
     <h1 class="hero-title">HabitualOS</h1>
     <p class="hero-tagline">
-      Agentic AI for real life — daily productivity tools and relationship support,
-      built and used in production to understand how AI agents actually behave when
-      stakes are real.
+      A daily experiment in agentic human empowerment.<br class="d-none d-sm-block">
+      An open-source, modular prototyping kit for agentic apps, now featuring wiser agents, saner humans, and faster ships.
     </p>
     <div class="hero-cta">
-      <a href="https://www.linkedin.com/in/erikburns" class="btn btn-primary" target="_blank" rel="noopener">
-        Follow on LinkedIn
+      <a href="#about" class="btn btn-primary">Explore the Work</a>
+      <a href="https://www.linkedin.com/in/erikburns" class="btn btn-ghost" target="_blank" rel="noopener">
+        LinkedIn
       </a>
-      <a href="#systems" class="btn btn-ghost">See the Work</a>
     </div>
   </div>
 </section>
 
 <!-- About -->
 <section class="section" id="about">
-  <div class="container-narrow">
-    <p class="section-label">About</p>
-    <h2 class="section-title">Built to be used, not demoed</h2>
+  <div class="container">
+    <div class="story-image-wrap">
+      <img src="/images/habitual_space_flight.png" alt="" class="story-image">
+    </div>
+    <h2 class="section-title">The Habitual Story</h2>
     <p class="section-intro">
-      Most agentic AI exists as demos or developer previews. HabitualOS is different:
-      I'm the primary user, and these tools handle real daily work.
+      I got tired of reading about agentic AI and started building with it instead.
+      Not demos — tools I actually needed, for problems I actually had.
     </p>
     <p>
-      The premise is simple: the best way to understand agentic AI is to live with it.
-      When an agent manages your actual task load, the gaps in design quality become
-      immediately visible. When AI supports your real relationship dynamics, the failure
-      modes that don't show up in benchmarks surface quickly.
+      The first system was a task manager that used Claude to help schedule and
+      prioritize my daily work. Within a week of real use, it fell apart in ways
+      no benchmark would have predicted: agents gave confident answers to ambiguous
+      inputs, outputs weren't auditable, context evaporated between sessions.
+      All the hard problems were in the seams.
     </p>
     <p>
-      HabitualOS is a personal R&D platform with two deployed systems. It's also
-      becoming a shared infrastructure for building agentic apps focused on human
-      empowerment and internal growth — which is why it's a monorepo.
+      That friction became the design brief. Every failure mode I hit became a
+      constraint: structure agent outputs so behavior is predictable; build memory
+      so context isn't rebuilt from scratch; keep humans at the decision points,
+      not routed around them. I wasn't optimizing for a demo — I needed these tools
+      to work tomorrow morning.
     </p>
     <p>
-      The work spans multi-agent orchestration, conversational UX patterns, structured
-      agent signal protocols, and the problem of building AI systems that treat humans
-      as collaborators rather than endpoints.
+      HabitualOS is what I built to solve those problems, and kept building because
+      solving them opened new ones. It's a personal R&D platform, a monorepo of
+      live production systems, and increasingly a shared infrastructure for anyone
+      building agentic tools that treat humans as collaborators rather than endpoints.
     </p>
+  </div>
+</section>
+
+<!-- Stack -->
+<section class="section" id="stack">
+  <div class="container">
+    <h2 class="section-title">Built on Standards</h2>
+    <p class="section-intro">HabitualOS combines many technologies into one, enabling rapid prototyping of just about any human agent workflow imaginable.</p>
+
+    <div class="stack-grid">
+      <a class="stack-item" href="https://platform.claude.com/" target="_blank" rel="noopener">
+        <div class="stack-item-icon">
+          <img src="/images/icons/anthropic.svg" alt="Anthropic" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Claude API</p>
+        <p class="stack-item-desc">Tool use, structured outputs, prompt caching, extended thinking, streaming responses</p>
+      </a>
+      <div class="stack-item">
+        <div class="stack-item-icon stack-item-icon--text">🦾</div>
+        <p class="stack-item-label">Multi-agent orchestration</p>
+        <p class="stack-item-desc">Typed signal protocols, agent-to-agent handoffs, long-context memory, autonomous scheduling</p>
+      </div>
+      <a class="stack-item" href="https://www.netlify.com/products/functions/" target="_blank" rel="noopener">
+        <div class="stack-item-icon">
+          <img src="/images/icons/nodejs.svg" alt="Node.js" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Node.js + Netlify Functions</p>
+        <p class="stack-item-desc">Serverless backend, edge functions for streaming, scheduled cron agents</p>
+      </a>
+      <a class="stack-item" href="https://firebase.google.com/products/firestore" target="_blank" rel="noopener">
+        <div class="stack-item-icon">
+          <img src="/images/icons/firebase.svg" alt="Firebase" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Google Firestore</p>
+        <p class="stack-item-desc">Real-time database, user-partitioned data architecture, service layer pattern</p>
+      </a>
+      <a class="stack-item" href="https://www.11ty.dev" target="_blank" rel="noopener">
+        <div class="stack-item-icon">
+          <img src="/images/icons/eleventy.svg" alt="Eleventy" class="stack-logo">
+        </div>
+        <p class="stack-item-label">11ty + Nunjucks</p>
+        <p class="stack-item-desc">Static site generation, local-first where possible, modular template architecture</p>
+      </a>
+      <a class="stack-item" href="https://livinginterface.substack.com/p/zero-gravity-a-semantic-bootstrap" target="_blank" rel="noopener">
+        <div class="stack-item-icon stack-item-icon--text">🪐</div>
+        <p class="stack-item-label">Zero Gravity</p>
+        <p class="stack-item-desc">Semantic microformat for agent-parseable content — structured metadata that preserves document readability</p>
+      </a>
+    </div>
   </div>
 </section>
 
 <!-- Systems -->
 <section class="section" id="systems">
   <div class="container">
-    <p class="section-label">Systems</p>
-    <h2 class="section-title">Two deployed apps, one platform</h2>
+    <h2 class="section-title">Habitual Apps</h2>
+    <p class="section-intro">Below are three live production apps that were built using HabitualOS. Each explores a different dimension of using agentic AI in daily life.</p>
 
     <!-- HabitualOS app card -->
     <div class="system-card">
+      <div class="screenshot-gallery">
+        <img src="/images/habitualos-1.png" alt="HabitualOS" class="screenshot-main">
+        <div class="screenshot-thumbs">
+          <img src="/images/habitualos-1.png" alt="" class="screenshot-thumb active">
+          <img src="/images/habitualos-2.png" alt="" class="screenshot-thumb">
+          <img src="/images/habitualos-3.png" alt="" class="screenshot-thumb">
+        </div>
+      </div>
       <div class="system-card-header">
         <h3 class="system-name">HabitualOS</h3>
         <p class="system-subtitle">Agentic daily productivity — executive function support and habit tracking</p>
@@ -106,6 +169,14 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
     <!-- Pidgerton card -->
     <div class="system-card">
+      <div class="screenshot-gallery">
+        <img src="/images/pidgerton-1.png" alt="Pidgerton" class="screenshot-main">
+        <div class="screenshot-thumbs">
+          <img src="/images/pidgerton-1.png" alt="" class="screenshot-thumb active">
+          <img src="/images/pidgerton-2.png" alt="" class="screenshot-thumb">
+          <img src="/images/pidgerton-3.png" alt="" class="screenshot-thumb">
+        </div>
+      </div>
       <div class="system-card-header">
         <h3 class="system-name">Pidgerton</h3>
         <p class="system-subtitle">Relationship support — journaling, pattern recognition, and AI-assisted reflection for navigating relational dynamics</p>
@@ -193,53 +264,15 @@ description: An agentic AI platform built and used daily to explore how AI agent
   </div>
 </section>
 
-<!-- Stack -->
-<section class="section" id="stack">
-  <div class="container">
-    <p class="section-label">Stack</p>
-    <h2 class="section-title">Technologies</h2>
-    <p class="section-intro">
-      Production systems, not toy demos. Everything below is running in deployed apps
-      handling real workloads.
-    </p>
-
-    <div class="stack-grid">
-      <div class="stack-item">
-        <p class="stack-item-label">Claude API</p>
-        <p class="stack-item-desc">Tool use, structured outputs, prompt caching, extended thinking, streaming responses</p>
-      </div>
-      <div class="stack-item">
-        <p class="stack-item-label">Multi-agent orchestration</p>
-        <p class="stack-item-desc">Typed signal protocols, agent-to-agent handoffs, long-context memory, autonomous scheduling</p>
-      </div>
-      <div class="stack-item">
-        <p class="stack-item-label">Node.js + Netlify Functions</p>
-        <p class="stack-item-desc">Serverless backend, edge functions for streaming, scheduled cron agents</p>
-      </div>
-      <div class="stack-item">
-        <p class="stack-item-label">Google Firestore</p>
-        <p class="stack-item-desc">Real-time database, user-partitioned data architecture, service layer pattern</p>
-      </div>
-      <div class="stack-item">
-        <p class="stack-item-label">11ty + Nunjucks</p>
-        <p class="stack-item-desc">Static site generation, local-first where possible, modular template architecture</p>
-      </div>
-      <div class="stack-item">
-        <p class="stack-item-label">Zero Gravity</p>
-        <p class="stack-item-desc">Semantic microformat for agent-parseable content — structured metadata that preserves document readability</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- Approach -->
 <section class="section" id="approach">
-  <div class="container-narrow">
-    <p class="section-label">Approach</p>
-    <h2 class="section-title">How I think about this work</h2>
+  <div class="container">
+    <h2 class="section-title">Principles of HabitualOS</h2>
+    <p class="section-intro">Designing excellent agentic systems involves skillful orchestration of the following components — learned from direct trial and error.</p>
 
     <div class="principles">
       <div class="principle">
+        <span class="principle-number">1</span>
         <p class="principle-title">AI as collaborator, not oracle</p>
         <p class="principle-body">
           Agents surface options and handle operational overhead.
@@ -248,6 +281,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
         </p>
       </div>
       <div class="principle">
+        <span class="principle-number">2</span>
         <p class="principle-title">Build in contexts that matter</p>
         <p class="principle-body">
           Demo apps optimize for impressiveness. Production tools optimize
@@ -256,6 +290,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
         </p>
       </div>
       <div class="principle">
+        <span class="principle-number">3</span>
         <p class="principle-title">Structured outputs constrain behavior</p>
         <p class="principle-body">
           Typed agent signals and tool use schemas make agent behavior
@@ -264,6 +299,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
         </p>
       </div>
       <div class="principle">
+        <span class="principle-number">4</span>
         <p class="principle-title">Context and memory change the product</p>
         <p class="principle-body">
           Agents that know your history, patterns, and preferences are categorically
@@ -277,8 +313,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
 <!-- Writing -->
 <section class="section" id="writing">
-  <div class="container-narrow">
-    <p class="section-label">Writing</p>
+  <div class="container">
     <h2 class="section-title">Articles and notes</h2>
     <p class="section-intro">
       Writing about what I learn building these systems —

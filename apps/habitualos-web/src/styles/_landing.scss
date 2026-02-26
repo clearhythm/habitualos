@@ -1,11 +1,33 @@
+// Story image
+.story-image-wrap {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto $space-xl;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+.story-image {
+  width: 100%;
+  display: block;
+  opacity: 0.75;
+}
+
 // Hero section
+.hero-ring {
+  width: 170px;
+  height: 170px;
+  object-fit: contain;
+  margin-bottom: $space-sm;
+}
+
 .hero {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: $space-2xl 0;
+  padding-bottom: 8vh;
 }
 
 .hero-title {
@@ -13,10 +35,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: $space-md;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
 
   @media (max-width: $breakpoint-sm) {
     font-size: 2.5rem;
@@ -43,12 +62,21 @@
 }
 
 // Section structure
+// About=2nd(even)=lighter, Systems=3rd(odd)=darker, Stack=4th(even)=lighter...
 .section {
-  padding: $space-2xl 0;
-  border-top: 1px solid $color-border;
+  padding: $space-xl 0;
+  background: $color-bg-muted;
 
   html[data-theme="dark"] & {
-    border-top-color: $dark-color-border;
+    background: $dark-color-bg-muted;
+  }
+}
+
+section.section:nth-of-type(even) {
+  background: $color-bg;
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
   }
 }
 
@@ -62,7 +90,7 @@
 }
 
 .section-title {
-  font-size: $font-size-2xl;
+  font-size: $font-size-3xl;
   font-weight: 700;
   margin-bottom: $space-md;
 }
@@ -90,6 +118,51 @@
   html[data-theme="dark"] & {
     background: $dark-color-bg;
     border-color: $dark-color-border;
+  }
+}
+
+.screenshot-gallery {
+  margin-bottom: $space-lg;
+}
+
+.screenshot-main {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 8px;
+  display: block;
+  border: 1px solid $color-border;
+  margin-bottom: $space-sm;
+
+  html[data-theme="dark"] & {
+    border-color: $dark-color-border;
+  }
+}
+
+.screenshot-thumbs {
+  display: flex;
+  gap: $space-sm;
+}
+
+.screenshot-thumb {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  object-position: top;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, border-color 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.active {
+    border-color: $color-primary;
+    opacity: 1;
   }
 }
 
@@ -194,9 +267,73 @@
   background: $color-bg-muted;
   border-radius: 8px;
   padding: $space-md;
+  position: relative;
+  display: block;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &[href] {
+    cursor: pointer;
+
+    &::after {
+      content: "↗";
+      position: absolute;
+      top: $space-sm;
+      right: $space-sm;
+      font-size: $font-size-sm;
+      color: $color-text-muted;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    &:hover {
+      border-color: $color-border;
+      transform: translateY(-2px);
+      text-decoration: none;
+
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
 
   html[data-theme="dark"] & {
     background: $dark-color-bg-muted;
+
+    &[href]:hover {
+      border-color: $dark-color-border;
+    }
+
+    &[href]::after {
+      color: $dark-color-text-muted;
+    }
+  }
+}
+
+.stack-item-icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: $space-sm;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.stack-item-icon--text {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.stack-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: invert(1);
+
+  html[data-theme="dark"] & {
+    filter: invert(1);
   }
 }
 
@@ -229,14 +366,32 @@
 
 .principle {
   padding: $space-lg;
-  border-left: 3px solid $color-primary;
+  border-left: 3px solid #4a2570;
 
   html[data-theme="dark"] & {
-    border-left-color: lighten($color-primary, 10%);
+    border-left-color: lighten(#4a2570, 20%);
   }
 }
 
+.principle-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background-image: url('/images/habitualos_vortex2.png');
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: $space-md;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
 .principle-title {
+  font-size: $font-size-2xl;
   font-weight: 600;
   margin-bottom: $space-sm;
 }
