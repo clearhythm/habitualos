@@ -107,7 +107,7 @@
   width: 100%;
   max-width: 600px;
   padding: 0 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #09090f;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -142,8 +142,29 @@
   opacity: 0.8;
 }
 
-.sidemenu-left footer {
+.sidemenu-footer {
   padding: 2rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sidemenu-ring {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  opacity: 0.7;
+}
+
+.sidemenu-linkedin {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  text-decoration: underline;
+
+  &:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
 }
 
 .sidemenu-right {
