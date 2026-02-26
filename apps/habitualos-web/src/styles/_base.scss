@@ -14,7 +14,7 @@ html {
   background: $color-bg;
 
   &[data-theme="dark"] {
-    background: $dark-color-bg;
+    background: #000;
   }
 }
 
@@ -33,7 +33,7 @@ body {
 
   html[data-theme="dark"] & {
     color: $dark-color-text;
-    background: linear-gradient(to bottom, #1a1b26, #1f2937 70%, #111827);
+    background: #000;
   }
 }
 

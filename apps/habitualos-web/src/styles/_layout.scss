@@ -16,24 +16,24 @@
 
 .main {
   flex: 1;
-  padding-bottom: $space-2xl;
 }
 
 .footer {
   background: $color-bg-muted;
-  border-top: 1px solid $color-border;
-  padding: $space-lg 0;
-  margin-top: $space-2xl;
+  padding: $space-2xl 0 $space-3xl;
   text-align: center;
 
   html[data-theme="dark"] & {
-    background: $dark-color-bg-muted;
-    border-top-color: $dark-color-border;
+    background: #000;
   }
 }
 
 .footer p {
-  margin-bottom: 0;
+  margin-bottom: $space-xs;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .grid {

@@ -109,7 +109,7 @@
   background: #fafbff;
 
   html[data-theme="dark"] & {
-    background: linear-gradient(to bottom, #1a1035, #060810);
+    background: linear-gradient(to bottom, #0d1230, #060810);
   }
 }
 
@@ -117,7 +117,7 @@ section.section:nth-of-type(even) {
   background: #eeeffe;
 
   html[data-theme="dark"] & {
-    background: linear-gradient(to bottom, #0d1230, #060810);
+    background: linear-gradient(to bottom, #1a1035, #060810);
   }
 }
 
@@ -158,8 +158,8 @@ section.section:nth-of-type(even) {
   margin-bottom: $space-xl;
 
   html[data-theme="dark"] & {
-    background: $dark-color-bg;
-    border-color: $dark-color-border;
+    background: rgba(255, 255, 255, 0.075);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 }
 
@@ -185,6 +185,7 @@ section.section:nth-of-type(even) {
 .screenshot-thumbs {
   display: flex;
   gap: $space-sm;
+  padding: 4px;
 }
 
 .screenshot-thumb {
@@ -193,18 +194,17 @@ section.section:nth-of-type(even) {
   object-fit: cover;
   object-position: top;
   border-radius: 4px;
-  border: 2px solid transparent;
   cursor: pointer;
   opacity: 0.6;
-  transition: opacity 0.2s, border-color 0.2s;
+  transition: opacity 0.2s, box-shadow 0.2s;
 
   &:hover {
     opacity: 1;
   }
 
   &.active {
-    border-color: $color-primary;
     opacity: 1;
+    box-shadow: 0 0 0 3px #9d6bda;
   }
 }
 
@@ -342,10 +342,10 @@ section.section:nth-of-type(even) {
   }
 
   html[data-theme="dark"] & {
-    background: $dark-color-bg-muted;
+    background: rgba(255, 255, 255, 0.075);
 
     &[href]:hover {
-      border-color: $dark-color-border;
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     &[href]::after {
