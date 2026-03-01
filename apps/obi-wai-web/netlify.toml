@@ -1,5 +1,6 @@
 # =============================================================================
 # Netlify Configuration for obi-wai-web
+# Set "Package directory" to "apps/obi-wai-web" in Netlify UI.
 # =============================================================================
 # Set "Package directory" to "apps/obi-wai-web" in Netlify UI.
 [build]
