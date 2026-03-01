@@ -21,11 +21,6 @@ export default createChatStreamHandler({
     toolExecuteEndpoint: "/api/fox-ea-tool-execute",
     signalPatterns: [], // No signals - tools return results directly
   },
-  "obi-wai": {
-    initEndpoint: "/api/obi-wai-chat-init",
-    toolExecuteEndpoint: null, // No tools
-    signalPatterns: [/^READY_TO_PRACTICE\s*\n---/m],
-  },
 });
 
 export const config = {

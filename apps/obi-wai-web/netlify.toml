@@ -1,0 +1,53 @@
+# =============================================================================
+# Netlify Configuration for obi-wai-web
+# =============================================================================
+# Set "Package directory" to "apps/obi-wai-web" in Netlify UI.
+[build]
+  base = "apps/obi-wai-web"
+  ignore = "cd $(git rev-parse --show-toplevel) && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/obi-wai-web/ packages/edge-functions/"
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/obi-wai-web/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/obi-wai-web/netlify/edge-functions/_lib/ && pnpm --filter obi-wai-web build"
+  publish = "_site"
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+[dev]
+  framework = "#custom"
+  command = "pnpm --filter obi-wai-web run eleventy:serve"
+  targetPort = 8080
+  autoLaunch = false
+  # These are relative to base (apps/obi-wai-web)
+  functions = "netlify/functions"
+  publish = "_site"
+  edge_functions = "netlify/edge-functions"
+
+# =============================================================================
+# Node.js Functions
+# =============================================================================
+
+[functions]
+  node_bundler = "esbuild"
+
+[functions."practice-submit"]
+  timeout = 26
+
+# =============================================================================
+# Edge Functions
+# =============================================================================
+
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
+
+# =============================================================================
+# Redirects
+# =============================================================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/"
+  to = "/practice/"
+  status = 302

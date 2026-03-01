@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Obi-Wai" }}</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="/css/main.css">
+  <script>
+    // Initialize theme before page renders to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+<body>
+  {% include "nav.njk" %}
+
+  <main class="main" style="padding-top: 80px;">
+    <div class="container">
+      {{ content | safe }}
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p class="text-muted">Built with 🍵 by Erik Burns &copy; 2026 HabitualOS</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script type="module" src="/assets/js/navigation.js"></script>
+  {% if pageScript %}
+  <script type="module" src="{{ pageScript }}"></script>
+  {% endif %}
+  <script>
+    // Dark mode toggle functionality
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      const html = document.documentElement;
+
+      function updateToggle() {
+        const currentTheme = html.getAttribute('data-theme');
+        if (currentTheme === 'dark') {
+          icon.textContent = '☀️';
+          text.textContent = 'Light Mode';
+        } else {
+          icon.textContent = '🌙';
+          text.textContent = 'Dark Mode';
+        }
+      }
+
+      toggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateToggle();
+      });
+
+      // Set initial state
+      updateToggle();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,871 @@
+// Buttons
+.btn {
+  display: inline-block;
+  padding: $space-sm $space-lg;
+  font-size: $font-size-base;
+  font-weight: 500;
+  text-align: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background-color: $color-primary;
+  color: white;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+.btn-success {
+  background-color: $color-success;
+  color: white;
+
+  &:hover {
+    background-color: darken($color-success, 10%);
+  }
+}
+
+.btn-secondary {
+  background-color: $color-bg-muted;
+  color: $color-text;
+
+  &:hover {
+    background-color: darken($color-bg-muted, 5%);
+  }
+}
+
+.btn-danger {
+  background-color: $color-danger;
+  color: white;
+
+  &:hover {
+    background-color: darken($color-danger, 10%);
+  }
+}
+
+// Cards
+.card {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+  }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      border-color: $dark-color-border-hover;
+    }
+  }
+}
+
+.card-clickable {
+  cursor: pointer;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+}
+
+.card-title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+  color: $color-text;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-md;
+}
+
+// Badges
+.badge {
+  display: inline-block;
+  padding: $space-xs $space-sm;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-high {
+  background-color: lighten($color-danger, 35%);
+  color: $color-danger;
+}
+
+.badge-medium {
+  background-color: lighten($color-warning, 35%);
+  color: darken($color-warning, 20%);
+}
+
+.badge-low {
+  background-color: lighten($color-primary, 35%);
+  color: $color-primary;
+}
+
+.badge-open {
+  background-color: lighten($color-primary, 35%);
+  color: $color-primary;
+}
+
+.badge-in-progress {
+  background-color: lighten($color-warning, 35%);
+  color: darken($color-warning, 20%);
+}
+
+.badge-completed {
+  background-color: lighten($color-success, 35%);
+  color: $color-success;
+}
+
+.badge-dismissed {
+  background-color: $color-bg-muted;
+  color: $color-text-muted;
+}
+
+// Forms
+.form-group {
+  margin-bottom: $space-lg;
+}
+
+.label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: $space-sm;
+  color: $color-text;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: $space-sm $space-md;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-border-hover;
+    border-color: $dark-color-border-hover;
+    color: $dark-color-text;
+
+    &:focus {
+      border-color: #3b82f6;
+      background: $dark-color-bg;
+    }
+  }
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+// Chat interface
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  border-radius: 8px;
+  margin-bottom: $space-md;
+}
+
+.chat-message {
+  padding: $space-md;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.chat-message-user {
+  background-color: $color-primary;
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message-assistant {
+  background-color: white;
+  color: $color-text;
+  align-self: flex-start;
+  border: 1px solid $color-border;
+  border-bottom-left-radius: 4px;
+
+  html[data-theme="dark"] & {
+    background-color: $dark-color-bg;
+    color: $dark-color-text;
+    border-color: $dark-color-border;
+  }
+}
+
+.chat-form {
+  display: flex;
+  gap: $space-sm;
+
+  .input {
+    flex: 1;
+  }
+
+  .btn {
+    white-space: nowrap;
+  }
+}
+
+// Progress bar
+.progress {
+  background-color: $color-bg-muted;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+  margin: $space-md 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: $color-success;
+  transition: width 0.3s ease;
+}
+
+// Breadcrumb
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  margin-bottom: $space-lg;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  a {
+    color: $color-primary;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .separator {
+    color: $color-text-muted;
+  }
+}
+
+// Artifacts list
+.artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.artifact-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-md;
+  background: $color-bg-muted;
+  border-radius: 6px;
+  border: 1px solid $color-border;
+
+  &:hover {
+    background: darken($color-bg-muted, 2%);
+  }
+}
+
+.artifact-info {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+}
+
+.artifact-icon {
+  font-size: $font-size-2xl;
+}
+
+.artifact-title {
+  font-weight: 500;
+}
+
+.artifact-meta {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.artifact-actions {
+  display: flex;
+  gap: $space-sm;
+}
+
+// Text links
+.text-link {
+  color: $color-primary;
+  font-size: $font-size-lg;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    color: $color-primary-dark;
+    text-decoration: underline;
+  }
+}
+
+// Agent cards grid (3-up on desktop, carousel on mobile)
+.agent-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $space-lg;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 767px) {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: $space-md;
+    padding-bottom: $space-sm;
+
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card {
+      flex: 0 0 85%;
+      scroll-snap-align: start;
+    }
+  }
+}
+
+// Actions grid (2-up on tablet/desktop, 1-up on mobile)
+.actions-grid {
+  display: grid;
+  gap: $space-md;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// Stats styling
+.stat-item {
+  .stat-value {
+    font-size: $font-size-3xl;
+    font-weight: 700;
+    color: $color-text;
+    margin: 0;
+  }
+
+  .stat-value-sm {
+    font-size: $font-size-base;
+    font-weight: 300;
+    color: $color-text;
+    margin: 0;
+  }
+}
+
+.config-text {
+  font-size: $font-size-base;
+  color: $color-text;
+  margin: 0;
+  font-weight: 500;
+}
+
+// File list styling
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  padding: $space-sm 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.file-link {
+  color: $color-primary;
+  text-decoration: none;
+  font-weight: 500;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.file-meta {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  margin-left: $space-sm;
+}
+
+// Markdown content styling
+.markdown-body {
+  color: $color-text;
+  line-height: 1.6;
+
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: $space-lg;
+    margin-bottom: $space-md;
+    font-weight: 600;
+  }
+
+  h1 { font-size: $font-size-2xl; }
+  h2 { font-size: $font-size-xl; }
+  h3 { font-size: $font-size-lg; }
+
+  p {
+    margin-bottom: $space-md;
+  }
+
+  ul, ol {
+    margin-bottom: $space-md;
+    padding-left: $space-xl;
+  }
+
+  li {
+    margin-bottom: $space-xs;
+  }
+
+  code {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: $space-md;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin-bottom: $space-md;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid $color-primary;
+    padding-left: $space-md;
+    margin-left: 0;
+    margin-bottom: $space-md;
+    color: $color-text-muted;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin: $space-lg 0;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  a {
+    color: $color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Dark Mode Toggle (in sidemenu)
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  width: 100%;
+  justify-content: space-between;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .theme-icon {
+    font-size: $font-size-2xl;
+  }
+}
+
+// ============================================================================
+// Multi-Agent Dashboard
+// ============================================================================
+
+// Agents grid - responsive layout
+.agents-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-lg;
+  margin-bottom: $space-xl;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+// Agent card
+.agent-card {
+  background: $color-bg;
+  border: 2px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    border-color: $color-primary;
+  }
+
+  &.selected {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  &.paused {
+    opacity: 0.7;
+    background: $color-bg-muted;
+  }
+
+  html[data-theme="dark"] & {
+    background: lighten($dark-color-bg, 3%);
+    border-color: lighten($dark-color-border, 5%);
+
+    &:hover {
+      border-color: $color-primary;
+    }
+
+    &.paused {
+      background: $dark-color-bg;
+      opacity: 0.6;
+    }
+  }
+}
+
+// Agent card header
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $space-md;
+  gap: $space-sm;
+}
+
+.agent-name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin: 0;
+  color: $color-text;
+  flex: 1;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+  }
+}
+
+// Agent metrics rows
+.agent-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  margin-bottom: $space-md;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: $font-size-sm;
+}
+
+.metric-label {
+  color: $color-text-muted;
+  font-weight: 500;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+.metric-value {
+  color: $color-text;
+  font-weight: 600;
+
+  &.text-muted {
+    color: $color-text-muted;
+    font-weight: 500;
+  }
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text;
+
+    &.text-muted {
+      color: $dark-color-text-muted;
+    }
+  }
+}
+
+// Agent controls
+.agent-controls {
+  display: flex;
+  gap: $space-sm;
+  margin-top: $space-md;
+  border-top: 1px solid $color-border;
+  padding-top: $space-md;
+
+  button {
+    flex: 1;
+  }
+
+  html[data-theme="dark"] & {
+    border-top-color: lighten($dark-color-border, 5%);
+  }
+}
+
+// New Agent card
+.new-agent-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  min-height: 280px;
+
+  &:hover {
+    background: lighten($color-primary, 45%);
+    border-color: $color-primary;
+  }
+
+  html[data-theme="dark"] & {
+    &:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+  }
+}
+
+.new-agent-content {
+  text-align: center;
+}
+
+.new-agent-icon {
+  font-size: 3rem;
+  color: $color-primary;
+  margin-bottom: $space-sm;
+  font-weight: 300;
+}
+
+// Button variants
+.btn-sm {
+  padding: $space-xs $space-md;
+  font-size: $font-size-sm;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid $color-border;
+  color: $color-text;
+
+  &:hover {
+    background: $color-bg-muted;
+    border-color: $color-primary;
+  }
+
+  html[data-theme="dark"] & {
+    border-color: lighten($dark-color-border, 5%);
+    color: $dark-color-text;
+
+    &:hover {
+      background: lighten($dark-color-bg, 5%);
+      border-color: $color-primary;
+    }
+  }
+}
+
+// Gap utility
+.gap-sm {
+  gap: $space-sm;
+}
+
+// ============================================================================
+// Agent Detail Page
+// ============================================================================
+
+// Metrics grid for agent detail page
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+
+  .metric-value {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $color-text;
+
+    html[data-theme="dark"] & {
+      color: $dark-color-text;
+    }
+  }
+}
+
+// Two-column layout for agent detail page
+.agent-detail-layout {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    gap: $space-xl;
+  }
+}
+
+.agent-detail-column {
+  flex: 1;
+  min-width: 0;
+
+  @media (min-width: 1024px) {
+    max-width: 400px;
+  }
+}
+
+.agent-actions-column {
+  flex: 2;
+  min-width: 0;
+}
+
+// Metrics for agent detail page (2-column grid)
+.agent-detail-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $space-md;
+}
+
+// Actions filter dropdown
+.actions-filter-select {
+  padding: $space-xs $space-md;
+  font-size: $font-size-sm;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  background: $color-bg;
+  color: $color-text;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  html[data-theme="dark"] & {
+    background: $dark-color-bg;
+    border-color: $dark-color-border;
+    color: $dark-color-text;
+
+    &:hover {
+      border-color: $color-primary;
+    }
+  }
+}

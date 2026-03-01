@@ -1,0 +1,26 @@
+{
+  "name": "obi-wai-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prestart": "mkdir -p netlify/edge-functions/_lib && cp ../../packages/edge-functions/chat-stream-core.ts netlify/edge-functions/_lib/",
+    "start": "netlify dev",
+    "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
+    "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
+    "eleventy:build": "eleventy",
+    "eleventy:serve": "eleventy --serve --port=8080",
+    "dev": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
+    "build": "sass src/styles/main.scss:_site/css/main.css --style=compressed && eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@habitualos/auth-server": "workspace:*",
+    "@habitualos/db-core": "workspace:*",
+    "marked": "^15.0.12"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "sass": "^1.69.5"
+  }
+}

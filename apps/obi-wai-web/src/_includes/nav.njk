@@ -9,16 +9,14 @@
     <div class="sidemenu-main">
       <div class="sidemenu-left">
         <ul>
-          <li><h3><a href="/">Home</a></h3></li>
-          <li><h3><a href="#" data-obi-wai-link>Practice ↗</a></h3></li>
           <li>
-            <h3><a href="/do/">Do</a></h3>
+            <h3><a href="/practice/">Practice</a></h3>
             <ul class="nav-secondary">
-              <li><a href="/do/chat/">Explore</a></li>
-              <li><a href="/do/log/">Log Work</a></li>
-              <li><a href="/do/actions/">Actions</a></li>
-              <li><a href="/do/projects/">Projects</a></li>
-              <li><a href="/do/agents/">Agents</a></li>
+              <li><a href="/practice/chat/">Motivate</a></li>
+              <li><a href="/practice/log/">Log Practice</a></li>
+              <li><a href="/practice/history/">History</a></li>
+              <li><a href="/practice/garden/">Garden</a></li>
+              <li><a href="/practice/library/">Practices</a></li>
             </ul>
           </li>
         </ul>
@@ -27,7 +25,7 @@
             <span id="theme-text">Dark Mode</span>
             <span class="theme-icon" id="theme-icon">🌙</span>
           </button>
-          <p id="nav-auth" style="color: #fff; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">HabitualOS</p>
+          <p id="nav-auth" style="color: #fff; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">Obi-Wai</p>
           <script type="module">
             import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
             const el = document.getElementById("nav-auth");
@@ -47,10 +45,6 @@
   </div>
 
   <div class="mx-auto">
-    {% if page.url.startsWith('/do/') %}
-      <a class="navbar-brand" href="/do/">{{ navtitle | default("HabitualOS") }}</a>
-    {% else %}
-      <a class="navbar-brand" href="/">{{ navtitle | default("HabitualOS") }}</a>
-    {% endif %}
+    <a class="navbar-brand" href="/practice/">{{ navtitle | default("Obi-Wai") }}</a>
   </div>
 </nav>
