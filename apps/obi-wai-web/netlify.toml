@@ -31,6 +31,12 @@
 [functions."practice-submit"]
   timeout = 26
 
+[functions."sms-inbound"]
+  timeout = 26
+
+[functions."sms-reminder"]
+  schedule = "0 2 * * *"
+
 # =============================================================================
 # Edge Functions
 # =============================================================================

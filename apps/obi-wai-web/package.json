@@ -17,7 +17,8 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/db-core": "workspace:*",
-    "marked": "^15.0.12"
+    "marked": "^15.0.12",
+    "twilio": "^5.0.0"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

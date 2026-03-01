@@ -326,7 +326,7 @@ export function createChatStreamHandler(
 
           // Stream Claude's response via raw fetch
           const eventStream = streamAnthropicMessages(apiKey, {
-            model: "claude-sonnet-4-5-20250929",
+            model: "claude-sonnet-4-6",
             max_tokens: 2048,
             system: systemMessages,
             messages: messages,

@@ -7,6 +7,77 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
+const tools = [
+  {
+    name: 'get_practice_history',
+    description: "Fetch the user's practice log entries including their written reflections. Use this when the user asks about their history, patterns, or what they've noticed across practices.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        practice_name: {
+          type: 'string',
+          description: "Optional: filter to logs for a specific practice (e.g. 'LASSO', 'jogging'). Case-insensitive."
+        },
+        limit: {
+          type: 'number',
+          description: 'Max number of logs to return (default 15, max 50)'
+        }
+      },
+      required: []
+    }
+  },
+  {
+    name: 'get_practice_detail',
+    description: 'Fetch the full definition and all logged sessions for one specific practice by name. Use this when the user asks about a particular practice in depth.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        practice_name: {
+          type: 'string',
+          description: "The name of the practice to look up (e.g. 'LASSO', 'jogging', 'journaling')"
+        }
+      },
+      required: ['practice_name']
+    }
+  }
+];
+
+function handleTool(name, input, allLogs, allPractices) {
+  if (name === 'get_practice_history') {
+    let logs = allLogs;
+    if (input.practice_name) {
+      const pattern = new RegExp(input.practice_name, 'i');
+      logs = logs.filter(l => pattern.test(l.practice_name));
+    }
+    const limit = Math.min(input.limit || 15, 50);
+    return logs.slice(0, limit).map(l => ({
+      date: l.timestamp,
+      practice: l.practice_name,
+      duration: l.duration,
+      reflection: l.reflection || null,
+      wisdom: l.obi_wan_message || null
+    }));
+  }
+
+  if (name === 'get_practice_detail') {
+    const pattern = new RegExp(input.practice_name, 'i');
+    const definition = allPractices.find(p => pattern.test(p.name || p.practice_name));
+    const logs = allLogs.filter(l => pattern.test(l.practice_name));
+    return {
+      definition: definition || null,
+      log_count: logs.length,
+      logs: logs.slice(0, 20).map(l => ({
+        date: l.timestamp,
+        duration: l.duration,
+        reflection: l.reflection || null,
+        wisdom: l.obi_wan_message || null
+      }))
+    };
+  }
+
+  return { error: `Unknown tool: ${name}` };
+}
+
 /**
  * POST /api/practice-chat
  * Conversational coaching to help user discover what practice they need
@@ -46,14 +117,14 @@ exports.handler = async (event) => {
     }
 
     // Fetch practice history for context
-    const practices = await getPracticesByUserId(userId); // Practice library (unique practices)
-    const practiceLogs = await getPracticeLogsByUserId(userId); // Practice logs (timeline)
+    const practices = await getPracticesByUserId(userId);
+    const practiceLogs = await getPracticeLogsByUserId(userId);
 
-    const practiceCount = practices.length; // Number of unique practices
+    const practiceCount = practices.length;
 
     // Extract recent practice names from logs (what they've been doing lately)
     const practiceNames = practiceLogs
-      .slice(0, 10) // Last 10 logs
+      .slice(0, 10)
       .map(p => p.practice_name)
       .filter(name => name && name.trim());
 
@@ -88,11 +159,24 @@ Your voice:
 - Stay observational, not pushy
 - Use "I see..." and "I notice..." language, not "you should..."
 
-User's context:
+Quick summary (minimal — use tools for specifics):
 - Current time: ${timeOfDay}, ${dayOfWeek}
-- Total practices: ${practiceCount}
-- Recent practices: ${practiceNames.length > 0 ? practiceNames.slice(0, 5).join(', ') : 'None yet'}
-${recentReflections ? `- Recent reflections: ${recentReflections}` : ''}
+- Unique practices in library: ${practiceCount}
+- Recent practice names (last 10 logs): ${practiceNames.length > 0 ? practiceNames.join(', ') : 'None yet'}
+${recentReflections ? `- Last 3 reflections (preview only): ${recentReflections}` : ''}
+
+Available tools:
+- get_practice_history: fetch logged sessions with reflections, optionally filtered by practice name
+- get_practice_detail: fetch full history + definition for one specific practice
+
+Use these tools whenever the user asks anything specific about:
+- How many times they've done a practice
+- What they wrote in their reflections
+- How a particular practice has gone
+- Patterns or trends across their history
+- Anything about a specific practice by name
+
+The quick summary above is intentionally minimal — do not use it alone to answer history questions. Call the appropriate tool first.
 
 Conversation flow (3 phases):
 
@@ -139,29 +223,52 @@ MESSAGE: I see you. Ready enough. Two or three minutes. Your body knows.`;
       content: msg.content
     }));
 
-    // Add current user message
-    conversationHistory.push({
-      role: 'user',
-      content: message
-    });
+    let messages = [...conversationHistory, { role: 'user', content: message }];
+    const toolsUsed = [];
 
-    // Call Claude API
-    const apiResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+    // Call Claude API with tool use loop
+    let apiResponse = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       system: systemPrompt,
-      messages: conversationHistory
+      tools,
+      messages
     });
 
-    // Extract assistant response
-    const assistantResponse = apiResponse.content[0].text;
+    while (apiResponse.stop_reason === 'tool_use') {
+      const toolUseBlocks = apiResponse.content.filter(b => b.type === 'tool_use');
+
+      messages.push({ role: 'assistant', content: apiResponse.content });
+
+      const toolResults = toolUseBlocks.map(toolUse => {
+        toolsUsed.push(toolUse.name);
+        const result = handleTool(toolUse.name, toolUse.input, practiceLogs, practices);
+        return {
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(result)
+        };
+      });
+
+      messages.push({ role: 'user', content: toolResults });
+
+      apiResponse = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        tools,
+        messages
+      });
+    }
+
+    // Extract text from final response
+    const assistantResponse = apiResponse.content.find(b => b.type === 'text')?.text || '';
 
     // Check if response indicates readiness to practice
     if (assistantResponse.startsWith('READY_TO_PRACTICE')) {
-      // Parse the structured data
       const lines = assistantResponse.split('\n');
       let practiceName = '';
-      let message = '';
+      let readyMessage = '';
       let inMessage = false;
 
       for (let i = 2; i < lines.length; i++) {
@@ -170,24 +277,22 @@ MESSAGE: I see you. Ready enough. Two or three minutes. Your body knows.`;
         if (line.startsWith('PRACTICE_NAME:')) {
           practiceName = line.substring(14).trim();
         } else if (line.startsWith('MESSAGE:')) {
-          message = line.substring(8).trim();
+          readyMessage = line.substring(8).trim();
           inMessage = true;
         } else if (inMessage && line.trim() && !line.startsWith('READY_TO_PRACTICE') && !line.startsWith('---')) {
-          // Continue multi-line message only if we're actively building the message
-          message += ' ' + line.trim();
+          readyMessage += ' ' + line.trim();
         }
       }
 
       return {
         statusCode: 200,
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
           ready: true,
-          response: message.trim(),
-          practiceName: practiceName.trim()
+          response: readyMessage.trim(),
+          practiceName: practiceName.trim(),
+          toolsUsed
         })
       };
     }
@@ -195,13 +300,12 @@ MESSAGE: I see you. Ready enough. Two or three minutes. Your body knows.`;
     // Regular conversational response
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
         ready: false,
-        response: assistantResponse
+        response: assistantResponse,
+        toolsUsed
       })
     };
 

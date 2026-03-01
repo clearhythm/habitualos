@@ -157,6 +157,7 @@ permalink: /practice/chat/
   let streamingMessageElement = null;
   let streamingText = '';
   let streamingStarted = false;
+  let streamingToolEvents = [];
 
   // Update send button state based on textarea content
   function updateSendButton() {
@@ -190,10 +191,38 @@ permalink: /practice/chat/
     }
   }
 
+  function buildStreamingToolHtml() {
+    return streamingToolEvents.map(e =>
+      `<div style="font-size: 0.75rem; color: #6b7280; font-style: italic; margin-bottom: 0.5rem;">${e}</div>`
+    ).join('');
+  }
+
+  function updateStreamingToolStatus(toolName, status) {
+    if (!streamingMessageElement) return;
+    const label = toolLabels[toolName] || toolName;
+    if (status === 'start') {
+      streamingToolEvents.push(`Using ${label}...`);
+    } else {
+      const idx = streamingToolEvents.findIndex(e => e === `Using ${label}...`);
+      if (idx !== -1) {
+        streamingToolEvents[idx] = `✓ Looked up your ${label}`;
+      } else {
+        streamingToolEvents.push(`✓ Looked up your ${label}`);
+      }
+    }
+    // Re-render with updated tool status
+    const toolHtml = buildStreamingToolHtml();
+    const cursor = '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
+    const contentHtml = window.marked && streamingText ? marked.parse(streamingText) : (streamingText ? streamingText : '<span style="color: #999; font-style: italic;">Obi-Wai is thinking...</span>');
+    streamingMessageElement.innerHTML = toolHtml + contentHtml + cursor;
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+  }
+
   // Streaming message helpers
   function showStreamingMessage() {
     streamingText = '';
     streamingStarted = false;
+    streamingToolEvents = [];
     const messageDiv = document.createElement('div');
     messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #f9f6ff; color: #333; align-self: flex-start; border-left: 3px solid #ddd; border-bottom-left-radius: 4px;';
     messageDiv.innerHTML = '<span style="color: #999; font-style: italic;">Obi-Wai is thinking...</span>';
@@ -220,9 +249,11 @@ permalink: /practice/chat/
       streamingMessageElement.style.borderLeftColor = '#9b59b6';
     }
 
-    // Update content with cursor at end
+    // Update content with tool events above and cursor at end
+    const toolHtml = buildStreamingToolHtml();
+    const cursor = '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
     if (window.marked) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #9b59b6; animation: blink 1s infinite;"></span>';
+      streamingMessageElement.innerHTML = toolHtml + marked.parse(streamingText) + cursor;
     } else {
       streamingMessageElement.textContent = streamingText;
     }
@@ -232,13 +263,10 @@ permalink: /practice/chat/
   function finalizeStreamingMessage() {
     if (!streamingMessageElement) return { text: '', displayText: '' };
 
-    // Remove cursor and finalize content
-    const cursor = streamingMessageElement.querySelector('.streaming-cursor');
-    if (cursor) cursor.remove();
-
-    // Re-render with final markdown
+    // Remove cursor and finalize content (keep tool events above)
+    const toolHtml = buildStreamingToolHtml();
     if (window.marked && streamingText) {
-      streamingMessageElement.innerHTML = marked.parse(streamingText);
+      streamingMessageElement.innerHTML = toolHtml + marked.parse(streamingText);
     } else if (streamingText) {
       streamingMessageElement.textContent = streamingText;
     }
@@ -247,6 +275,7 @@ permalink: /practice/chat/
     streamingMessageElement = null;
     streamingText = '';
     streamingStarted = false;
+    streamingToolEvents = [];
 
     return { text: finalText, displayText: finalText };
   }
@@ -257,6 +286,7 @@ permalink: /practice/chat/
       streamingMessageElement = null;
       streamingText = '';
       streamingStarted = false;
+      streamingToolEvents = [];
     }
   }
 
@@ -395,6 +425,10 @@ permalink: /practice/chat/
 
             if (data.type === 'token') {
               appendStreamingText(data.text);
+            } else if (data.type === 'tool_start') {
+              updateStreamingToolStatus(data.tool, 'start');
+            } else if (data.type === 'tool_complete') {
+              updateStreamingToolStatus(data.tool, 'complete');
             } else if (data.type === 'done') {
               // Check for signal in the done event
               if (data.hasSignal && data.signal) {
@@ -410,6 +444,9 @@ permalink: /practice/chat/
       }
     }
 
+    // Capture tool HTML before finalizing (finalizeStreamingMessage clears streamingToolEvents)
+    const finalToolHtml = buildStreamingToolHtml();
+
     // Finalize the streaming message
     const { text: fullResponse } = finalizeStreamingMessage();
 
@@ -419,12 +456,11 @@ permalink: /practice/chat/
     // Get display text (without signal content)
     const displayText = getDisplayText(fullResponse);
 
-    // Update the rendered message to show only display text
+    // Update the rendered message to show only display text (keep tool indicators)
     if (displayText !== fullResponse && streamingMessageElement === null) {
-      // Find the last message and update it
       const lastMessage = chatMessages.lastElementChild;
       if (lastMessage && window.marked) {
-        lastMessage.innerHTML = marked.parse(displayText);
+        lastMessage.innerHTML = finalToolHtml + marked.parse(displayText);
       }
     }
 
@@ -456,6 +492,19 @@ permalink: /practice/chat/
     }
   }
 
+  const toolLabels = {
+    get_practice_history: 'practice history',
+    get_practice_detail: 'practice details'
+  };
+
+  function renderToolIndicators(toolsUsed) {
+    if (!toolsUsed || toolsUsed.length === 0) return '';
+    return toolsUsed.map(tool => {
+      const label = toolLabels[tool] || tool;
+      return `<div style="font-size: 0.75rem; color: #6b7280; font-style: italic; margin-bottom: 0.5rem;">✓ Looked up your ${label}</div>`;
+    }).join('');
+  }
+
   // Non-streaming fallback
   async function handleNonStreamingChat(message) {
     showLoadingMessage();
@@ -484,12 +533,20 @@ permalink: /practice/chat/
 
     hideLoadingMessage();
 
+    // Render assistant message with tool indicators
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'padding: 0.875rem 1rem 1rem 1rem; border-radius: 8px; max-width: 80%; word-wrap: break-word; line-height: 1.5; background-color: #f9f6ff; color: #333; align-self: flex-start; border-left: 3px solid #9b59b6; border-bottom-left-radius: 4px;';
+    const toolHtml = renderToolIndicators(data.toolsUsed);
+    const contentHtml = window.marked ? marked.parse(data.response) : data.response;
+    messageDiv.innerHTML = toolHtml + contentHtml;
+    chatMessages.appendChild(messageDiv);
+    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
     const assistantMessage = {
       role: 'assistant',
       content: data.response,
       timestamp: new Date().toISOString()
     };
-    renderMessage('assistant', data.response);
     chatHistory.push(assistantMessage);
     saveChatHistory(chatHistory);
 

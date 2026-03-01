@@ -17,6 +17,8 @@
               <li><a href="/practice/history/">History</a></li>
               <li><a href="/practice/garden/">Garden</a></li>
               <li><a href="/practice/library/">Practices</a></li>
+              <li><a href="/challenge/">Challenge</a></li>
+              <li><a href="/profile/">Profile</a></li>
             </ul>
           </li>
         </ul>
@@ -25,7 +27,7 @@
             <span id="theme-text">Dark Mode</span>
             <span class="theme-icon" id="theme-icon">🌙</span>
           </button>
-          <p id="nav-auth" style="color: #fff; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">Obi-Wai</p>
+          <p id="nav-auth" style="color: #fff; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">Practice</p>
           <script type="module">
             import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
             const el = document.getElementById("nav-auth");
@@ -45,6 +47,6 @@
   </div>
 
   <div class="mx-auto">
-    <a class="navbar-brand" href="/practice/">{{ navtitle | default("Obi-Wai") }}</a>
+    <a class="navbar-brand" href="/practice/">{{ navtitle | default("Practice") }}</a>
   </div>
 </nav>
