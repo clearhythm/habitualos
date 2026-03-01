@@ -429,6 +429,11 @@ export function createChatStreamHandler(
               });
             }
 
+            // Cache tool results so they aren't re-billed on subsequent turns
+            if (toolResults.length > 0) {
+              (toolResults[toolResults.length - 1] as Record<string, unknown>).cache_control = { type: "ephemeral" };
+            }
+
             // Add assistant's response to messages
             messages.push({
               role: "assistant",
