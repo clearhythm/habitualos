@@ -30,6 +30,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Close button inside sidemenu panel
+  const closeBtn = document.getElementById('sidemenu-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function() {
+      if (toggle) toggle.classList.remove('open');
+      document.body.classList.remove('sidemenu-open');
+    });
+  }
+
   // Auto-close menu when any link is clicked
   menuLinks.forEach(link => {
     link.addEventListener('click', function() {

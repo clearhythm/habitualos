@@ -9,7 +9,7 @@
 
 html {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #EBEDFD, #FDFCF3 70%, #B5DAFF);
+  background: linear-gradient(to bottom, #EBEDFD 0%, #FDFCF3 70%, #c8e6d4 100%);
   transition: background 0.3s ease;
 
   &[data-theme="dark"] {

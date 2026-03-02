@@ -16,7 +16,8 @@
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 1.25rem;
 }
 
 // Active state (after scroll)
@@ -31,11 +32,13 @@
 }
 
 .navbar-brand {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #333;
+  color: #1f2937;
   text-decoration: none;
-  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 
   html[data-theme="dark"] & {
     color: $dark-color-text;
@@ -46,12 +49,18 @@
   text-decoration: none;
 }
 
+.navbar-brand-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
 .navbar.active .navbar-brand {
-  color: #333;
+  color: #1f2937;
 }
 
 // Hamburger Toggle
-.sidemenu .toggle {
+.sidemenu-toggle {
   width: 24px;
   height: 18px;
   position: relative;
@@ -60,9 +69,10 @@
   transition: 0.5s ease-in-out;
   cursor: pointer;
   z-index: 2000;
+  flex-shrink: 0;
 }
 
-.sidemenu .toggle span {
+.sidemenu-toggle span {
   display: block;
   position: absolute;
   height: 3px;
@@ -79,34 +89,34 @@
   }
 }
 
-.sidemenu .toggle span:nth-child(1) {
+.sidemenu-toggle span:nth-child(1) {
   top: 0px;
   width: 85%;
 }
 
-.sidemenu .toggle span:nth-child(2) {
+.sidemenu-toggle span:nth-child(2) {
   top: 8px;
 }
 
-.sidemenu .toggle span:nth-child(3) {
+.sidemenu-toggle span:nth-child(3) {
   top: 16px;
   width: 65%;
 }
 
 // Hamburger → X animation
-.sidemenu .toggle.open span:nth-child(1) {
+.sidemenu-toggle.open span:nth-child(1) {
   top: 8px;
   width: 28px;
   height: 4px;
   transform: rotate(135deg);
 }
 
-.sidemenu .toggle.open span:nth-child(2) {
+.sidemenu-toggle.open span:nth-child(2) {
   opacity: 0;
   left: -60px;
 }
 
-.sidemenu .toggle.open span:nth-child(3) {
+.sidemenu-toggle.open span:nth-child(3) {
   top: 8px;
   width: 28px;
   height: 4px;
@@ -139,6 +149,49 @@
   pointer-events: auto;
 }
 
+// Close button inside sidemenu panel — same 3-span structure as toggle, fixed in X state
+.sidemenu-close {
+  position: absolute;
+  top: .65rem;
+  left: .85rem;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.85;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  span {
+    display: block;
+    position: absolute;
+    height: 4px;
+    width: 28px;
+    background: #2a3d2e;
+    border-radius: 1px;
+    left: 8px;
+    transition: 0.25s ease-in-out;
+  }
+
+  span:nth-child(1) {
+    top: 20px;
+    transform: rotate(135deg);
+  }
+
+  span:nth-child(2) {
+    top: 20px;
+    opacity: 0;
+  }
+
+  span:nth-child(3) {
+    top: 20px;
+    transform: rotate(-135deg);
+  }
+}
+
 // Left panel (menu content)
 .sidemenu-left {
   z-index: 1001;
@@ -147,7 +200,7 @@
   width: 100%;
   max-width: 600px;
   padding: 0 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #c5d5be;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -174,7 +227,7 @@
 
 .sidemenu-left ul li h3 a {
   text-decoration: none;
-  color: #fff;
+  color: #2a3d2e;
   transition: opacity 0.2s;
 }
 
@@ -194,7 +247,7 @@
 
   a {
     text-decoration: none;
-    color: #fff;
+    color: #2a3d2e;
     font-size: 1.25rem;
     transition: opacity 0.2s;
 

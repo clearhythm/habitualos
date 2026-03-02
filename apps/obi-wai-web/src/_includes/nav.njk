@@ -1,52 +1,53 @@
 <nav class="navbar">
-  <div class="w-100 sidemenu">
-    <div id="sidemenu-toggle" class="toggle">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-
-    <div class="sidemenu-main">
-      <div class="sidemenu-left">
-        <ul>
-          <li>
-            <h3><a href="/practice/">Practice</a></h3>
-            <ul class="nav-secondary">
-              <li><a href="/practice/chat/">Motivate</a></li>
-              <li><a href="/practice/log/">Log Practice</a></li>
-              <li><a href="/practice/history/">History</a></li>
-              <li><a href="/practice/garden/">Garden</a></li>
-              <li><a href="/practice/library/">Practices</a></li>
-              <li><a href="/challenge/">Challenge</a></li>
-              <li><a href="/profile/">Profile</a></li>
-            </ul>
-          </li>
-        </ul>
-        <footer>
-          <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
-            <span id="theme-text">Dark Mode</span>
-            <span class="theme-icon" id="theme-icon">🌙</span>
-          </button>
-          <p id="nav-auth" style="color: #fff; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">Practice</p>
-          <script type="module">
-            import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
-            const el = document.getElementById("nav-auth");
-            if (isSignedIn()) {
-              const name = getFriendlyName();
-              el.innerHTML = `${name} · <a href="/signout/" style="color: #fff; text-decoration: underline;">Sign out</a>`;
-            } else {
-              el.innerHTML = `<a href="/signin/" style="color: #fff; text-decoration: underline;">Sign in</a>`;
-            }
-          </script>
-        </footer>
-      </div>
-      <div class="sidemenu-right">
-        <div class="sidemenu-overlay"></div>
-      </div>
-    </div>
+  <div id="sidemenu-toggle" class="sidemenu-toggle" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
   </div>
-
-  <div class="mx-auto">
-    <a class="navbar-brand" href="/practice/">{{ navtitle | default("Practice") }}</a>
-  </div>
+  <a class="navbar-brand" href="/practice/">
+    <img src="/images/favicon.svg" alt="" class="navbar-brand-icon">
+    Daily Practice
+  </a>
 </nav>
+
+<div class="sidemenu-main">
+  <div class="sidemenu-left">
+    <button id="sidemenu-close" class="sidemenu-close" aria-label="Close menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <ul>
+      <li>
+        <h3><a href="/practice/">Practice</a></h3>
+        <ul class="nav-secondary">
+          <li><a href="/practice/chat/">Motivate</a></li>
+          <li><a href="/practice/log/">Log Practice</a></li>
+          <li><a href="/practice/history/">History</a></li>
+          <li><a href="/practice/garden/">Garden</a></li>
+          <li><a href="/practice/library/">Practices</a></li>
+          <li><a href="/challenge/">Challenge</a></li>
+          <li><a href="/profile/">Profile</a></li>
+        </ul>
+      </li>
+    </ul>
+    <footer>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+        <span id="theme-text">Dark Mode</span>
+        <span class="theme-icon" id="theme-icon">🌙</span>
+      </button>
+      <p id="nav-auth" style="color: #2a3d2e; font-size: 0.9rem; padding: 1rem; opacity: 0.7; margin-top: 1rem;">Practice</p>
+      <script type="module">
+        import { isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
+        const el = document.getElementById("nav-auth");
+        if (isSignedIn()) {
+          const name = getFriendlyName();
+          el.innerHTML = `${name} · <a href="/signout/" style="color: #2a3d2e; text-decoration: underline;">Sign out</a>`;
+        } else {
+          el.innerHTML = `<a href="/signin/" style="color: #2a3d2e; text-decoration: underline;">Sign in</a>`;
+        }
+      </script>
+    </footer>
+  </div>
+  <div class="sidemenu-right"></div>
+</div>
