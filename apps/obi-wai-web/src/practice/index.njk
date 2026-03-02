@@ -59,14 +59,10 @@ permalink: /practice/
 
     <!-- Log buttons -->
     <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
-      <a id="log-jogging-link" href="/practice/log/?practice=Jogging"
-         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
-        🏃 Jogging
-      </a>
-      <a id="log-lasso-link" href="/practice/log/?practice=LASSO"
-         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
-        🧘 LASSO
-      </a>
+      <a id="log-jogging-link" href="/practice/log/?practice=Jogging" data-label="Jogging" data-emoji="🏃" data-done-icon="◐"
+         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🏃 Jogging</a>
+      <a id="log-lasso-link" href="/practice/log/?practice=LASSO" data-label="LASSO" data-emoji="🧘" data-done-icon="◑"
+         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🧘 LASSO</a>
     </div>
 
     <!-- Calendar grid -->
@@ -176,10 +172,13 @@ permalink: /practice/
     function styleBtn(el, done) {
       if (done) {
         el.style.cssText = baseBtn + `color: #fff; background: #27ae60;`;
+        el.textContent = `${el.dataset.doneIcon} ${el.dataset.label}`;
       } else if (isFuture || isToday) {
         el.style.cssText = baseBtn + `border-color: #ddd; color: #555; background: transparent;`;
+        el.textContent = `${el.dataset.emoji} ${el.dataset.label}`;
       } else {
         el.style.cssText = baseBtn + `color: #fff; background: #aaa;`;
+        el.textContent = `○ ${el.dataset.label}`;
       }
     }
 
