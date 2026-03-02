@@ -147,10 +147,8 @@ permalink: /practice/
 
       document.getElementById('march-challenge-block').style.display = 'block';
 
-      if (data.streak > 0) {
-        document.getElementById('challenge-streak-label').textContent =
-          `${data.streak} day streak`;
-      }
+      document.getElementById('challenge-streak-label').textContent =
+        data.streak === 1 ? '1 day streak' : `${data.streak} day streak`;
 
       const calendar = document.getElementById('home-calendar');
       for (let day = 1; day <= 31; day++) {
