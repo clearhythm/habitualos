@@ -191,6 +191,12 @@ permalink: /practice/
     styleBtn(jogBtn, details.jogging);
     styleBtn(lassoBtn, details.lasso);
 
+    const isPast = !isToday && !isFuture;
+    [jogBtn, lassoBtn].forEach(btn => {
+      btn.style.pointerEvents = isPast ? 'none' : '';
+      btn.style.cursor = isPast ? 'default' : 'pointer';
+    });
+
     document.querySelectorAll('#home-calendar div').forEach(sq => {
       sq.style.outline = Number(sq.dataset.day) === day ? '2px solid #333' : 'none';
       sq.style.outlineOffset = '1px';
