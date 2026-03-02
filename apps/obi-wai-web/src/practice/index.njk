@@ -172,27 +172,21 @@ permalink: /practice/
 
     document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
 
-    const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem;
-      text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;`;
-    function styleBtn(el, done, emoji) {
+    const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none;`;
+    function styleBtn(el, done) {
       if (done) {
         el.style.cssText = baseBtn + `border: none; color: #fff; background: #27ae60;`;
-        el.innerHTML = `<span>✓</span><span>${el.dataset.label}</span>`;
       } else if (isFuture || isToday) {
         el.style.cssText = baseBtn + `border: 2px solid #ddd; color: #555; background: transparent;`;
-        el.innerHTML = `<span>${emoji}</span><span>${el.dataset.label}</span>`;
       } else {
         el.style.cssText = baseBtn + `border: none; color: #fff; background: #aaa;`;
-        el.innerHTML = `<span>✗</span><span>${el.dataset.label}</span>`;
       }
     }
 
     const jogBtn = document.getElementById('log-jogging-link');
     const lassoBtn = document.getElementById('log-lasso-link');
-    jogBtn.dataset.label = 'Jogging';
-    lassoBtn.dataset.label = 'LASSO';
-    styleBtn(jogBtn, details.jogging, '🏃');
-    styleBtn(lassoBtn, details.lasso, '🧘');
+    styleBtn(jogBtn, details.jogging);
+    styleBtn(lassoBtn, details.lasso);
 
     document.querySelectorAll('#home-calendar div').forEach(sq => {
       sq.style.outline = Number(sq.dataset.day) === day ? '2px solid #333' : 'none';
