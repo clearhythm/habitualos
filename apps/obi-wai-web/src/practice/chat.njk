@@ -87,12 +87,7 @@ permalink: /practice/chat/
     <!-- "I'm Ready" Modal Overlay (appears after READY_TO_PRACTICE signal) -->
     <div id="ready-button-container" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
       <div style="background: white; padding: 3rem 2rem; border-radius: 12px; text-align: center; max-width: 400px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
-        <button
-          id="ready-button"
-          style="padding: 1rem 2rem; background: #9b59b6; color: white; border: none; border-radius: 24px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3);"
-          onmouseover="this.style.background='#8b4a96'; this.style.boxShadow='0 4px 12px rgba(155, 89, 182, 0.4)'"
-          onmouseout="this.style.background='#9b59b6'; this.style.boxShadow='0 2px 8px rgba(155, 89, 182, 0.3)'"
-        >
+        <button id="ready-button" class="btn btn-primary" style="border-radius: 24px;">
           I'm Ready to Practice
         </button>
         <button
@@ -116,12 +111,7 @@ permalink: /practice/chat/
       <p style="font-size: 1.1rem; color: #666; margin-bottom: 2rem;">
         Return here when you've completed it to track that you did it. You got this.
       </p>
-      <button
-        id="i-practiced-button"
-        style="padding: 1rem 2rem; background: #0066cc; color: white; border: none; border-radius: 4px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;"
-        onmouseover="this.style.background='#0052a3'"
-        onmouseout="this.style.background='#0066cc'"
-      >
+      <button id="i-practiced-button" class="btn btn-primary">
         I Practiced
       </button>
     </div>
@@ -347,7 +337,7 @@ permalink: /practice/chat/
       <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 360px; width: calc(100% - 2rem); box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
         <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem; color: #333;">Today's Check-in</h3>
         <div style="margin-bottom: 1.5rem;">${scoresHtml}</div>
-        <button id="checkin-confirm-btn" style="width: 100%; padding: 0.75rem; background: #9b59b6; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 0.75rem;">Save Check-in</button>
+        <button id="checkin-confirm-btn" style="width: 100%; padding: 0.75rem; background: #3a7a10; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 0.75rem;">Save Check-in</button>
         <button id="checkin-dismiss-btn" style="width: 100%; padding: 0.5rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">Don't save</button>
       </div>
     `;
