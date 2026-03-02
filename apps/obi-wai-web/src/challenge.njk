@@ -38,6 +38,7 @@ permalink: /challenge/
 
     <div style="font-size: 0.8rem; color: #bbb; display: flex; gap: 1rem; flex-wrap: wrap;">
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#27ae60;"></span> complete</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f39c12;"></span> partial</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;"></span> missed</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#3498db;"></span> today</span>
       <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0f0f0;"></span> future</span>
@@ -108,6 +109,7 @@ permalink: /challenge/
         const dateStr = `2026-03-${String(day).padStart(2, '0')}`;
         const isToday = day === data.dayNumber;
         const isComplete = data.completedDays.includes(dateStr);
+        const isPartial = (data.partialDays || []).includes(dateStr);
         const isMissed = data.missedDays.includes(dateStr);
 
         const square = document.createElement('div');
@@ -115,10 +117,10 @@ permalink: /challenge/
         square.style.cssText = `
           width: 22px; height: 22px; border-radius: 3px; font-size: 11px;
           display: flex; align-items: center; justify-content: center;
-          background: ${isComplete ? '#27ae60' : isMissed ? '#e74c3c' : isToday ? '#3498db' : '#f0f0f0'};
-          color: ${isComplete || isMissed || isToday ? '#fff' : '#ccc'};
+          background: ${isComplete ? '#27ae60' : isPartial ? '#f39c12' : isMissed ? '#e74c3c' : isToday ? '#3498db' : '#f0f0f0'};
+          color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
         `;
-        square.textContent = isComplete ? '●' : isMissed ? '✗' : isToday ? '○' : '·';
+        square.textContent = isComplete ? '●' : isPartial ? '◑' : isMissed ? '✗' : isToday ? '○' : '·';
         calendar.appendChild(square);
       }
     } catch (error) {

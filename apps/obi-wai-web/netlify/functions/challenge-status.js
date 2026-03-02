@@ -76,11 +76,18 @@ exports.handler = async (event) => {
     return hasJogging && hasLasso;
   }
 
+  function isDayPartial(logs) {
+    const hasJogging = logs.some(l => /jog|run/i.test(l.practice_name || ''));
+    const hasLasso = logs.some(l => /lasso|meditat/i.test(l.practice_name || ''));
+    return hasJogging !== hasLasso; // exactly one, not both
+  }
+
   const today = todayPacific();
   const todayDay = marchDayNumber(today);
 
-  // Build completedDays and missedDays
+  // Build completedDays, partialDays, and missedDays
   const completedDays = [];
+  const partialDays = [];
   const missedDays = [];
 
   for (let d = 1; d <= 31; d++) {
@@ -90,6 +97,8 @@ exports.handler = async (event) => {
 
     if (byDate[dateStr] && isDayComplete(byDate[dateStr])) {
       completedDays.push(dateStr);
+    } else if (isPast && !isToday && byDate[dateStr] && isDayPartial(byDate[dateStr])) {
+      partialDays.push(dateStr);
     } else if (isPast && !isToday) {
       missedDays.push(dateStr);
     }
@@ -138,6 +147,7 @@ exports.handler = async (event) => {
     body: JSON.stringify({
       success: true,
       completedDays,
+      partialDays,
       missedDays,
       todayJogging,
       todayLasso,
