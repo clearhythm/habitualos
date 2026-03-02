@@ -66,17 +66,23 @@ permalink: /practice/
   <!-- March Challenge Widget -->
   <div id="march-challenge-block" style="margin-top: 1.5rem; display: none; text-align: center;">
 
-    <!-- Left: navigator + status + buttons -->
+    <!-- Left: title + streak + navigator + status + buttons -->
     <div id="march-challenge-left">
-      <!-- Day navigator as heading -->
+      <!-- Static title -->
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0 0 0.25rem 0;">March Challenge</h2>
+
+      <!-- Streak (fixed, not day-dependent) -->
+      <p id="challenge-streak-label" style="font-size: 0.9rem; color: #999; margin: 0 0 1rem 0;"></p>
+
+      <!-- Day navigator -->
       <div class="day-nav" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 0.25rem;">
         <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">‹</button>
-        <h2 id="selected-day-label" style="font-size: 1.25rem; font-weight: 600; margin: 0; min-width: 12rem;"></h2>
+        <h3 id="selected-day-label" style="font-size: 1rem; font-weight: 600; margin: 0; min-width: 8rem;"></h3>
         <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">›</button>
       </div>
 
       <!-- Status text -->
-      <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 1rem;"></p>
+      <p id="selected-day-status" style="font-size: 0.9rem; color: #999; margin-bottom: 1rem;"></p>
 
       <!-- Log buttons -->
       <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
@@ -115,18 +121,6 @@ permalink: /practice/
     }
   }
 
-  // Shared subtitle state — whichever API resolves last wins
-  const subtitleState = { checkins: null, streak: null };
-  function renderSubtitle() {
-    if (subtitleState.checkins === null) return;
-    const c = subtitleState.checkins;
-    let text = `You logged ${c} ${c === 1 ? 'practice' : 'practices'}`;
-    if (subtitleState.streak !== null && subtitleState.streak + 1 > 0) {
-      const s = subtitleState.streak + 1;
-      text += ` · ${s} day${s === 1 ? '' : 's'} streak`;
-    }
-    document.getElementById('rank-subtitle').textContent = text;
-  }
 
   // Load rank/subtitle from practice stats
   async function loadStats() {
@@ -138,8 +132,9 @@ permalink: /practice/
         const rank = getRank(totalCheckins);
         document.getElementById('rank-emoji').textContent = rank.emoji;
         document.getElementById('rank-name').textContent = rank.name;
-        subtitleState.checkins = totalCheckins;
-        renderSubtitle();
+        const c = totalCheckins;
+        document.getElementById('rank-subtitle').textContent =
+          `You logged ${c} ${c === 1 ? 'practice' : 'practices'}`;
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -159,8 +154,9 @@ permalink: /practice/
 
       document.getElementById('march-challenge-block').style.display = 'block';
 
-      subtitleState.streak = data.streak;
-      renderSubtitle();
+      const s = data.streak;
+      document.getElementById('challenge-streak-label').textContent =
+        s > 0 ? `🌞 ${s} day${s === 1 ? '' : 's'} streak` : '';
 
       const calendar = document.getElementById('home-calendar');
       for (let day = 1; day <= 31; day++) {
@@ -203,7 +199,7 @@ permalink: /practice/
     const isToday = day === data.dayNumber;
     const isFuture = day > data.dayNumber;
 
-    document.getElementById('selected-day-label').textContent = `March ${day} Challenge`;
+    document.getElementById('selected-day-label').textContent = `March ${day}`;
     const partialSymbol = details.jogging ? '◐' : '◑';
     const statusText = isComplete ? 'Complete ●' : isPartial ? `Partial ${partialSymbol}` : isMissed ? 'Missed ○' : isToday ? 'Today' : 'Upcoming';
     document.getElementById('selected-day-status').textContent = statusText;
