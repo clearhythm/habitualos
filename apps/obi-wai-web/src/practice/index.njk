@@ -120,9 +120,9 @@ permalink: /practice/
   function renderSubtitle() {
     if (subtitleState.checkins === null) return;
     const c = subtitleState.checkins;
-    let text = `You logged ${c} ${c === 1 ? 'practice' : 'practices'}.`;
-    if (subtitleState.streak !== null && subtitleState.streak > 0) {
-      const s = subtitleState.streak;
+    let text = `You logged ${c} ${c === 1 ? 'practice' : 'practices'}`;
+    if (subtitleState.streak !== null && subtitleState.streak + 1 > 0) {
+      const s = subtitleState.streak + 1;
       text += ` · ${s} day${s === 1 ? '' : 's'} streak`;
     }
     document.getElementById('rank-subtitle').textContent = text;
