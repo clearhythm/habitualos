@@ -76,8 +76,7 @@ permalink: /practice/
       </div>
 
       <!-- Status text -->
-      <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 0.25rem;"></p>
-      <p id="challenge-streak-label" style="font-size: 0.8rem; color: #bbb; margin-bottom: 1rem;"></p>
+      <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 1rem;"></p>
 
       <!-- Log buttons -->
       <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
@@ -116,6 +115,19 @@ permalink: /practice/
     }
   }
 
+  // Shared subtitle state — whichever API resolves last wins
+  const subtitleState = { checkins: null, streak: null };
+  function renderSubtitle() {
+    if (subtitleState.checkins === null) return;
+    const c = subtitleState.checkins;
+    let text = `You logged ${c} ${c === 1 ? 'practice' : 'practices'}.`;
+    if (subtitleState.streak !== null && subtitleState.streak > 0) {
+      const s = subtitleState.streak;
+      text += ` · ${s} day${s === 1 ? '' : 's'} streak`;
+    }
+    document.getElementById('rank-subtitle').textContent = text;
+  }
+
   // Load rank/subtitle from practice stats
   async function loadStats() {
     try {
@@ -126,8 +138,8 @@ permalink: /practice/
         const rank = getRank(totalCheckins);
         document.getElementById('rank-emoji').textContent = rank.emoji;
         document.getElementById('rank-name').textContent = rank.name;
-        document.getElementById('rank-subtitle').textContent =
-          `You logged ${totalCheckins} ${totalCheckins === 1 ? 'practice' : 'practices'}.`;
+        subtitleState.checkins = totalCheckins;
+        renderSubtitle();
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -147,8 +159,8 @@ permalink: /practice/
 
       document.getElementById('march-challenge-block').style.display = 'block';
 
-      document.getElementById('challenge-streak-label').textContent =
-        data.streak === 1 ? '1 day streak' : `${data.streak} day streak`;
+      subtitleState.streak = data.streak;
+      renderSubtitle();
 
       const calendar = document.getElementById('home-calendar');
       for (let day = 1; day <= 31; day++) {
