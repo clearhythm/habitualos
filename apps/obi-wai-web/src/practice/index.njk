@@ -55,7 +55,7 @@ permalink: /practice/
     </div>
 
     <!-- Status text (same size as old gray subtitle) -->
-    <p id="selected-day-status" style="font-size: 0.85rem; color: #999; margin-bottom: 1rem;"></p>
+    <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 1rem;"></p>
 
     <!-- Log buttons -->
     <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
@@ -166,7 +166,8 @@ permalink: /practice/
     const isFuture = day > data.dayNumber;
 
     document.getElementById('selected-day-label').textContent = `March ${day} Challenge`;
-    const statusText = isComplete ? 'Complete ✓' : isPartial ? 'Partial ◑' : isMissed ? 'Missed ✗' : isToday ? 'Today' : 'Upcoming';
+    const partialSymbol = details.jogging ? '◐' : '◑';
+    const statusText = isComplete ? 'Complete ●' : isPartial ? `Partial ${partialSymbol}` : isMissed ? 'Missed ○' : isToday ? 'Today' : 'Upcoming';
     document.getElementById('selected-day-status').textContent = statusText;
 
     document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
