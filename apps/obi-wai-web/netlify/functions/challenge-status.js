@@ -69,6 +69,15 @@ exports.handler = async (event) => {
     byDate[dateStr].push(log);
   }
 
+  // Per-day practice breakdown (for homepage log button state)
+  const dayDetails = {};
+  for (const [dateStr, logs] of Object.entries(byDate)) {
+    dayDetails[dateStr] = {
+      jogging: logs.some(l => /jog|run/i.test(l.practice_name || '')),
+      lasso: logs.some(l => /lasso|meditat/i.test(l.practice_name || ''))
+    };
+  }
+
   // For a set of logs on a day, check completion
   function isDayComplete(logs) {
     const hasJogging = logs.some(l => /jog|run/i.test(l.practice_name || ''));
@@ -149,6 +158,7 @@ exports.handler = async (event) => {
       completedDays,
       partialDays,
       missedDays,
+      dayDetails,
       todayJogging,
       todayLasso,
       todayComplete,

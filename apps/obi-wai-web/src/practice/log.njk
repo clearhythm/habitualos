@@ -175,6 +175,13 @@ permalink: /practice/log/
   const userId = initializeUser();
   console.log('Initialized userId:', userId);
 
+  // Pre-fill practice from URL param (e.g., ?practice=Jogging)
+  const urlPractice = new URLSearchParams(window.location.search).get('practice');
+  if (urlPractice) {
+    const input = document.getElementById('practice_name');
+    if (input) input.value = urlPractice;
+  }
+
   // Check for suggested practice from chat and pre-fill
   const chatState = getPracticeChatState();
   if (chatState && chatState.suggestedPractice) {

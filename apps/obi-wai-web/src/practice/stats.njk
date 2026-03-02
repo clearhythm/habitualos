@@ -1,0 +1,82 @@
+---
+title: Stats - HabitualOS
+layout: base.njk
+permalink: /practice/stats/
+---
+
+<div style="max-width: 800px; margin: 4rem auto; padding: 2rem; text-align: center;">
+  <h1 id="rank-title"><span id="rank-emoji"></span> <span id="rank-name">&nbsp;</span></h1>
+  <p style="font-size: 1.2rem; color: #666; margin: 0 0 2rem 0;" id="rank-subtitle">
+    Loading...
+  </p>
+
+  <style>
+    html[data-theme="dark"] .habits-title {
+      color: #e5e7eb;
+    }
+    html[data-theme="dark"] .stat-number {
+      color: #e5e7eb !important;
+    }
+    html[data-theme="dark"] .stat-label {
+      color: #9ca3af !important;
+    }
+    html[data-theme="dark"] .stat-link {
+      color: #60a5fa !important;
+    }
+    html[data-theme="dark"] .stat-divider {
+      background: #374151 !important;
+    }
+  </style>
+
+  <h2 class="habits-title" style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Habits</h2>
+  <div class="habits-stats" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; border-radius: 8px;">
+    <a href="/practice/history/" style="text-decoration: none; text-align: center; color: inherit;">
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="checkins-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">check-ins</div>
+      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+    </a>
+    <div class="stat-divider" style="width: 1px; height: 60px; background: #ddd;"></div>
+    <a href="/practice/library/" style="text-decoration: none; text-align: center; color: inherit;">
+      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="practices-count">--</div>
+      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">practices</div>
+      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
+    </a>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeUser } from '/assets/js/auth/auth.js';
+
+  const userId = initializeUser();
+
+  function getRank(checkins) {
+    if (checkins <= 2) return { emoji: '🌱', name: 'Seedling' };
+    if (checkins <= 5) return { emoji: '🌿', name: 'Sprout' };
+    if (checkins <= 10) return { emoji: '🌺', name: 'Budding' };
+    if (checkins <= 20) return { emoji: '🌸', name: 'Blooming' };
+    if (checkins <= 50) return { emoji: '🌻', name: 'Full Bloom' };
+    return { emoji: '🌼', name: 'Garden' };
+  }
+
+  async function loadStats() {
+    try {
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' });
+      const data = await response.json();
+      if (data.success) {
+        const totalCheckins = data.practices.reduce((sum, p) => sum + (p.checkins || 0), 0);
+        const uniquePractices = data.practices.length;
+        const rank = getRank(totalCheckins);
+        document.getElementById('rank-emoji').textContent = rank.emoji;
+        document.getElementById('rank-name').textContent = rank.name;
+        document.getElementById('rank-subtitle').textContent =
+          `You logged ${totalCheckins} ${totalCheckins === 1 ? 'practice' : 'practices'}.`;
+        document.getElementById('checkins-count').textContent = totalCheckins;
+        document.getElementById('practices-count').textContent = uniquePractices;
+      }
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  }
+
+  loadStats();
+</script>

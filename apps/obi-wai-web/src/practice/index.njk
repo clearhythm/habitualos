@@ -42,48 +42,35 @@ permalink: /practice/
         grid-template-columns: 1fr !important;
       }
     }
-
-    /* Dark mode styles for Your Habits section */
-    html[data-theme="dark"] .habits-title {
-      color: #e5e7eb;
-    }
-
-    html[data-theme="dark"] .stat-number {
-      color: #e5e7eb !important;
-    }
-
-    html[data-theme="dark"] .stat-label {
-      color: #9ca3af !important;
-    }
-
-    html[data-theme="dark"] .stat-link {
-      color: #60a5fa !important;
-    }
-
-    html[data-theme="dark"] .stat-divider {
-      background: #374151 !important;
-    }
   </style>
 
-  <!-- Entries Section -->
-  <h2 class="habits-title" style="margin-top: 3rem; margin-bottom: 1rem; font-size: 1.25rem;">Your Habits</h2>
-  <div class="habits-stats" style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center; padding: 2rem 1rem; border-radius: 8px;">
-    <!-- Check-ins Stat -->
-    <a href="/practice/history/" style="text-decoration: none; text-align: center; color: inherit;">
-      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="checkins-count">--</div>
-      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">check-ins</div>
-      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
-    </a>
+  <!-- March Challenge Widget -->
+  <div id="march-challenge-block" style="margin-top: 3rem; display: none; text-align: left;">
+    <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">March Challenge</h2>
+    <p style="font-size: 0.85rem; color: #999; margin-bottom: 1rem;">Daily jogging + LASSO mindfulness</p>
 
-    <!-- Vertical Divider -->
-    <div class="stat-divider" style="width: 1px; height: 60px; background: #ddd;"></div>
+    <div id="home-calendar" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem;"></div>
 
-    <!-- Practices Stat -->
-    <a href="/practice/library/" style="text-decoration: none; text-align: center; color: inherit;">
-      <div class="stat-number" style="font-size: 2rem; font-weight: 600; color: #333; margin-bottom: 0.25rem;" id="practices-count">--</div>
-      <div class="stat-label" style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">practices</div>
-      <div class="stat-link" style="font-size: 0.85rem; color: #0066cc; text-decoration: underline;">view &gt;</div>
-    </a>
+    <div id="selected-day-panel" style="padding: 1rem; background: #f5f5f5; border-radius: 8px; display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; padding: 0 0.5rem;">‹</button>
+        <div>
+          <div id="selected-day-label" style="font-size: 0.9rem; font-weight: 600; color: #333; text-align: center;"></div>
+          <div id="selected-day-status" style="font-size: 0.75rem; color: #999; text-align: center;"></div>
+        </div>
+        <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; padding: 0 0.5rem;">›</button>
+      </div>
+      <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 0.5rem;">
+        <a id="log-jogging-link" href="/practice/log/?practice=Jogging"
+           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
+          🏃 Jogging
+        </a>
+        <a id="log-lasso-link" href="/practice/log/?practice=LASSO"
+           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
+          🧘 LASSO
+        </a>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -110,39 +97,97 @@ permalink: /practice/
     }
   }
 
-  // Load stats
+  // Load rank/subtitle from practice stats
   async function loadStats() {
     try {
-      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, {
-        cache: 'no-store'
-      });
-
+      const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
-
       if (data.success) {
-        // data.practices is now the practice library (unique practices)
-        // Each practice has a checkins counter
         const totalCheckins = data.practices.reduce((sum, p) => sum + (p.checkins || 0), 0);
-        const uniquePractices = data.practices.length;
-
-        // Update rank
         const rank = getRank(totalCheckins);
         document.getElementById('rank-emoji').textContent = rank.emoji;
         document.getElementById('rank-name').textContent = rank.name;
-
-        // Update subtitle
-        const practicesText = totalCheckins === 1 ? 'practice' : 'practices';
         document.getElementById('rank-subtitle').textContent =
-          `You logged ${totalCheckins} ${practicesText}.`;
-
-        // Update stats
-        document.getElementById('checkins-count').textContent = totalCheckins;
-        document.getElementById('practices-count').textContent = uniquePractices;
+          `You logged ${totalCheckins} ${totalCheckins === 1 ? 'practice' : 'practices'}.`;
       }
     } catch (error) {
       console.error('Error loading stats:', error);
     }
   }
 
+  // March Challenge widget
+  let challengeData = null;
+  let selectedDay = null;
+
+  async function loadChallenge() {
+    try {
+      const res = await fetch(`/api/challenge-status?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!data.success || !data.dayNumber) return;
+      challengeData = data;
+
+      document.getElementById('march-challenge-block').style.display = 'block';
+
+      const calendar = document.getElementById('home-calendar');
+      for (let day = 1; day <= 31; day++) {
+        const dateStr = `2026-03-${String(day).padStart(2, '0')}`;
+        const isToday = day === data.dayNumber;
+        const isComplete = data.completedDays.includes(dateStr);
+        const isPartial = (data.partialDays || []).includes(dateStr);
+        const isMissed = data.missedDays.includes(dateStr);
+
+        const sq = document.createElement('div');
+        sq.dataset.day = day;
+        sq.style.cssText = `
+          width: 26px; height: 26px; border-radius: 3px; font-size: 11px; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          background: ${isComplete ? '#27ae60' : isPartial ? '#f39c12' : isMissed ? '#e74c3c' : isToday ? '#3498db' : '#f0f0f0'};
+          color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
+        `;
+        sq.textContent = isComplete ? '●' : isPartial ? '◑' : isMissed ? '✗' : isToday ? '○' : '·';
+        sq.addEventListener('click', () => selectDay(day));
+        calendar.appendChild(sq);
+      }
+
+      selectDay(data.dayNumber);
+    } catch (error) {
+      console.error('Error loading challenge:', error);
+    }
+  }
+
+  function selectDay(day) {
+    selectedDay = day;
+    const data = challengeData;
+    const dateStr = `2026-03-${String(day).padStart(2, '0')}`;
+    const details = (data.dayDetails || {})[dateStr] || { jogging: false, lasso: false };
+    const isComplete = data.completedDays.includes(dateStr);
+    const isPartial = (data.partialDays || []).includes(dateStr);
+    const isMissed = data.missedDays.includes(dateStr);
+    const isToday = day === data.dayNumber;
+    const isFuture = day > data.dayNumber;
+
+    document.getElementById('selected-day-label').textContent = `March ${day}`;
+    const statusText = isComplete ? 'Complete ✓' : isPartial ? 'Partial ◑' : isMissed ? 'Missed ✗' : isToday ? 'Today' : 'Upcoming';
+    document.getElementById('selected-day-status').textContent = statusText;
+
+    document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
+    document.getElementById('log-jogging-link').style.opacity = details.jogging ? '0.35' : '1';
+    document.getElementById('log-lasso-link').style.opacity = details.lasso ? '0.35' : '1';
+    document.getElementById('selected-day-panel').style.display = 'block';
+
+    document.querySelectorAll('#home-calendar div').forEach(sq => {
+      sq.style.outline = Number(sq.dataset.day) === day ? '2px solid #333' : 'none';
+      sq.style.outlineOffset = '1px';
+    });
+  }
+
+  document.getElementById('prev-day-btn').addEventListener('click', () => {
+    if (selectedDay > 1) selectDay(selectedDay - 1);
+  });
+  document.getElementById('next-day-btn').addEventListener('click', () => {
+    if (selectedDay < 31) selectDay(selectedDay + 1);
+  });
+
   loadStats();
+  loadChallenge();
 </script>
