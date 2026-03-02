@@ -132,15 +132,18 @@ permalink: /practice/
         const isPartial = (data.partialDays || []).includes(dateStr);
         const isMissed = data.missedDays.includes(dateStr);
 
+        const details = (data.dayDetails || {})[dateStr] || {};
+        const partialSymbol = details.jogging ? '◐' : '◑';
+
         const sq = document.createElement('div');
         sq.dataset.day = day;
         sq.style.cssText = `
           width: 26px; height: 26px; border-radius: 3px; font-size: 11px; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          background: ${isComplete ? '#27ae60' : isPartial ? '#f39c12' : isMissed ? '#e74c3c' : isToday ? '#3498db' : '#f0f0f0'};
+          background: ${isComplete || isPartial ? '#27ae60' : isMissed ? '#f39c12' : isToday ? '#3498db' : '#f0f0f0'};
           color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
         `;
-        sq.textContent = isComplete ? '●' : isPartial ? '◑' : isMissed ? '✗' : isToday ? '○' : '·';
+        sq.textContent = isComplete ? '●' : isPartial ? partialSymbol : isMissed ? '○' : isToday ? '○' : '·';
         sq.addEventListener('click', () => selectDay(day));
         calendar.appendChild(sq);
       }
