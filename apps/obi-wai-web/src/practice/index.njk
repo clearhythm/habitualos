@@ -46,7 +46,7 @@ permalink: /practice/
       #march-challenge-block {
         display: inline-grid !important;
         grid-template-columns: auto auto;
-        gap: 2rem;
+        gap: 1.5rem 2rem;
         align-items: start;
       }
       #march-challenge-left {
@@ -60,41 +60,43 @@ permalink: /practice/
       #march-challenge-block .day-nav {
         justify-content: center !important;
       }
+      #challenge-streak-label {
+        grid-column: 1 / -1;
+        margin-top: 0 !important;
+      }
     }
   </style>
 
   <!-- March Challenge Widget -->
   <div id="march-challenge-block" style="margin-top: 1.5rem; display: none; text-align: center;">
 
-    <!-- Left: title + streak + navigator + status + buttons -->
+    <!-- Left: title + navigator + buttons + streak -->
     <div id="march-challenge-left">
       <!-- Static title -->
       <h2 style="font-size: 1.25rem; font-weight: 600; margin: 0 0 0.25rem 0;">March Challenge</h2>
 
-      <!-- Streak (fixed, not day-dependent) -->
-      <p id="challenge-streak-label" style="font-size: 0.9rem; color: #999; margin: 0 0 1rem 0; min-height: 0;"></p>
-
       <!-- Day navigator -->
-      <div class="day-nav" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+      <div class="day-nav" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.75rem; margin-bottom: 1rem;">
         <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">‹</button>
-        <h3 id="selected-day-label" style="font-size: 1rem; font-weight: 600; margin: 0; min-width: 8rem;"></h3>
+        <h3 id="selected-day-label" style="font-size: 1rem; font-weight: 600; margin: 0; min-width: 7rem;"></h3>
         <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">›</button>
       </div>
 
-      <!-- Status text -->
-      <p id="selected-day-status" style="font-size: 0.9rem; color: #999; margin-bottom: 1rem;"></p>
-
       <!-- Log buttons -->
-      <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
+      <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 0.75rem;">
         <a id="log-jogging-link" href="/practice/log/?prefill=Jogging" data-label="Jogging" data-emoji="🏃" data-done-icon="◐"
            style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🏃 Jogging</a>
         <a id="log-lasso-link" href="/practice/log/?prefill=LASSO" data-label="LASSO" data-emoji="🧘" data-done-icon="◑"
            style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🧘 LASSO</a>
       </div>
+
     </div>
 
     <!-- Right: Calendar grid -->
     <div id="home-calendar" style="display: grid; grid-template-columns: repeat(7, 26px); gap: 5px; justify-content: center;"></div>
+
+    <!-- Streak: below buttons on mobile, spans both columns on desktop -->
+    <p id="challenge-streak-label" style="font-size: 0.9rem; color: #999; margin: 1.25rem 0 0 0;"></p>
   </div>
 </div>
 
@@ -159,7 +161,7 @@ permalink: /practice/
       if (s > 0) {
         streakEl.textContent = `🌞 ${s} day${s === 1 ? '' : 's'} streak`;
       } else {
-        streakEl.style.display = 'none';
+        streakEl.textContent = 'No current streak';
       }
 
       const calendar = document.getElementById('home-calendar');
@@ -203,10 +205,7 @@ permalink: /practice/
     const isToday = day === data.dayNumber;
     const isFuture = day > data.dayNumber;
 
-    document.getElementById('selected-day-label').textContent = `March ${day}`;
-    const partialSymbol = details.jogging ? '◐' : '◑';
-    const statusText = isComplete ? 'Complete ●' : isPartial ? `Partial ${partialSymbol}` : isMissed ? 'Missed ○' : isToday ? 'Today' : 'Upcoming';
-    document.getElementById('selected-day-status').textContent = statusText;
+    document.getElementById('selected-day-label').innerHTML = `Day ${day} <span style="color:#bbb; font-weight:400;">of 31</span>`;
 
     document.getElementById('selected-day-actions').style.display = 'flex';
 
