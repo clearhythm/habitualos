@@ -42,30 +42,53 @@ permalink: /practice/
         grid-template-columns: 1fr !important;
       }
     }
+    @media (min-width: 600px) {
+      #march-challenge-block {
+        display: grid !important;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: start;
+        text-align: left !important;
+      }
+      #march-challenge-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      #selected-day-actions {
+        justify-content: flex-start !important;
+      }
+      #march-challenge-block .day-nav {
+        justify-content: flex-start !important;
+      }
+    }
   </style>
 
   <!-- March Challenge Widget -->
   <div id="march-challenge-block" style="margin-top: 3rem; display: none; text-align: center;">
 
-    <!-- Day navigator as heading -->
-    <div style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 0.25rem;">
-      <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">‹</button>
-      <h2 id="selected-day-label" style="font-size: 1.25rem; font-weight: 600; margin: 0; min-width: 12rem;"></h2>
-      <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">›</button>
+    <!-- Left: navigator + status + buttons -->
+    <div id="march-challenge-left">
+      <!-- Day navigator as heading -->
+      <div class="day-nav" style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+        <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">‹</button>
+        <h2 id="selected-day-label" style="font-size: 1.25rem; font-weight: 600; margin: 0; min-width: 12rem;"></h2>
+        <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">›</button>
+      </div>
+
+      <!-- Status text -->
+      <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 1rem;"></p>
+
+      <!-- Log buttons -->
+      <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
+        <a id="log-jogging-link" href="/practice/log/?practice=Jogging" data-label="Jogging" data-emoji="🏃" data-done-icon="◐"
+           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🏃 Jogging</a>
+        <a id="log-lasso-link" href="/practice/log/?practice=LASSO" data-label="LASSO" data-emoji="🧘" data-done-icon="◑"
+           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🧘 LASSO</a>
+      </div>
     </div>
 
-    <!-- Status text (same size as old gray subtitle) -->
-    <p id="selected-day-status" style="font-size: 1rem; color: #999; margin-bottom: 1rem;"></p>
-
-    <!-- Log buttons -->
-    <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
-      <a id="log-jogging-link" href="/practice/log/?practice=Jogging" data-label="Jogging" data-emoji="🏃" data-done-icon="◐"
-         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🏃 Jogging</a>
-      <a id="log-lasso-link" href="/practice/log/?practice=LASSO" data-label="LASSO" data-emoji="🧘" data-done-icon="◑"
-         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">🧘 LASSO</a>
-    </div>
-
-    <!-- Calendar grid -->
+    <!-- Right: Calendar grid -->
     <div id="home-calendar" style="display: grid; grid-template-columns: repeat(7, 26px); gap: 5px; justify-content: center;"></div>
   </div>
 </div>
