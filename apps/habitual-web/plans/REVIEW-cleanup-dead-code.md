@@ -1,4 +1,8 @@
-# Cleanup: Dead Code, Legacy Pages, Hardcoded Values
+# REVIEW: Cleanup: Dead Code, Legacy Pages, Hardcoded Values
+
+> **Status: Complete — ready for PR review** (2026-03-02)
+>
+> All phases implemented on branch `claude/review-cleanup-plan-LvUz1`. See summary at bottom for what was done.
 
 ## Context
 
@@ -112,7 +116,7 @@ making it hard to see what's current.
 - `implement-recurring-actions.md`
 - `plan-agent-notes.md`
 - `project-goals-visualization.md`
-- `cleanup-dead-code.md` (this file)
+- `REVIEW-cleanup-dead-code.md` (this file)
 
 ---
 
@@ -137,3 +141,23 @@ Nothing to clean up here.
 
 Low risk — all deletions are confirmed dead code or completed work. The env var fix is
 the only behavior change (and it's a fix, not a feature).
+
+---
+
+## Implementation Notes (added on completion)
+
+All work completed on `claude/review-cleanup-plan-LvUz1`.
+
+**Phase 1 ✅** — Deleted all 5 migration function files.
+
+**Phase 2 ✅** — Deleted `src/do/backup.njk`.
+
+**Phase 3 ✅** — `discovery-scheduled.js` now reads `process.env.DISCOVERY_USER_ID` and
+`process.env.DISCOVERY_AGENT_ID`. If either is missing, logs a warning and returns early.
+The old multi-config loop was simplified to a direct single call since there's one config.
+Remember to set `DISCOVERY_USER_ID=u-mgpqwa49` and `DISCOVERY_AGENT_ID=agent-mk3jq2dqjbfy`
+in Netlify environment variables.
+
+**Phase 4 ✅** — No action taken; reconciler kept as-is.
+
+**Phase 5 ✅** — Deleted all 13 DONE/ARCHIVED plan files.

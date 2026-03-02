@@ -10,34 +10,30 @@
 
 const { runDiscovery } = require('./_utils/discovery-pipeline.cjs');
 
-// Hardcoded for now — single user, single discovery agent
-const DISCOVERY_CONFIGS = [
-  { userId: 'u-mgpqwa49', agentId: 'agent-mk3jq2dqjbfy' }
-];
-
 exports.handler = async (event) => {
   console.log('[discovery-scheduled] Starting scheduled discovery run');
 
-  const results = [];
+  const userId = process.env.DISCOVERY_USER_ID;
+  const agentId = process.env.DISCOVERY_AGENT_ID;
 
-  for (const config of DISCOVERY_CONFIGS) {
-    const { userId, agentId } = config;
-    console.log(`[discovery-scheduled] Running for agent=${agentId}, user=${userId}`);
-
-    try {
-      const result = await runDiscovery({ agentId, userId });
-      console.log(`[discovery-scheduled] Complete: ${result.draftIds.length} drafts, ${result.errors.length} errors`);
-      results.push({ agentId, success: true, drafts: result.draftIds.length, errors: result.errors });
-    } catch (err) {
-      console.error(`[discovery-scheduled] Error for agent=${agentId}:`, err.message);
-      results.push({ agentId, success: false, error: err.message });
-    }
+  if (!userId || !agentId) {
+    console.warn('[discovery-scheduled] Missing DISCOVERY_USER_ID or DISCOVERY_AGENT_ID — aborting');
+    return { statusCode: 200, body: JSON.stringify({ skipped: true }) };
   }
 
-  console.log('[discovery-scheduled] All runs complete:', JSON.stringify(results));
+  console.log(`[discovery-scheduled] Running for agent=${agentId}, user=${userId}`);
+
+  let result;
+  try {
+    result = await runDiscovery({ agentId, userId });
+    console.log(`[discovery-scheduled] Complete: ${result.draftIds.length} drafts, ${result.errors.length} errors`);
+  } catch (err) {
+    console.error(`[discovery-scheduled] Error for agent=${agentId}:`, err.message);
+    return { statusCode: 200, body: JSON.stringify({ agentId, success: false, error: err.message }) };
+  }
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ results })
+    body: JSON.stringify({ agentId, success: true, drafts: result.draftIds.length, errors: result.errors })
   };
 };
