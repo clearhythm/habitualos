@@ -175,8 +175,8 @@ permalink: /practice/log/
   const userId = initializeUser();
   console.log('Initialized userId:', userId);
 
-  // Pre-fill practice from URL param (e.g., ?practice=Jogging)
-  const urlPractice = new URLSearchParams(window.location.search).get('practice');
+  // Pre-fill practice from URL param (e.g., ?prefill=Jogging)
+  const urlPractice = new URLSearchParams(window.location.search).get('prefill');
   if (urlPractice) {
     const input = document.getElementById('practice_name');
     if (input) input.value = urlPractice;
