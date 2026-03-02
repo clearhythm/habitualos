@@ -140,7 +140,7 @@ permalink: /practice/
         sq.style.cssText = `
           width: 26px; height: 26px; border-radius: 3px; font-size: 11px; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          background: ${isComplete ? '#1a4d32' : isPartial ? '#9ab845' : isMissed ? '#f39c12' : isToday ? '#3498db' : '#f0f0f0'};
+          background: ${isComplete ? '#4d9618' : isPartial ? '#9ab845' : isMissed ? '#f39c12' : isToday ? '#3498db' : '#f0f0f0'};
           color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
         `;
         sq.textContent = isComplete ? '●' : isPartial ? partialSymbol : isMissed ? '○' : isToday ? '○' : '·';
@@ -174,7 +174,7 @@ permalink: /practice/
     const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 2px solid transparent;`;
     function styleBtn(el, done) {
       if (done) {
-        el.style.cssText = baseBtn + `color: #fff; background: #5a9e20;`;
+        el.style.cssText = baseBtn + `color: #fff; background: #4d9618;`;
         el.textContent = `${el.dataset.doneIcon} ${el.dataset.label}`;
       } else if (isFuture || isToday) {
         el.style.cssText = baseBtn + `border-color: #ddd; color: #555; background: transparent;`;
