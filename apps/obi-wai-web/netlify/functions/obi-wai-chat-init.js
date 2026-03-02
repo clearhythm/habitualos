@@ -101,13 +101,25 @@ exports.handler = async (event) => {
     // Ensure survey definition exists (idempotent)
     await ensureSurveyDefinition();
 
-    // Check if today's check-in is pending
+    // Fetch practice data + check-in history in parallel
     const todayPT = getTodayPacific();
+    const [practices, practiceLogs, allResponses] = await Promise.all([
+      getPracticesByUserId(userId),
+      getPracticeLogsByUserId(userId),
+      getResponsesByUser(userId, SURVEY_ID).catch(() => [])
+    ]);
+
+    // Smart check-in trigger
     let checkInMode = null;
     try {
-      const allResponses = await getResponsesByUser(userId, SURVEY_ID);
-      const todayDone = allResponses.some(r => toDatePacific(r._createdAt) === todayPT);
-      if (!todayDone) {
+      const todayResponses = allResponses
+        .filter(r => toDatePacific(r._createdAt) === todayPT)
+        .sort((a, b) => new Date(b._createdAt) - new Date(a._createdAt));
+
+      const todayLogs = practiceLogs.filter(l => l.timestamp && toDatePacific(l.timestamp) === todayPT);
+
+      if (todayResponses.length === 0) {
+        // No check-in today — auto-trigger
         let action = await getOpenSurveyAction(SURVEY_ID, userId);
         if (!action || action.date !== todayPT) {
           const { id } = await createSurveyAction({
@@ -119,15 +131,25 @@ exports.handler = async (event) => {
           });
           action = { id };
         }
-        checkInMode = { actionId: action.id };
+        checkInMode = { actionId: action.id, context: 'first' };
+      } else {
+        // Check-in done today — trigger again only if practices logged since last check-in
+        const lastCheckInTime = new Date(todayResponses[0]._createdAt);
+        const newPracticesAfter = todayLogs.some(l => new Date(l.timestamp) > lastCheckInTime);
+        if (newPracticesAfter) {
+          const { id } = await createSurveyAction({
+            _userId: userId,
+            surveyDefinitionId: SURVEY_ID,
+            type: 'daily',
+            focusDimensions: ['Resistance', 'Self-efficacy', 'Inner access'],
+            date: todayPT
+          });
+          checkInMode = { actionId: id, context: 'post-practice' };
+        }
       }
     } catch (err) {
       console.warn('[obi-wai-chat-init] Check-in detection failed (non-fatal):', err.message);
     }
-
-    // Fetch practice history for context
-    const practices = await getPracticesByUserId(userId);
-    const practiceLogs = await getPracticeLogsByUserId(userId);
 
     const practiceCount = practices.length;
 
@@ -156,7 +178,7 @@ exports.handler = async (event) => {
 
     const checkInPrompt = checkInMode ? `== DAILY CHECK-IN ==
 
-Before anything else, do today's brief check-in. Three questions, one at a time, in this order:
+${checkInMode.context === 'post-practice' ? 'You\'ve completed your practices today. Before coaching, offer a quick post-practice check-in: "You\'ve done your practices — want a quick post-practice check-in? (Say skip to go straight to coaching.)" If they skip, proceed to normal coaching immediately. Otherwise, do the three questions below.' : 'Before anything else, do today\'s brief check-in. Three questions, one at a time, in this order:'}
 1. Resistance — how much did you resist getting started today?
 2. Self-efficacy — how confident are you about completing all 30 days?
 3. Inner access — how available do you feel to yourself right now?

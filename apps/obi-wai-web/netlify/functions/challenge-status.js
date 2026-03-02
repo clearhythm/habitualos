@@ -117,20 +117,20 @@ exports.handler = async (event) => {
   // dayNumber: which March day we're on (null if not in March 2026)
   const dayNumber = todayDay || null;
 
-  // Today's check-in scores (if done)
-  const todayResponse = allResponses.find(r => toPacificDate(r._createdAt) === today);
-  let todayCheckIn = null;
-  if (todayResponse?.scores) {
-    const get = name => todayResponse.scores.find(s => s.dimension === name);
-    const r = get('Resistance');
-    const se = get('Self-efficacy');
-    const ia = get('Inner access');
-    todayCheckIn = {
-      resistance: r ? r.average : null,
-      selfEfficacy: se ? se.average : null,
-      innerAccess: ia ? ia.average : null
-    };
-  }
+  // Today's check-in scores (all of them, sorted oldest first)
+  const todayCheckIns = allResponses
+    .filter(r => toPacificDate(r._createdAt) === today)
+    .sort((a, b) => new Date(a._createdAt) - new Date(b._createdAt))
+    .map(r => {
+      const get = name => r.scores?.find(s => s.dimension === name);
+      return {
+        timing: r.timing || null,
+        resistance: get('Resistance')?.average ?? null,
+        selfEfficacy: get('Self-efficacy')?.average ?? null,
+        innerAccess: get('Inner access')?.average ?? null,
+        createdAt: r._createdAt
+      };
+    });
 
   return {
     statusCode: 200,
@@ -144,7 +144,7 @@ exports.handler = async (event) => {
       todayComplete,
       streak,
       dayNumber,
-      todayCheckIn
+      todayCheckIns
     })
   };
 };
