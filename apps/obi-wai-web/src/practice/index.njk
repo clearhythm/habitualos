@@ -170,19 +170,19 @@ permalink: /practice/
     const statusText = isComplete ? 'Complete ●' : isPartial ? `Partial ${partialSymbol}` : isMissed ? 'Missed ○' : isToday ? 'Today' : 'Upcoming';
     document.getElementById('selected-day-status').textContent = statusText;
 
-    document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
+    document.getElementById('selected-day-actions').style.display = 'flex';
 
     const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 2px solid transparent;`;
     function styleBtn(el, done) {
       if (done) {
         el.style.cssText = baseBtn + `color: #fff; background: #4d9618;`;
         el.textContent = `${el.dataset.doneIcon} ${el.dataset.label}`;
-      } else if (isFuture || isToday) {
+      } else if (isToday) {
         el.style.cssText = baseBtn + `border-color: #ddd; color: #555; background: transparent;`;
         el.textContent = `${el.dataset.emoji} ${el.dataset.label}`;
       } else {
-        el.style.cssText = baseBtn + `color: #fff; background: #aaa;`;
-        el.textContent = `○ ${el.dataset.label}`;
+        el.style.cssText = baseBtn + `border-color: #ddd; color: #aaa; background: transparent;`;
+        el.textContent = `${el.dataset.emoji} ${el.dataset.label}`;
       }
     }
 
@@ -191,10 +191,10 @@ permalink: /practice/
     styleBtn(jogBtn, details.jogging);
     styleBtn(lassoBtn, details.lasso);
 
-    const isPast = !isToday && !isFuture;
+    const notClickable = !isToday;
     [jogBtn, lassoBtn].forEach(btn => {
-      btn.style.pointerEvents = isPast ? 'none' : '';
-      btn.style.cursor = isPast ? 'default' : 'pointer';
+      btn.style.pointerEvents = notClickable ? 'none' : '';
+      btn.style.cursor = notClickable ? 'default' : 'pointer';
     });
 
     document.querySelectorAll('#home-calendar div').forEach(sq => {
