@@ -182,9 +182,9 @@ permalink: /practice/log/
     if (input) input.value = urlPractice;
   }
 
-  // Check for suggested practice from chat and pre-fill
+  // Check for suggested practice from chat and pre-fill (skip if ?prefill= was used)
   const chatState = getPracticeChatState();
-  if (chatState && chatState.suggestedPractice) {
+  if (!urlPractice && chatState && chatState.suggestedPractice) {
     const practiceNameInput = document.getElementById('practice_name');
     practiceNameInput.value = chatState.suggestedPractice;
 
