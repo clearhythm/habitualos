@@ -172,14 +172,14 @@ permalink: /practice/
 
     document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
 
-    const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none;`;
+    const baseBtn = `padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 2px solid transparent;`;
     function styleBtn(el, done) {
       if (done) {
-        el.style.cssText = baseBtn + `border: none; color: #fff; background: #27ae60;`;
+        el.style.cssText = baseBtn + `color: #fff; background: #27ae60;`;
       } else if (isFuture || isToday) {
-        el.style.cssText = baseBtn + `border: 2px solid #ddd; color: #555; background: transparent;`;
+        el.style.cssText = baseBtn + `border-color: #ddd; color: #555; background: transparent;`;
       } else {
-        el.style.cssText = baseBtn + `border: none; color: #fff; background: #aaa;`;
+        el.style.cssText = baseBtn + `color: #fff; background: #aaa;`;
       }
     }
 
