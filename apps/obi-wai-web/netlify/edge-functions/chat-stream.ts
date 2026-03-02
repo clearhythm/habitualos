@@ -9,7 +9,7 @@ export default createChatStreamHandler({
   "obi-wai": {
     initEndpoint: "/api/obi-wai-chat-init",
     toolExecuteEndpoint: "/api/practice-tool-execute",
-    signalPatterns: [/^READY_TO_PRACTICE\s*\n---/m],
+    signalPatterns: [/^READY_TO_PRACTICE\s*\n---/m, /^STORE_MEASUREMENT\s*\n---/m],
   },
 });
 

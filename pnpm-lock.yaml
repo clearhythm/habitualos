@@ -86,6 +86,9 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      '@habitualos/survey-engine':
+        specifier: workspace:*
+        version: link:../../packages/survey-engine
       marked:
         specifier: ^15.0.12
         version: 15.0.12

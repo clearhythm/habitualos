@@ -1,6 +1,43 @@
 require('dotenv').config();
 const { getPracticesByUserId } = require('./_services/db-practices.cjs');
 const { getPracticeLogsByUserId } = require('./_services/db-practice-logs.cjs');
+const {
+  getSurveyDefinition,
+  createSurveyDefinition,
+  getResponsesByUser,
+  getOpenSurveyAction,
+  createSurveyAction
+} = require('@habitualos/survey-engine');
+
+const SURVEY_ID = 'survey-obi-v1';
+
+function getTodayPacific() {
+  const now = new Date();
+  const parts = now.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' }).split('/');
+  // M/D/YYYY → YYYY-MM-DD
+  return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+}
+
+function toDatePacific(isoString) {
+  if (!isoString) return null;
+  const parts = new Date(isoString).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' }).split('/');
+  return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+}
+
+async function ensureSurveyDefinition() {
+  const def = await getSurveyDefinition(SURVEY_ID);
+  if (!def) {
+    await createSurveyDefinition(SURVEY_ID, {
+      title: 'Daily Challenge Check-in',
+      version: 1,
+      dimensions: [
+        { name: 'Resistance', questions: ['How much resistance did you feel getting started?'] },
+        { name: 'Self-efficacy', questions: ['How confident do you feel about completing all 30 days?'] },
+        { name: 'Inner access', questions: ['How available do you feel to yourself right now?'] }
+      ]
+    });
+  }
+}
 
 const tools = [
   {
@@ -61,6 +98,33 @@ exports.handler = async (event) => {
       };
     }
 
+    // Ensure survey definition exists (idempotent)
+    await ensureSurveyDefinition();
+
+    // Check if today's check-in is pending
+    const todayPT = getTodayPacific();
+    let checkInMode = null;
+    try {
+      const allResponses = await getResponsesByUser(userId, SURVEY_ID);
+      const todayDone = allResponses.some(r => toDatePacific(r._createdAt) === todayPT);
+      if (!todayDone) {
+        let action = await getOpenSurveyAction(SURVEY_ID, userId);
+        if (!action || action.date !== todayPT) {
+          const { id } = await createSurveyAction({
+            _userId: userId,
+            surveyDefinitionId: SURVEY_ID,
+            type: 'daily',
+            focusDimensions: ['Resistance', 'Self-efficacy', 'Inner access'],
+            date: todayPT
+          });
+          action = { id };
+        }
+        checkInMode = { actionId: action.id };
+      }
+    } catch (err) {
+      console.warn('[obi-wai-chat-init] Check-in detection failed (non-fatal):', err.message);
+    }
+
     // Fetch practice history for context
     const practices = await getPracticesByUserId(userId);
     const practiceLogs = await getPracticeLogsByUserId(userId);
@@ -90,7 +154,44 @@ exports.handler = async (event) => {
       timeZone: timezone
     });
 
-    const systemPrompt = `You are Obi-Wai, a wise companion helping someone discover what they need to practice today.
+    const checkInPrompt = checkInMode ? `== DAILY CHECK-IN ==
+
+Before anything else, do today's brief check-in. Three questions, one at a time, in this order:
+1. Resistance — how much did you resist getting started today?
+2. Self-efficacy — how confident are you about completing all 30 days?
+3. Inner access — how available do you feel to yourself right now?
+
+Scale is 1–5 for each:
+- Resistance: 1 = flowed right in, 5 = had to really push
+- Self-efficacy: 1 = shaky, 5 = solid
+- Inner access: 1 = closed/scattered, 5 = present/open
+
+Rules:
+- ONE question per message. Never combine.
+- One brief sentence describing what the dimension means, then ask for 1–5.
+- If they give a number with no context, ask one brief follow-up: what's behind that?
+- If they give a number WITH context, reflect in one sentence (Obi-Wai voice), then move on.
+- No cheerleading. Calm, observational.
+
+After all 3: "That's all three. Want me to save this?" When they confirm, emit the signal below exactly, then offer to continue into coaching or close.
+If they want to skip mid-way, emit the signal with whatever dimensions were scored.
+
+STORE_MEASUREMENT
+---
+{
+  "surveyActionId": "${checkInMode.actionId}",
+  "dimensions": [
+    { "name": "Resistance", "score": <1-5>, "notes": "<their words, first person>" },
+    { "name": "Self-efficacy", "score": <1-5>, "notes": "<their words, first person>" },
+    { "name": "Inner access", "score": <1-5>, "notes": "<their words, first person>" }
+  ]
+}
+
+==
+
+` : '';
+
+    const systemPrompt = `${checkInPrompt}You are Obi-Wai, a wise companion helping someone discover what they need to practice today.
 
 Your voice:
 - Calm, observant, present-tense

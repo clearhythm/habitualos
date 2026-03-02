@@ -319,9 +319,76 @@ permalink: /practice/chat/
 
   // Get display text (without signal content)
   function getDisplayText(text) {
-    if (!text.includes('READY_TO_PRACTICE')) return text;
-    const signalIndex = text.indexOf('READY_TO_PRACTICE');
-    return text.substring(0, signalIndex).trim();
+    for (const marker of ['READY_TO_PRACTICE', 'STORE_MEASUREMENT']) {
+      const idx = text.indexOf(marker);
+      if (idx !== -1) return text.substring(0, idx).trim();
+    }
+    return text;
+  }
+
+  // Check-in modal state
+  let pendingCheckInSignal = null;
+
+  function handleCheckInSignal(signal) {
+    pendingCheckInSignal = signal;
+    const dims = signal.data?.dimensions || [];
+
+    const scoresHtml = dims.map(d => `
+      <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;">
+        <span style="color: #555; font-size: 0.95rem;">${d.name}</span>
+        <span style="color: #9b59b6; font-weight: 600;">${d.score} / 5</span>
+      </div>`).join('');
+
+    // Build modal
+    const overlay = document.createElement('div');
+    overlay.id = 'checkin-modal-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;';
+    overlay.innerHTML = `
+      <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 360px; width: calc(100% - 2rem); box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+        <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem; color: #333;">Today's Check-in</h3>
+        <div style="margin-bottom: 1.5rem;">${scoresHtml}</div>
+        <button id="checkin-confirm-btn" style="width: 100%; padding: 0.75rem; background: #9b59b6; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-bottom: 0.75rem;">Save Check-in</button>
+        <button id="checkin-dismiss-btn" style="width: 100%; padding: 0.5rem; background: transparent; color: #999; border: none; font-size: 0.9rem; cursor: pointer; text-decoration: underline;">Don't save</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('checkin-confirm-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('checkin-confirm-btn');
+      btn.textContent = 'Saving...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/survey-measurement-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, signal: pendingCheckInSignal })
+        });
+        const result = await res.json();
+        if (!result.success) throw new Error(result.error);
+
+        overlay.remove();
+        showToast('Check-in saved.');
+        // Re-enable chat for follow-up coaching
+        messageInput.disabled = false;
+        updateSendButton();
+        messageInput.focus();
+      } catch (err) {
+        console.error('Check-in save failed:', err);
+        showToast('Failed to save check-in.', { type: 'error' });
+        btn.textContent = 'Save Check-in';
+        btn.disabled = false;
+      }
+      pendingCheckInSignal = null;
+    });
+
+    document.getElementById('checkin-dismiss-btn').addEventListener('click', () => {
+      overlay.remove();
+      pendingCheckInSignal = null;
+      messageInput.disabled = false;
+      updateSendButton();
+      messageInput.focus();
+    });
   }
 
   // Load chat history from localStorage
@@ -472,6 +539,16 @@ permalink: /practice/chat/
     };
     chatHistory.push(assistantMessage);
     saveChatHistory(chatHistory);
+
+    // Handle check-in signal
+    if (signalData?.type === 'STORE_MEASUREMENT') {
+      // Disable chat while modal is open
+      messageInput.disabled = true;
+      sendButton.disabled = true;
+      sendButton.style.background = '#ddd';
+      sendButton.style.cursor = 'not-allowed';
+      handleCheckInSignal(signalData);
+    }
 
     // Handle ready to practice signal
     if (parsedSignal || (signalData?.type === 'READY_TO_PRACTICE')) {

@@ -27,6 +27,19 @@ permalink: /challenge/
       </div>
     </div>
 
+    <!-- Today's check-in scores -->
+    <div id="checkin-block" style="margin-bottom: 1.5rem; padding: 1rem; background: #f9f6ff; border-radius: 8px; border-left: 3px solid #9b59b6; display: none;">
+      <div style="font-size: 0.8rem; color: #9b59b6; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">Today's Check-in</div>
+      <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        <span style="font-size: 0.9rem; color: #555;">Resistance: <strong id="ci-resistance"></strong></span>
+        <span style="font-size: 0.9rem; color: #555;">Self-efficacy: <strong id="ci-selfefficacy"></strong></span>
+        <span style="font-size: 0.9rem; color: #555;">Inner access: <strong id="ci-inneraccess"></strong></span>
+      </div>
+    </div>
+    <div id="checkin-pending" style="margin-bottom: 1.5rem; display: none;">
+      <a href="/practice/chat/" style="font-size: 0.9rem; color: #9b59b6; text-decoration: none;">+ Daily check-in not done yet →</a>
+    </div>
+
     <!-- Calendar grid: 31 squares -->
     <div id="challenge-calendar" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1.5rem;"></div>
 
@@ -74,6 +87,17 @@ permalink: /challenge/
       lassoStatus.style.color = data.todayLasso ? '#27ae60' : '#999';
 
       document.getElementById('challenge-streak').textContent = data.streak;
+
+      // Check-in scores
+      if (data.todayCheckIn) {
+        const ci = data.todayCheckIn;
+        document.getElementById('ci-resistance').textContent = `${ci.resistance}/5`;
+        document.getElementById('ci-selfefficacy').textContent = `${ci.selfEfficacy}/5`;
+        document.getElementById('ci-inneraccess').textContent = `${ci.innerAccess}/5`;
+        document.getElementById('checkin-block').style.display = 'block';
+      } else {
+        document.getElementById('checkin-pending').style.display = 'block';
+      }
 
       const calendar = document.getElementById('challenge-calendar');
       for (let day = 1; day <= 31; day++) {

@@ -14,6 +14,9 @@
  * }
  */
 const { getPracticeLogsByUserId } = require('./_services/db-practice-logs.cjs');
+const { getResponsesByUser } = require('@habitualos/survey-engine');
+
+const SURVEY_ID = 'survey-obi-v1';
 
 // Convert a timestamp to a Pacific date string "YYYY-MM-DD"
 function toPacificDate(timestamp) {
@@ -46,7 +49,10 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid userId' }) };
   }
 
-  const allLogs = await getPracticeLogsByUserId(userId);
+  const [allLogs, allResponses] = await Promise.all([
+    getPracticeLogsByUserId(userId),
+    getResponsesByUser(userId, SURVEY_ID).catch(() => [])
+  ]);
 
   // Filter to March 2026 logs only
   const marchLogs = allLogs.filter(log => {
@@ -111,6 +117,21 @@ exports.handler = async (event) => {
   // dayNumber: which March day we're on (null if not in March 2026)
   const dayNumber = todayDay || null;
 
+  // Today's check-in scores (if done)
+  const todayResponse = allResponses.find(r => toPacificDate(r._createdAt) === today);
+  let todayCheckIn = null;
+  if (todayResponse?.scores) {
+    const get = name => todayResponse.scores.find(s => s.dimension === name);
+    const r = get('Resistance');
+    const se = get('Self-efficacy');
+    const ia = get('Inner access');
+    todayCheckIn = {
+      resistance: r ? r.average : null,
+      selfEfficacy: se ? se.average : null,
+      innerAccess: ia ? ia.average : null
+    };
+  }
+
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
@@ -122,7 +143,8 @@ exports.handler = async (event) => {
       todayLasso,
       todayComplete,
       streak,
-      dayNumber
+      dayNumber,
+      todayCheckIn
     })
   };
 };
