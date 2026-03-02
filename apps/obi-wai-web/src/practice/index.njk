@@ -66,7 +66,7 @@ permalink: /practice/
     </div>
 
     <!-- Calendar grid -->
-    <div id="home-calendar" style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;"></div>
+    <div id="home-calendar" style="display: grid; grid-template-columns: repeat(7, 26px); gap: 5px; justify-content: center;"></div>
   </div>
 </div>
 
@@ -180,9 +180,12 @@ permalink: /practice/
       } else if (isToday) {
         el.style.cssText = baseBtn + `border-color: #ddd; color: #555; background: transparent;`;
         el.textContent = `${el.dataset.emoji} ${el.dataset.label}`;
-      } else {
+      } else if (isFuture) {
         el.style.cssText = baseBtn + `border-color: #ddd; color: #aaa; background: transparent;`;
         el.textContent = `${el.dataset.emoji} ${el.dataset.label}`;
+      } else {
+        el.style.cssText = baseBtn + `border-color: #ddd; color: #aaa; background: transparent;`;
+        el.textContent = `⊗ ${el.dataset.label}`;
       }
     }
 
