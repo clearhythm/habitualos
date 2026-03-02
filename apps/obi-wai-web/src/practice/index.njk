@@ -171,8 +171,23 @@ permalink: /practice/
     document.getElementById('selected-day-status').textContent = statusText;
 
     document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
-    document.getElementById('log-jogging-link').style.opacity = details.jogging ? '0.35' : '1';
-    document.getElementById('log-lasso-link').style.opacity = details.lasso ? '0.35' : '1';
+
+    function styleBtn(el, done, emoji) {
+      const color = done ? '#27ae60' : isToday ? '#3498db' : '#e74c3c';
+      const icon = done ? '✓' : isToday ? emoji : '✗';
+      el.style.cssText = `
+        padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem;
+        text-decoration: none; border: none; color: #fff; background: ${color};
+      `;
+      el.textContent = `${icon} ${el.dataset.label}`;
+    }
+
+    const jogBtn = document.getElementById('log-jogging-link');
+    const lassoBtn = document.getElementById('log-lasso-link');
+    jogBtn.dataset.label = 'Jogging';
+    lassoBtn.dataset.label = 'LASSO';
+    styleBtn(jogBtn, details.jogging, '🏃');
+    styleBtn(lassoBtn, details.lasso, '🧘');
 
     document.querySelectorAll('#home-calendar div').forEach(sq => {
       sq.style.outline = Number(sq.dataset.day) === day ? '2px solid #333' : 'none';
