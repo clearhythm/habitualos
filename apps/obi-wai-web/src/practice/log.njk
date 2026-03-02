@@ -29,6 +29,7 @@ permalink: /practice/log/
           placeholder="e.g., Meditation, Writing, Exercise"
           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
         />
+        <script>(function(){ var p = new URLSearchParams(location.search).get('prefill'); if (p) document.getElementById('practice_name').value = p; })();</script>
       </div>
 
       <!-- Duration (optional) -->
