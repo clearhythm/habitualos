@@ -45,32 +45,33 @@ permalink: /practice/
   </style>
 
   <!-- March Challenge Widget -->
-  <div id="march-challenge-block" style="margin-top: 3rem; display: none; text-align: left;">
-    <h2 style="font-size: 1.25rem; margin-bottom: 0.25rem;">March Challenge</h2>
-    <p style="font-size: 0.85rem; color: #999; margin-bottom: 1rem;">Daily jogging + LASSO mindfulness</p>
+  <div id="march-challenge-block" style="margin-top: 3rem; display: none; text-align: center;">
+    <h2 style="font-size: 1.25rem; margin-bottom: 1rem;">March Challenge</h2>
 
-    <div id="home-calendar" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 1rem;"></div>
-
-    <div id="selected-day-panel" style="padding: 1rem; background: #f5f5f5; border-radius: 8px; display: none;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-        <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; padding: 0 0.5rem;">‹</button>
-        <div>
-          <div id="selected-day-label" style="font-size: 0.9rem; font-weight: 600; color: #333; text-align: center;"></div>
-          <div id="selected-day-status" style="font-size: 0.75rem; color: #999; text-align: center;"></div>
-        </div>
-        <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; padding: 0 0.5rem;">›</button>
-      </div>
-      <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 0.5rem;">
-        <a id="log-jogging-link" href="/practice/log/?practice=Jogging"
-           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
-          🏃 Jogging
-        </a>
-        <a id="log-lasso-link" href="/practice/log/?practice=LASSO"
-           style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
-          🧘 LASSO
-        </a>
-      </div>
+    <!-- Day navigator (replaces subtitle) -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-bottom: 0.25rem;">
+      <button id="prev-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">‹</button>
+      <span id="selected-day-label" style="font-size: 1rem; font-weight: 600; color: #333; min-width: 10rem;"></span>
+      <button id="next-day-btn" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #bbb; padding: 0 0.4rem; line-height: 1;">›</button>
     </div>
+
+    <!-- Status text (where subtitle was) -->
+    <p id="selected-day-status" style="font-size: 0.85rem; color: #999; margin-bottom: 1rem;"></p>
+
+    <!-- Log buttons -->
+    <div id="selected-day-actions" style="display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 1.25rem;">
+      <a id="log-jogging-link" href="/practice/log/?practice=Jogging"
+         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
+        🏃 Jogging
+      </a>
+      <a id="log-lasso-link" href="/practice/log/?practice=LASSO"
+         style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; text-decoration: none; border: 1.5px solid #555; color: #555;">
+        🧘 LASSO
+      </a>
+    </div>
+
+    <!-- Calendar grid -->
+    <div id="home-calendar" style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;"></div>
   </div>
 </div>
 
@@ -166,14 +167,13 @@ permalink: /practice/
     const isToday = day === data.dayNumber;
     const isFuture = day > data.dayNumber;
 
-    document.getElementById('selected-day-label').textContent = `March ${day}`;
+    document.getElementById('selected-day-label').textContent = `March ${day} Challenge`;
     const statusText = isComplete ? 'Complete ✓' : isPartial ? 'Partial ◑' : isMissed ? 'Missed ✗' : isToday ? 'Today' : 'Upcoming';
     document.getElementById('selected-day-status').textContent = statusText;
 
     document.getElementById('selected-day-actions').style.display = isFuture ? 'none' : 'flex';
     document.getElementById('log-jogging-link').style.opacity = details.jogging ? '0.35' : '1';
     document.getElementById('log-lasso-link').style.opacity = details.lasso ? '0.35' : '1';
-    document.getElementById('selected-day-panel').style.display = 'block';
 
     document.querySelectorAll('#home-calendar div').forEach(sq => {
       sq.style.outline = Number(sq.dataset.day) === day ? '2px solid #333' : 'none';
