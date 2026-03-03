@@ -67,7 +67,47 @@ function formatTimestamp(timestamp) {
 }
 
 /**
- * Generate YAML frontmatter markdown from draft data
+ * Serialize a value to YAML-safe string
+ */
+function yamlValue(value) {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    return '\n' + value.map(item => `  - "${item}"`).join('\n');
+  }
+  if (typeof value === 'string' && (value.includes(':') || value.includes('"') || value.includes('\n'))) {
+    return `"${value.replace(/"/g, '\\"')}"`;
+  }
+  return String(value ?? '');
+}
+
+/**
+ * Build YAML frontmatter block from a key/value object
+ */
+function buildFrontmatter(fields) {
+  const lines = ['---'];
+  for (const [key, value] of Object.entries(fields)) {
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        lines.push(`${key}: []`);
+      } else {
+        lines.push(`${key}:`);
+        for (const item of value) {
+          lines.push(`  - "${item}"`);
+        }
+      }
+    } else if (typeof value === 'string' && (value.includes(':') || value.includes('"') || value.includes('\n'))) {
+      lines.push(`${key}: "${value.replace(/"/g, '\\"')}"`);
+    } else {
+      lines.push(`${key}: ${value ?? ''}`);
+    }
+  }
+  lines.push('---');
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Generate YAML frontmatter markdown from a company draft
  * Review data is read from draft.review (stored on the draft itself)
  * @param {Object} draft - Draft document from Firestore
  * @returns {string} Complete markdown string with YAML frontmatter
@@ -166,10 +206,11 @@ async function reconcile({ userId } = {}) {
     const draftResult = { draftId: draft.id, type: draft.type };
 
     try {
-      // Validate draft has required data
-      if (!draft.data?.name) {
+      // Validate draft has required data (articles use title, others use name)
+      const draftLabel = draft.type === 'article' ? draft.data?.title : draft.data?.name;
+      if (!draftLabel) {
         draftResult.status = 'skipped';
-        draftResult.reason = 'Draft has no data.name';
+        draftResult.reason = draft.type === 'article' ? 'Draft has no data.title' : 'Draft has no data.name';
         results.skipped++;
         results.details.push(draftResult);
         continue;
@@ -193,8 +234,8 @@ async function reconcile({ userId } = {}) {
         continue;
       }
 
-      // Generate filename
-      const filename = toFilename(draft.data.name);
+      // Generate filename (articles use title, others use name)
+      const filename = toFilename(draft.type === 'article' ? draft.data.title : draft.data.name);
       if (!filename) {
         draftResult.status = 'skipped';
         draftResult.reason = 'Could not generate valid filename';
@@ -240,7 +281,9 @@ async function reconcile({ userId } = {}) {
       }
 
       // Generate markdown content (review data is on the draft itself)
-      const markdown = generateMarkdown(draft);
+      const markdown = draft.type === 'article'
+        ? generateArticleMarkdown(draft)
+        : generateMarkdown(draft);
 
       // Write file
       const writeResult = await agentFilesystem.writeFile(agentDataPath, relativePath, markdown);
@@ -258,7 +301,7 @@ async function reconcile({ userId } = {}) {
 
       draftResult.status = 'committed';
       draftResult.path = relativePath;
-      draftResult.name = draft.data.name;
+      draftResult.name = draft.type === 'article' ? draft.data.title : draft.data.name;
       draftResult.hasReview = !!draft.review;
       results.committed++;
       results.details.push(draftResult);
@@ -276,8 +319,39 @@ async function reconcile({ userId } = {}) {
   return results;
 }
 
+/**
+ * Generate YAML frontmatter markdown from an article draft
+ * Body includes full article content if available, otherwise summary.
+ * @param {Object} draft - Draft document from Firestore
+ * @returns {string} Complete markdown string with YAML frontmatter + body
+ */
+function generateArticleMarkdown(draft) {
+  const data = draft.data || {};
+  const review = draft.review || null;
+
+  const frontmatter = buildFrontmatter({
+    type: 'article',
+    title: data.title || '',
+    url: data.url || '',
+    publication: data.publication || '',
+    author: data.author || '',
+    content_type: data.content_type || '',
+    topics: data.topics || [],
+    relevance_score: data.relevance_score ?? '',
+    user_score: review?.score ?? '',
+    user_feedback: review?.feedback || '',
+    user_tags: review?.user_tags || [],
+    source: 'agent-discovery',
+    discovered_at: formatTimestamp(draft._createdAt) || ''
+  });
+
+  const body = data.content || data.summary || '';
+  return frontmatter + body + '\n';
+}
+
 module.exports = {
   reconcile,
   generateMarkdown,
+  generateArticleMarkdown,
   toFilename
 };

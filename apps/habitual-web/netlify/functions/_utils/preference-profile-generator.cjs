@@ -67,7 +67,7 @@ Be specific and concrete — use the actual feedback language. If preferences ha
 Return ONLY the JSON object, no other text.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
   });

@@ -17,6 +17,7 @@
  */
 
 const { runDiscovery } = require('./_utils/discovery-pipeline.cjs');
+const { runArticleDiscovery } = require('./_utils/article-pipeline.cjs');
 
 exports.handler = async (event) => {
   // Only allow POST
@@ -29,11 +30,9 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Parse request body
     const body = JSON.parse(event.body || '{}');
     const { userId, agentId } = body;
 
-    // Validate required fields
     if (!userId) {
       return {
         statusCode: 400,
@@ -52,21 +51,21 @@ exports.handler = async (event) => {
 
     console.log(`[discovery-run] Starting for agent=${agentId}, user=${userId}`);
 
-    // Run discovery pipeline
-    const result = await runDiscovery({ agentId, userId });
+    // Run both pipelines
+    const [companies, articles] = await Promise.all([
+      runDiscovery({ agentId, userId }),
+      runArticleDiscovery({ agentId, userId })
+    ]);
 
-    console.log(`[discovery-run] Complete:`, {
-      draftIds: result.draftIds.length,
-      queries: result.searchQueries.length,
-      errors: result.errors.length
-    });
+    console.log(`[discovery-run] Complete: ${companies.draftIds.length} companies, ${articles.draftIds.length} articles`);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
-        ...result
+        companies,
+        articles
       })
     };
 

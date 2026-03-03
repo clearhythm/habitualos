@@ -163,7 +163,7 @@ Return ONLY a JSON array of query strings, like:
 ["query 1", "query 2", "query 3"]`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-4-6',
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }]
   });
@@ -262,7 +262,7 @@ Focus on quality over quantity - only extract companies that seem like genuine g
 Skip job boards, recruiters, or generic listings.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-5-20250929',
+    model: 'claude-sonnet-4-6',
     max_tokens: 2000,
     tools: [EXTRACT_COMPANY_TOOL],
     messages: [{ role: 'user', content: prompt }]

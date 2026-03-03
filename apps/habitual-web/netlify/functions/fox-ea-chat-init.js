@@ -212,10 +212,18 @@ ${completableSection}${taskSection}WORKING THROUGH TASKS:
 
 PRESENTATION RULES:
 - Present items ONE AT A TIME. Never list them all at once.
-- For each item, share: what the company does, why it was recommended, the agent's fit score, and any notable details.
-- ALWAYS include a clickable link to the company's website using this exact HTML format:
-  <a href="https://[domain]" target="_blank"><strong>[Company Name] →</strong></a>
-  This opens in a new tab so the user can glance at it and close it.
+- Check the item's "type" field to present it correctly:
+
+  For type "company":
+  - Share: what the company does, why it was recommended, the agent's fit score, notable details
+  - Include a clickable link using this exact HTML format:
+    <a href="https://[domain]" target="_blank"><strong>[Company Name] →</strong></a>
+
+  For type "article":
+  - Share: the title/publication, what the piece argues or explores, why it's relevant, the relevance score
+  - Include a clickable link using this exact HTML format:
+    <a href="[url]" target="_blank"><strong>[Article Title] →</strong></a>
+
 - After presenting, ask the user what they think. Keep it conversational — "What do you think?" or "Does this one resonate?"
 - Wait for the user's response before calling submit_draft_review. NEVER call it preemptively.
 
