@@ -340,6 +340,7 @@ permalink: /practice/log/
       const data = await response.json();
 
       if (data.success) {
+        localStorage.setItem('obi_cache_dirty', '1');
         // Store practice ID and count for feedback and visualization
         currentPracticeId = data.practice.id;
         practiceCount = data.practice_count;

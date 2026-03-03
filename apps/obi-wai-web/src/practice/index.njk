@@ -41,6 +41,9 @@ permalink: /practice/
       div[style*="grid-template-columns: 1fr 1fr"] {
         grid-template-columns: 1fr !important;
       }
+      div[style*="max-width: 800px"] {
+        margin-top: 1rem !important;
+      }
     }
     @media (min-width: 600px) {
       #march-challenge-block {
@@ -106,6 +109,22 @@ permalink: /practice/
   // Initialize userId
   const userId = initializeUser();
 
+  // ── Cache helpers ────────────────────────────────────────────────
+  function readCache(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; }
+  }
+  function saveCache(key, value) {
+    try { localStorage.setItem(key, JSON.stringify({ ...value, timestamp: Date.now() })); } catch {}
+  }
+  function challengeChanged(newData, cached) {
+    if (!cached || !cached.data) return true;
+    const d = cached.data;
+    return newData.streak !== d.streak
+      || newData.completedDays.join() !== d.completedDays.join()
+      || (newData.partialDays || []).join() !== (d.partialDays || []).join();
+  }
+  // ────────────────────────────────────────────────────────────────
+
   // Calculate rank based on check-ins
   function getRank(checkins) {
     if (checkins <= 2) {
@@ -124,19 +143,29 @@ permalink: /practice/
   }
 
 
+  function renderStats(totalCheckins) {
+    const rank = getRank(totalCheckins);
+    document.getElementById('rank-emoji').textContent = rank.emoji;
+    document.getElementById('rank-name').textContent = rank.name;
+    const c = totalCheckins;
+    document.getElementById('rank-subtitle').textContent =
+      `You logged ${c} ${c === 1 ? 'practice' : 'practices'}`;
+  }
+
   // Load rank/subtitle from practice stats
   async function loadStats() {
+    const cached = readCache('obi_stats_cache');
+    if (cached) renderStats(cached.totalCheckins);
+
     try {
       const response = await fetch(`/.netlify/functions/practice-list?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' });
       const data = await response.json();
       if (data.success) {
         const totalCheckins = data.practices.reduce((sum, p) => sum + (p.checkins || 0), 0);
-        const rank = getRank(totalCheckins);
-        document.getElementById('rank-emoji').textContent = rank.emoji;
-        document.getElementById('rank-name').textContent = rank.name;
-        const c = totalCheckins;
-        document.getElementById('rank-subtitle').textContent =
-          `You logged ${c} ${c === 1 ? 'practice' : 'practices'}`;
+        if (!cached || cached.totalCheckins !== totalCheckins) {
+          renderStats(totalCheckins);
+        }
+        saveCache('obi_stats_cache', { totalCheckins });
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -147,48 +176,59 @@ permalink: /practice/
   let challengeData = null;
   let selectedDay = null;
 
+  function renderChallenge(data) {
+    challengeData = data;
+    document.getElementById('march-challenge-block').style.display = 'block';
+
+    const s = data.streak;
+    const streakEl = document.getElementById('challenge-streak-label');
+    streakEl.textContent = s > 0 ? `🌞 ${s} day${s === 1 ? '' : 's'} streak` : 'No current streak';
+
+    const calendar = document.getElementById('home-calendar');
+    calendar.innerHTML = '';
+
+    for (let day = 1; day <= 31; day++) {
+      const dateStr = `2026-03-${String(day).padStart(2, '0')}`;
+      const isToday = day === data.dayNumber;
+      const isComplete = data.completedDays.includes(dateStr);
+      const isPartial = (data.partialDays || []).includes(dateStr);
+      const isMissed = data.missedDays.includes(dateStr);
+
+      const details = (data.dayDetails || {})[dateStr] || {};
+      const partialSymbol = details.jogging ? '◐' : '◑';
+
+      const sq = document.createElement('div');
+      sq.dataset.day = day;
+      sq.style.cssText = `
+        width: 26px; height: 26px; border-radius: 3px; font-size: 11px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        background: ${isComplete ? '#4d9618' : isPartial ? '#9ab845' : isMissed ? '#f39c12' : isToday ? '#3498db' : '#f0f0f0'};
+        color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
+      `;
+      sq.textContent = isComplete ? '●' : isPartial ? partialSymbol : isMissed ? '○' : isToday ? '○' : '·';
+      sq.addEventListener('click', () => selectDay(day));
+      calendar.appendChild(sq);
+    }
+
+    selectDay(data.dayNumber);
+  }
+
   async function loadChallenge() {
+    const cached = readCache('obi_challenge_cache');
+    if (cached && cached.data && cached.data.dayNumber) {
+      renderChallenge(cached.data);
+    }
+
     try {
       const res = await fetch(`/api/challenge-status?userId=${userId}&_=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
-      if (!data.success || !data.dayNumber) return;
-      challengeData = data;
-
-      document.getElementById('march-challenge-block').style.display = 'block';
-
-      const s = data.streak;
-      const streakEl = document.getElementById('challenge-streak-label');
-      if (s > 0) {
-        streakEl.textContent = `🌞 ${s} day${s === 1 ? '' : 's'} streak`;
-      } else {
-        streakEl.textContent = 'No current streak';
+      if (data.success && data.dayNumber) {
+        if (challengeChanged(data, cached)) {
+          renderChallenge(data);
+        }
+        saveCache('obi_challenge_cache', { data });
+        localStorage.removeItem('obi_cache_dirty');
       }
-
-      const calendar = document.getElementById('home-calendar');
-      for (let day = 1; day <= 31; day++) {
-        const dateStr = `2026-03-${String(day).padStart(2, '0')}`;
-        const isToday = day === data.dayNumber;
-        const isComplete = data.completedDays.includes(dateStr);
-        const isPartial = (data.partialDays || []).includes(dateStr);
-        const isMissed = data.missedDays.includes(dateStr);
-
-        const details = (data.dayDetails || {})[dateStr] || {};
-        const partialSymbol = details.jogging ? '◐' : '◑';
-
-        const sq = document.createElement('div');
-        sq.dataset.day = day;
-        sq.style.cssText = `
-          width: 26px; height: 26px; border-radius: 3px; font-size: 11px; cursor: pointer;
-          display: flex; align-items: center; justify-content: center;
-          background: ${isComplete ? '#4d9618' : isPartial ? '#9ab845' : isMissed ? '#f39c12' : isToday ? '#3498db' : '#f0f0f0'};
-          color: ${isComplete || isPartial || isMissed || isToday ? '#fff' : '#ccc'};
-        `;
-        sq.textContent = isComplete ? '●' : isPartial ? partialSymbol : isMissed ? '○' : isToday ? '○' : '·';
-        sq.addEventListener('click', () => selectDay(day));
-        calendar.appendChild(sq);
-      }
-
-      selectDay(data.dayNumber);
     } catch (error) {
       console.error('Error loading challenge:', error);
     }
