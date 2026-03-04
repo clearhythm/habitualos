@@ -9,7 +9,7 @@ apps/
   habitual-web/     CLAUDE.md — agents + practice system
   obi-wai-web/      CLAUDE.md — standalone habit tracker
   relationship-web/ CLAUDE.md — couples app
-  zer0gravity/      CLAUDE.md — (add as needed)
+  zerogravity/      CLAUDE.md — (add as needed)
 packages/           shared: db-core, auth-server, edge-functions, survey-engine, ...
 ```
 
