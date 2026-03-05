@@ -2,8 +2,6 @@ const path = require("path");
 const sass = require("sass");
 
 module.exports = function(eleventyConfig) {
-  eleventyConfig.addPassthroughCopy("src/scripts");
-  eleventyConfig.addPassthroughCopy("src/images");
   eleventyConfig.addPassthroughCopy("src/assets");
 
   // Compile SCSS natively so 11ty watches partials and live-reloads CSS
