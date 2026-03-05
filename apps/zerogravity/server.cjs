@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Zer0 Gr@vity — Local Dashboard Server
+ * Zerogravity — Local Dashboard Server
  *
  * Usage: node server.cjs
  * Opens at http://localhost:3333
@@ -129,7 +129,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Zer0 Gr@vity Dashboard`);
+  console.log(`\n  Zerogravity Dashboard`);
   console.log(`  ─────────────────────`);
   console.log(`  http://localhost:${PORT}\n`);
 });
