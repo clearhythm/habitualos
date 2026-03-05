@@ -8,6 +8,8 @@ node_modules/
 
 # Build output
 _site/
+# Live Sass Compiler VSCode extension output
+apps/obi-wai-web/css/
 
 # Logs
 *.log

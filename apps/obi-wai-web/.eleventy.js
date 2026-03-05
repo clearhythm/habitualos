@@ -1,11 +1,6 @@
 module.exports = function(eleventyConfig) {
-  // Pass through CSS (compiled from Sass)
-  eleventyConfig.addPassthroughCopy("_site/css");
-
-  // Pass through JavaScript
+  // Pass through static assets
   eleventyConfig.addPassthroughCopy("src/assets");
-  eleventyConfig.addPassthroughCopy("src/scripts");
-  eleventyConfig.addPassthroughCopy("src/images");
 
   // Watch CSS files for changes
   eleventyConfig.addWatchTarget("_site/css/");
