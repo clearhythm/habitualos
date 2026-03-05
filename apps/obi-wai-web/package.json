@@ -4,13 +4,10 @@
   "private": true,
   "scripts": {
     "prestart": "mkdir -p netlify/edge-functions/_lib && cp ../../packages/edge-functions/chat-stream-core.ts netlify/edge-functions/_lib/",
-    "start": "concurrently --kill-others \"npm:sass:watch\" \"netlify dev\"",
-    "sass:build": "sass src/styles/main.scss:_site/css/main.css --style=compressed",
-    "sass:watch": "sass src/styles/main.scss:_site/css/main.css --watch",
+    "start": "netlify dev",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve --port=8080",
-    "dev": "concurrently --kill-others \"npm:sass:watch\" \"npm:eleventy:serve\"",
-    "build": "sass src/styles/main.scss:_site/css/main.css --style=compressed && eleventy"
+    "build": "eleventy"
   },
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",
