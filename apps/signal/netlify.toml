@@ -1,0 +1,22 @@
+[build]
+  base = "apps/signal"
+  ignore = "cd $(git rev-parse --show-toplevel) && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/signal/ packages/"
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter signal build"
+  publish = "_site"
+  functions = "netlify/functions"
+
+[dev]
+  framework = "#custom"
+  command = "pnpm --filter signal run eleventy:serve"
+  targetPort = 8081
+  autoLaunch = false
+  functions = "netlify/functions"
+  publish = "_site"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

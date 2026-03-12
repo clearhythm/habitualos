@@ -1,0 +1,19 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  background: $color-bg;
+  color: $color-text;
+  line-height: 1.6;
+}
+
+a { color: $color-primary; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3, h4 { margin: 0 0 $space-md; line-height: 1.2; }
+p { margin: 0 0 $space-md; }
+
+.text-muted { color: $color-text-muted; }

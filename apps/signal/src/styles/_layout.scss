@@ -1,0 +1,14 @@
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 $space-lg;
+}
+
+.main {
+  padding-top: 64px;
+  min-height: 100vh;
+}
+
+.hero {
+  padding: $space-2xl 0;
+}

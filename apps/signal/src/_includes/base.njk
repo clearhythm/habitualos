@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Signal" }}</title>
+  <meta name="description" content="{{ description or 'Signal' }}">
+  <link rel="stylesheet" href="/styles/main.css">
+  <script>
+    (function() {
+      const userId = localStorage.getItem('userId') || (() => {
+        const id = 'u-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('userId', id);
+        return id;
+      })();
+      window.__userId = userId;
+    })();
+  </script>
+</head>
+<body>
+  {% include "nav.njk" %}
+
+  <main class="main">
+    {{ content | safe }}
+  </main>
+
+  {% if pageScript %}
+  <script type="module" src="{{ pageScript }}"></script>
+  {% endif %}
+</body>
+</html>

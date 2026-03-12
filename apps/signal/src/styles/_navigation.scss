@@ -1,0 +1,27 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: $color-bg-muted;
+  border-bottom: 1px solid $color-border;
+  z-index: 100;
+
+  &-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 $space-lg;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  &-brand {
+    font-weight: 600;
+    font-size: $font-size-lg;
+    color: $color-text;
+
+    &:hover { text-decoration: none; }
+  }
+}

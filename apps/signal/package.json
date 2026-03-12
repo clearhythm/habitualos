@@ -1,0 +1,21 @@
+{
+  "name": "signal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "netlify dev",
+    "eleventy:build": "eleventy",
+    "eleventy:serve": "eleventy --serve --port=8081",
+    "build": "eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@habitualos/auth-server": "workspace:*",
+    "@habitualos/db-core": "workspace:*",
+    "marked": "^15.0.12"
+  },
+  "devDependencies": {
+    "sass": "^1.69.5"
+  }
+}

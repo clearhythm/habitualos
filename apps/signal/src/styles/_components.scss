@@ -1,0 +1,24 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: $space-sm $space-lg;
+  border-radius: 6px;
+  font-size: $font-size-base;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.85; text-decoration: none; }
+
+  &-primary {
+    background: $color-primary;
+    color: #fff;
+  }
+
+  &-ghost {
+    background: transparent;
+    color: $color-text;
+    border: 1px solid $color-border;
+  }
+}
