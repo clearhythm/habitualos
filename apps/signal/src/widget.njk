@@ -61,6 +61,20 @@ pageScript: /assets/js/signal-widget.js
     <div class="signal-score-footer">
       <span class="signal-score-footer-text">Scoring updates as the conversation develops</span>
     </div>
+
+    <!-- Next step (shown when confidence ≥ 0.65 + ≥ 4 turns) -->
+    <div class="signal-next-step" id="signal-next-step" hidden>
+      <div class="signal-next-step-heading">Based on this conversation…</div>
+      <div class="signal-next-step-label" id="next-step-label"></div>
+      <div class="signal-next-step-actions" id="next-step-actions"></div>
+      <div class="signal-lead-capture" id="lead-capture" hidden>
+        <input type="text" class="signal-lead-input" id="lead-name" placeholder="Your name" autocomplete="name" />
+        <input type="email" class="signal-lead-input" id="lead-email" placeholder="Email (optional)" autocomplete="email" />
+        <button type="button" class="btn btn-primary signal-lead-btn" id="lead-submit">Send</button>
+        <p class="signal-lead-hint">So they know who reached out.</p>
+        <p class="signal-lead-sent" id="lead-sent" hidden>Got it. They'll know you stopped by.</p>
+      </div>
+    </div>
   </div>
 
   <!-- Right panel: Chat -->

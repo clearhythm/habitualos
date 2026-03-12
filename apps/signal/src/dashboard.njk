@@ -62,6 +62,136 @@ pageScript: /assets/js/dashboard.js
         </div>
       </section>
 
+      <!-- AI Work History -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">AI work history</h2>
+        <p class="dash-section-desc">Upload your Claude or ChatGPT conversation export. Signal extracts your skills, working style, and what you're looking for — grounding the Fit Score in real evidence, not just what you wrote about yourself.</p>
+
+        <div class="dash-context-stats" id="context-stats" hidden>
+          <div class="dash-context-stat-row"><span>Total conversations</span><strong id="stat-total">0</strong></div>
+          <div class="dash-context-stat-row"><span>Processed</span><strong id="stat-processed">0</strong></div>
+          <div class="dash-context-stat-row"><span>Claude exports</span><strong id="stat-claude">0</strong></div>
+          <div class="dash-context-stat-row"><span>ChatGPT exports</span><strong id="stat-chatgpt">0</strong></div>
+          <div class="dash-context-stat-row"><span>Last upload</span><strong id="stat-last-upload">—</strong></div>
+        </div>
+
+        <div class="dash-completeness-grid" id="completeness-grid" hidden>
+          <div class="dash-completeness-card">
+            <div class="dash-completeness-label">Skills</div>
+            <div class="dash-completeness-bar-track"><div class="dash-completeness-bar-fill" id="completeness-skills" style="width:0%"></div></div>
+            <div class="dash-completeness-pct" id="completeness-skills-pct">—</div>
+          </div>
+          <div class="dash-completeness-card">
+            <div class="dash-completeness-label">Alignment</div>
+            <div class="dash-completeness-bar-track"><div class="dash-completeness-bar-fill" id="completeness-alignment" style="width:0%"></div></div>
+            <div class="dash-completeness-pct" id="completeness-alignment-pct">—</div>
+          </div>
+          <div class="dash-completeness-card">
+            <div class="dash-completeness-label">Personality</div>
+            <div class="dash-completeness-bar-track"><div class="dash-completeness-bar-fill" id="completeness-personality" style="width:0%"></div></div>
+            <div class="dash-completeness-pct" id="completeness-personality-pct">—</div>
+          </div>
+        </div>
+
+        <div class="dash-upload-row" style="margin-top:1rem;">
+          <label class="dash-upload-label" id="upload-label" for="context-file-input">
+            <span class="dash-upload-icon">↑</span>
+            <span id="upload-label-text">Choose Claude or ChatGPT export JSON</span>
+            <input type="file" id="context-file-input" accept=".json" class="dash-upload-input" />
+          </label>
+        </div>
+        <div class="dash-upload-hint">
+          <p>Export from <strong>claude.ai → Settings → Export data</strong> or <strong>chatgpt.com → Settings → Data controls → Export</strong>. Select the <code>conversations.json</code> file.</p>
+        </div>
+
+        <div class="dash-progress-wrap" id="upload-progress-wrap" hidden>
+          <div class="dash-progress-label" id="upload-progress-label">Preparing…</div>
+          <div class="dash-progress-track"><div class="dash-progress-fill" id="upload-progress-fill"></div></div>
+        </div>
+
+        <div class="dash-form-actions">
+          <button type="button" class="btn btn-primary" id="context-upload-btn" disabled>Upload</button>
+          <button type="button" class="btn btn-ghost dash-delete-btn" id="context-delete-btn" hidden>Delete all history</button>
+          <span class="dash-save-status" id="upload-status"></span>
+        </div>
+
+        <!-- Gap Q&A: Alignment -->
+        <div class="dash-gap-card" id="gap-alignment" hidden>
+          <div class="dash-gap-title">Complete your Alignment profile</div>
+          <div class="dash-gap-desc">Your conversation history shows what you've built, but not clearly what you're looking for next. Answer these to strengthen alignment scoring.</div>
+          <div class="dash-gap-fields">
+            <div class="dash-gap-field">
+              <label>What types of opportunities are you open to?</label>
+              <input class="dash-gap-input" id="gap-opportunities" type="text" placeholder="e.g. Senior IC, fractional CPO, advisory, co-founder" />
+            </div>
+            <div class="dash-gap-field">
+              <label>What kinds of problems or domains excite you most right now?</label>
+              <input class="dash-gap-input" id="gap-excited-by" type="text" placeholder="e.g. agentic AI, behavioral science, consumer health" />
+            </div>
+            <div class="dash-gap-field">
+              <label>What working style do you thrive in?</label>
+              <input class="dash-gap-input" id="gap-work-style" type="text" placeholder="e.g. async, collaborative, direct feedback, fast iteration" />
+            </div>
+            <div class="dash-gap-field">
+              <label>Anything you're explicitly NOT looking for?</label>
+              <input class="dash-gap-input" id="gap-not-looking-for" type="text" placeholder="e.g. pure management, pre-seed with no thesis" />
+            </div>
+          </div>
+          <div class="dash-form-actions">
+            <button type="button" class="btn btn-primary" id="gap-alignment-save-btn">Save alignment profile</button>
+            <span class="dash-save-status" id="gap-alignment-status"></span>
+          </div>
+        </div>
+
+        <!-- Gap Q&A: Personality -->
+        <div class="dash-gap-card" id="gap-personality" hidden>
+          <div class="dash-gap-title">Complete your Personality profile</div>
+          <div class="dash-gap-desc">Your conversation history doesn't have strong personality signals yet. Answer these to improve personality scoring.</div>
+          <div class="dash-gap-fields">
+            <div class="dash-gap-field">
+              <label>How would your closest collaborators describe how you work?</label>
+              <input class="dash-gap-input" id="gap-collab-style" type="text" placeholder="e.g. direct, systems thinker, asks hard questions" />
+            </div>
+            <div class="dash-gap-field">
+              <label>What's your preferred way to go deep on a new problem?</label>
+              <input class="dash-gap-input" id="gap-problem-approach" type="text" placeholder="e.g. read everything first, prototype fast, whiteboard with team" />
+            </div>
+          </div>
+          <div class="dash-form-actions">
+            <button type="button" class="btn btn-primary" id="gap-personality-save-btn">Save personality profile</button>
+            <span class="dash-save-status" id="gap-personality-status"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact links -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Contact links</h2>
+        <p class="dash-section-desc">These power the "next step" CTAs that visitors see after a high-score conversation. Add what's relevant — all fields are optional.</p>
+        <div class="dash-links-grid">
+          <div>
+            <label class="signal-label">Calendly / booking link</label>
+            <input class="signal-input-field" id="link-calendar" type="url" placeholder="https://calendly.com/…" />
+          </div>
+          <div>
+            <label class="signal-label">LinkedIn</label>
+            <input class="signal-input-field" id="link-linkedin" type="url" placeholder="https://linkedin.com/in/…" />
+          </div>
+          <div>
+            <label class="signal-label">Substack</label>
+            <input class="signal-input-field" id="link-substack" type="url" placeholder="https://yourname.substack.com" />
+          </div>
+          <div>
+            <label class="signal-label">Other link</label>
+            <input class="signal-input-field" id="link-other" type="url" placeholder="https://…" />
+          </div>
+        </div>
+        <div class="dash-form-actions">
+          <button type="button" class="btn btn-primary" id="links-save-btn">Save links</button>
+          <span class="dash-save-status" id="links-status"></span>
+        </div>
+      </section>
+
       <!-- API key -->
       <section class="dash-section">
         <h2 class="dash-section-title">Anthropic API key</h2>
@@ -75,6 +205,15 @@ pageScript: /assets/js/dashboard.js
           <span class="dash-save-status" id="apikey-status"></span>
           <p class="signal-field-hint" id="apikey-hint"></p>
         </form>
+      </section>
+
+      <!-- Leads -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Recent leads</h2>
+        <p class="dash-section-desc">Visitors who completed a Signal conversation, sorted by fit score.</p>
+        <div id="leads-list" class="dash-leads-list">
+          <p class="dash-no-leads" id="leads-empty" hidden>No leads yet. Share your Signal widget to start collecting.</p>
+        </div>
       </section>
 
     </div>

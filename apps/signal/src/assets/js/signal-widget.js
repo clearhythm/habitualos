@@ -23,6 +23,9 @@ let chatHistory = [];
 let chatId = null;
 let currentPersona = null;
 let isStreaming = false;
+let turnCount = 0;
+let lastScore = null;       // { skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel }
+let leadSubmitted = false;
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
@@ -46,6 +49,16 @@ const personalityVal = document.getElementById('personality-value');
 const confidenceBar  = document.getElementById('confidence-bar');
 const confidencePct  = document.getElementById('confidence-pct');
 const reasonEl       = document.getElementById('signal-reason');
+
+// Next step panel
+const nextStepEl      = document.getElementById('signal-next-step');
+const nextStepLabel   = document.getElementById('next-step-label');
+const nextStepActions = document.getElementById('next-step-actions');
+const leadCaptureEl   = document.getElementById('lead-capture');
+const leadNameEl      = document.getElementById('lead-name');
+const leadEmailEl     = document.getElementById('lead-email');
+const leadSubmitBtn   = document.getElementById('lead-submit');
+const leadSentEl      = document.getElementById('lead-sent');
 
 // Ring geometry (r=52)
 const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -144,7 +157,11 @@ function removeThinking() {
 
 // ─── Score panel ──────────────────────────────────────────────────────────────
 
-function updateScorePanel({ skills, alignment, personality, overall, confidence, reason }) {
+function updateScorePanel(data) {
+  const { skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: label, turn } = data;
+
+  lastScore = data;
+
   const pct = v => `${(v / 10) * 100}%`;
   skillsBar.style.width = pct(skills);
   alignmentBar.style.width = pct(alignment);
@@ -164,6 +181,69 @@ function updateScorePanel({ skills, alignment, personality, overall, confidence,
     reasonEl.textContent = reason;
     reasonEl.classList.add('visible');
   }
+
+  // Show next step panel when confidence is high enough and conversation has depth
+  const effectiveTurn = turn || turnCount;
+  if (nextStep && label && confidence >= 0.65 && effectiveTurn >= 4) {
+    renderNextStep(nextStep, label);
+  }
+}
+
+function renderNextStep(step, label) {
+  if (!nextStepEl) return;
+
+  nextStepLabel.textContent = label;
+
+  // Build action buttons from ownerConfig.contactLinks
+  const links = ownerConfig?.contactLinks || {};
+  nextStepActions.innerHTML = '';
+
+  if (step === 'schedule' || step === 'connect') {
+    if (step === 'schedule' && links.calendar) {
+      const a = document.createElement('a');
+      a.href = links.calendar;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'btn btn-primary signal-next-btn';
+      a.textContent = 'Book time →';
+      nextStepActions.appendChild(a);
+    }
+    if (links.linkedin) {
+      const a = document.createElement('a');
+      a.href = links.linkedin;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'btn signal-next-btn';
+      a.textContent = 'Connect on LinkedIn →';
+      nextStepActions.appendChild(a);
+    }
+    // Show lead capture for schedule/connect
+    if (leadCaptureEl && !leadSubmitted) {
+      leadCaptureEl.hidden = false;
+    }
+  } else if (step === 'follow') {
+    if (links.linkedin) {
+      const a = document.createElement('a');
+      a.href = links.linkedin;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'btn signal-next-btn';
+      a.textContent = 'Connect on LinkedIn →';
+      nextStepActions.appendChild(a);
+    }
+    if (links.substack) {
+      const a = document.createElement('a');
+      a.href = links.substack;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.className = 'btn signal-next-btn';
+      a.textContent = 'Follow on Substack →';
+      nextStepActions.appendChild(a);
+    }
+  }
+  // 'pass' tier: no action buttons, just the label
+
+  nextStepEl.hidden = false;
 }
 
 // ─── Persona selection ────────────────────────────────────────────────────────
@@ -200,6 +280,7 @@ async function sendMessage(text) {
   input.disabled = true;
   sendBtn.disabled = true;
 
+  turnCount++;
   const userMsg = { role: 'user', content: text };
   chatHistory.push(userMsg);
   appendMessage('user', text);
@@ -332,6 +413,42 @@ form.addEventListener('submit', (e) => {
   const text = input.value.trim();
   if (text) { input.value = ''; input.style.height = 'auto'; sendMessage(text); }
 });
+
+// ─── Lead capture ─────────────────────────────────────────────────────────────
+
+if (leadSubmitBtn) {
+  leadSubmitBtn.addEventListener('click', async () => {
+    if (leadSubmitted) return;
+    const name = leadNameEl?.value.trim() || '';
+    const email = leadEmailEl?.value.trim() || '';
+
+    leadSubmitBtn.disabled = true;
+    leadSubmitBtn.textContent = 'Sending…';
+
+    try {
+      await fetch('/api/signal-lead-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          signalId,
+          visitorId: window.__userId,
+          persona: currentPersona,
+          score: lastScore?.overall ?? null,
+          reason: lastScore?.reason ?? '',
+          nextStep: lastScore?.nextStep ?? '',
+          name,
+          email
+        })
+      });
+    } catch (err) {
+      console.warn('[signal-widget] Lead save failed:', err);
+    }
+
+    leadSubmitted = true;
+    if (leadCaptureEl) leadCaptureEl.hidden = true;
+    if (leadSentEl) leadSentEl.hidden = false;
+  });
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 

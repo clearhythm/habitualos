@@ -176,6 +176,85 @@
   opacity: 0.6;
 }
 
+// ─── Next Step Panel ───────────────────────────────────────────────────────────
+
+.signal-next-step {
+  border-top: 1px solid $color-border;
+  padding-top: $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.signal-next-step-heading {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $color-text-muted;
+}
+
+.signal-next-step-label {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $color-text;
+  line-height: 1.3;
+}
+
+.signal-next-step-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.signal-next-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: $font-size-sm;
+  text-align: center;
+}
+
+.signal-lead-capture {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  margin-top: $space-xs;
+  padding-top: $space-sm;
+  border-top: 1px solid $color-border;
+}
+
+.signal-lead-input {
+  width: 100%;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  padding: $space-xs $space-sm;
+  color: $color-text;
+  font-size: $font-size-sm;
+  font-family: $font-family;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { outline: none; border-color: $color-primary; }
+}
+
+.signal-lead-btn {
+  width: 100%;
+  justify-content: center;
+  font-size: $font-size-sm;
+}
+
+.signal-lead-hint {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+.signal-lead-sent {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+}
+
 // ─── Chat Panel ────────────────────────────────────────────────────────────────
 
 .signal-panel--chat {
@@ -784,4 +863,270 @@
 .dash-save-status {
   font-size: $font-size-sm;
   color: $color-text-muted;
+}
+
+// ─── Upload section ────────────────────────────────────────────────────────────
+
+.dash-upload-label {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-md $space-lg;
+  background: $color-bg;
+  border: 1px dashed $color-border;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover { border-color: $color-primary; color: $color-text; }
+  &.has-file { border-color: $color-primary; color: $color-text; border-style: solid; }
+}
+
+.dash-upload-input {
+  display: none;
+}
+
+.dash-upload-icon {
+  font-size: 1.2rem;
+}
+
+.dash-upload-hint {
+  margin-top: $space-sm;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.6;
+
+  strong { color: $color-text; font-weight: 600; }
+  code { font-family: monospace; background: $color-bg; padding: 0 4px; border-radius: 3px; font-size: 0.85em; }
+}
+
+// Progress bar
+.dash-progress-wrap {
+  margin-top: $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.dash-progress-label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.dash-progress-track {
+  height: 6px;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  background: $color-primary;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+// Context stats
+.dash-context-stats {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-md;
+  margin-bottom: $space-md;
+  font-size: $font-size-sm;
+}
+
+.dash-context-stat-row {
+  display: flex;
+  justify-content: space-between;
+  color: $color-text-muted;
+  margin-bottom: $space-xs;
+
+  &:last-child { margin-bottom: 0; }
+  strong { color: $color-text; }
+}
+
+// Completeness indicators
+.dash-completeness-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: $space-sm;
+  margin-top: $space-md;
+
+  @media (max-width: $breakpoint-sm) { grid-template-columns: 1fr; }
+}
+
+.dash-completeness-card {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+}
+
+.dash-completeness-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  margin-bottom: $space-xs;
+}
+
+.dash-completeness-bar-track {
+  height: 4px;
+  background: $color-border;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: $space-xs;
+}
+
+.dash-completeness-bar-fill {
+  height: 100%;
+  background: $color-primary;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.dash-completeness-pct {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
+// Gap Q&A
+.dash-gap-card {
+  background: rgba($color-primary, 0.08);
+  border: 1px solid rgba($color-primary, 0.25);
+  border-radius: 8px;
+  padding: $space-md $space-lg;
+  margin-top: $space-md;
+}
+
+.dash-gap-title {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+  margin-bottom: $space-xs;
+}
+
+.dash-gap-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-md;
+  line-height: 1.5;
+}
+
+.dash-gap-fields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.dash-gap-field label {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-xs;
+}
+
+.dash-gap-input {
+  width: 100%;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 6px;
+  padding: $space-xs $space-sm;
+  color: $color-text;
+  font-size: $font-size-sm;
+  font-family: $font-family;
+
+  &:focus { outline: none; border-color: $color-primary; }
+  &::placeholder { color: $color-text-muted; }
+}
+
+// Contact links
+.dash-links-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-sm;
+
+  @media (max-width: $breakpoint-sm) { grid-template-columns: 1fr; }
+}
+
+// Leads section
+.dash-leads-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.dash-lead-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: $space-md;
+  align-items: center;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+}
+
+.dash-lead-score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  min-width: 2rem;
+  text-align: center;
+
+  &.score-high { color: #4ade80; }
+  &.score-mid  { color: $color-primary; }
+  &.score-low  { color: $color-text-muted; }
+}
+
+.dash-lead-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dash-lead-name {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  truncate: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dash-lead-meta {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
+.dash-lead-reason {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-lead-action {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  white-space: nowrap;
+}
+
+.dash-no-leads {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  text-align: center;
+  padding: $space-lg;
+}
+
+// Delete button (danger)
+.dash-delete-btn {
+  color: #f87171;
+  border-color: #f87171;
+
+  &:hover { background: rgba(248, 113, 113, 0.1); }
 }

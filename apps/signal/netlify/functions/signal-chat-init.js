@@ -1,12 +1,14 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
+const { getTopChunks } = require('./_services/db-signal-context.cjs');
 
 /**
  * POST /api/signal-chat-init
  *
  * Phase 1 (no signalId or signalId='erik-burns'): Erik's hardcoded context.
  * Phase 2+: fetches owner config from Firestore by signalId.
+ * Phase 3+: also injects synthesized profiles + top evidence chunks.
  */
 
 // ─── Erik's hardcoded context ─────────────────────────────────────────────────
@@ -35,24 +37,37 @@ Agentic AI (current, production):
 - Builds with Claude API, Netlify edge functions, Firestore, 11ty
 - Real agentic systems: tools, streaming, multi-turn, signal protocols — not demos
 - Signal (this conversation) is itself a live example of that work
-
-== WHERE HE EXCELS ==
-- Behavioral science + AI intersection (trained therapist who ships production AI)
-- Getting agentic systems to production (not slides, not demos)
-- Consumer product strategy with measurable revenue impact
-- Founding-level product work: concept to architecture to clinical validation to code
-- Making complex systems feel simple for end users
-
-== WHERE HE'S STILL LEARNING (be honest) ==
-- Large-scale distributed systems engineering (not his core)
-- Business development and enterprise sales cycles
-
-== WHAT HE'S LOOKING FOR ==
-- Senior product or AI leadership roles where behavioral science + agentic AI is the core challenge
-- Collaborative work with founders building serious AI-native products
-- Open to advisory, fractional, or full-time depending on fit
-- Values: intellectual honesty, real outcomes over polish, collaboration over hierarchy
 `;
+
+const ERIK_SKILLS_PROFILE = {
+  coreSkills: [
+    'Agentic AI systems', 'Product strategy', 'Behavioral science',
+    'System prompt design', 'Streaming architecture', 'Firestore data modeling',
+    'Edge function development', 'Consumer product', 'Clinical therapy',
+    'UX leadership', 'Revenue-tied product decisions', 'Founding-level product work'
+  ],
+  domains: ['Agentic AI', 'Behavioral health', 'Consumer product', 'Enterprise software', 'Neuroscience'],
+  technologies: ['Claude API', 'Netlify edge functions', 'Firestore', '11ty', 'TypeScript', 'Node.js', 'SCSS'],
+  projectTypes: ['Production AI systems', 'Behavioral health platforms', 'Consumer apps at scale', 'Clinical validation'],
+  completeness: 0.9
+};
+
+const ERIK_WANTS_PROFILE = {
+  workTypes: ['Agentic AI systems', 'Behavioral product', 'AI-native products'],
+  opportunities: ['Senior product leadership', 'AI leadership', 'Fractional CPO', 'Advisory'],
+  excitedBy: ['Behavioral science + AI intersection', 'Production systems that help people', 'Founding-stage work'],
+  workStyle: 'Collaborative, direct, async-friendly. Prefers real outcomes over polished decks.',
+  openTo: ['Remote', 'Hybrid', 'SF / LA'],
+  notLookingFor: ['Pure management without craft', 'Pre-product-market-fit pivoting without clear thesis'],
+  completeness: 0.85
+};
+
+const ERIK_PERSONALITY_PROFILE = {
+  communicationStyle: 'direct, warm, intellectually honest',
+  intellectualStyle: 'systems thinker, first-principles, empirical',
+  problemApproach: 'Challenges assumptions before building; asks clarifying questions; moves fast once direction is clear',
+  completeness: 0.85
+};
 
 const ERIK_PERSONAS = {
   recruiter: {
@@ -80,59 +95,122 @@ Adapt the conversation toward whatever dimension seems most interesting to them.
   }
 };
 
-function buildScoringProtocol(displayName) {
-  return `
-== SCORING PROTOCOL ==
+// ─── System prompt builders ───────────────────────────────────────────────────
 
-You are building a Fit Score across three dimensions as the conversation unfolds.
-Emit a FIT_SCORE_UPDATE block whenever your confidence on any dimension meaningfully changes.
+function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile) {
+  const sections = [];
 
-Dimensions:
-- Skills (0-10): Overlap between what the visitor needs and ${displayName}'s demonstrated capabilities
-- Alignment (0-10): Overlap in goals, values, working style, and direction
-- Personality (0-10): Fit in communication style, intellectual curiosity, and temperament
+  if (skillsProfile) {
+    sections.push(`== SKILLS (demonstrated) ==
+Core: ${(skillsProfile.coreSkills || []).join(', ')}
+Domains: ${(skillsProfile.domains || []).join(', ')}
+Stack: ${(skillsProfile.technologies || []).join(', ')}`);
+  }
 
-Confidence (0.0-1.0): How much evidence you have. Start at 0.0. Rises with each substantive exchange.
-- 0.0-0.25: Persona known, little else
-- 0.25-0.5: Role/context understood, scoring hypothesis forming
-- 0.5-0.75: Enough specifics to score with reasonable accuracy
-- 0.75-1.0: Strong evidence across all three dimensions
+  if (wantsProfile) {
+    const parts = [];
+    if ((wantsProfile.opportunities || []).length) parts.push(`Open to: ${wantsProfile.opportunities.join(', ')}`);
+    if ((wantsProfile.excitedBy || []).length) parts.push(`Excited by: ${wantsProfile.excitedBy.join(', ')}`);
+    if (wantsProfile.workStyle) parts.push(`Style: ${wantsProfile.workStyle}`);
+    if ((wantsProfile.notLookingFor || []).length) parts.push(`Not looking for: ${wantsProfile.notLookingFor.join(', ')}`);
+    if (parts.length) sections.push(`== ALIGNMENT (what ${displayName} wants) ==\n${parts.join('\n')}`);
+  }
 
-Signal format (emit verbatim when confidence meaningfully changes):
-FIT_SCORE_UPDATE
----
-{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<1-2 sentences referencing specific projects/skills on both sides>"}
+  if (personalityProfile) {
+    sections.push(`== PERSONALITY (from work history) ==
+Communication: ${personalityProfile.communicationStyle || ''}
+Intellectual: ${personalityProfile.intellectualStyle || ''}
+Approach: ${personalityProfile.problemApproach || ''}`);
+  }
 
-Rules:
-- Only emit after you have at least a hypothesis (confidence >= 0.1)
-- Update when any score changes by >=1 point or confidence changes by >=0.15
-- The "overall" score is your holistic read, not a simple average
-- The "reason" must reference specifics from both sides, not generic praise
-- Be honest: a 4 is a 4. Do not inflate.
-- Append the FIT_SCORE_UPDATE block at the END of your message, after your conversational response
-`;
+  return sections.join('\n\n');
 }
 
-const CONVERSATION_STYLE = `
-== CONVERSATION STYLE ==
+function buildEvidenceSection(chunks, displayName) {
+  if (!chunks || chunks.length === 0) return '';
+  const lines = chunks.map(c =>
+    `[${String(c.date || '').slice(0, 10)}] "${c.title}"\n${c.summary || ''}${c.keyInsight ? `\nKey signal: ${c.keyInsight}` : ''}`
+  );
+  return `== EVIDENCE FROM WORK HISTORY ==
+The following are real conversations from ${displayName}'s AI work history, showing actual working patterns and demonstrated skills:
 
-Voice:
-- Direct, intellectually honest, warm but not sycophantic
-- You represent real work history — be accurate, not promotional
-- Acknowledge gaps plainly. Honesty is more credible than polished marketing.
-- Conversational length: 2-4 sentences per response usually
+${lines.join('\n\n')}`;
+}
 
-What to ask:
-- One focused question per message
-- Questions that surface specifics on the visitor's side (role, project, challenge)
-- Questions that let you map their needs to demonstrated experience
+function buildCoverageSection(skillsProfile, wantsProfile, personalityProfile) {
+  const pct = (v) => v != null ? `${Math.round((v || 0) * 100)}%` : 'not yet synthesized';
+  return `== DIMENSION COVERAGE FROM HISTORY ==
+Skills: ${pct(skillsProfile?.completeness)} confidence
+Alignment: ${pct(wantsProfile?.completeness)} confidence
+Personality: ${pct(personalityProfile?.completeness)} confidence
+(Low % means gaps were filled by manual input or defaults — be transparent when scoring)`;
+}
 
-What not to do:
-- Do not oversell. If there is a mismatch, say so.
-- Do not ask multiple questions at once
-- Do not volunteer bio details without relevance to what they said
-- Do not use filler phrases like "Great question!" or "Absolutely!"
-`;
+function buildScoringProtocol(displayName) {
+  return `== SCORING PROTOCOL ==
+
+You are a matchmaking concierge — serving the visitor, acting on behalf of both parties.
+Your job is to help the visitor honestly understand if ${displayName} is a good fit for their needs.
+This is not a pitch. Honest mismatches are as valuable as strong fits.
+
+Score three dimensions as the conversation unfolds:
+- Skills (0-10): Overlap between what the visitor needs and ${displayName}'s demonstrated capabilities
+- Alignment (0-10): Overlap between what the visitor wants AND what ${displayName} wants — both sides matter
+- Personality (0-10): Compatibility in communication style, intellectual approach, and working temperament
+
+Confidence (0.0-1.0): How much evidence you have across both sides.
+- 0.0-0.2: Persona known, little else
+- 0.2-0.5: Role and needs understood, hypotheses forming
+- 0.5-0.75: Enough specifics to score with real accuracy
+- 0.75-1.0: Strong evidence across all dimensions
+
+Next step (emit when confidence ≥ 0.65 and at least 4 turns have passed):
+- overall 8-10 → nextStep: "schedule", nextStepLabel: "Let's actively explore working together"
+- overall 6-7  → nextStep: "schedule", nextStepLabel: "Worth a 30-min conversation"
+- overall 4-5  → nextStep: "follow",   nextStepLabel: "Let's stay in each other's orbit"
+- overall 0-3  → nextStep: "pass",     nextStepLabel: "Probably not the right fit right now"
+
+Signal format — emit verbatim at end of message when confidence meaningfully changes:
+FIT_SCORE_UPDATE
+---
+{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specifics from both sides>", "nextStep": "<schedule|follow|pass|null>", "nextStepLabel": "<label or null>"}
+
+Rules:
+- Emit after your first substantive response (initial hypothesis)
+- Update when any score changes ≥1 point or confidence changes ≥0.15
+- Only emit nextStep when confidence ≥ 0.65 and ≥ 4 turns have passed
+- The "reason" must reference specifics from both sides (not generic praise)
+- Be honest: a 4 is a 4. Mismatches build trust.
+- Append the block AFTER your conversational response`;
+}
+
+const CONVERSATION_APPROACH = `== CONVERSATION APPROACH ==
+
+You are a matchmaking concierge — warm, direct, genuinely helpful to the visitor.
+Your goal: help them efficiently understand if this is a person worth their time.
+
+Each response:
+1. Briefly reflect on what they said (1-2 sentences — shows you understood)
+2. Ask ONE natural question — what a thoughtful colleague would genuinely want to know next
+
+Do NOT:
+- Stack questions
+- Ask formulaic intake questions ("What's your timeline?", "Team size?")
+- Explain what you're assessing
+- Oversell. If there's a mismatch, say so honestly.
+
+Personality inference (continuous — not interrogated):
+Read HOW they write, not just what they say:
+- Terse, precise → direct communicator
+- Technical vocabulary → domain fluency
+- Long, exploratory → broad conceptual thinker
+- Challenges your framing → intellectually independent
+- Asks questions back → curious, collaborative
+Only ask a direct personality question if confidence on that dimension is below 0.3 with fewer than 3 turns left.
+
+Conversational length: 2-4 sentences per response. No filler. No "Great question!"`;
+
+// ─── Handler ──────────────────────────────────────────────────────────────────
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -148,6 +226,7 @@ exports.handler = async (event) => {
 
     const useOwnerConfig = signalId && signalId !== 'erik-burns';
     let displayName, contextText, personaConfig, ownerApiKey;
+    let skillsProfile, wantsProfile, personalityProfile, topChunks = [];
 
     if (useOwnerConfig) {
       const owner = await getOwnerBySignalId(signalId);
@@ -157,11 +236,19 @@ exports.handler = async (event) => {
 
       displayName = owner.displayName;
       contextText = owner.contextText || '';
+      skillsProfile = owner.skillsProfile || null;
+      wantsProfile = owner.wantsProfile || null;
+      personalityProfile = owner.personalityProfile || null;
+
+      // Fetch top evidence chunks if history has been processed
+      if (owner.contextStats?.processedChunks > 0) {
+        topChunks = await getTopChunks(signalId, 15).catch(() => []);
+      }
 
       const matchedPersona = (owner.personas || []).find(p => p.key === persona) || owner.personas?.[0];
       personaConfig = matchedPersona
-        ? { opener: matchedPersona.opener, strategy: `Help the visitor understand ${displayName}'s background and score fit.` }
-        : { opener: `I'm an AI built on ${displayName}'s work history. What brings you here?`, strategy: `Help the visitor understand ${displayName}'s background and score fit.` };
+        ? { opener: matchedPersona.opener, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` }
+        : { opener: `I'm an AI built on ${displayName}'s work history. What brings you here?`, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` };
 
       if (owner.anthropicApiKey) {
         try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
@@ -169,26 +256,44 @@ exports.handler = async (event) => {
     } else {
       displayName = 'Erik Burns';
       contextText = ERIK_CONTEXT;
+      skillsProfile = ERIK_SKILLS_PROFILE;
+      wantsProfile = ERIK_WANTS_PROFILE;
+      personalityProfile = ERIK_PERSONALITY_PROFILE;
       const personaKey = Object.keys(ERIK_PERSONAS).includes(persona) ? persona : 'curious';
       personaConfig = ERIK_PERSONAS[personaKey];
+      // For Erik's own signal, also try to load processed chunks
+      topChunks = await getTopChunks('erik-burns', 15).catch(() => []);
     }
 
-    const systemPrompt = `You are Signal — an AI built on ${displayName}'s real work history to help visitors assess professional fit.
+    // Build system prompt
+    const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
+    const evidenceSection = buildEvidenceSection(topChunks, displayName);
+    const coverageSection = (skillsProfile || wantsProfile || personalityProfile)
+      ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile)
+      : '';
 
-You are not a chatbot. You are a structured evidence-gathering system that produces a dynamic Fit Score as the conversation unfolds.
+    const systemPrompt = `You are Signal — a matchmaking concierge built on ${displayName}'s real work history.
+You help visitors honestly assess professional fit. You serve the visitor while acting on behalf of both parties.
+You are not a chatbot. You are a structured evidence-gathering system that produces a dynamic Fit Score.
 
 == ${displayName.toUpperCase()}'S BACKGROUND ==
 ${contextText}
+
+${profileSection}
+
+${evidenceSection}
+
+${coverageSection}
+
+${CONVERSATION_APPROACH}
 
 == VISITOR PERSONA: ${persona.toUpperCase()} ==
 ${personaConfig.strategy}
 
 ${buildScoringProtocol(displayName)}
 
-${CONVERSATION_STYLE}
-
 == OPENING ==
-Your first message is already set. Begin immediately with evidence gathering after that. Do not re-introduce yourself.`;
+Your first message is already set. Begin evidence gathering immediately after. Do not re-introduce yourself.`;
 
     const response = {
       success: true,
