@@ -492,3 +492,296 @@
   font-size: $font-size-base;
   color: $color-text-muted;
 }
+
+// ─── Auth / Register ───────────────────────────────────────────────────────────
+
+.signal-auth-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: $space-2xl $space-lg;
+  min-height: calc(100vh - 56px);
+}
+
+.signal-auth-card {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 16px;
+  padding: $space-xl;
+  width: 100%;
+  max-width: 480px;
+}
+
+.signal-auth-title {
+  font-size: $font-size-3xl;
+  font-weight: 700;
+  margin-bottom: $space-sm;
+}
+
+.signal-auth-sub {
+  color: $color-text-muted;
+  margin-bottom: $space-xl;
+  line-height: 1.6;
+}
+
+.signal-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.signal-field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.signal-label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $color-text;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.signal-label-hint {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  font-weight: 400;
+}
+
+.signal-input-field {
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+  color: $color-text;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  width: 100%;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { outline: none; border-color: $color-primary; }
+}
+
+.signal-field-hint {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+.signal-auth-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.signal-error {
+  font-size: $font-size-sm;
+  color: #f87171;
+  margin: 0;
+}
+
+.signal-code-input {
+  font-size: $font-size-2xl;
+  font-family: monospace;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+.signal-back-btn {
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+
+  &:hover { color: $color-text; }
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────────
+
+.dash-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: $space-xl $space-lg $space-2xl;
+}
+
+.dash-loading {
+  padding: $space-2xl;
+  text-align: center;
+}
+
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $space-xl;
+  gap: $space-lg;
+  flex-wrap: wrap;
+}
+
+.dash-title {
+  font-size: $font-size-3xl;
+  font-weight: 700;
+  margin-bottom: $space-xs;
+}
+
+.dash-signal-id {
+  font-size: $font-size-sm;
+  margin: 0;
+}
+
+.dash-sections {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xl;
+}
+
+.dash-section {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+}
+
+.dash-section-title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin-bottom: $space-xs;
+}
+
+.dash-section-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-lg;
+  line-height: 1.6;
+}
+
+// Embed code block
+.dash-embed-wrap {
+  position: relative;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-md;
+  padding-right: 5rem;
+}
+
+.dash-embed-code {
+  font-family: monospace;
+  font-size: $font-size-sm;
+  color: $color-text;
+  word-break: break-all;
+  white-space: pre-wrap;
+  display: block;
+}
+
+.dash-copy-btn {
+  position: absolute;
+  top: $space-sm;
+  right: $space-sm;
+  padding: $space-xs $space-sm;
+  background: $color-border;
+  border: none;
+  border-radius: 6px;
+  color: $color-text;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: lighten($color-border, 10%); }
+}
+
+// Textarea
+.dash-textarea {
+  width: 100%;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+  color: $color-text;
+  font-size: $font-size-sm;
+  font-family: $font-family;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 160px;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { outline: none; border-color: $color-primary; }
+}
+
+// Persona editor
+.dash-personas-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  margin-bottom: $space-md;
+}
+
+.dash-persona-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: $space-sm;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-md;
+}
+
+.dash-persona-fields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.dash-persona-remove {
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+  cursor: pointer;
+  padding: 0 $space-xs;
+  align-self: flex-start;
+
+  &:hover { color: #f87171; }
+}
+
+.dash-persona-opener {
+  resize: vertical;
+  min-height: 60px;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+}
+
+.dash-add-persona-btn {
+  font-size: $font-size-sm;
+}
+
+// API key row
+.dash-apikey-row {
+  display: flex;
+  gap: $space-sm;
+  align-items: flex-start;
+  margin-bottom: $space-sm;
+}
+
+.dash-apikey-input {
+  flex: 1;
+}
+
+// Save status
+.dash-form-actions {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  margin-top: $space-md;
+}
+
+.dash-save-status {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}

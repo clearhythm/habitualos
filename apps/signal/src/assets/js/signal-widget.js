@@ -1,11 +1,21 @@
 /**
  * signal-widget.js
- * Chat widget for Signal — handles persona selection, SSE streaming,
- * FIT_SCORE_UPDATE parsing, and score panel animation.
+ * Chat widget for Signal — handles dynamic config loading, persona selection,
+ * SSE streaming, FIT_SCORE_UPDATE parsing, and score panel animation.
+ *
+ * Phase 2: reads ?id= from URL to load any owner's Signal config.
+ * Falls back to 'erik-burns' (hardcoded demo) if no id param.
  */
 
-const STORAGE_KEY = 'signal-chat';
-const CHAT_ID_KEY = 'signal-chat-id';
+// ─── Resolve signalId from URL ────────────────────────────────────────────────
+
+const urlParams = new URLSearchParams(window.location.search);
+const signalId = urlParams.get('id') || 'erik-burns';
+
+// ─── Storage keys (namespaced by signalId so multiple Signals don't collide) ──
+
+const STORAGE_KEY = `signal-chat-${signalId}`;
+const CHAT_ID_KEY = `signal-chat-id-${signalId}`;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -17,30 +27,72 @@ let isStreaming = false;
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
 
 const personaWrap   = document.getElementById('persona-wrap');
+const personaPrompt = document.getElementById('persona-prompt');
+const personaBtns   = document.getElementById('persona-btns');
 const messagesEl    = document.getElementById('signal-messages');
 const form          = document.getElementById('signal-form');
 const input         = document.getElementById('signal-input');
 const sendBtn       = document.getElementById('signal-send');
 
 // Score panel
-const overallScore  = document.getElementById('overall-score');
-const overallRing   = document.getElementById('overall-ring');
-const skillsBar     = document.getElementById('skills-bar');
-const alignmentBar  = document.getElementById('alignment-bar');
-const personalityBar= document.getElementById('personality-bar');
-const skillsVal     = document.getElementById('skills-value');
-const alignmentVal  = document.getElementById('alignment-value');
-const personalityVal= document.getElementById('personality-value');
-const confidenceBar = document.getElementById('confidence-bar');
-const confidencePct = document.getElementById('confidence-pct');
-const reasonEl      = document.getElementById('signal-reason');
+const overallScore   = document.getElementById('overall-score');
+const overallRing    = document.getElementById('overall-ring');
+const skillsBar      = document.getElementById('skills-bar');
+const alignmentBar   = document.getElementById('alignment-bar');
+const personalityBar = document.getElementById('personality-bar');
+const skillsVal      = document.getElementById('skills-value');
+const alignmentVal   = document.getElementById('alignment-value');
+const personalityVal = document.getElementById('personality-value');
+const confidenceBar  = document.getElementById('confidence-bar');
+const confidencePct  = document.getElementById('confidence-pct');
+const reasonEl       = document.getElementById('signal-reason');
 
-// Ring geometry
-const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // r=52
+// Ring geometry (r=52)
+const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
 overallRing.style.strokeDasharray = RING_CIRCUMFERENCE;
-overallRing.style.strokeDashoffset = RING_CIRCUMFERENCE; // start empty
+overallRing.style.strokeDashoffset = RING_CIRCUMFERENCE;
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
+// ─── Config loading ───────────────────────────────────────────────────────────
+
+let ownerConfig = null;
+
+async function loadConfig() {
+  try {
+    const res = await fetch('/api/signal-config-get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ signalId })
+    });
+    const data = await res.json();
+    if (data.success) return data.config;
+  } catch {}
+  // Fallback: minimal Erik config (widget still works without Firestore)
+  return {
+    signalId: 'erik-burns',
+    displayName: "Erik Burns",
+    personas: [
+      { key: 'recruiter', label: 'Recruiter' },
+      { key: 'founder',   label: 'Founder' },
+      { key: 'colleague', label: 'Colleague' },
+      { key: 'curious',   label: 'Just curious' }
+    ]
+  };
+}
+
+function renderPersonaButtons(personas) {
+  personaPrompt.textContent = "I'm an AI built on this person's work history. Who are you?";
+  personaBtns.innerHTML = '';
+  personas.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'signal-persona-btn';
+    btn.dataset.persona = p.key;
+    btn.textContent = p.label;
+    btn.addEventListener('click', () => selectPersona(p.key));
+    personaBtns.appendChild(btn);
+  });
+}
+
+// ─── localStorage helpers ─────────────────────────────────────────────────────
 
 function saveHistory() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ persona: currentPersona, messages: chatHistory }));
@@ -68,10 +120,9 @@ function clearHistory() {
 
 // ─── Message rendering ────────────────────────────────────────────────────────
 
-function appendMessage(role, text, id) {
+function appendMessage(role, text) {
   const el = document.createElement('div');
   el.className = `signal-message signal-message--${role}`;
-  if (id) el.id = id;
   el.textContent = text;
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -85,38 +136,30 @@ function showThinking() {
   el.innerHTML = '<span></span><span></span><span></span>';
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
-  return el;
 }
 
 function removeThinking() {
-  const el = document.getElementById('thinking-indicator');
-  if (el) el.remove();
+  document.getElementById('thinking-indicator')?.remove();
 }
 
-// ─── Score panel updates ──────────────────────────────────────────────────────
+// ─── Score panel ──────────────────────────────────────────────────────────────
 
 function updateScorePanel({ skills, alignment, personality, overall, confidence, reason }) {
-  // Dimension bars (0–10 → 0–100%)
   const pct = v => `${(v / 10) * 100}%`;
-
   skillsBar.style.width = pct(skills);
   alignmentBar.style.width = pct(alignment);
   personalityBar.style.width = pct(personality);
-
   skillsVal.textContent = skills;
   alignmentVal.textContent = alignment;
   personalityVal.textContent = personality;
 
-  // Overall ring
   const offset = RING_CIRCUMFERENCE - (overall / 10) * RING_CIRCUMFERENCE;
   overallRing.style.strokeDashoffset = offset;
   overallScore.textContent = overall;
 
-  // Confidence meter
   confidenceBar.style.width = `${Math.round(confidence * 100)}%`;
   confidencePct.textContent = `${Math.round(confidence * 100)}%`;
 
-  // Reason (show when confidence ≥ 40%)
   if (reason && confidence >= 0.4) {
     reasonEl.textContent = reason;
     reasonEl.classList.add('visible');
@@ -127,30 +170,24 @@ function updateScorePanel({ skills, alignment, personality, overall, confidence,
 
 async function selectPersona(persona) {
   currentPersona = persona;
-
-  // Hide persona selector
   personaWrap.style.display = 'none';
-
-  // Enable input
   input.disabled = false;
   sendBtn.disabled = false;
   input.focus();
 
-  // Fetch opener from init endpoint
   try {
     const res = await fetch('/api/signal-chat-init', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: window.__userId, persona })
+      body: JSON.stringify({ userId: window.__userId, signalId, persona })
     });
     const data = await res.json();
     if (data.opener) {
-      const msg = { role: 'assistant', content: data.opener };
-      chatHistory.push(msg);
+      chatHistory.push({ role: 'assistant', content: data.opener });
       appendMessage('assistant', data.opener);
       saveHistory();
     }
-  } catch (err) {
+  } catch {
     appendMessage('assistant', "I'm ready. What brings you here?");
   }
 }
@@ -163,17 +200,15 @@ async function sendMessage(text) {
   input.disabled = true;
   sendBtn.disabled = true;
 
-  // Add user message to history and UI
   const userMsg = { role: 'user', content: text };
   chatHistory.push(userMsg);
   appendMessage('user', text);
   saveHistory();
 
-  // Show typing indicator
-  showThinking();
+  // History to send = everything except the just-added user msg (edge fn appends it)
+  const historyForApi = chatHistory.slice(0, -1);
 
-  // Build chat history for API (exclude the opener which has no user turn yet)
-  const historyForApi = chatHistory.slice(0, -1); // exclude the just-added user msg
+  showThinking();
 
   try {
     const res = await fetch('/api/signal-chat-stream', {
@@ -182,6 +217,7 @@ async function sendMessage(text) {
       body: JSON.stringify({
         userId: window.__userId,
         chatType: 'signal',
+        signalId,
         persona: currentPersona,
         message: text,
         chatHistory: historyForApi
@@ -211,33 +247,23 @@ async function sendMessage(text) {
         if (!line.startsWith('data: ')) continue;
         const raw = line.slice(6).trim();
         if (!raw) continue;
-
         let event;
         try { event = JSON.parse(raw); } catch { continue; }
 
         if (event.type === 'token') {
           fullResponse += event.text;
-          // Strip FIT_SCORE_UPDATE block from visible text
-          const visible = stripScoreBlock(fullResponse);
-          assistantEl.textContent = visible;
+          assistantEl.textContent = stripScoreBlock(fullResponse);
           messagesEl.scrollTop = messagesEl.scrollHeight;
 
         } else if (event.type === 'done') {
           fullResponse = event.fullResponse || fullResponse;
-
-          // Parse and apply score update if signal was found
-          if (event.hasSignal && event.signal && event.signal.type === 'FIT_SCORE_UPDATE') {
+          if (event.hasSignal && event.signal?.type === 'FIT_SCORE_UPDATE') {
             updateScorePanel(event.signal.data);
           }
-
-          // Store clean response in history (without score block)
-          const cleanResponse = stripScoreBlock(fullResponse);
-          assistantEl.textContent = cleanResponse;
-          const assistantMsg = { role: 'assistant', content: cleanResponse };
-          chatHistory.push(assistantMsg);
+          const clean = stripScoreBlock(fullResponse);
+          assistantEl.textContent = clean;
+          chatHistory.push({ role: 'assistant', content: clean });
           saveHistory();
-
-          // Persist to Firestore
           saveChat(chatHistory);
 
         } else if (event.type === 'error') {
@@ -260,7 +286,6 @@ async function sendMessage(text) {
   input.focus();
 }
 
-// Strip the FIT_SCORE_UPDATE block from visible assistant text
 function stripScoreBlock(text) {
   return text.replace(/\n*FIT_SCORE_UPDATE\s*\n---\s*\n\{[\s\S]*?\}/m, '').trim();
 }
@@ -272,7 +297,6 @@ async function saveChat(messages) {
     const mode = chatId ? 'append' : 'create';
     const body = { userId: window.__userId, messages, mode };
     if (chatId) body.chatId = chatId;
-
     const res = await fetch('/api/signal-chat-save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -288,7 +312,7 @@ async function saveChat(messages) {
   }
 }
 
-// ─── Auto-resize textarea ─────────────────────────────────────────────────────
+// ─── Textarea auto-resize ─────────────────────────────────────────────────────
 
 input.addEventListener('input', () => {
   input.style.height = 'auto';
@@ -299,37 +323,26 @@ input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     const text = input.value.trim();
-    if (text) {
-      input.value = '';
-      input.style.height = 'auto';
-      sendMessage(text);
-    }
+    if (text) { input.value = ''; input.style.height = 'auto'; sendMessage(text); }
   }
 });
-
-// ─── Form submit ──────────────────────────────────────────────────────────────
 
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = input.value.trim();
-  if (text) {
-    input.value = '';
-    input.style.height = 'auto';
-    sendMessage(text);
-  }
-});
-
-// ─── Persona button clicks ────────────────────────────────────────────────────
-
-document.querySelectorAll('.signal-persona-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    selectPersona(btn.dataset.persona);
-  });
+  if (text) { input.value = ''; input.style.height = 'auto'; sendMessage(text); }
 });
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-function init() {
+async function init() {
+  ownerConfig = await loadConfig();
+
+  // Update page title with owner's name if available
+  if (ownerConfig.displayName) {
+    document.title = `Signal — ${ownerConfig.displayName}`;
+  }
+
   const restored = loadHistory();
 
   if (restored && chatHistory.length > 0) {
@@ -337,26 +350,27 @@ function init() {
     personaWrap.style.display = 'none';
     input.disabled = false;
     sendBtn.disabled = false;
-
-    // Re-render messages
     chatHistory.forEach(msg => appendMessage(msg.role, msg.content));
 
-    // Add a reset option
-    const resetEl = document.createElement('div');
-    resetEl.className = 'signal-reset-wrap';
-    resetEl.innerHTML = '<button class="signal-reset-btn" id="reset-btn">Start new conversation</button>';
-    messagesEl.prepend(resetEl);
-
-    document.getElementById('reset-btn').addEventListener('click', () => {
+    // Reset option
+    const resetWrap = document.createElement('div');
+    resetWrap.className = 'signal-reset-wrap';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'signal-reset-btn';
+    resetBtn.textContent = 'Start new conversation';
+    resetBtn.addEventListener('click', () => {
       clearHistory();
-      chatHistory = [];
-      chatId = null;
-      currentPersona = null;
+      chatHistory = []; chatId = null; currentPersona = null;
       messagesEl.innerHTML = '';
       personaWrap.style.display = '';
       input.disabled = true;
       sendBtn.disabled = true;
+      renderPersonaButtons(ownerConfig.personas || []);
     });
+    resetWrap.appendChild(resetBtn);
+    messagesEl.prepend(resetWrap);
+  } else {
+    renderPersonaButtons(ownerConfig.personas || []);
   }
 }
 

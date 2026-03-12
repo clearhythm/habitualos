@@ -14,6 +14,13 @@
         return id;
       })();
       window.__userId = userId;
+      // Show dashboard nav link if owner is signed in
+      if (localStorage.getItem('signal-owner-id')) {
+        document.addEventListener('DOMContentLoaded', function() {
+          var el = document.getElementById('nav-dashboard');
+          if (el) el.style.display = '';
+        });
+      }
     })();
   </script>
 </head>

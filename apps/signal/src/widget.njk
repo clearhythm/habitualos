@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: "Signal — Erik Burns"
-description: "Have a real conversation about fit. Signal scores Skills, Alignment, and Personality based on Erik's actual work history."
+title: "Signal"
+description: "Have a real conversation about fit. Signal scores Skills, Alignment, and Personality based on real work history."
 pageScript: /assets/js/signal-widget.js
 ---
 
@@ -66,15 +66,10 @@ pageScript: /assets/js/signal-widget.js
   <!-- Right panel: Chat -->
   <div class="signal-panel signal-panel--chat">
 
-    <!-- Persona selector (shown before first message) -->
+    <!-- Loading state while config fetches -->
     <div class="signal-persona-wrap" id="persona-wrap">
-      <p class="signal-persona-prompt">I'm an AI built on Erik's work history. Who are you?</p>
-      <div class="signal-persona-btns">
-        <button class="signal-persona-btn" data-persona="recruiter">Recruiter</button>
-        <button class="signal-persona-btn" data-persona="founder">Founder</button>
-        <button class="signal-persona-btn" data-persona="colleague">Colleague</button>
-        <button class="signal-persona-btn" data-persona="curious">Just curious</button>
-      </div>
+      <p class="signal-persona-prompt" id="persona-prompt">Loading…</p>
+      <div class="signal-persona-btns" id="persona-btns"></div>
     </div>
 
     <!-- Chat messages -->

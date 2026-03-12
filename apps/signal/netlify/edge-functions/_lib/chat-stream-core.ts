@@ -217,7 +217,10 @@ export function createChatStreamHandler(
       userName,
       // Reply mode
       replyToMomentId,
-    } = body;
+      // Signal-specific
+      signalId,
+      persona,
+    } = body as RequestBody & { signalId?: string; persona?: string };
 
     // Get chat type configuration
     const config = chatTypeConfigs[chatType];
@@ -262,6 +265,8 @@ export function createChatStreamHandler(
     let initBody: Record<string, unknown> = { userId };
     if (chatType === "agent") {
       initBody = { userId, agentId, actionContext, reviewContext };
+    } else if (chatType === "signal") {
+      initBody = { userId, signalId, persona };
     } else {
       // For other chat types (fox-ea, obi-wai, rely, etc.)
       initBody = { userId, timezone, userName };
@@ -286,8 +291,8 @@ export function createChatStreamHandler(
     const initData = await initResponse.json();
     const { systemMessages, tools } = initData;
 
-    // Get API key
-    const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+    // Use owner's API key if provided by init endpoint, otherwise fall back to env var
+    const apiKey = (initData.apiKey as string | undefined) || Deno.env.get("ANTHROPIC_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "API key not configured" }), {
         status: 500,

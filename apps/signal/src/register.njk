@@ -1,0 +1,71 @@
+---
+layout: base.njk
+title: "Signal — Create your Signal"
+description: "Create your own Signal widget powered by your AI work history."
+pageScript: /assets/js/register.js
+---
+
+<div class="signal-auth-wrap">
+
+  <!-- Step 1: Registration form -->
+  <div class="signal-auth-card" id="step-register">
+    <p class="signal-hero-eyebrow">Signal</p>
+    <h1 class="signal-auth-title">Create your Signal</h1>
+    <p class="signal-auth-sub">Connect your AI work history and deploy a conversational Fit Score widget — anywhere.</p>
+
+    <form class="signal-auth-form" id="register-form" novalidate>
+      <div class="signal-field">
+        <label class="signal-label" for="field-name">Your name</label>
+        <input class="signal-input-field" type="text" id="field-name" name="displayName"
+          placeholder="Jane Smith" autocomplete="name" required />
+      </div>
+
+      <div class="signal-field">
+        <label class="signal-label" for="field-email">Email</label>
+        <input class="signal-input-field" type="email" id="field-email" name="email"
+          placeholder="you@example.com" autocomplete="email" required />
+      </div>
+
+      <div class="signal-field">
+        <label class="signal-label" for="field-slug">
+          Signal ID
+          <span class="signal-label-hint">signal.habitualos.com/widget/?id=<strong id="slug-preview">your-name</strong></span>
+        </label>
+        <input class="signal-input-field" type="text" id="field-slug" name="signalId"
+          placeholder="your-name" pattern="[a-z0-9-]{3,32}" autocomplete="off" required />
+        <p class="signal-field-hint">3–32 chars. Lowercase letters, numbers, and hyphens only.</p>
+      </div>
+
+      <p class="signal-error" id="register-error" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn-primary signal-auth-btn" id="register-btn">
+        Continue
+      </button>
+    </form>
+  </div>
+
+  <!-- Step 2: Verification code -->
+  <div class="signal-auth-card" id="step-verify" hidden>
+    <p class="signal-hero-eyebrow">Signal</p>
+    <h1 class="signal-auth-title">Check your email</h1>
+    <p class="signal-auth-sub" id="verify-sub">We sent a 6-digit code to your email.</p>
+
+    <form class="signal-auth-form" id="verify-form" novalidate>
+      <div class="signal-field">
+        <label class="signal-label" for="field-code">Verification code</label>
+        <input class="signal-input-field signal-code-input" type="text" id="field-code"
+          name="code" placeholder="000000" maxlength="6" inputmode="numeric"
+          autocomplete="one-time-code" required />
+      </div>
+
+      <p class="signal-error" id="verify-error" role="alert" hidden></p>
+
+      <button type="submit" class="btn btn-primary signal-auth-btn" id="verify-btn">
+        Verify &amp; create Signal
+      </button>
+
+      <button type="button" class="signal-back-btn" id="back-btn">← Back</button>
+    </form>
+  </div>
+
+</div>

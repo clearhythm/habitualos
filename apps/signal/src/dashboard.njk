@@ -1,0 +1,93 @@
+---
+layout: base.njk
+title: "Signal — Dashboard"
+description: "Manage your Signal widget."
+pageScript: /assets/js/dashboard.js
+---
+
+<div class="dash-wrap">
+
+  <!-- Auth guard: shown while checking session -->
+  <div id="dash-loading" class="dash-loading">
+    <p class="text-muted">Loading…</p>
+  </div>
+
+  <!-- Main dashboard (shown after auth check) -->
+  <div id="dash-main" hidden>
+
+    <div class="dash-header">
+      <div>
+        <p class="signal-hero-eyebrow">Dashboard</p>
+        <h1 class="dash-title" id="dash-display-name">Your Signal</h1>
+        <p class="dash-signal-id text-muted">signal.habitualos.com/widget/?id=<span id="dash-signal-id">—</span></p>
+      </div>
+      <a id="dash-preview-link" href="#" class="btn btn-ghost" target="_blank" rel="noopener">Preview widget →</a>
+    </div>
+
+    <div class="dash-sections">
+
+      <!-- Embed code -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Embed on any site</h2>
+        <p class="dash-section-desc">Drop this snippet on any page. It injects a floating Signal button that opens your widget in a modal.</p>
+        <div class="dash-embed-wrap">
+          <code class="dash-embed-code" id="embed-code"></code>
+          <button class="dash-copy-btn" id="copy-embed-btn" type="button">Copy</button>
+        </div>
+      </section>
+
+      <!-- Context text -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Your background</h2>
+        <p class="dash-section-desc">Paste your work history, bio, or any context Signal should know about you. This is what the agent draws on when scoring fit.</p>
+        <form id="context-form">
+          <textarea class="dash-textarea" id="context-text" rows="10"
+            placeholder="Describe your background, what you've built, where you excel, what you're looking for…"></textarea>
+          <div class="dash-form-actions">
+            <button type="submit" class="btn btn-primary" id="context-save-btn">Save</button>
+            <span class="dash-save-status" id="context-status"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- Personas -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Personas</h2>
+        <p class="dash-section-desc">Up to 4 options visitors pick from at the start. Each has a label and opening message.</p>
+        <div id="personas-list" class="dash-personas-list"></div>
+        <button type="button" class="btn btn-ghost dash-add-persona-btn" id="add-persona-btn">+ Add persona</button>
+        <div class="dash-form-actions" style="margin-top:1rem;">
+          <button type="button" class="btn btn-primary" id="personas-save-btn">Save personas</button>
+          <span class="dash-save-status" id="personas-status"></span>
+        </div>
+      </section>
+
+      <!-- API key -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Anthropic API key</h2>
+        <p class="dash-section-desc">Your key is used to power the Signal agent for your widget. It's stored encrypted and never exposed to visitors.</p>
+        <form id="apikey-form">
+          <div class="dash-apikey-row">
+            <input class="signal-input-field dash-apikey-input" type="password" id="apikey-input"
+              placeholder="sk-ant-…" autocomplete="off" />
+            <button type="submit" class="btn btn-primary" id="apikey-save-btn">Save</button>
+          </div>
+          <span class="dash-save-status" id="apikey-status"></span>
+          <p class="signal-field-hint" id="apikey-hint"></p>
+        </form>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Not authenticated -->
+  <div id="dash-unauth" hidden class="signal-auth-wrap">
+    <div class="signal-auth-card">
+      <p class="signal-hero-eyebrow">Signal</p>
+      <h1 class="signal-auth-title">Dashboard</h1>
+      <p class="signal-auth-sub">You need to register or log in to access your dashboard.</p>
+      <a href="/register/" class="btn btn-primary">Create your Signal</a>
+    </div>
+  </div>
+
+</div>
