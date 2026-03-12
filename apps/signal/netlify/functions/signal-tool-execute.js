@@ -1,8 +1,8 @@
-/**
- * POST /api/signal-tool-execute
- * Tool execution stub for Phase 1 (no tools defined).
- * Phase 2+ will add tools for fetching context chunks, etc.
- */
+require('dotenv').config();
+const { searchChunks } = require('./_services/db-signal-context.cjs');
+
+const STOPWORDS = new Set(['the','a','an','and','or','for','to','in','of','on','is','are','was','were','with','that','this']);
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return {
@@ -11,9 +11,56 @@ exports.handler = async (event) => {
     };
   }
 
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ success: true, result: {} })
-  };
+  try {
+    const { signalId, toolUse } = JSON.parse(event.body);
+    const { name, input } = toolUse;
+
+    if (name === 'search_work_history') {
+      const rawQuery = String(input.query || '').slice(0, 200);
+      const terms = rawQuery
+        .toLowerCase()
+        .split(/[\s,;:]+/)
+        .filter(t => t.length > 2 && !STOPWORDS.has(t));
+
+      if (!signalId || !terms.length) {
+        return {
+          statusCode: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: { chunks: [], found: 0, message: 'No results' } })
+        };
+      }
+
+      const chunks = await searchChunks(signalId, terms, 5);
+
+      const result = {
+        query: rawQuery,
+        found: chunks.length,
+        chunks: chunks.map(c => ({
+          date: String(c.date || '').slice(0, 10),
+          title: c.title,
+          summary: c.summary,
+          keyInsight: c.keyInsight,
+          evidenceStrength: c.evidenceStrength,
+          skills: (c.skills || []).slice(0, 8),
+          topics: (c.topics || []).slice(0, 5)
+        }))
+      };
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result })
+      };
+    }
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ result: { error: `Unknown tool: ${name}` } })
+    };
+
+  } catch (error) {
+    console.error('[signal-tool-execute] ERROR:', error);
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+  }
 };

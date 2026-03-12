@@ -1,7 +1,6 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
-const { getTopChunks } = require('./_services/db-signal-context.cjs');
 
 /**
  * POST /api/signal-chat-init
@@ -226,7 +225,7 @@ exports.handler = async (event) => {
 
     const useOwnerConfig = signalId && signalId !== 'erik-burns';
     let displayName, contextText, personaConfig, ownerApiKey;
-    let skillsProfile, wantsProfile, personalityProfile, topChunks = [];
+    let skillsProfile, wantsProfile, personalityProfile;
 
     if (useOwnerConfig) {
       const owner = await getOwnerBySignalId(signalId);
@@ -239,11 +238,6 @@ exports.handler = async (event) => {
       skillsProfile = owner.skillsProfile || null;
       wantsProfile = owner.wantsProfile || null;
       personalityProfile = owner.personalityProfile || null;
-
-      // Fetch top evidence chunks if history has been processed
-      if (owner.contextStats?.processedChunks > 0) {
-        topChunks = await getTopChunks(signalId, 15).catch(() => []);
-      }
 
       const matchedPersona = (owner.personas || []).find(p => p.key === persona) || owner.personas?.[0];
       personaConfig = matchedPersona
@@ -261,16 +255,28 @@ exports.handler = async (event) => {
       personalityProfile = ERIK_PERSONALITY_PROFILE;
       const personaKey = Object.keys(ERIK_PERSONAS).includes(persona) ? persona : 'curious';
       personaConfig = ERIK_PERSONAS[personaKey];
-      // For Erik's own signal, also try to load processed chunks
-      topChunks = await getTopChunks('erik-burns', 15).catch(() => []);
     }
 
     // Build system prompt
     const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
-    const evidenceSection = buildEvidenceSection(topChunks, displayName);
     const coverageSection = (skillsProfile || wantsProfile || personalityProfile)
       ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile)
       : '';
+
+    const searchToolInstruction = `== WORK HISTORY SEARCH ==
+You have access to a search_work_history tool that searches ${displayName}'s real AI conversation history.
+
+Call it when:
+- You need specific evidence to score a dimension (e.g., visitor mentions a domain or skill)
+- You want to verify whether ${displayName} has done relevant work
+- Confidence on any dimension is below 0.5 and you have visitor context to search with
+
+Do NOT call it:
+- Before the visitor has said anything substantive
+- More than 3 times per conversation
+- With vague queries — be specific (e.g., "streaming SSE edge functions" not "technical work")
+
+The tool returns real conversation summaries showing demonstrated capabilities. Reference them specifically in your scoring reason.`;
 
     const systemPrompt = `You are Signal — a matchmaking concierge built on ${displayName}'s real work history.
 You help visitors honestly assess professional fit. You serve the visitor while acting on behalf of both parties.
@@ -281,9 +287,9 @@ ${contextText}
 
 ${profileSection}
 
-${evidenceSection}
-
 ${coverageSection}
+
+${searchToolInstruction}
 
 ${CONVERSATION_APPROACH}
 
@@ -299,7 +305,20 @@ Your first message is already set. Begin evidence gathering immediately after. D
       success: true,
       opener: personaConfig.opener,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      tools: []
+      tools: [{
+        name: 'search_work_history',
+        description: `Search ${displayName}'s real AI conversation history for evidence relevant to what the visitor needs. Returns conversation summaries showing demonstrated skills and working patterns.`,
+        input_schema: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'Space-separated terms to search for (e.g., "streaming SSE edge functions real-time"). Be specific — use domain terms, technologies, or skill names from the conversation.'
+            }
+          },
+          required: ['query']
+        }
+      }]
     };
 
     if (ownerApiKey) {

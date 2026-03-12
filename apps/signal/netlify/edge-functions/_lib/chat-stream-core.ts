@@ -411,6 +411,9 @@ export function createChatStreamHandler(
               if (chatType === "agent") {
                 toolBody.agentId = agentId;
               }
+              if (chatType === "signal") {
+                toolBody.signalId = signalId;
+              }
 
               // Execute tool via Node.js function
               const toolResponse = await fetch(

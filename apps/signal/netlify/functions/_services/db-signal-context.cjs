@@ -160,6 +160,43 @@ async function getTopChunks(signalId, limit = 15) {
 }
 
 /**
+ * Search processed chunks by concept/keyword overlap.
+ * Fetches all processed chunks for signalId, scores by term match,
+ * ranks by (matchScore × evidenceStrength), returns top N.
+ */
+async function searchChunks(signalId, queryTerms, limit = 5) {
+  const snap = await db.collection(COLLECTION)
+    .where('signalId', '==', signalId)
+    .where('status', '==', 'processed')
+    .get();
+
+  const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  const scored = docs.map(doc => {
+    const haystack = [
+      ...(doc.concepts || []),
+      ...(doc.topics || []),
+      ...(doc.skills || []),
+      ...(doc.technologies || []),
+      doc.title || '',
+      doc.summary || '',
+      doc.keyInsight || ''
+    ].join(' ').toLowerCase();
+
+    const matchScore = queryTerms.reduce((n, term) =>
+      n + (haystack.includes(term.toLowerCase()) ? 1 : 0), 0
+    );
+
+    return { ...doc, matchScore };
+  });
+
+  return scored
+    .filter(d => d.matchScore > 0)
+    .sort((a, b) => (b.matchScore * b.evidenceStrength) - (a.matchScore * a.evidenceStrength))
+    .slice(0, limit);
+}
+
+/**
  * Get stats for a signalId.
  */
 async function getContextStats(signalId) {
@@ -210,6 +247,7 @@ module.exports = {
   updateChunk,
   getAllProcessedChunks,
   getTopChunks,
+  searchChunks,
   getContextStats,
   deleteAllChunks
 };
