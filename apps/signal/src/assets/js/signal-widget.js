@@ -38,6 +38,7 @@ const input         = document.getElementById('signal-input');
 const sendBtn       = document.getElementById('signal-send');
 
 // Score panel
+const overallWrap    = document.getElementById('overall-wrap');
 const overallScore   = document.getElementById('overall-score');
 const overallRing    = document.getElementById('overall-ring');
 const skillsBar      = document.getElementById('skills-bar');
@@ -161,6 +162,18 @@ function updateScorePanel(data) {
   const { skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: label, turn } = data;
 
   lastScore = data;
+
+  // Animate ring: enter on first score, pulse on updates
+  if (overallWrap) {
+    if (!overallWrap.classList.contains('is-visible')) {
+      overallWrap.classList.add('is-visible');
+    } else {
+      overallWrap.classList.add('is-pulsing');
+      overallWrap.addEventListener('animationend', () => {
+        overallWrap.classList.remove('is-pulsing');
+      }, { once: true });
+    }
+  }
 
   const pct = v => `${(v / 10) * 100}%`;
   skillsBar.style.width = pct(skills);

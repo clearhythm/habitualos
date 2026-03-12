@@ -22,6 +22,29 @@
   border: 1px solid $color-border;
   border-radius: 12px;
   overflow: hidden;
+
+  &.signal-panel--score {
+    border-color: rgba(196, 181, 253, 0.2);
+  }
+}
+
+// ─── Ring / orb animations ────────────────────────────────────────────────────
+
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes orb-enter {
+  0%   { transform: scale(0.75); opacity: 0; }
+  70%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes orb-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
 }
 
 // ─── Score Panel ───────────────────────────────────────────────────────────────
@@ -49,7 +72,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: $color-text-muted;
+  color: #c4b5fd;
 }
 
 .signal-confidence-label {
@@ -64,6 +87,19 @@
   align-items: center;
   justify-content: center;
   margin: $space-sm 0;
+
+  &.is-visible {
+    animation: orb-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+    .signal-ring {
+      animation: orb-float 3.5s ease-in-out infinite;
+      animation-delay: 0.6s;
+    }
+  }
+
+  &.is-pulsing {
+    animation: orb-pulse 0.5s ease-out;
+  }
 }
 
 .signal-ring {
@@ -79,7 +115,7 @@
 
   .signal-ring-fill {
     fill: none;
-    stroke: $color-primary;
+    stroke: #9d6ef5;
     stroke-width: 8;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -90,7 +126,7 @@
   position: absolute;
   font-size: $font-size-3xl;
   font-weight: 700;
-  color: $color-text;
+  color: #c4b5fd;
   line-height: 1;
 }
 
@@ -105,7 +141,7 @@
 .signal-confidence-bar {
   height: 100%;
   width: 0;
-  background: $color-primary;
+  background: #9d6ef5;
   border-radius: 2px;
   transition: width 0.5s ease;
 }
@@ -147,10 +183,15 @@
 .signal-bar-fill {
   height: 100%;
   width: 0;
-  background: $color-primary;
+  background: #059669;
   border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.8s ease;
 }
+
+// Stagger bar entry transitions
+#skills-bar     { transition-delay: 0.1s; }
+#alignment-bar  { transition-delay: 0.3s; }
+#personality-bar { transition-delay: 0.5s; }
 
 // Reasoning text
 .signal-reason {
@@ -423,22 +464,29 @@
 .signal-chat-footer {
   display: flex;
   align-items: center;
-  gap: $space-xs;
+  gap: $space-sm;
   padding: $space-sm $space-md;
   border-top: 1px solid $color-border;
 }
 
-.signal-brand {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  color: $color-primary;
+.signal-brand-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 
-  &:hover { text-decoration: none; opacity: 0.85; }
+  &:hover { opacity: 0.8; }
+}
+
+.signal-logo-img {
+  height: 20px;
+  width: auto;
+  display: block;
 }
 
 .signal-brand-sub {
-  font-size: $font-size-sm;
+  font-size: 0.72rem;
   color: $color-text-muted;
+  line-height: 1.3;
 }
 
 // Reset button
