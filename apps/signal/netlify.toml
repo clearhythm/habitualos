@@ -9,11 +9,8 @@
 [dev]
   framework = "#custom"
   command = "pnpm --filter signal run eleventy:serve"
-  targetPort = 8081
+  targetPort = 8080
   autoLaunch = false
-  functions = "netlify/functions"
-  edge_functions = "netlify/edge-functions"
-  publish = "_site"
 
 [functions]
   node_bundler = "esbuild"

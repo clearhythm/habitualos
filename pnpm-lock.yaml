@@ -137,6 +137,34 @@ importers:
         specifier: ^1.69.5
         version: 1.97.3
 
+  apps/signal:
+    dependencies:
+      '@11ty/eleventy':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@anthropic-ai/sdk':
+        specifier: ^0.71.2
+        version: 0.71.2
+      '@habitualos/auth-server':
+        specifier: workspace:*
+        version: link:../../packages/auth-server
+      '@habitualos/chat-storage':
+        specifier: workspace:*
+        version: link:../../packages/chat-storage
+      '@habitualos/db-core':
+        specifier: workspace:*
+        version: link:../../packages/db-core
+      marked:
+        specifier: ^15.0.12
+        version: 15.0.12
+      resend:
+        specifier: ^4.0.0
+        version: 4.8.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+    devDependencies:
+      sass:
+        specifier: ^1.69.5
+        version: 1.97.3
+
   apps/zerogravity:
     dependencies:
       '@anthropic-ai/sdk':

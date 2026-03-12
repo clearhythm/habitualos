@@ -5,15 +5,17 @@
   "scripts": {
     "start": "netlify dev",
     "eleventy:build": "eleventy",
-    "eleventy:serve": "eleventy --serve --port=8081",
+    "eleventy:serve": "eleventy --serve --port=8080",
     "build": "eleventy"
   },
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",
     "@anthropic-ai/sdk": "^0.71.2",
     "@habitualos/auth-server": "workspace:*",
+    "@habitualos/chat-storage": "workspace:*",
     "@habitualos/db-core": "workspace:*",
-    "marked": "^15.0.12"
+    "marked": "^15.0.12",
+    "resend": "^4.0.0"
   },
   "devDependencies": {
     "sass": "^1.69.5"
