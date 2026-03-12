@@ -4,6 +4,7 @@
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter signal build"
   publish = "_site"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [dev]
   framework = "#custom"
@@ -11,10 +12,15 @@
   targetPort = 8081
   autoLaunch = false
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
   publish = "_site"
 
 [functions]
   node_bundler = "esbuild"
+
+[[edge_functions]]
+  path = "/api/signal-chat-stream"
+  function = "chat-stream"
 
 [[redirects]]
   from = "/api/*"

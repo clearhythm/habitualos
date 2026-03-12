@@ -9,12 +9,27 @@
   z-index: 100;
 
   &-inner {
-    max-width: 720px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 0 $space-lg;
     height: 100%;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+  }
+
+  &-links {
+    display: flex;
+    gap: $space-lg;
+    align-items: center;
+  }
+
+  &-link {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    transition: color 0.15s;
+
+    &:hover { color: $color-text; text-decoration: none; }
   }
 
   &-brand {

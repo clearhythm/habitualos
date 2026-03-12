@@ -1,0 +1,494 @@
+// ─── Signal Widget Layout ──────────────────────────────────────────────────────
+
+.signal-widget {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: calc(100vh - 56px);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: $space-xl;
+  gap: $space-xl;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    padding: $space-md;
+    gap: $space-md;
+    min-height: auto;
+  }
+}
+
+.signal-panel {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+// ─── Score Panel ───────────────────────────────────────────────────────────────
+
+.signal-panel--score {
+  display: flex;
+  flex-direction: column;
+  padding: $space-lg;
+  gap: $space-md;
+
+  @media (max-width: $breakpoint-md) {
+    order: 2;
+    padding: $space-md;
+  }
+}
+
+.signal-score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.signal-score-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $color-text-muted;
+}
+
+.signal-confidence-label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+// Overall ring
+.signal-overall-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: $space-sm 0;
+}
+
+.signal-ring {
+  width: 120px;
+  height: 120px;
+  transform: rotate(-90deg);
+
+  .signal-ring-track {
+    fill: none;
+    stroke: $color-border;
+    stroke-width: 8;
+  }
+
+  .signal-ring-fill {
+    fill: none;
+    stroke: $color-primary;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.signal-overall-score {
+  position: absolute;
+  font-size: $font-size-3xl;
+  font-weight: 700;
+  color: $color-text;
+  line-height: 1;
+}
+
+// Confidence bar
+.signal-confidence-bar-wrap {
+  height: 4px;
+  background: $color-border;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.signal-confidence-bar {
+  height: 100%;
+  width: 0;
+  background: $color-primary;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+// Dimension bars
+.signal-dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  margin-top: $space-sm;
+}
+
+.signal-dimension {}
+
+.signal-dimension-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: $space-xs;
+}
+
+.signal-dimension-name {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.signal-dimension-value {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.signal-bar-track {
+  height: 6px;
+  background: $color-border;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.signal-bar-fill {
+  height: 100%;
+  width: 0;
+  background: $color-primary;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Reasoning text
+.signal-reason {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.5;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  min-height: 0;
+
+  &.visible {
+    opacity: 1;
+  }
+}
+
+.signal-score-footer {
+  margin-top: auto;
+}
+
+.signal-score-footer-text {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  opacity: 0.6;
+}
+
+// ─── Chat Panel ────────────────────────────────────────────────────────────────
+
+.signal-panel--chat {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px - 2 * #{$space-xl});
+  max-height: 800px;
+
+  @media (max-width: $breakpoint-md) {
+    order: 1;
+    height: 520px;
+    max-height: none;
+  }
+}
+
+// Persona selector
+.signal-persona-wrap {
+  padding: $space-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.signal-persona-prompt {
+  color: $color-text-muted;
+  font-size: $font-size-base;
+  margin: 0;
+}
+
+.signal-persona-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+}
+
+.signal-persona-btn {
+  padding: $space-sm $space-lg;
+  border-radius: 24px;
+  background: transparent;
+  border: 1px solid $color-border;
+  color: $color-text;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover {
+    background: rgba($color-primary, 0.12);
+    border-color: $color-primary;
+  }
+
+  &:active {
+    background: rgba($color-primary, 0.2);
+  }
+}
+
+// Messages container
+.signal-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: $space-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  scroll-behavior: smooth;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Individual message bubbles
+.signal-message {
+  max-width: 85%;
+  line-height: 1.55;
+  font-size: $font-size-base;
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  &--user {
+    align-self: flex-end;
+    background: $color-primary;
+    color: #fff;
+    padding: $space-sm $space-md;
+    border-radius: 18px 18px 4px 18px;
+  }
+
+  &--assistant {
+    align-self: flex-start;
+    color: $color-text;
+    padding: $space-sm 0;
+  }
+}
+
+// Typing indicator
+.signal-thinking {
+  display: flex;
+  gap: 4px;
+  padding: $space-sm 0;
+
+  span {
+    width: 7px;
+    height: 7px;
+    background: $color-text-muted;
+    border-radius: 50%;
+    animation: signal-bounce 1.2s infinite ease-in-out;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes signal-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+// Chat form
+.signal-form {
+  display: flex;
+  align-items: flex-end;
+  gap: $space-sm;
+  padding: $space-md;
+  border-top: 1px solid $color-border;
+}
+
+.signal-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+  color: $color-text;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  line-height: 1.5;
+  resize: none;
+  max-height: 160px;
+  overflow-y: auto;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { outline: none; border-color: $color-primary; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.signal-send {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.85; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+// Footer
+.signal-chat-footer {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+  padding: $space-sm $space-md;
+  border-top: 1px solid $color-border;
+}
+
+.signal-brand {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+
+  &:hover { text-decoration: none; opacity: 0.85; }
+}
+
+.signal-brand-sub {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+// Reset button
+.signal-reset-wrap {
+  padding-bottom: $space-sm;
+  border-bottom: 1px solid $color-border;
+}
+
+.signal-reset-btn {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover { color: $color-text; }
+}
+
+// ─── Homepage landing styles ───────────────────────────────────────────────────
+
+.signal-hero {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $space-2xl $space-lg 0;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $space-xl $space-lg 0;
+  }
+}
+
+.signal-hero-eyebrow {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: $color-primary;
+  margin-bottom: $space-md;
+}
+
+.signal-hero-headline {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: $space-lg;
+  color: $color-text;
+}
+
+.signal-hero-sub {
+  font-size: $font-size-lg;
+  color: $color-text-muted;
+  line-height: 1.6;
+  max-width: 560px;
+  margin-bottom: $space-xl;
+}
+
+.signal-cta-row {
+  display: flex;
+  gap: $space-md;
+  flex-wrap: wrap;
+}
+
+// How it works
+.signal-how {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $space-2xl $space-lg;
+}
+
+.signal-how-title {
+  font-size: $font-size-2xl;
+  font-weight: 600;
+  margin-bottom: $space-xl;
+}
+
+.signal-steps {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.signal-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: $space-md;
+  align-items: start;
+}
+
+.signal-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.15);
+  color: $color-primary;
+  font-size: $font-size-sm;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.signal-step-title {
+  font-weight: 600;
+  margin-bottom: $space-xs;
+}
+
+.signal-step-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.6;
+  margin: 0;
+}
+
+// Footer CTA
+.signal-footer-cta {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $space-2xl $space-lg;
+  border-top: 1px solid $color-border;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-lg;
+  flex-wrap: wrap;
+}
+
+.signal-footer-cta-text {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+}
