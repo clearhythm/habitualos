@@ -207,6 +207,40 @@ pageScript: /assets/js/dashboard.js
         </form>
       </section>
 
+      <!-- Opportunity Fit -->
+      <section class="dash-section">
+        <h2 class="dash-section-title">Evaluate an opportunity</h2>
+        <p class="dash-section-desc">Paste a job description, project brief, or role details to see how well it fits your Signal profile.</p>
+
+        <form id="eval-form">
+          <div class="dash-gap-field" style="margin-bottom:0.75rem;">
+            <label class="signal-label">Title (optional)</label>
+            <input class="signal-input-field" id="eval-title" type="text" placeholder="e.g. Senior AI Product Lead — Seed Stage" maxlength="200" />
+          </div>
+          <textarea class="dash-textarea" id="eval-content" rows="8"
+            placeholder="Paste job description, project brief, or opportunity details here…"></textarea>
+          <div class="dash-form-actions">
+            <button type="submit" class="btn btn-primary" id="eval-submit-btn">Evaluate fit →</button>
+            <span class="dash-save-status" id="eval-status"></span>
+          </div>
+        </form>
+
+        <!-- Result panel (shown after evaluation) -->
+        <div id="eval-result" class="eval-result-panel" hidden></div>
+
+        <!-- Generated content (resume / cover letter) -->
+        <div id="eval-generated" hidden>
+          <div id="eval-resume-panel" class="eval-generated-panel" hidden></div>
+          <div id="eval-cover-panel" class="eval-generated-panel" hidden></div>
+        </div>
+
+        <!-- History -->
+        <div id="eval-history-wrap" hidden>
+          <h3 class="eval-history-title">Past evaluations</h3>
+          <div id="eval-history-list" class="eval-history-list"></div>
+        </div>
+      </section>
+
       <!-- Leads -->
       <section class="dash-section">
         <h2 class="dash-section-title">Recent leads</h2>

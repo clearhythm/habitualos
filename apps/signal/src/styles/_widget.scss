@@ -1130,3 +1130,176 @@
 
   &:hover { background: rgba(248, 113, 113, 0.1); }
 }
+
+// ─── Opportunity evaluation ───────────────────────────────────────────────────
+
+.eval-result-panel {
+  margin-top: $space-lg;
+  padding: $space-lg;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.eval-score-row {
+  display: flex;
+  align-items: center;
+  gap: $space-lg;
+  flex-wrap: wrap;
+}
+
+.eval-overall-score {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+
+  .eval-score-denom { font-size: 1rem; font-weight: 400; color: $color-text-muted; margin-left: 2px; }
+
+  &.score-high { color: #4ade80; }
+  &.score-mid  { color: $color-primary; }
+  &.score-low  { color: $color-text-muted; }
+}
+
+.eval-score-dims {
+  display: flex;
+  gap: $space-lg;
+}
+
+.eval-score-dim {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  strong { color: $color-text; margin-left: 4px; }
+}
+
+.eval-recommendation {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text;
+  margin-left: auto;
+
+  @media (max-width: $breakpoint-sm) { margin-left: 0; }
+}
+
+.eval-summary {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.eval-items-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.eval-strength-item {
+  font-size: $font-size-sm;
+  color: #4ade80;
+}
+
+.eval-gap-item {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  &.eval-gap-mod { color: #fbbf24; }
+  &.eval-gap-high { color: #f87171; }
+}
+
+.eval-gap-frame {
+  color: $color-text-muted;
+  font-style: italic;
+}
+
+.eval-evidence-note {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
+.eval-actions {
+  display: flex;
+  gap: $space-sm;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: $space-xs;
+}
+
+// Generated content (resume / cover letter)
+
+.eval-generated-panel {
+  margin-top: $space-md;
+  padding: $space-md;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+}
+
+.eval-generated-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $space-sm;
+  font-size: $font-size-sm;
+}
+
+.eval-copy-btn {
+  font-size: 0.75rem;
+  padding: 2px 10px;
+}
+
+.eval-generated-text {
+  font-family: inherit;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  line-height: 1.6;
+}
+
+// Evaluation history
+
+.eval-history-title {
+  font-size: $font-size-base;
+  font-weight: 600;
+  margin: $space-lg 0 $space-sm;
+}
+
+.eval-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.eval-history-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $space-md;
+  align-items: center;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-sm $space-md;
+}
+
+.eval-history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.eval-history-title-text {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

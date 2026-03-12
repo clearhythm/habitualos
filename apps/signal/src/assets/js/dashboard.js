@@ -34,9 +34,10 @@ let detectedSource = null;
     loading.hidden = true;
     main.hidden = false;
 
-    // Load context stats and leads in parallel
+    // Load context stats, leads, and evaluation history in parallel
     loadContextStatus();
     loadLeads();
+    loadEvaluationHistory();
   } catch {
     showUnauth();
   }
@@ -524,6 +525,229 @@ document.getElementById('copy-embed-btn').addEventListener('click', () => {
     setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
   });
 });
+
+// ─── Opportunity evaluation ───────────────────────────────────────────────────
+
+let currentEvalId = null;
+let currentResumeId = null;
+
+document.getElementById('eval-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const content = document.getElementById('eval-content').value.trim();
+  const title = document.getElementById('eval-title').value.trim();
+  if (!content) { document.getElementById('eval-status').textContent = 'Paste an opportunity first.'; return; }
+
+  const btn = document.getElementById('eval-submit-btn');
+  const status = document.getElementById('eval-status');
+  btn.disabled = true;
+  btn.textContent = 'Evaluating…';
+  status.textContent = '';
+  document.getElementById('eval-result').hidden = true;
+  document.getElementById('eval-generated').hidden = true;
+
+  try {
+    const res = await fetch('/api/signal-evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: window.__userId,
+        opportunity: { type: 'free-text', title: title || 'Untitled', content }
+      })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Evaluation failed');
+
+    currentEvalId = data.evaluationId;
+    currentResumeId = null;
+    renderEvalResult(data);
+    loadEvaluationHistory();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Evaluate fit →';
+  }
+});
+
+function renderEvalResult(data) {
+  const panel = document.getElementById('eval-result');
+  const score = data.score || {};
+  const overall = score.overall || 0;
+  const scoreClass = overall >= 8 ? 'score-high' : overall >= 5 ? 'score-mid' : 'score-low';
+  const recLabels = {
+    'strong-candidate': 'Strong candidate.',
+    'worth-applying': 'Worth applying.',
+    'stretch': 'Stretch role.',
+    'poor-fit': 'Poor fit.'
+  };
+  const rec = recLabels[data.recommendation] || data.recommendation || '';
+
+  const strengthsHtml = (data.strengths || []).map(s =>
+    `<li class="eval-strength-item">✓ ${escHtml(s)}</li>`
+  ).join('');
+
+  const gapsHtml = (data.gaps || []).map(g => {
+    const sevClass = g.severity === 'high' ? ' eval-gap-high' : g.severity === 'moderate' ? ' eval-gap-mod' : '';
+    return `<li class="eval-gap-item${sevClass}">△ ${escHtml(g.gap)}${g.closeable && g.framing ? `<span class="eval-gap-frame"> — ${escHtml(g.framing)}</span>` : ''}</li>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div class="eval-score-row">
+      <div class="eval-overall-score ${scoreClass}">${overall}<span class="eval-score-denom">/10</span></div>
+      <div class="eval-score-dims">
+        <div class="eval-score-dim">Skills <strong>${score.skills ?? '—'}</strong></div>
+        <div class="eval-score-dim">Alignment <strong>${score.alignment ?? '—'}</strong></div>
+      </div>
+      <div class="eval-recommendation">${escHtml(rec)}</div>
+    </div>
+    <p class="eval-summary">${escHtml(data.summary || '')}</p>
+    ${strengthsHtml || gapsHtml ? `<ul class="eval-items-list">${strengthsHtml}${gapsHtml}</ul>` : ''}
+    ${data.evidenceUsed?.length ? `<div class="eval-evidence-note">Evidence: ${escHtml(data.evidenceUsed.join(' · '))}</div>` : ''}
+    <div class="eval-actions">
+      <button type="button" class="btn btn-ghost" id="eval-resume-btn">Generate resume →</button>
+      <button type="button" class="btn btn-ghost" id="eval-cover-btn">Generate cover letter →</button>
+      <span class="dash-save-status" id="eval-gen-status"></span>
+    </div>
+  `;
+
+  panel.hidden = false;
+
+  document.getElementById('eval-resume-btn').addEventListener('click', generateResume);
+  document.getElementById('eval-cover-btn').addEventListener('click', generateCover);
+}
+
+async function generateResume() {
+  if (!currentEvalId) return;
+  const btn = document.getElementById('eval-resume-btn');
+  const status = document.getElementById('eval-gen-status');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.textContent = '';
+
+  try {
+    const res = await fetch('/api/signal-resume-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.__userId, evaluationId: currentEvalId })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Resume generation failed');
+
+    currentResumeId = data.resumeId;
+    renderGeneratedContent('eval-resume-panel', 'Resume', formatResume(data.content));
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate resume →';
+  }
+}
+
+async function generateCover() {
+  if (!currentEvalId) return;
+  const btn = document.getElementById('eval-cover-btn');
+  const status = document.getElementById('eval-gen-status');
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  status.textContent = '';
+
+  try {
+    const res = await fetch('/api/signal-cover-generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.__userId, evaluationId: currentEvalId, resumeId: currentResumeId || undefined })
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Cover letter generation failed');
+
+    renderGeneratedContent('eval-cover-panel', 'Cover letter', formatCoverLetter(data.content));
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generate cover letter →';
+  }
+}
+
+function formatResume(content) {
+  if (!content) return '';
+  const lines = [];
+  if (content.summary) { lines.push(content.summary); lines.push(''); }
+  (content.experience || []).forEach(e => {
+    lines.push(`${e.title} — ${e.org}  (${e.dates})`);
+    (e.bullets || []).forEach(b => lines.push(`  • ${b}`));
+    lines.push('');
+  });
+  if (content.skills?.length) { lines.push('Skills: ' + content.skills.join(', ')); lines.push(''); }
+  (content.education || []).forEach(e => {
+    lines.push(`${e.degree} — ${e.institution}  (${e.dates})`);
+  });
+  return lines.join('\n');
+}
+
+function formatCoverLetter(content) {
+  if (!content) return '';
+  return String(content.body || '').replace(/\\n/g, '\n');
+}
+
+function renderGeneratedContent(panelId, label, text) {
+  const panel = document.getElementById(panelId);
+  panel.innerHTML = `
+    <div class="eval-generated-header">
+      <strong>${escHtml(label)}</strong>
+      <button type="button" class="dash-copy-btn eval-copy-btn">Copy</button>
+    </div>
+    <pre class="eval-generated-text">${escHtml(text)}</pre>
+  `;
+  panel.hidden = false;
+  document.getElementById('eval-generated').hidden = false;
+
+  panel.querySelector('.eval-copy-btn').addEventListener('click', (e) => {
+    navigator.clipboard.writeText(text).then(() => {
+      e.target.textContent = 'Copied!';
+      setTimeout(() => { e.target.textContent = 'Copy'; }, 2000);
+    });
+  });
+}
+
+async function loadEvaluationHistory() {
+  try {
+    const res = await fetch('/api/signal-evaluations-get', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.__userId })
+    });
+    const data = await res.json();
+    if (!data.success || !data.evaluations?.length) return;
+    renderEvalHistory(data.evaluations);
+  } catch {}
+}
+
+function renderEvalHistory(evaluations) {
+  const wrap = document.getElementById('eval-history-wrap');
+  const list = document.getElementById('eval-history-list');
+  list.innerHTML = '';
+
+  evaluations.forEach(ev => {
+    const overall = ev.score?.overall || 0;
+    const scoreClass = overall >= 8 ? 'score-high' : overall >= 5 ? 'score-mid' : 'score-low';
+    const timeAgo = ev._createdAt ? formatTimeAgo(ev._createdAt._seconds * 1000) : '';
+    const tags = [ev.recommendation, ev.resumeGenerated ? 'resume' : '', ev.coverLetterGenerated ? 'cover' : ''].filter(Boolean);
+    const row = document.createElement('div');
+    row.className = 'eval-history-row';
+    row.innerHTML = `
+      <div class="dash-lead-score ${scoreClass}">${overall}</div>
+      <div class="eval-history-info">
+        <div class="eval-history-title-text">${escHtml(ev.title)}</div>
+        <div class="dash-lead-meta">${escHtml(tags.join(' · '))}${timeAgo ? ` · ${timeAgo}` : ''}</div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+
+  wrap.hidden = false;
+}
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
