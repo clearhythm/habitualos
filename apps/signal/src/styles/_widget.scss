@@ -1390,3 +1390,135 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+// ─── Waitlist page ───────────────────────────────────────────────────────────
+
+.signal-qualify-block {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+  margin: $space-xl 0;
+  text-align: left;
+}
+
+.signal-qualify-heading {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: $space-md;
+}
+
+.signal-qualify-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  li {
+    padding-left: 1.25em;
+    position: relative;
+    color: $color-text;
+    font-size: $font-size-base;
+
+    &::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: $color-primary;
+      font-weight: 700;
+    }
+  }
+}
+
+.signal-qualify-note {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+.signal-waitlist-form {
+  display: flex;
+  gap: $space-sm;
+  margin-top: $space-lg;
+  flex-wrap: wrap;
+}
+
+.signal-waitlist-input {
+  flex: 1 1 220px;
+  padding: 0.625rem 1rem;
+  font-size: $font-size-base;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  background: $color-bg-muted;
+  color: $color-text;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+}
+
+.signal-waitlist-error {
+  color: #e74c3c;
+  font-size: $font-size-sm;
+  margin-top: $space-sm;
+}
+
+.signal-waitlist-success {
+  background: rgba($color-primary, 0.08);
+  border: 1px solid $color-primary;
+  border-radius: 12px;
+  padding: $space-lg;
+  margin-top: $space-lg;
+}
+
+.signal-waitlist-success-msg {
+  margin: 0;
+  color: $color-text;
+  font-size: $font-size-base;
+}
+
+.signal-waitlist-demo-link {
+  margin-top: $space-lg;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  a {
+    color: $color-primary;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// ─── Site footer ─────────────────────────────────────────────────────────────
+
+.signal-footer {
+  text-align: center;
+  padding: $space-xl $space-lg;
+  border-top: 1px solid $color-border;
+  margin-top: auto;
+}
+
+.signal-footer-link {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  text-decoration: none;
+  transition: color 0.15s;
+
+  &:hover {
+    color: $color-text;
+  }
+}

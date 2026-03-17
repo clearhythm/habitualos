@@ -1,18 +1,88 @@
 ---
 layout: base.njk
 title: "Signal — Create your Signal"
-description: "Create your own Signal widget powered by your AI work history."
+description: "Get early access to Signal — a professional fit-scoring agent trained on your actual AI work history."
 ---
 
 <section class="signal-hero">
-  <p class="signal-hero-eyebrow">Beta</p>
+  <p class="signal-hero-eyebrow">Early Access</p>
   <h1 class="signal-hero-headline">Your own Signal.</h1>
   <p class="signal-hero-sub">
-    Signal lets anyone deploy a professional fit-scoring widget powered by their actual AI conversation history — not a curated resume.
-    Connect your Claude or ChatGPT exports. Share a link. Let Signal do the screening.
+    Signal trains a professional fit-scoring agent on your actual AI conversation history — not a curated resume.
+    Visitors have a real conversation and walk away with an honest fit score.
   </p>
-  <div class="signal-cta-row">
-    <a href="/register/" class="btn btn-primary">Create your Signal</a>
-    <a href="/widget/" class="btn btn-ghost">Try Erik's demo first</a>
+
+  <div class="signal-qualify-block">
+    <p class="signal-qualify-heading">To create yours, you'll need:</p>
+    <ul class="signal-qualify-list">
+      <li>At least a few months of meaningful work done with Claude, ChatGPT, or similar tools</li>
+      <li>The ability to export those conversation histories</li>
+      <li>Willingness to share that data to train your agent</li>
+    </ul>
+    <p class="signal-qualify-note">If that's you, you're in the right place.</p>
   </div>
+
+  <div id="waitlist-form-wrap">
+    <form id="waitlist-form" class="signal-waitlist-form">
+      <input
+        type="email"
+        id="waitlist-email"
+        class="signal-waitlist-input"
+        placeholder="your@email.com"
+        required
+        autocomplete="email"
+      />
+      <button type="submit" class="btn btn-primary" id="waitlist-submit">Request early access</button>
+    </form>
+    <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
+  </div>
+
+  <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
+    <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
+  </div>
+
+  <p class="signal-waitlist-demo-link">
+    Not sure yet? <a href="/widget/">Try Erik's Signal first →</a>
+  </p>
 </section>
+
+<script>
+(function() {
+  var form = document.getElementById('waitlist-form');
+  var emailEl = document.getElementById('waitlist-email');
+  var submitBtn = document.getElementById('waitlist-submit');
+  var errorEl = document.getElementById('waitlist-error');
+  var formWrap = document.getElementById('waitlist-form-wrap');
+  var successEl = document.getElementById('waitlist-success');
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var email = emailEl.value.trim();
+    if (!email) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+    errorEl.style.display = 'none';
+
+    try {
+      var res = await fetch('/api/signal-waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, context: 'article-launch' })
+      });
+      var data = await res.json();
+      if (data.success) {
+        formWrap.style.display = 'none';
+        successEl.style.display = '';
+      } else {
+        throw new Error(data.error || 'Something went wrong');
+      }
+    } catch(err) {
+      errorEl.textContent = err.message || 'Something went wrong. Try again.';
+      errorEl.style.display = '';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Request early access';
+    }
+  });
+})();
+</script>
