@@ -296,6 +296,35 @@
   margin: 0;
 }
 
+// ─── Compact mobile score bar ──────────────────────────────────────────────────
+
+.signal-score-bar-mobile {
+  display: none; // shown via JS on mobile after first score
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: $color-bg-muted;
+  border: 1px solid rgba(196, 181, 253, 0.2);
+  border-radius: 10px;
+  order: 0; // appears before chat panel
+
+  @media (max-width: $breakpoint-md) {
+    &.is-visible { display: flex; }
+  }
+}
+
+.signal-score-bar-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #c4b5fd;
+  line-height: 1;
+}
+
+.signal-score-bar-label {
+  font-size: 12px;
+  color: $color-text-muted;
+}
+
 // ─── Chat Panel ────────────────────────────────────────────────────────────────
 
 .signal-panel--chat {
@@ -306,8 +335,18 @@
 
   @media (max-width: $breakpoint-md) {
     order: 1;
-    height: 520px;
+    height: calc(100vh - 56px - 80px); // leave room for compact score bar
     max-height: none;
+  }
+}
+
+// Sticky input on mobile
+@media (max-width: $breakpoint-md) {
+  .signal-form {
+    position: sticky;
+    bottom: 0;
+    background: $color-bg;
+    z-index: 1;
   }
 }
 

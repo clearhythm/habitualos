@@ -15,6 +15,10 @@ Standalone Netlify app in the HabitualOS monorepo.
 - AI: Claude API via `@anthropic-ai/sdk`
 - Auth: `@habitualos/auth-server`
 
+## Architecture Reference
+
+See `docs/architecture.md` for the full reference: all 9 Firestore collections, all endpoints, streaming chat flow, RAG pipeline, and env vars.
+
 ## Key Patterns
 
 See root `CLAUDE.md` for shared patterns (auth, data layer, endpoint structure).

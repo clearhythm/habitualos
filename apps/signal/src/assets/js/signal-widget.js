@@ -51,6 +51,12 @@ const confidenceBar  = document.getElementById('confidence-bar');
 const confidencePct  = document.getElementById('confidence-pct');
 const reasonEl       = document.getElementById('signal-reason');
 
+// Compact mobile score bar
+const scorePanelEl   = document.querySelector('.signal-panel--score');
+const scoreBarMobile = document.getElementById('score-bar-mobile');
+const scoreBarNum    = document.getElementById('score-bar-num');
+const scoreBarLabel  = document.getElementById('score-bar-label');
+
 // Next step panel
 const nextStepEl      = document.getElementById('signal-next-step');
 const nextStepLabel   = document.getElementById('next-step-label');
@@ -193,6 +199,14 @@ function updateScorePanel(data) {
   if (reason && confidence >= 0.4) {
     reasonEl.textContent = reason;
     reasonEl.classList.add('visible');
+  }
+
+  // Mobile: show compact score bar, hide full score panel
+  if (window.innerWidth < 768 && scoreBarMobile) {
+    scoreBarMobile.classList.add('is-visible');
+    if (scoreBarNum) scoreBarNum.textContent = overall;
+    if (scoreBarLabel) scoreBarLabel.textContent = Math.round(confidence * 100) + '% confidence';
+    if (scorePanelEl) scorePanelEl.style.display = 'none';
   }
 
   // Show next step panel when confidence is high enough and conversation has depth
@@ -414,7 +428,8 @@ input.addEventListener('input', () => {
 });
 
 input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  const isMobile = window.innerWidth < 600;
+  if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
     e.preventDefault();
     const text = input.value.trim();
     if (text) { input.value = ''; input.style.height = 'auto'; sendMessage(text); }

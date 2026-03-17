@@ -193,12 +193,22 @@ async function* streamAnthropicMessages(
 export function createChatStreamHandler(
   chatTypeConfigs: Record<string, ChatTypeConfig>
 ): (req: Request) => Promise<Response> {
+  const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+
   return async function handler(req: Request): Promise<Response> {
+    // CORS preflight
+    if (req.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
     // Only allow POST
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
     }
 
@@ -234,11 +244,11 @@ export function createChatStreamHandler(
       );
     }
 
-    // Validate inputs
-    if (!userId || !userId.startsWith("u-")) {
+    // Validate inputs — accept owner IDs (u-) and visitor IDs (v-) from embed
+    if (!userId || (!userId.startsWith("u-") && !userId.startsWith("v-"))) {
       return new Response(JSON.stringify({ error: "Valid userId is required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
       });
     }
 
@@ -491,6 +501,7 @@ export function createChatStreamHandler(
 
     return new Response(readable, {
       headers: {
+        ...CORS_HEADERS,
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         "X-Accel-Buffering": "no",

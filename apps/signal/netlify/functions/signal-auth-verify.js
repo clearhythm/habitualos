@@ -61,7 +61,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, signalId, displayName })
+      body: JSON.stringify({ success: true, signalId, displayName, userId })
     };
 
   } catch (error) {

@@ -3,12 +3,16 @@ const { searchChunks } = require('./_services/db-signal-context.cjs');
 
 const STOPWORDS = new Set(['the','a','an','and','or','for','to','in','of','on','is','are','was','were','with','that','this']);
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ success: false, error: 'Method not allowed' })
-    };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
   }
 
   try {
@@ -25,7 +29,7 @@ exports.handler = async (event) => {
       if (!signalId || !terms.length) {
         return {
           statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...CORS, 'Content-Type': 'application/json' },
           body: JSON.stringify({ result: { chunks: [], found: 0, message: 'No results' } })
         };
       }
@@ -48,19 +52,19 @@ exports.handler = async (event) => {
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...CORS, 'Content-Type': 'application/json' },
         body: JSON.stringify({ result })
       };
     }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
       body: JSON.stringify({ result: { error: `Unknown tool: ${name}` } })
     };
 
   } catch (error) {
     console.error('[signal-tool-execute] ERROR:', error);
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
   }
 };

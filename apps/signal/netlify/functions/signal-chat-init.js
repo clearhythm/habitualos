@@ -211,16 +211,26 @@ Conversational length: 2-4 sentences per response. No filler. No "Great question
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: CORS, body: '' };
+  }
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
   }
 
   try {
     const { userId, signalId, persona = 'curious' } = JSON.parse(event.body);
 
-    if (!userId || !userId.startsWith('u-')) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Valid userId required' }) };
+    // Accept owner IDs (u-) and visitor IDs (v-) — visitors are generated client-side by embed.js
+    if (!userId || (!userId.startsWith('u-') && !userId.startsWith('v-'))) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Valid userId required' }) };
     }
 
     const useOwnerConfig = signalId && signalId !== 'erik-burns';
@@ -327,12 +337,12 @@ Your first message is already set. Begin evidence gathering immediately after. D
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
       body: JSON.stringify(response)
     };
 
   } catch (error) {
     console.error('[signal-chat-init] ERROR:', error);
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
   }
 };

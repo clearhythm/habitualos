@@ -20,9 +20,16 @@ const { db, admin } = require('@habitualos/db-core');
  *   scores: { skills, alignment, personality, overall, confidence }
  * }
  */
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
   }
 
   try {
@@ -32,7 +39,7 @@ exports.handler = async (event) => {
     } = JSON.parse(event.body);
 
     if (!signalId || !visitorId) {
-      return { statusCode: 400, body: JSON.stringify({ success: false, error: 'signalId and visitorId required' }) };
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'signalId and visitorId required' }) };
     }
 
     const docId = `${signalId}-${visitorId}`;
@@ -52,12 +59,12 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
       body: JSON.stringify({ success: true })
     };
 
   } catch (error) {
     console.error('[signal-lead-save] ERROR:', error);
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
   }
 };
