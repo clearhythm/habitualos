@@ -99,21 +99,24 @@ description: An agentic AI platform built and used daily to explore how AI agent
     <p class="section-intro">These apps were created using HabitualOS. Each explores a different application of agentic AI in daily life. Each helped evolve the toolkit.</p>
 
     {# Toolkit package icons — reused across app cards #}
-    {% macro pkgIcon(name, title) %}
-      <div class="pkg-icon" title="{{ title }}">
-        {% if name === "db-core" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>
-        {% elif name === "auth-server" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
-        {% elif name === "edge-functions" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
-        {% elif name === "chat-storage" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" /></svg>
-        {% elif name === "frontend-utils" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" /></svg>
-        {% elif name === "survey-engine" %}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
-        {% endif %}
+    {% macro pkgIcon(name) %}
+      <div class="pkg-chip">
+        <div class="pkg-icon">
+          {% if name === "db-core" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>
+          {% elif name === "auth-server" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
+          {% elif name === "edge-functions" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+          {% elif name === "chat-storage" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" /></svg>
+          {% elif name === "frontend-utils" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" /></svg>
+          {% elif name === "survey-engine" %}
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+          {% endif %}
+        </div>
+        <span class="pkg-label">{{ name }}</span>
       </div>
     {% endmacro %}
 
@@ -121,21 +124,22 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
       <a href="https://signal.habitualos.com" class="app-card app-card--link">
         <div class="app-card-header">
-          <img src="/assets/images/apps/signal.png" alt="Signal" class="app-card-icon">
+          <div class="app-card-icon"><img src="/assets/images/apps/signal.png" alt="Signal"></div>
           <div>
             <p class="app-card-label">Signal</p>
-            <h3 class="app-card-name">An AI built on real work history — not a resume</h3>
+            <p class="app-card-category">Career intelligence</p>
           </div>
-        </div>
-        <div class="app-card-toolkit">
-          {{ pkgIcon("db-core", "db-core") }}
-          {{ pkgIcon("auth-server", "auth-server") }}
-          {{ pkgIcon("edge-functions", "edge-functions") }}
-          {{ pkgIcon("chat-storage", "chat-storage") }}
-          {{ pkgIcon("frontend-utils", "frontend-utils") }}
         </div>
         <div class="app-card-body">
           <p class="app-card-desc">You've been shipping real things with AI. Your resume doesn't show that. Signal does — through conversation, not claims. Built in a day using HabitualOS infrastructure.</p>
+          <h4 class="app-card-specs-heading">Specifications</h4>
+          <div class="app-card-toolkit">
+            {{ pkgIcon("db-core") }}
+            {{ pkgIcon("auth-server") }}
+            {{ pkgIcon("edge-functions") }}
+            {{ pkgIcon("chat-storage") }}
+            {{ pkgIcon("frontend-utils") }}
+          </div>
           <ul class="app-card-features">
             <li>Dynamic RAG pipeline over structured work history</li>
             <li>Role-adaptive conversation (recruiter, founder, colleague)</li>
@@ -147,21 +151,22 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
       <div class="app-card">
         <div class="app-card-header">
-          <img src="/assets/images/apps/habitual.png" alt="Habitual" class="app-card-icon">
+          <div class="app-card-icon"><img src="/assets/images/apps/habitual.png" alt="Habitual"></div>
           <div>
             <p class="app-card-label">Habitual</p>
-            <h3 class="app-card-name">Agentic daily productivity and habit tracking</h3>
+            <p class="app-card-category">Agentic productivity</p>
           </div>
-        </div>
-        <div class="app-card-toolkit">
-          {{ pkgIcon("db-core", "db-core") }}
-          {{ pkgIcon("auth-server", "auth-server") }}
-          {{ pkgIcon("edge-functions", "edge-functions") }}
-          {{ pkgIcon("chat-storage", "chat-storage") }}
-          {{ pkgIcon("frontend-utils", "frontend-utils") }}
         </div>
         <div class="app-card-body">
           <p class="app-card-desc">A personal operating system for daily life. Specialized agents handle scheduling, practice tracking, and check-ins through a typed signal protocol rather than freeform text.</p>
+          <h4 class="app-card-specs-heading">Specifications</h4>
+          <div class="app-card-toolkit">
+            {{ pkgIcon("db-core") }}
+            {{ pkgIcon("auth-server") }}
+            {{ pkgIcon("edge-functions") }}
+            {{ pkgIcon("chat-storage") }}
+            {{ pkgIcon("frontend-utils") }}
+          </div>
           <ul class="app-card-features">
             <li>Multi-agent orchestration with typed signal protocol</li>
             <li>Conversational UX for scheduling and task creation</li>
@@ -173,22 +178,23 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
       <div class="app-card">
         <div class="app-card-header">
-          <img src="/assets/images/apps/pidgerton.png" alt="Pidgerton" class="app-card-icon">
+          <div class="app-card-icon"><img src="/assets/images/apps/pidgerton.png" alt="Pidgerton"></div>
           <div>
             <p class="app-card-label">Pidgerton</p>
-            <h3 class="app-card-name">A shared journal for two people trying to understand each other better</h3>
+            <p class="app-card-category">Relationship support</p>
           </div>
-        </div>
-        <div class="app-card-toolkit">
-          {{ pkgIcon("db-core", "db-core") }}
-          {{ pkgIcon("auth-server", "auth-server") }}
-          {{ pkgIcon("edge-functions", "edge-functions") }}
-          {{ pkgIcon("chat-storage", "chat-storage") }}
-          {{ pkgIcon("survey-engine", "survey-engine") }}
-          {{ pkgIcon("frontend-utils", "frontend-utils") }}
         </div>
         <div class="app-card-body">
           <p class="app-card-desc">Built for my wife and me during the fog of new parenthood. Log moments through chat, get emotional support, find patterns over time.</p>
+          <h4 class="app-card-specs-heading">Specifications</h4>
+          <div class="app-card-toolkit">
+            {{ pkgIcon("db-core") }}
+            {{ pkgIcon("auth-server") }}
+            {{ pkgIcon("edge-functions") }}
+            {{ pkgIcon("chat-storage") }}
+            {{ pkgIcon("survey-engine") }}
+            {{ pkgIcon("frontend-utils") }}
+          </div>
           <ul class="app-card-features">
             <li>Conversation-driven moment capture (no structured forms)</li>
             <li>Temporal pattern recognition across relationship history</li>
@@ -200,21 +206,22 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
       <div class="app-card">
         <div class="app-card-header">
-          <img src="/assets/images/apps/daily-practice.svg" alt="Daily Practice" class="app-card-icon">
+          <div class="app-card-icon"><img src="/assets/images/apps/daily-practice.svg" alt="Daily Practice"></div>
           <div>
             <p class="app-card-label">Daily Practice</p>
-            <h3 class="app-card-name">Habit tracking and real-time AI coaching</h3>
+            <p class="app-card-category">Habit tracking</p>
           </div>
-        </div>
-        <div class="app-card-toolkit">
-          {{ pkgIcon("db-core", "db-core") }}
-          {{ pkgIcon("auth-server", "auth-server") }}
-          {{ pkgIcon("edge-functions", "edge-functions") }}
-          {{ pkgIcon("survey-engine", "survey-engine") }}
-          {{ pkgIcon("frontend-utils", "frontend-utils") }}
         </div>
         <div class="app-card-body">
           <p class="app-card-desc">Built in a day, used every day. Daily self-care, wellness tracking, and real-time support with AI-generated pattern insights. Currently driving a 30-day wellness challenge.</p>
+          <h4 class="app-card-specs-heading">Specifications</h4>
+          <div class="app-card-toolkit">
+            {{ pkgIcon("db-core") }}
+            {{ pkgIcon("auth-server") }}
+            {{ pkgIcon("edge-functions") }}
+            {{ pkgIcon("survey-engine") }}
+            {{ pkgIcon("frontend-utils") }}
+          </div>
           <ul class="app-card-features">
             <li>Daily check-in via chat or SMS</li>
             <li>AI-generated pattern insights over time</li>
