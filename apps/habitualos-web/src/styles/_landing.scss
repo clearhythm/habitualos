@@ -627,44 +627,22 @@ section.section:nth-of-type(even) {
   }
 }
 
-// App cards (agent-card style from erikburns.com)
+// App cards (full-width, two-col body)
 .app-cards {
-  display: grid;
-  gap: 1.25rem;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
 }
 
 .app-card {
-  display: flex;
-  flex-direction: column;
-  gap: $space-md;
-  padding: $space-xl;
   background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.2s, transform 0.2s;
-
-  &:hover {
-    border-color: rgba(74, 37, 112, 0.35);
-    background: rgba(74, 37, 112, 0.03);
-    transform: translateY(-2px);
-    text-decoration: none;
-    color: inherit;
-  }
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-xl;
 
   html[data-theme="dark"] & {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(255, 255, 255, 0.08);
-
-    &:hover {
-      border-color: rgba(167, 139, 250, 0.45);
-      background: rgba(255, 255, 255, 0.06);
-    }
   }
 }
 
@@ -672,103 +650,112 @@ section.section:nth-of-type(even) {
   display: flex;
   align-items: center;
   gap: $space-md;
+  margin-bottom: $space-md;
 }
 
 .app-card-icon {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: 10px;
   object-fit: contain;
   flex-shrink: 0;
+}
 
-  &--emoji {
-    font-size: 2rem;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: rgba(74, 37, 112, 0.1);
+.app-card-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.2rem;
+
+  html[data-theme="dark"] & {
+    color: lighten(#4a2570, 30%);
+  }
+}
+
+.app-card-name {
+  font-size: $font-size-2xl;
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-card-body {
+  display: grid;
+  gap: $space-xl;
+
+  @media (min-width: $breakpoint-lg) {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.app-card-description {
+  p {
+    line-height: 1.75;
+    color: $color-text-muted;
+    margin-bottom: $space-sm;
 
     html[data-theme="dark"] & {
-      background: rgba(167, 139, 250, 0.12);
+      color: $dark-color-text-muted;
     }
   }
 }
 
-.app-name {
-  font-size: $font-size-xl;
-  font-weight: 700;
-  margin: 0;
-}
-
-.app-subtitle {
+.app-card-link {
   font-size: $font-size-sm;
-  color: #7c5aa0;
-  margin: 0;
+  font-weight: 600;
+  color: $color-primary;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
 
   html[data-theme="dark"] & {
-    color: rgba(167, 139, 250, 0.75);
+    color: lighten(#4a2570, 30%);
   }
 }
 
-.app-description {
-  font-size: $font-size-sm;
-  line-height: 1.6;
-  margin: 0;
-  flex: 1;
-}
+.app-card-details {
+  h4 {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: $space-sm;
 
-.app-features {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  margin-top: auto;
+    html[data-theme="dark"] & {
+      color: $dark-color-text-muted;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
 
   li {
-    padding: $space-xs 0;
-    padding-left: $space-md;
+    padding: $space-xs 0 $space-xs $space-md;
     position: relative;
     font-size: $font-size-sm;
     color: $color-text-muted;
     border-bottom: 1px solid $color-border;
 
-    &:last-child {
-      border-bottom: none;
-    }
+    &:last-child { border-bottom: none; }
 
     &::before {
       content: "→";
       position: absolute;
       left: 0;
-      color: #4a2570;
-
-      html[data-theme="dark"] & {
-        color: lighten(#4a2570, 30%);
-      }
+      color: $color-primary;
     }
 
     html[data-theme="dark"] & {
       color: $dark-color-text-muted;
-      border-bottom-color: $dark-color-border;
+      border-bottom-color: rgba(255, 255, 255, 0.08);
+
+      &::before { color: lighten(#4a2570, 30%); }
     }
-  }
-}
-
-.app-link {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  color: #4a2570;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-
-  html[data-theme="dark"] & {
-    color: lighten(#4a2570, 30%);
   }
 }
 
