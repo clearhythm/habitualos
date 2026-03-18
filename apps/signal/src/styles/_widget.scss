@@ -548,6 +548,11 @@
 
 // ─── Homepage landing styles ───────────────────────────────────────────────────
 
+@keyframes signal-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
 .signal-hero {
   max-width: 720px;
   margin: 0 auto;
@@ -558,13 +563,37 @@
   }
 }
 
+.signal-hero--home {
+  text-align: center;
+  padding-top: $space-2xl;
+
+  .signal-hero-sub {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .signal-cta-row {
+    justify-content: center;
+  }
+}
+
 .signal-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
   font-size: $font-size-sm;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: $color-primary;
   margin-bottom: $space-md;
+}
+
+.signal-hero-eyebrow-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
 }
 
 .signal-hero-headline {
@@ -599,6 +628,13 @@
 .signal-how-title {
   font-size: $font-size-2xl;
   font-weight: 600;
+  margin-bottom: $space-md;
+}
+
+.signal-how-sub {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  line-height: 1.6;
   margin-bottom: $space-xl;
 }
 
