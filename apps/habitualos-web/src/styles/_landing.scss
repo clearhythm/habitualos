@@ -721,25 +721,39 @@ section.section:nth-of-type(even) {
   flex: 1;
 }
 
-.app-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
+.app-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   margin-top: auto;
-}
 
-.app-tag {
-  font-size: 0.68rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  background: rgba(74, 37, 112, 0.08);
-  border: 1px solid rgba(74, 37, 112, 0.18);
-  color: #4a2570;
+  li {
+    padding: $space-xs 0;
+    padding-left: $space-md;
+    position: relative;
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    border-bottom: 1px solid $color-border;
 
-  html[data-theme="dark"] & {
-    background: rgba(167, 139, 250, 0.08);
-    border-color: rgba(167, 139, 250, 0.18);
-    color: rgba(167, 139, 250, 0.9);
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #4a2570;
+
+      html[data-theme="dark"] & {
+        color: lighten(#4a2570, 30%);
+      }
+    }
+
+    html[data-theme="dark"] & {
+      color: $dark-color-text-muted;
+      border-bottom-color: $dark-color-border;
+    }
   }
 }
 
