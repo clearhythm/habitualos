@@ -701,16 +701,57 @@ section.section:nth-of-type(even) {
   }
 }
 
-.app-card-link {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  color: $color-primary;
+.app-card--link {
+  display: block;
   text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
 
-  &:hover { text-decoration: underline; }
+  &:hover {
+    border-color: rgba(74, 37, 112, 0.4);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+
+    html[data-theme="dark"] & {
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+  }
+}
+
+.app-card-toolkit {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: $space-md;
+  padding-top: $space-sm;
+  border-top: 1px solid $color-border;
 
   html[data-theme="dark"] & {
-    color: lighten(#4a2570, 30%);
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.pkg-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #4a2570;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    fill: none;
+  }
+
+  html[data-theme="dark"] & {
+    background: lighten(#4a2570, 15%);
   }
 }
 
