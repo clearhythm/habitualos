@@ -11,6 +11,11 @@ export default createChatStreamHandler({
     toolExecuteEndpoint: "/api/signal-tool-execute",
     signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
   },
+  "signal-demo": {
+    initEndpoint: "/api/signal-demo-init",
+    toolExecuteEndpoint: "/api/signal-tool-execute",
+    signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
+  },
 });
 
 export const config = {
