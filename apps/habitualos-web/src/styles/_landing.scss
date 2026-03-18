@@ -783,31 +783,20 @@ section.section:nth-of-type(even) {
 
 
 .app-card-features {
-  list-style: none;
-  padding: 0;
+  list-style: disc;
+  padding: 0 0 0 1.1rem;
   margin: 0;
 
   li {
-    padding: $space-xs 0 $space-xs $space-md;
-    position: relative;
+    padding: $space-xs 0;
     font-size: $font-size-sm;
     color: $color-text-muted;
-    border-bottom: 1px solid $color-border;
 
-    &:last-child { border-bottom: none; }
-
-    &::before {
-      content: "→";
-      position: absolute;
-      left: 0;
-      color: $color-text-muted;
-    }
+    &::marker { color: #4a2570; }
 
     html[data-theme="dark"] & {
       color: $dark-color-text-muted;
-      border-bottom-color: rgba(255, 255, 255, 0.08);
-
-      &::before { color: $dark-color-text-muted; }
+      &::marker { color: lighten(#4a2570, 30%); }
     }
   }
 }
