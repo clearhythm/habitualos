@@ -656,7 +656,7 @@ section.section:nth-of-type(even) {
   transition: border-color 0.2s, transform 0.2s;
 
   &:hover {
-    border-color: rgba(74, 37, 112, 0.4);
+    border-color: rgba(167, 139, 250, 0.4);
     transform: translateY(-2px);
     text-decoration: none;
     color: inherit;
@@ -678,7 +678,7 @@ section.section:nth-of-type(even) {
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  background: rgba(74, 37, 112, 0.25);
+  background: rgba(167, 139, 250, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -705,12 +705,8 @@ section.section:nth-of-type(even) {
 .app-card-category {
   font-size: $font-size-sm;
   font-weight: 500;
-  color: #4a2570;
+  color: rgba(167, 139, 250, 0.75);
   margin: 0;
-
-  html[data-theme="dark"] & {
-    color: lighten(#4a2570, 30%);
-  }
 }
 
 .app-card-desc {
@@ -792,11 +788,11 @@ section.section:nth-of-type(even) {
     font-size: $font-size-sm;
     color: $color-text-muted;
 
-    &::marker { color: rgba(74, 37, 112, 0.4); }
+    &::marker { color: rgba(167, 139, 250, 0.5); }
 
     html[data-theme="dark"] & {
       color: $dark-color-text-muted;
-      &::marker { color: rgba(167, 139, 250, 0.4); }
+      &::marker { color: rgba(167, 139, 250, 0.5); }
     }
   }
 }
