@@ -734,7 +734,16 @@ section.section:nth-of-type(even) {
 .pkg-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid $color-border;
+  background: $color-bg-muted;
+
+  html[data-theme="dark"] & {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .pkg-label {
@@ -753,39 +762,25 @@ section.section:nth-of-type(even) {
 }
 
 .pkg-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #4a2570;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
   svg {
-    width: 13px;
-    height: 13px;
-    stroke: #fff;
+    width: 14px;
+    height: 14px;
+    stroke: $color-text-muted;
     fill: none;
   }
 
   html[data-theme="dark"] & {
-    background: lighten(#4a2570, 15%);
+    svg { stroke: $dark-color-text-muted; }
   }
 }
 
-.app-card-specs-heading {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  color: $color-text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: $space-md 0 $space-sm;
-
-  html[data-theme="dark"] & {
-    color: $dark-color-text-muted;
-  }
-}
 
 .app-card-features {
   list-style: none;
