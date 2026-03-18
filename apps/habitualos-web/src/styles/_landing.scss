@@ -627,10 +627,10 @@ section.section:nth-of-type(even) {
   }
 }
 
-// App cards (simplified, no screenshots)
+// App cards (agent-card style from erikburns.com)
 .app-cards {
   display: grid;
-  gap: $space-lg;
+  gap: 1.25rem;
 
   @media (min-width: $breakpoint-md) {
     grid-template-columns: repeat(2, 1fr);
@@ -638,52 +638,108 @@ section.section:nth-of-type(even) {
 }
 
 .app-card {
-  padding: $space-lg;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  padding: $space-xl;
   background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s, transform 0.2s;
+
+  &:hover {
+    border-color: rgba(74, 37, 112, 0.35);
+    background: rgba(74, 37, 112, 0.03);
+    transform: translateY(-2px);
+    text-decoration: none;
+    color: inherit;
+  }
 
   html[data-theme="dark"] & {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      border-color: rgba(167, 139, 250, 0.45);
+      background: rgba(255, 255, 255, 0.06);
+    }
   }
 }
 
 .app-card-header {
-  margin-bottom: $space-sm;
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+}
+
+.app-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+
+  &--emoji {
+    font-size: 2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(74, 37, 112, 0.1);
+
+    html[data-theme="dark"] & {
+      background: rgba(167, 139, 250, 0.12);
+    }
+  }
 }
 
 .app-name {
   font-size: $font-size-xl;
   font-weight: 700;
-  margin-bottom: 0.25rem;
+  margin: 0;
 }
 
 .app-subtitle {
   font-size: $font-size-sm;
-  color: $color-text-muted;
+  color: #7c5aa0;
   margin: 0;
 
   html[data-theme="dark"] & {
-    color: $dark-color-text-muted;
+    color: rgba(167, 139, 250, 0.75);
   }
 }
 
 .app-description {
   font-size: $font-size-sm;
   line-height: 1.6;
-  margin-bottom: $space-sm;
+  margin: 0;
+  flex: 1;
 }
 
-.app-details {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  padding-left: 1.25rem;
-  margin-bottom: $space-sm;
-  line-height: 1.7;
+.app-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.app-tag {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  background: rgba(74, 37, 112, 0.08);
+  border: 1px solid rgba(74, 37, 112, 0.18);
+  color: #4a2570;
 
   html[data-theme="dark"] & {
-    color: $dark-color-text-muted;
+    background: rgba(167, 139, 250, 0.08);
+    border-color: rgba(167, 139, 250, 0.18);
+    color: rgba(167, 139, 250, 0.9);
   }
 }
 
