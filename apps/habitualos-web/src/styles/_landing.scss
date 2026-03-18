@@ -137,6 +137,74 @@ section.section:nth-of-type(even) {
   margin-bottom: $space-md;
 }
 
+.agentic-split {
+  display: grid;
+  gap: $space-xl;
+  align-items: center;
+  margin-bottom: $space-xl;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: 2fr 3fr;
+  }
+}
+
+.agentic-split > div {
+  padding-top: $space-lg;
+}
+
+.agentic-split-ship {
+  img {
+    width: 100%;
+    max-width: 400px;
+    display: block;
+    margin: 0 auto;
+  }
+}
+
+.pullquote {
+  border-left: 4px solid #4a2570;
+  padding: $space-lg $space-xl;
+  margin: $space-xl 0;
+
+  html[data-theme="dark"] & {
+    border-left-color: lighten(#4a2570, 25%);
+  }
+}
+
+.pullquote-text {
+  font-size: $font-size-2xl;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: $space-sm;
+}
+
+.pullquote-attribution {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  font-style: normal;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+.why-body {
+  font-size: $font-size-lg;
+  line-height: 1.75;
+  margin-bottom: $space-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-subtitle {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+}
+
 .section-intro {
   font-size: $font-size-lg;
   color: $color-text-muted;
@@ -290,10 +358,105 @@ section.section:nth-of-type(even) {
   }
 }
 
+// Toolkit (packages) grid
+.packages-grid {
+  display: grid;
+  gap: $space-md;
+  grid-template-columns: repeat(3, 1fr);
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.package-item {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: $space-lg;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+
+  html[data-theme="dark"] & {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.package-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #4a2570;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $space-sm;
+  flex-shrink: 0;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    stroke: #fff;
+    fill: none;
+  }
+
+  html[data-theme="dark"] & {
+    background: lighten(#4a2570, 15%);
+  }
+}
+
+.package-name {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #4a2570;
+  margin-bottom: $space-xs;
+  letter-spacing: 0.01em;
+
+  html[data-theme="dark"] & {
+    color: lighten(#4a2570, 30%);
+  }
+}
+
+.package-tagline {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  margin-bottom: $space-xs;
+}
+
+.package-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+// Signal card logo display
+.signal-logo-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  background: #0a0a0f;
+  border-radius: 8px;
+}
+
+.signal-card-logo {
+  width: 120px;
+  height: auto;
+}
+
 // Tech stack grid
 .stack-ship {
-  padding-top: $space-3xl;
-  margin-top: $space-3xl;
+  padding-top: $space-lg;
+  margin-top: $space-lg;
   text-align: center;
 }
 
@@ -403,6 +566,60 @@ section.section:nth-of-type(even) {
 .stack-item-desc {
   font-size: $font-size-sm;
   color: $color-text-muted;
+  margin: 0;
+
+  html[data-theme="dark"] & {
+    color: $dark-color-text-muted;
+  }
+}
+
+// Value cards (3-up)
+.values-grid {
+  display: grid;
+  gap: $space-lg;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.value-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: $space-lg;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  html[data-theme="dark"] & {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.value-card-icon {
+  margin-bottom: $space-md;
+
+  svg {
+    width: 40px;
+    height: 40px;
+    stroke: #4a2570;
+    fill: none;
+
+    html[data-theme="dark"] & {
+      stroke: lighten(#4a2570, 35%);
+    }
+  }
+}
+
+.value-card-title {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  margin-bottom: $space-sm;
+}
+
+.value-card-body {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.6;
   margin: 0;
 
   html[data-theme="dark"] & {

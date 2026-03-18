@@ -40,7 +40,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(to bottom, #FF8000 0%, #764ba2 100%);
+  background: linear-gradient(to bottom, #FF9A00 0%, #E05000 100%);
   color: white;
   z-index: 0;
 
@@ -48,7 +48,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, #E07000 0%, #5d3a82 100%);
+    background: linear-gradient(to bottom, #FFB340 0%, #C94000 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: -1;

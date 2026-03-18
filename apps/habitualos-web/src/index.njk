@@ -10,60 +10,80 @@ description: An agentic AI platform built and used daily to explore how AI agent
     <img src="/assets/images/habitualos_vortex2.png" alt="" class="hero-ring">
     <h1 class="hero-title">HabitualOS</h1>
     <p class="hero-tagline">
-      An open-source, modular prototyping kit for agentic apps,<br class="d-sm-block d-none"> featuring wiser agents, saner humans, and faster ships.
+      The open-source, modular prototyping kit for agentic apps,<br class="d-sm-block d-none"> featuring wiser agents, saner humans, and faster ships.
     </p>
     <div class="hero-cta">
-      <a href="#stack" class="btn btn-primary">Explore the Work</a>
+      <a href="#toolkit" class="btn btn-primary">Explore the Work</a>
       <a href="https://github.com/clearhythm/habitualos" class="btn btn-ghost">GitHub Repo</a>
     </div>
   </div>
 </section>
 
-<!-- Stack -->
-<section class="section" id="stack">
+<!-- Toolkit -->
+<section class="section" id="toolkit">
   <div class="container">
-    <h2 class="section-title">Built on Standards</h2>
-    <p class="section-intro">HabitualOS combines many technologies into one, enabling rapid prototyping of just about any human agent workflow imaginable.</p>
+    <h2 class="section-title">The Toolkit</h2>
+    <p class="section-intro">Every agentic app needs the same foundation: auth, streaming chat, data access, session management. Instead of rebuilding them each time, I extracted them. These are the core functional modules of HabitualOS.</p>
 
-    <div class="stack-grid">
-      <a class="stack-item" href="https://platform.claude.com/">
-        <div class="stack-item-icon">
-          <img src="/assets/images/icons/anthropic.svg" alt="Anthropic" class="stack-logo">
+    <div class="packages-grid">
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" /></svg>
         </div>
-        <p class="stack-item-label">Claude API</p>
-        <p class="stack-item-desc">Tool use, structured outputs, prompt caching, extended thinking, streaming responses</p>
-      </a>
-      <div class="stack-item">
-        <div class="stack-item-icon stack-item-icon--text">🦾</div>
-        <p class="stack-item-label">Multi-agent orchestration</p>
-        <p class="stack-item-desc">Typed signal protocols, agent-to-agent handoffs, long-context memory, autonomous scheduling</p>
+        <p class="package-name">@habitualos/db-core</p>
+        <p class="package-tagline">Firestore CRUD, used everywhere</p>
+        <p class="package-desc">A tiny, collection-agnostic data layer with sanitization, server timestamps, and a simple query API. One place to fix a bug, one API to learn. Every function in every app uses it.</p>
       </div>
-      <a class="stack-item" href="https://nodejs.org">
-        <div class="stack-item-icon">
-          <img src="/assets/images/icons/nodejs.svg" alt="Node.js" class="stack-logo">
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
         </div>
-        <p class="stack-item-label">Node.js + Netlify Functions</p>
-        <p class="stack-item-desc">Serverless backend, edge functions for streaming, scheduled cron agents</p>
-      </a>
-      <a class="stack-item" href="https://firebase.google.com/products/firestore">
-        <div class="stack-item-icon">
-          <img src="/assets/images/icons/firebase.svg" alt="Firebase" class="stack-logo">
+        <p class="package-name">@habitualos/auth-server</p>
+        <p class="package-tagline">Server-side auth, once</p>
+        <p class="package-desc">Middleware and user management shared across all apps. Authentication logic lives in one package — not duplicated into every function handler or reinvented for each new app.</p>
+      </div>
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
         </div>
-        <p class="stack-item-label">Google Firestore</p>
-        <p class="stack-item-desc">Real-time database, user-partitioned data architecture, service layer pattern</p>
-      </a>
-      <a class="stack-item" href="https://www.11ty.dev">
-        <div class="stack-item-icon">
-          <img src="/assets/images/icons/eleventy.svg" alt="Eleventy" class="stack-logo">
+        <p class="package-name">@habitualos/edge-functions</p>
+        <p class="package-tagline">Streaming AI chat infrastructure</p>
+        <p class="package-desc">The core that makes every AI conversation feel fast — token-by-token SSE, tool call routing, typed message protocol. Built once for Netlify Edge Functions, deployed to every app.</p>
+      </div>
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" /></svg>
         </div>
-        <p class="stack-item-label">11ty + Nunjucks</p>
-        <p class="stack-item-desc">Static site generation, local-first where possible, modular template architecture</p>
-      </a>
-      <a class="stack-item" href="https://github.com/clearhythm/zero-gravity">
-        <div class="stack-item-icon stack-item-icon--text">🪐</div>
-        <p class="stack-item-label">Zero Gravity</p>
-        <p class="stack-item-desc">Semantic microformat for agent-parseable content, structured metadata that preserves document readability</p>
-      </a>
+        <p class="package-name">@habitualos/chat-storage</p>
+        <p class="package-tagline">Conversation persistence, drop-in</p>
+        <p class="package-desc">Save and retrieve chat history with two handlers. Drop them into any app's function directory and conversation continuity is solved. No schema design, no wiring.</p>
+      </div>
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" /></svg>
+        </div>
+        <p class="package-name">@habitualos/frontend-utils</p>
+        <p class="package-tagline">Client-side session management</p>
+        <p class="package-desc">localStorage-backed user IDs, sign-in/out, auth guards, and intent handling. The 200 lines every app needs, written once and shared — so each new frontend starts with session management already working.</p>
+      </div>
+      <div class="package-item">
+        <div class="package-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+        </div>
+        <p class="package-name">@habitualos/survey-engine</p>
+        <p class="package-tagline">Structured measurement layer</p>
+        <p class="package-desc">Survey definitions, response tracking, and focus dimension computation. Built when one app needed measurement — extracted so the next one gets it for free.</p>
+      </div>
+    </div>
+
+    <div class="agentic-split">
+      <blockquote class="pullquote">
+        <p class="pullquote-text">"I think that most people are underestimating just how radical the upside of AI could be."</p>
+        <p class="pullquote-attribution">— Dario Amodei, CEO, Anthropic</p>
+      </blockquote>
+      <div>
+        <p class="section-intro">The people who figure out how to work with agents now are building intuition that can't be shortcut later. HabitualOS exists to collapse that iteration cost: <strong>prototype any human-agent interaction pattern imaginable, at a fraction of the usual time</strong>.</p>
+      </div>
     </div>
 
     <div class="stack-ship">
@@ -76,7 +96,43 @@ description: An agentic AI platform built and used daily to explore how AI agent
 <section class="section" id="systems">
   <div class="container">
     <h2 class="section-title">Habitual Apps</h2>
-    <p class="section-intro">Below are three live production apps that were built using HabitualOS. Each explores a different dimension of using agentic AI in daily life.</p>
+    <p class="section-intro">Live production apps built using HabitualOS. Each explores a different dimension of using agentic AI in daily life — and each one made the toolkit better.</p>
+
+    <!-- Signal card -->
+    <div class="system-card">
+      <div class="system-card-header">
+        <h3 class="system-name">Signal</h3>
+        <p class="system-subtitle">An AI built on real work history — not a resume</p>
+      </div>
+      <div class="system-card-body">
+        <div class="system-card-media">
+          <div class="signal-logo-display">
+            <img src="/assets/images/signal-logo.png" alt="Signal" class="signal-card-logo">
+          </div>
+        </div>
+        <div class="system-card-content">
+          <div class="system-description">
+            <p>
+              You've been shipping real things with AI. Your resume doesn't show that.
+              Signal does — through conversation, not claims. Visitors have a real
+              conversation with an AI trained on actual work history, and walk away
+              with an honest fit score across skills, alignment, and personality.
+              Built in a day using HabitualOS infrastructure.
+            </p>
+          </div>
+          <div class="system-details">
+            <h4>Technical highlights</h4>
+            <ul>
+              <li>Dynamic RAG pipeline over structured work history</li>
+              <li>Role-adaptive conversation (recruiter, founder, colleague)</li>
+              <li>Live fit scoring across skills, alignment, and personality</li>
+              <li>Embeddable widget with streaming SSE responses</li>
+              <li><a href="https://signal.habitualos.com">signal.habitualos.com</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Habitual app card -->
     <div class="system-card">
@@ -199,8 +255,8 @@ description: An agentic AI platform built and used daily to explore how AI agent
   </div>
 </section>
 
-<!-- Approach -->
-<section class="section" id="approach">
+<!-- Principles -->
+<section class="section" id="principles">
   <div class="container">
     <h2 class="section-title">Principles of HabitualOS</h2>
     <p class="section-intro">Daily use of these systems has produced an opinionated frame of reference about what makes agentic AI actually empowering.</p>
@@ -209,41 +265,72 @@ description: An agentic AI platform built and used daily to explore how AI agent
       <div class="principle">
         <span class="principle-number">1</span>
         <p class="principle-title">Relational intelligence, not tooling</p>
-        <p class="principle-body">
-          How you meet AI determines what you can do together. Not a tool you
-          operate, but a form of intelligence you collaborate with. The products here
-          are built on that: agents with personality and stance, designed to meet
-          you where you are.
-        </p>
+        <p class="principle-body">How you meet AI determines what you can do together. Not a tool you operate, but a form of intelligence you collaborate with. The products here are built on that: agents with personality and stance, designed to meet you where you are.</p>
       </div>
       <div class="principle">
         <span class="principle-number">2</span>
         <p class="principle-title">When it needs to work, you learn</p>
-        <p class="principle-body">
-          Demo apps optimize for impressiveness. Production tools optimize for
-          reliability. Every system here gets used the same day that it's built.
-          That's the only test that matters, and the only one that teaches anything.
-        </p>
+        <p class="principle-body">Demo apps optimize for impressiveness. Production tools optimize for reliability. Every system here gets used the same day that it's built. That's the only test that matters, and the only one that teaches anything.</p>
       </div>
       <div class="principle">
         <span class="principle-number">3</span>
         <p class="principle-title">Constraints enable real delegation</p>
-        <p class="principle-body">
-          The more defined an agent's behavior, the more you can actually rely on it.
-          Vague outputs require constant supervision. Clear interfaces make it possible
-          to genuinely hand work off and trust that it lands.
-        </p>
+        <p class="principle-body">The more defined an agent's behavior, the more you can actually rely on it. Vague outputs require constant supervision. Clear interfaces make it possible to genuinely hand work off and trust that it lands.</p>
       </div>
       <div class="principle">
         <span class="principle-number">4</span>
         <p class="principle-title">Embodiment fuels productivity</p>
-        <p class="principle-body">
-          Productivity without embodiment leads to burnout. Embodiment without
-          direction goes nowhere. As AI takes on more cognitive overhead, the human's
-          irreplaceable contribution becomes clearer: presence, judgment, lived
-          experience. HabitualOS holds both halves.
-        </p>
+        <p class="principle-body">Productivity without embodiment leads to burnout. Embodiment without direction goes nowhere. As AI takes on more cognitive overhead, the human's irreplaceable contribution becomes clearer: presence, judgment, lived experience. HabitualOS holds both halves.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stack -->
+<section class="section" id="stack">
+  <div class="container">
+    <h2 class="section-title">Built on Standards</h2>
+    <p class="section-intro">HabitualOS combines many technologies into one, enabling rapid prototyping of just about any human agent workflow imaginable.</p>
+
+    <div class="stack-grid">
+      <a class="stack-item" href="https://platform.claude.com/">
+        <div class="stack-item-icon">
+          <img src="/assets/images/icons/anthropic.svg" alt="Anthropic" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Claude API</p>
+        <p class="stack-item-desc">Tool use, structured outputs, prompt caching, extended thinking, streaming responses</p>
+      </a>
+      <div class="stack-item">
+        <div class="stack-item-icon stack-item-icon--text">🦾</div>
+        <p class="stack-item-label">Multi-agent orchestration</p>
+        <p class="stack-item-desc">Typed signal protocols, agent-to-agent handoffs, long-context memory, autonomous scheduling</p>
+      </div>
+      <a class="stack-item" href="https://nodejs.org">
+        <div class="stack-item-icon">
+          <img src="/assets/images/icons/nodejs.svg" alt="Node.js" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Node.js + Netlify Functions</p>
+        <p class="stack-item-desc">Serverless backend, edge functions for streaming, scheduled cron agents</p>
+      </a>
+      <a class="stack-item" href="https://firebase.google.com/products/firestore">
+        <div class="stack-item-icon">
+          <img src="/assets/images/icons/firebase.svg" alt="Firebase" class="stack-logo">
+        </div>
+        <p class="stack-item-label">Google Firestore</p>
+        <p class="stack-item-desc">Real-time database, user-partitioned data architecture, service layer pattern</p>
+      </a>
+      <a class="stack-item" href="https://www.11ty.dev">
+        <div class="stack-item-icon">
+          <img src="/assets/images/icons/eleventy.svg" alt="Eleventy" class="stack-logo">
+        </div>
+        <p class="stack-item-label">11ty + Nunjucks</p>
+        <p class="stack-item-desc">Static site generation, local-first where possible, modular template architecture</p>
+      </a>
+      <a class="stack-item" href="https://github.com/clearhythm/zero-gravity">
+        <div class="stack-item-icon stack-item-icon--text">🪐</div>
+        <p class="stack-item-label">Zero Gravity</p>
+        <p class="stack-item-desc">Semantic microformat for agent-parseable content, structured metadata that preserves document readability</p>
+      </a>
     </div>
   </div>
 </section>
