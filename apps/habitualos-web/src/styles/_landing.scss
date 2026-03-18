@@ -725,12 +725,6 @@ section.section:nth-of-type(even) {
   gap: 0.4rem;
   flex-wrap: wrap;
   margin-top: $space-md;
-  padding-top: $space-sm;
-  border-top: 1px solid $color-border;
-
-  html[data-theme="dark"] & {
-    border-top-color: rgba(255, 255, 255, 0.08);
-  }
 }
 
 .pkg-icon {
@@ -756,19 +750,6 @@ section.section:nth-of-type(even) {
 }
 
 .app-card-details {
-  h4 {
-    font-size: $font-size-sm;
-    font-weight: 600;
-    color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: $space-sm;
-
-    html[data-theme="dark"] & {
-      color: $dark-color-text-muted;
-    }
-  }
-
   ul {
     list-style: none;
     padding: 0;
