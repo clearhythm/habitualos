@@ -6,7 +6,8 @@ const {
   createSurveyDefinition,
   getResponsesByUser,
   getOpenSurveyAction,
-  createSurveyAction
+  createSurveyAction,
+  surveyTools
 } = require('@habitualos/survey-engine');
 
 const SURVEY_ID = 'survey-obi-v1';
@@ -39,7 +40,7 @@ async function ensureSurveyDefinition() {
   }
 }
 
-const tools = [
+const practiceTools = [
   {
     name: 'get_practice_history',
     description: "Fetch the user's practice log entries including their written reflections. Use this when the user asks about their history, patterns, or what they've noticed across practices.",
@@ -110,7 +111,7 @@ exports.handler = async (event) => {
     ]);
 
     // Smart check-in trigger
-    let checkInMode = null;
+    let pendingSurvey = null;
     try {
       const todayResponses = allResponses
         .filter(r => toDatePacific(r._createdAt) === todayPT)
@@ -119,7 +120,7 @@ exports.handler = async (event) => {
       const todayLogs = practiceLogs.filter(l => l.timestamp && toDatePacific(l.timestamp) === todayPT);
 
       if (todayResponses.length === 0) {
-        // No check-in today — auto-trigger
+        // No check-in today — create/get open survey action
         let action = await getOpenSurveyAction(SURVEY_ID, userId);
         if (!action || action.date !== todayPT) {
           const { id } = await createSurveyAction({
@@ -131,7 +132,7 @@ exports.handler = async (event) => {
           });
           action = { id };
         }
-        checkInMode = { actionId: action.id, context: 'first' };
+        pendingSurvey = { actionId: action.id, context: 'first' };
       } else {
         // Check-in done today — trigger again only if practices logged since last check-in
         const lastCheckInTime = new Date(todayResponses[0]._createdAt);
@@ -144,7 +145,7 @@ exports.handler = async (event) => {
             focusDimensions: ['Resistance', 'Self-efficacy', 'Inner access'],
             date: todayPT
           });
-          checkInMode = { actionId: id, context: 'post-practice' };
+          pendingSurvey = { actionId: id, context: 'post-practice' };
         }
       }
     } catch (err) {
@@ -176,44 +177,25 @@ exports.handler = async (event) => {
       timeZone: timezone
     });
 
-    const checkInPrompt = checkInMode ? `== DAILY CHECK-IN ==
+    const pendingSurveyPrompt = pendingSurvey ? `== PENDING CHECK-IN ==
 
-${checkInMode.context === 'post-practice' ? 'You\'ve completed your practices today. Before coaching, offer a quick post-practice check-in: "You\'ve done your practices — want a quick post-practice check-in? (Say skip to go straight to coaching.)" If they skip, proceed to normal coaching immediately. Otherwise, do the three questions below.' : 'Before anything else, do today\'s brief check-in. Three questions, one at a time, in this order:'}
-1. Resistance — how much did you resist getting started today?
-2. Self-efficacy — how confident are you about completing all 30 days?
-3. Inner access — how available do you feel to yourself right now?
+There is a pending daily check-in survey for this user (surveyActionId: ${pendingSurvey.actionId}).
+${pendingSurvey.context === 'post-practice' ? 'The user has logged practices since their last check-in.' : ''}
+At the start of the conversation, mention this naturally and ask if they\'d like to do it now.
+For example: "Before we dive in — there\'s a quick check-in ready for you. Want to do that first, or would you rather just chat?"
+If they say yes, call start_survey({ surveyActionId: "${pendingSurvey.actionId}" }) to begin.
+If they say no or later, respect that and proceed normally.
+Do NOT start asking survey questions unless you have called start_survey first.
 
-Scale is 1–5 for each:
-- Resistance: 1 = flowed right in, 5 = had to really push
-- Self-efficacy: 1 = shaky, 5 = solid
-- Inner access: 1 = closed/scattered, 5 = present/open
-
-Rules:
-- ONE question per message. Never combine.
-- One brief sentence describing what the dimension means, then ask for 1–5.
-- If they give a number with no context, ask one brief follow-up: what's behind that?
-- If they give a number WITH context, reflect in one sentence (Obi-Wai voice), then move on.
-- No cheerleading. Calm, observational.
-
-After all 3: "That's all three. Want me to save this?" When they confirm, emit the signal below exactly, then offer to continue into coaching or close.
-If they want to skip mid-way, emit the signal with whatever dimensions were scored.
-
-STORE_MEASUREMENT
----
-{
-  "surveyActionId": "${checkInMode.actionId}",
-  "dimensions": [
-    { "name": "Resistance", "score": <1-5>, "notes": "<their words, first person>" },
-    { "name": "Self-efficacy", "score": <1-5>, "notes": "<their words, first person>" },
-    { "name": "Inner access", "score": <1-5>, "notes": "<their words, first person>" }
-  ]
-}
+Survey tools available: start_survey, submit_survey_answer, store_survey_results, abandon_survey.
+After all answers are collected, summarize and ask the user to confirm before calling store_survey_results.
+If the user wants to stop mid-survey, call abandon_survey.
 
 ==
 
 ` : '';
 
-    const systemPrompt = `${checkInPrompt}You are Obi-Wai, a wise companion helping someone discover what they need to practice today.
+    const systemPrompt = `${pendingSurveyPrompt}You are Obi-Wai, a wise companion helping someone discover what they need to practice today.
 
 Your voice:
 - Calm, observant, present-tense
@@ -287,7 +269,7 @@ MESSAGE: I see you. Ready enough. Two or three minutes. Your body knows.`;
       body: JSON.stringify({
         success: true,
         systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-        tools
+        tools: [...practiceTools, ...surveyTools]
       })
     };
 
