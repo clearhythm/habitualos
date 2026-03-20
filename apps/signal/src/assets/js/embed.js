@@ -448,10 +448,6 @@
 
   // ── Send message ───────────────────────────────────────────────────────────
 
-  function stripScoreBlock(text) {
-    return text.replace(/\n*FIT_SCORE_UPDATE\s*\n---\s*\n\{[\s\S]*?\}/m, '').trim();
-  }
-
   async function sendMessage(text) {
     if (isStreaming || !text.trim()) return;
 
@@ -521,16 +517,22 @@
 
           if (event.type === 'token') {
             fullResponse += event.text;
-            assistantEl.textContent = stripScoreBlock(fullResponse);
+            assistantEl.textContent = fullResponse;
             els.messages.scrollTop = els.messages.scrollHeight;
+          } else if (event.type === 'tool_complete') {
+            if (event.tool === 'update_fit_score') {
+              const { scores, reason, nextStep } = event.result;
+              const nextStepLabels = {
+                hot: 'Hot fit — worth prioritizing',
+                warm: 'Warm fit — worth staying connected',
+                cold: 'Probably not the right fit right now',
+              };
+              updateScore({ ...scores, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+            }
           } else if (event.type === 'done') {
             fullResponse = event.fullResponse || fullResponse;
-            if (event.hasSignal && event.signal && event.signal.type === 'FIT_SCORE_UPDATE') {
-              updateScore(event.signal.data);
-            }
-            const clean = stripScoreBlock(fullResponse);
-            assistantEl.textContent = clean;
-            chatHistory.push({ role: 'assistant', content: clean });
+            assistantEl.textContent = fullResponse;
+            chatHistory.push({ role: 'assistant', content: fullResponse });
             saveHistory();
             saveChat(chatHistory);
           } else if (event.type === 'error') {

@@ -167,26 +167,20 @@ Confidence (0.0-1.0): How much evidence you have across both sides.
 JOB DESCRIPTION INPUT — if the visitor pastes a JD or structured role requirements:
 - Treat it as a high-information input equivalent to several turns of conversation
 - Set confidence to 0.75+ immediately — you have both the owner's full profile and the visitor's full requirements
-- Score and emit FIT_SCORE_UPDATE in the same response
+- Score and call update_fit_score in the same response
 - Ask at most one focused follow-up question if something genuinely ambiguous
 
-Next step (emit when confidence ≥ 0.65):
-- overall 8-10 → nextStep: "hot",  nextStepLabel: "Hot fit — worth prioritizing"
-- overall 6-7  → nextStep: "warm", nextStepLabel: "Warm fit — worth staying connected"
-- overall 0-5  → nextStep: "cold", nextStepLabel: "Probably not the right fit right now"
+Next step (include in update_fit_score when confidence ≥ 0.65):
+- overall 8-10 → nextStep: "hot"
+- overall 6-7  → nextStep: "warm"
+- overall 0-5  → nextStep: "cold"
 
-Signal format — emit verbatim at end of message when confidence meaningfully changes:
-FIT_SCORE_UPDATE
----
-{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specifics from both sides>", "nextStep": "<hot|warm|cold|null>", "nextStepLabel": "<label or null>"}
-
-Rules:
-- Emit after your first substantive response (initial hypothesis)
-- Update when any score changes ≥1 point or confidence changes ≥0.15
-- Emit nextStep when confidence ≥ 0.65 — no minimum turn count required
+Fit score tool rules:
+- Call update_fit_score after your first substantive response (initial hypothesis)
+- Call it again when any score changes ≥1 point or confidence changes ≥0.15
+- Only include nextStep when confidence ≥ 0.65 — no minimum turn count required
 - The "reason" must reference specifics from both sides (not generic praise)
-- Be honest: a 4 is a 4. Mismatches build trust.
-- Append the block AFTER your conversational response`;
+- Be honest: a 4 is a 4. Mismatches build trust.`;
 }
 
 const CONVERSATION_APPROACH = `== CONVERSATION APPROACH ==
@@ -333,6 +327,22 @@ Your first message is already set. Begin evidence gathering immediately after. D
             }
           },
           required: ['query']
+        }
+      }, {
+        name: 'update_fit_score',
+        description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
+        input_schema: {
+          type: 'object',
+          properties: {
+            skills: { type: 'number', description: 'Technical skills fit score 0-10' },
+            alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
+            personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
+            overall: { type: 'number', description: 'Overall fit score 0-10' },
+            confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
+            reason: { type: 'string', description: 'Brief explanation of the current assessment' },
+            nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65)' }
+          },
+          required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
         }
       }]
     };

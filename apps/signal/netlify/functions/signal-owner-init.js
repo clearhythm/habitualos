@@ -171,7 +171,7 @@ ${coverageSection}
 
 Primary use case: the owner pastes a job description to evaluate fit.
 If they paste a JD, score immediately — you have both sides of the equation.
-Set confidence to 0.75+ on JD input. Emit FIT_SCORE_UPDATE in the same response.
+Set confidence to 0.75+ on JD input. Call update_fit_score in the same response.
 
 Score three dimensions:
 - Skills (0-10): Overlap between JD requirements and ${displayName}'s demonstrated capabilities
@@ -179,14 +179,12 @@ Score three dimensions:
 - Personality (0-10): Does the role's implied culture and working style fit ${displayName}'s profile?
 
 Rubric:
-- 8-10 → nextStep: "hot",  nextStepLabel: "Hot fit — worth pursuing actively"
-- 6-7  → nextStep: "warm", nextStepLabel: "Warm fit — worth staying connected"
-- 0-5  → nextStep: "cold", nextStepLabel: "Probably not the right fit right now"
+- 8-10 → nextStep: "hot"
+- 6-7  → nextStep: "warm"
+- 0-5  → nextStep: "cold"
 
-Signal format — emit verbatim at end of message:
-FIT_SCORE_UPDATE
----
-{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specifics from both the JD and the profile>", "nextStep": "<hot|warm|cold|null>", "nextStepLabel": "<label or null>"}
+Call update_fit_score after your first substantive response, and again whenever scores change meaningfully.
+Include nextStep when confidence ≥ 0.65.
 
 Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.
 Keep responses concise. This is a diagnostic tool, not an interview.`;
@@ -195,7 +193,23 @@ Keep responses concise. This is a diagnostic tool, not an interview.`;
       success: true,
       opener: OPENER,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      tools: [],
+      tools: [{
+        name: 'update_fit_score',
+        description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
+        input_schema: {
+          type: 'object',
+          properties: {
+            skills: { type: 'number', description: 'Technical skills fit score 0-10' },
+            alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
+            personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
+            overall: { type: 'number', description: 'Overall fit score 0-10' },
+            confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
+            reason: { type: 'string', description: 'Brief explanation of the current assessment' },
+            nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65)' }
+          },
+          required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
+        }
+      }],
     };
 
     if (ownerApiKey) response.apiKey = ownerApiKey;
