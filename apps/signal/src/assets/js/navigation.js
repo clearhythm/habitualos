@@ -1,0 +1,86 @@
+(function () {
+  var body = document.body;
+  var toggle = document.getElementById('sidemenu-toggle');
+  var overlay = document.getElementById('sidemenu-overlay');
+  var navbar = document.querySelector('.navbar');
+  var modal = document.getElementById('signal-modal');
+  var modalClose = document.getElementById('signal-modal-close');
+  var sidemenuDemoOpen = document.getElementById('sidemenu-demo-open');
+
+  // ─── Sidemenu ───────────────────────────────────────────────────────────────
+
+  function openMenu() { body.classList.add('sidemenu-open'); }
+  function closeMenu() { body.classList.remove('sidemenu-open'); }
+
+  if (toggle) {
+    toggle.addEventListener('click', function () {
+      body.classList.toggle('sidemenu-open');
+    });
+    toggle.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        body.classList.toggle('sidemenu-open');
+      }
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', closeMenu);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closeMenu();
+      closeModal();
+    }
+  });
+
+  // ─── Navbar scroll ──────────────────────────────────────────────────────────
+
+  if (navbar) {
+    function updateNavbar() {
+      navbar.classList.toggle('active', window.scrollY > 10);
+    }
+    updateNavbar();
+    window.addEventListener('scroll', updateNavbar, { passive: true });
+  }
+
+  // ─── Modal ──────────────────────────────────────────────────────────────────
+
+  function openModal() {
+    closeMenu();
+    if (modal) {
+      modal.removeAttribute('hidden');
+      body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeModal() {
+    if (modal) {
+      modal.setAttribute('hidden', '');
+      body.style.overflow = '';
+    }
+  }
+
+  // Expose openModal for signal-modal.js to call
+  window.signalModalOpen = openModal;
+
+  // Sidemenu "Score your Signal" — delegate to signalOpen (no signalId → onboard mode)
+  if (sidemenuDemoOpen && modal) {
+    sidemenuDemoOpen.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.signalOpen) window.signalOpen();
+    });
+  }
+
+  if (modalClose) {
+    modalClose.addEventListener('click', closeModal);
+  }
+
+  // Click outside modal inner to close
+  if (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+  }
+})();

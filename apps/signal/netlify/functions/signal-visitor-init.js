@@ -3,8 +3,9 @@ const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
 
 /**
- * POST /api/signal-chat-init
+ * POST /api/signal-visitor-init
  *
+ * Visitor mode init — loads owner config and returns system prompt + opener for the visitor chat.
  * Phase 1 (no signalId or signalId='erik-burns'): Erik's hardcoded context.
  * Phase 2+: fetches owner config from Firestore by signalId.
  * Phase 3+: also injects synthesized profiles + top evidence chunks.
@@ -70,9 +71,9 @@ const ERIK_PERSONALITY_PROFILE = {
 
 const ERIK_PERSONAS = {
   recruiter: {
-    opener: "What role are you hiring for? I can tell you honestly where Erik would be a strong fit — and where he wouldn't be.",
-    strategy: `Understand the role they're hiring for, then score fit across Skills, Alignment, and Personality.
-Ask about: seniority level, team type, primary challenge (product strategy / agentic AI / behavioral / other), company stage.
+    opener: "Paste the job description and I'll score the fit directly — skills, alignment, working style. Or describe the role if you don't have it handy.",
+    strategy: `Recruiters should be prompted to paste a job description. If they provide one, treat it as a high-information input and score immediately.
+If they describe the role conversationally, ask targeted follow-ups: seniority level, primary challenge (product strategy / agentic AI / behavioral / other), company stage.
 Be direct about where Erik is a strong match and where he's not.`
   },
   founder: {
@@ -163,21 +164,26 @@ Confidence (0.0-1.0): How much evidence you have across both sides.
 - 0.5-0.75: Enough specifics to score with real accuracy
 - 0.75-1.0: Strong evidence across all dimensions
 
-Next step (emit when confidence ≥ 0.65 and at least 4 turns have passed):
-- overall 8-10 → nextStep: "schedule", nextStepLabel: "Let's actively explore working together"
-- overall 6-7  → nextStep: "schedule", nextStepLabel: "Worth a 30-min conversation"
-- overall 4-5  → nextStep: "follow",   nextStepLabel: "Let's stay in each other's orbit"
-- overall 0-3  → nextStep: "pass",     nextStepLabel: "Probably not the right fit right now"
+JOB DESCRIPTION INPUT — if the visitor pastes a JD or structured role requirements:
+- Treat it as a high-information input equivalent to several turns of conversation
+- Set confidence to 0.75+ immediately — you have both the owner's full profile and the visitor's full requirements
+- Score and emit FIT_SCORE_UPDATE in the same response
+- Ask at most one focused follow-up question if something genuinely ambiguous
+
+Next step (emit when confidence ≥ 0.65):
+- overall 8-10 → nextStep: "hot",  nextStepLabel: "Hot fit — worth prioritizing"
+- overall 6-7  → nextStep: "warm", nextStepLabel: "Warm fit — worth staying connected"
+- overall 0-5  → nextStep: "cold", nextStepLabel: "Probably not the right fit right now"
 
 Signal format — emit verbatim at end of message when confidence meaningfully changes:
 FIT_SCORE_UPDATE
 ---
-{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specifics from both sides>", "nextStep": "<schedule|follow|pass|null>", "nextStepLabel": "<label or null>"}
+{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specifics from both sides>", "nextStep": "<hot|warm|cold|null>", "nextStepLabel": "<label or null>"}
 
 Rules:
 - Emit after your first substantive response (initial hypothesis)
 - Update when any score changes ≥1 point or confidence changes ≥0.15
-- Only emit nextStep when confidence ≥ 0.65 and ≥ 4 turns have passed
+- Emit nextStep when confidence ≥ 0.65 — no minimum turn count required
 - The "reason" must reference specifics from both sides (not generic praise)
 - Be honest: a 4 is a 4. Mismatches build trust.
 - Append the block AFTER your conversational response`;
@@ -342,7 +348,7 @@ Your first message is already set. Begin evidence gathering immediately after. D
     };
 
   } catch (error) {
-    console.error('[signal-chat-init] ERROR:', error);
+    console.error('[signal-visitor-init] ERROR:', error);
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
   }
 };

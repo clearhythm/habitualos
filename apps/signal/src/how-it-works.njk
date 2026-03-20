@@ -1,0 +1,93 @@
+---
+layout: base.njk
+title: "How Signal Works"
+description: "Signal scores professional fit across Skills, Alignment, and Personality — through conversation, not resume claims."
+---
+
+<section class="signal-hero">
+  <p class="signal-hero-eyebrow">
+    <img src="/assets/images/signal-logo.png" alt="" class="signal-hero-eyebrow-icon" aria-hidden="true">Signal
+  </p>
+  <h1 class="signal-hero-headline">How Signal Works</h1>
+  <p class="signal-hero-sub">An AI built on real work history. Visitors have a conversation and walk away with a live Fit Score across Skills, Alignment, and Personality.</p>
+</section>
+
+<section class="signal-how" id="how-it-works">
+  <h2 class="signal-how-title">Three steps to an honest score</h2>
+  <div class="signal-steps">
+    <div class="signal-step">
+      <div class="signal-step-num">1</div>
+      <div>
+        <p class="signal-step-title">Tell Signal who you are</p>
+        <p class="signal-step-desc">Pick a role — recruiter, founder, colleague, or just curious. Signal adapts the conversation to what's most relevant for you.</p>
+      </div>
+    </div>
+    <div class="signal-step">
+      <div class="signal-step-num">2</div>
+      <div>
+        <p class="signal-step-title">Have a real conversation</p>
+        <p class="signal-step-desc">Signal asks focused questions to understand your context — what you're building, what you need, how you work. It's trained on actual work history, not talking points.</p>
+      </div>
+    </div>
+    <div class="signal-step">
+      <div class="signal-step-num">3</div>
+      <div>
+        <p class="signal-step-title">Watch the Fit Score develop</p>
+        <p class="signal-step-desc">As the conversation builds, Signal scores fit across three dimensions — Skills, Alignment, and Personality — with a confidence meter that rises as it learns more.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="signal-scoring-section">
+
+  <h2 class="signal-how-title">Scoring Dimensions: Full Specification</h2>
+
+  <div class="signal-score-dim-list">
+
+    <div class="signal-score-dim-card">
+      <h3>Skills <span class="signal-score-range">0–10</span></h3>
+      <p>Measures the overlap between what the visitor needs and the Signal owner's demonstrated capabilities. Grounded entirely in real evidence extracted from processed AI conversation chunks: specific technologies used, project types completed, domains worked in, and concrete outcomes achieved. Not self-reported claims. The score reflects how tightly the visitor's stated requirements map to what the owner has actually built and shipped.</p>
+    </div>
+
+    <div class="signal-score-dim-card">
+      <h3>Alignment <span class="signal-score-range">0–10</span></h3>
+      <p>Two-sided, and this is the dimension most professional tools miss entirely. It asks not just whether the owner can do the work, but whether they actually want to. Draws on a synthesized wants profile derived from the owner's conversation history: preferred work types, opportunity types they've expressed excitement about, and stated deal-breakers. This catches the common problem where someone is technically qualified but clearly uninterested in the role, which is a bad outcome for both sides. A candidate who doesn't want the work is not a good hire regardless of skills score.</p>
+    </div>
+
+    <div class="signal-score-dim-card">
+      <h3>Personality <span class="signal-score-range">0–10</span></h3>
+      <p>Inferred from behavioral signals, not interrogated directly. Signal reads how the visitor writes during the conversation: their communication style, intellectual approach, directness, tone, and how they frame problems. This is matched against a personality profile derived from behavioral signals in the owner's actual conversation history. No form to fill out. The conversation itself is the data. Because this dimension requires real behavioral observation rather than a short structured input, it informs the qualitative framing of the overall score but does not change the math directly.</p>
+    </div>
+
+  </div>
+
+  <div class="signal-score-formula">
+    <h3>Overall Score</h3>
+    <p class="signal-formula-eq">Overall = Skills × 0.55 + Alignment × 0.45</p>
+    <p>Skills is weighted slightly higher because demonstrable capability is the primary filter. Alignment is weighted heavily because a misaligned hire is a failed hire regardless of skill level. Personality informs the narrative framing without entering the formula, because it requires more conversational surface area to measure accurately than most interactions provide.</p>
+  </div>
+
+  <div class="signal-score-confidence">
+    <h3>Confidence Score <span class="signal-score-range">0.0–1.0</span></h3>
+    <p>Tracks how much evidence Signal has gathered across both sides of the conversation. The score becomes more meaningful as confidence rises.</p>
+    <ul class="signal-confidence-levels">
+      <li><strong>0.0–0.2</strong> — Persona context only, early hypotheses</li>
+      <li><strong>0.2–0.5</strong> — Role and needs understood, scoring beginning to form</li>
+      <li><strong>0.5–0.75</strong> — Enough specifics to score with real accuracy</li>
+      <li><strong>0.75–1.0</strong> — Strong evidence across all dimensions, high confidence score</li>
+    </ul>
+    <p>A fit score is only surfaced alongside a recommended action once confidence crosses 0.65 and at least one substantive input has been provided.</p>
+  </div>
+
+  <div class="signal-honest-mismatch">
+    <h3>Why Honest Mismatches Matter</h3>
+    <p>Signal is explicitly designed to surface low scores as readily as high ones. A 4 is a 4. An honest mismatch identified in five minutes is more valuable than a false positive that costs both sides three rounds of interviews. The system does not optimize for flattery. It optimizes for accuracy.</p>
+  </div>
+
+</section>
+
+<div class="signal-footer-cta">
+  <p class="signal-footer-cta-text">Ready to build your own Signal?</p>
+  <a href="/waitlist/" class="btn btn-primary">Join the waitlist</a>
+</div>

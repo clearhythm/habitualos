@@ -6,13 +6,18 @@
 import { createChatStreamHandler } from "./_lib/chat-stream-core.ts";
 
 export default createChatStreamHandler({
-  "signal": {
-    initEndpoint: "/api/signal-chat-init",
+  "signal-visitor": {
+    initEndpoint: "/api/signal-visitor-init",
     toolExecuteEndpoint: "/api/signal-tool-execute",
     signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
   },
-  "signal-demo": {
-    initEndpoint: "/api/signal-demo-init",
+  "signal-onboard": {
+    initEndpoint: "/api/signal-onboard-init",
+    toolExecuteEndpoint: "/api/signal-tool-execute",
+    signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
+  },
+  "signal-owner": {
+    initEndpoint: "/api/signal-owner-init",
     toolExecuteEndpoint: "/api/signal-tool-execute",
     signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
   },

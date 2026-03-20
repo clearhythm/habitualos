@@ -6,7 +6,8 @@
     "start": "netlify dev",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve --port=8080",
-    "build": "eleventy"
+    "build": "eleventy",
+    "ship": "netlify deploy --prod"
   },
   "dependencies": {
     "@11ty/eleventy": "^2.0.1",

@@ -1,0 +1,48 @@
+---
+layout: base.njk
+title: "Signal — Test Harness"
+showDemoModal: true
+---
+
+<section class="signal-test">
+  <h1 class="signal-test-title">Signal Test Harness</h1>
+  <p class="signal-test-desc">Launch the modal in each sub-agent mode. Close and relaunch to switch modes — same mode continues the session.</p>
+
+  <div class="signal-test-modes">
+
+    <div class="signal-test-mode signal-test-mode--primary">
+      <div class="signal-test-mode-header">
+        <h2 class="signal-test-mode-name">Visitor</h2>
+        <span class="signal-test-mode-type">chatType: signal-visitor</span>
+        <span class="signal-test-mode-badge">Primary</span>
+      </div>
+      <p class="signal-test-mode-desc">signalId: erik-burns — fits the visitor against the owner profile. Persona selector, lead capture.</p>
+      <button class="btn btn-primary" onclick="window.signalOpen && window.signalOpen({ signalId: 'erik-burns' })">
+        Launch Visitor
+      </button>
+    </div>
+
+    <div class="signal-test-mode">
+      <div class="signal-test-mode-header">
+        <h2 class="signal-test-mode-name">Onboard</h2>
+        <span class="signal-test-mode-type">chatType: signal-onboard</span>
+      </div>
+      <p class="signal-test-mode-desc">No signalId — scores the visitor for Signal readiness. Marketing homepage experience.</p>
+      <button class="btn btn-primary" onclick="window.signalOpen && window.signalOpen()">
+        Launch Onboard
+      </button>
+    </div>
+
+    <div class="signal-test-mode">
+      <div class="signal-test-mode-header">
+        <h2 class="signal-test-mode-name">Owner</h2>
+        <span class="signal-test-mode-type">chatType: signal-owner</span>
+      </div>
+      <p class="signal-test-mode-desc">signalId: erik-burns, mode: owner — diagnostic interface for the Signal profile owner.</p>
+      <button class="btn btn-primary" onclick="window.signalOpen && window.signalOpen({ signalId: 'erik-burns', mode: 'owner' })">
+        Launch Owner
+      </button>
+    </div>
+
+  </div>
+</section>

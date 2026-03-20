@@ -1558,3 +1558,424 @@
     color: $color-text;
   }
 }
+
+// ─── Site footer ──────────────────────────────────────────────────────────────
+
+.site-footer {
+  border-top: 1px solid $color-border;
+  padding: $space-xl $space-lg;
+  text-align: center;
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-sm;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    margin: 0;
+  }
+
+  a {
+    color: $color-text-muted;
+    transition: color 0.15s;
+
+    &:hover { color: $color-text; }
+  }
+}
+
+.footer-logo {
+  height: 24px;
+  width: auto;
+  opacity: 0.6;
+}
+
+// ─── Demo modal overlay ────────────────────────────────────────────────────────
+
+.signal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 13, 23, 0.96);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+
+  &[hidden] { display: none; }
+}
+
+.signal-modal-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1100px;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.signal-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $space-sm $space-lg;
+  border-bottom: 1px solid $color-border;
+  flex-shrink: 0;
+}
+
+.signal-modal-title {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $color-text-muted;
+}
+
+.signal-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+  flex-shrink: 0;
+
+  span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: $color-text-muted;
+    position: absolute;
+    border-radius: 1px;
+    transition: background 0.15s;
+
+    &:first-child { transform: rotate(45deg); }
+    &:last-child  { transform: rotate(-45deg); }
+  }
+
+  &:hover span { background: $color-text; }
+}
+
+.signal-modal-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  .signal-widget {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .signal-panel--chat {
+    height: 100%;
+  }
+}
+
+// ─── Homepage sample score card ───────────────────────────────────────────────
+
+.signal-sample-section {
+  display: flex;
+  justify-content: center;
+  padding: $space-xl $space-lg $space-2xl;
+}
+
+.signal-sample-card {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(196, 181, 253, 0.2);
+  border-radius: 16px;
+  padding: $space-lg;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(196, 181, 253, 0.4);
+  }
+}
+
+.signal-sample-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0 0 $space-md;
+}
+
+.signal-card-top {
+  display: flex;
+  align-items: center;
+  gap: $space-lg;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.signal-ring-wrap {
+  flex-shrink: 0;
+}
+
+.signal-sample-ring {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+.signal-ring-score {
+  font-size: 42px;
+  font-weight: 700;
+  fill: rgba(255, 255, 255, 0.92);
+}
+
+.signal-sample-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+  width: 100%;
+}
+
+.signal-sample-row {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+}
+
+.signal-sample-dim {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  width: 76px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.signal-sample-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.signal-sample-fill {
+  height: 100%;
+  background: #9d6ef5;
+  border-radius: 4px;
+}
+
+.signal-sample-score {
+  font-size: $font-size-sm;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  width: 20px;
+  text-align: left;
+}
+
+.signal-card-rule {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: $space-md 0 $space-sm;
+}
+
+.signal-card-footer {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  font-size: $font-size-sm;
+  color: rgba(196, 181, 253, 0.6);
+  margin: 0;
+
+  strong { color: rgba(196, 181, 253, 0.85); }
+}
+
+.signal-footer-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+// ─── How Signal Works page ────────────────────────────────────────────────────
+
+.signal-scoring-section {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 $space-lg $space-2xl;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2xl;
+}
+
+.signal-score-dim-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+
+  @media (min-width: $breakpoint-lg) {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.signal-score-dim-card {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+
+  h3 {
+    display: flex;
+    align-items: baseline;
+    gap: $space-sm;
+    font-size: $font-size-lg;
+    font-weight: 600;
+    margin: 0 0 $space-sm;
+    color: $color-text;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    line-height: 1.65;
+    margin: 0;
+  }
+}
+
+.signal-score-range {
+  font-size: $font-size-sm;
+  font-weight: 400;
+  color: $color-text-muted;
+}
+
+.signal-score-formula,
+.signal-score-confidence,
+.signal-honest-mismatch {
+  h3 {
+    display: flex;
+    align-items: baseline;
+    gap: $space-sm;
+    font-size: $font-size-xl;
+    font-weight: 600;
+    margin: 0 0 $space-sm;
+    color: $color-text;
+  }
+
+  p {
+    color: $color-text-muted;
+    line-height: 1.65;
+    margin: 0 0 $space-sm;
+  }
+}
+
+.signal-formula-eq {
+  font-family: monospace;
+  font-size: $font-size-lg;
+  color: #c4b5fd;
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $space-md $space-lg;
+  margin-bottom: $space-md;
+  display: block;
+}
+
+.signal-confidence-levels {
+  list-style: none;
+  padding: 0;
+  margin: $space-sm 0 $space-md;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+
+  li {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    padding: $space-xs $space-md;
+    background: $color-bg-muted;
+    border-radius: 6px;
+    line-height: 1.5;
+  }
+}
+
+// ─── Test harness page (/test/) ───────────────────────────────────────────────
+
+.signal-test {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $space-2xl $space-lg;
+}
+
+.signal-test-title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  margin-bottom: $space-sm;
+}
+
+.signal-test-desc {
+  color: $color-text-muted;
+  margin-bottom: $space-2xl;
+}
+
+.signal-test-modes {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.signal-test-mode {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: $space-lg;
+}
+
+.signal-test-mode-header {
+  display: flex;
+  align-items: baseline;
+  gap: $space-md;
+  margin-bottom: $space-sm;
+}
+
+.signal-test-mode-name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin: 0;
+}
+
+.signal-test-mode-type {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  font-family: monospace;
+}
+
+.signal-test-mode-desc {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  margin-bottom: $space-md;
+}
+
+.signal-test-mode--primary {
+  border-color: rgba(196, 181, 253, 0.35);
+}
+
+.signal-test-mode-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-primary;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
