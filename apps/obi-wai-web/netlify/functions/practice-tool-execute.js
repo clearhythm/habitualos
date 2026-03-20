@@ -72,6 +72,9 @@ exports.handler = async (event) => {
           wisdom: l.obi_wan_message || null
         }))
       };
+    } else if (toolUse.name === 'show_practice_modal') {
+      const { practiceName, message } = toolUse.input;
+      result = { ok: true, practiceName, message };
     } else {
       result = { error: `Unknown tool: ${toolUse.name}` };
     }
