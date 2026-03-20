@@ -1,7 +1,7 @@
 # TICKET-07: Chat Context — Priority-Aware Opening Messages
 
 **Phase**: New pattern (run after TICKET-06 is confirmed working)
-**Apps affected**: obi-wai-web (immediate), all chat apps (future)
+**Apps affected**: obi-wai-web, habitual-web, relationship-web (refactor existing)
 **Prerequisites**: TICKET-00 (survey-engine with tool API)
 
 ---
@@ -188,6 +188,99 @@ if (chatHistory.length === 0) {
 ```
 
 Note: this fetch only runs when `chatHistory.length === 0` (first visit or cleared history). Returning visits render from localStorage with no network call.
+
+---
+
+---
+
+## Part 4: habitual-web Implementation
+
+habitual-web has no current priority states (no surveys, no partner replies), but should be wired into the pattern now so future priorities work automatically.
+
+### Create `netlify/functions/chat-context.js`
+
+```javascript
+const { resolveChatContext } = require('@habitualos/frontend-utils');
+// No checks yet — returns { priority: null, data: null }
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'GET') return { statusCode: 405 };
+  const { userId } = event.queryStringParameters || {};
+  if (!userId) return { statusCode: 400, body: JSON.stringify({ error: 'userId required' }) };
+
+  const context = await resolveChatContext(userId, [
+    // future checks go here e.g. checkPendingOnboarding()
+  ]);
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context)
+  };
+};
+```
+
+### Update `src/do/chat.njk`
+
+Replace the hardcoded opening message block (currently around line 328) with the same context-aware pattern used in obi-wai-web (Part 3 above), with habitual-web's own message strings:
+
+```javascript
+const APP_MESSAGES = {
+  default: "What would you like to focus on today?"
+  // add priority keys here as new priority types are introduced
+};
+```
+
+---
+
+## Part 5: relationship-web Refactor
+
+relationship-web already implements this pattern correctly — it calls `/api/survey-check` and conditionally sets the opening message including `hasSurvey` and `replyMoment` priorities. However it uses a bespoke implementation rather than the shared package pattern.
+
+Refactor to use `resolveChatContext` and `checkPendingSurvey` from the packages:
+
+### Update `netlify/functions/survey-check.js` → rename to `chat-context.js`
+
+Read the existing `survey-check.js` to understand what it returns. Replace its internals with `resolveChatContext`:
+
+```javascript
+const { resolveChatContext } = require('@habitualos/frontend-utils');
+const { checkPendingSurvey } = require('@habitualos/survey-engine');
+// future: const { checkReplyMoment } = require('./wherever-that-lives');
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'GET') return { statusCode: 405 };
+  const { userId } = event.queryStringParameters || {};
+  if (!userId) return { statusCode: 400, body: JSON.stringify({ error: 'userId required' }) };
+
+  const context = await resolveChatContext(userId, [
+    // checkReplyMoment(userId),  // add when check function exists
+    checkPendingSurvey('survey-rel-v1'),
+  ]);
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context)
+  };
+};
+```
+
+**Note**: `replyMoment` is currently handled separately in `chat.njk` via a URL param (`replyToMomentId`), not via `survey-check`. That's fine — leave `replyMoment` logic as-is for now. Only migrate the survey check portion to the package pattern. The `checkReplyMoment` function can be added later when that pattern is formalized.
+
+### Update `src/chat.njk`
+
+Replace the call to `/api/survey-check` with `/api/chat-context`. The response shape changes from `{ hasSurvey: bool }` to `{ priority: 'survey' | null, data: {...} }`. Update the consuming code:
+
+```javascript
+// Before
+hasSurvey = !!data.hasSurvey;
+
+// After
+hasSurvey = ctx.priority === 'survey';
+```
+
+The opening message strings and conditional logic in `chat.njk` stay the same — only the data source changes.
 
 ---
 
