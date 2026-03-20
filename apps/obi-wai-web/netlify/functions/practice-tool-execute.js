@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getPracticesByUserId } = require('./_services/db-practices.cjs');
 const { getPracticeLogsByUserId } = require('./_services/db-practice-logs.cjs');
+const { handleSurveyTool, SURVEY_TOOL_NAMES } = require('@habitualos/survey-engine');
 
 /**
  * POST /api/practice-tool-execute
@@ -23,6 +24,16 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'userId and toolUse required' })
+      };
+    }
+
+    // Route survey tools to the package handler
+    if (SURVEY_TOOL_NAMES.includes(toolUse.name)) {
+      const result = await handleSurveyTool(toolUse.name, toolUse.input, { userId });
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result })
       };
     }
 

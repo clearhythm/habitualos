@@ -420,7 +420,7 @@ export function createChatStreamHandler(
               const toolData = await toolResponse.json();
               const toolResult = toolData.result || { error: "Tool execution failed" };
 
-              await send({ type: "tool_complete", tool: toolUseBlock.name });
+              await send({ type: "tool_complete", tool: toolUseBlock.name, result: toolResult });
 
               toolResults.push({
                 type: "tool_result",
