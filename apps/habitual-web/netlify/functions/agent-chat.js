@@ -16,8 +16,7 @@ const {
   sendMessage,
   handleToolCall,
   buildSystemMessages,
-  buildTools,
-  parseSignals
+  buildTools
 } = require('./_agent-core');
 
 // Create Anthropic client
@@ -259,99 +258,6 @@ exports.handler = async (event) => {
     }
 
     log('info', `[agent-chat] Total request time: ${Date.now() - startTime}ms`);
-
-    // Parse signals from response using extracted module
-    const signal = parseSignals(assistantResponse);
-
-    if (signal) {
-      if (signal.error) {
-        log('error', `[agent-chat] Signal parse error: ${signal.error}`, signal.raw);
-        return {
-          statusCode: 500,
-          body: JSON.stringify({
-            success: false,
-            error: `Failed to parse ${signal.type} response`
-          })
-        };
-      }
-
-      // Handle GENERATE_ACTIONS signal
-      if (signal.type === 'GENERATE_ACTIONS') {
-        log('info', '[agent-chat] GENERATE_ACTIONS parsed:', { title: signal.data.title, taskType: signal.data.taskType, priority: signal.data.priority });
-        tracker.signal('GENERATE_ACTIONS', { title: signal.data.title, taskType: signal.data.taskType, priority: signal.data.priority });
-
-        const draftAction = {
-          id: `draft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          title: signal.data.title,
-          description: signal.data.description,
-          priority: signal.data.priority || 'medium',
-          taskType: signal.data.taskType || 'scheduled',
-          taskConfig: signal.data.taskConfig || {},
-          state: 'draft',
-          agentId: agent.id
-        };
-
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            success: true,
-            response: `I've drafted this deliverable for you. Let me know if you want to refine it, or we can mark it as defined and move on to the next one.`,
-            draftActions: [draftAction],
-            hasDraftActions: true
-          })
-        };
-      }
-
-      // Handle GENERATE_ASSET signal
-      if (signal.type === 'GENERATE_ASSET') {
-        log('info', '[agent-chat] GENERATE_ASSET parsed:', { title: signal.data.title, type: signal.data.type });
-        tracker.signal('GENERATE_ASSET', { title: signal.data.title, type: signal.data.type });
-
-        const draftAction = {
-          id: `draft-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          title: signal.data.title,
-          description: signal.data.description,
-          taskType: 'manual',
-          type: signal.data.type || 'text',
-          content: signal.data.content,
-          priority: 'medium',
-          state: 'draft',
-          agentId: agent.id
-        };
-
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            success: true,
-            response: `I've created this deliverable for you. Let me know if you want to refine it, or we can mark it as defined.`,
-            draftActions: [draftAction],
-            hasDraftActions: true
-          })
-        };
-      }
-
-      // Handle STORE_MEASUREMENT signal
-      if (signal.type === 'STORE_MEASUREMENT') {
-        log('info', `[agent-chat] STORE_MEASUREMENT signal detected with ${signal.data.dimensions?.length || 0} dimensions`);
-        tracker.signal('STORE_MEASUREMENT', { dimensionCount: signal.data.dimensions?.length || 0 });
-
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            success: true,
-            response: `Got it! I've recorded your check-in. Keep up the great work!`,
-            hasMeasurement: true,
-            measurementData: {
-              dimensions: signal.data.dimensions || [],
-              notes: signal.data.notes || null
-            }
-          })
-        };
-      }
-    }
 
     // Regular conversational response
     return {
