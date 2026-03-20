@@ -72,6 +72,24 @@ const practiceTools = [
       },
       required: ['practice_name']
     }
+  },
+  {
+    name: 'show_practice_modal',
+    description: "Show the 'I'm Ready' modal to the user, signaling they should begin their practice. Call this ONLY when the user has confirmed they want to practice NOW. Do not write any text after calling this tool — the modal is the response.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        practiceName: {
+          type: 'string',
+          description: "1-3 words describing the practice, from the user's own language"
+        },
+        message: {
+          type: 'string',
+          description: 'Brief affirmation in Obi-Wai voice, 1-2 sentences'
+        }
+      },
+      required: ['practiceName', 'message']
+    }
   }
 ];
 
@@ -236,12 +254,15 @@ PHASE 1: DISCOVERY (4-6 exchanges)
 PHASE 2: TIMING
 - Once discovery is complete, ask: "Would you like to do this now, or are you planning it for later?"
 - Listen to their response about timing
-- If they say "later" or "not now", acknowledge supportively and end conversation (no READY_TO_PRACTICE)
+- If they say "later" or "not now", acknowledge supportively and end conversation (do not call show_practice_modal)
 - If they say "now" or "yes" or "ready", move to Phase 3
 
 PHASE 3: READY CONFIRMATION
-- ONLY when they confirm they want to practice NOW, respond with READY_TO_PRACTICE signal
-- This triggers the "I'm Ready" button in the UI
+- ONLY when they confirm they want to practice NOW, call show_practice_modal with:
+  - practiceName: 1-3 words from their own language describing what they'll do
+  - message: a brief affirmation in Obi-Wai voice, 1-2 sentences
+- Do not write any text after calling show_practice_modal. The modal is the response.
+- If they say "later" or "not now", acknowledge supportively and end (do not call show_practice_modal).
 
 Guidelines:
 - DON'T rush through phases - each unfolds naturally
@@ -249,19 +270,7 @@ Guidelines:
 - They might give long context - that's okay, acknowledge it
 - If uncertain about anything, help them notice what's present ("What does that scattering feel like?")
 - Reference their history when relevant ("You've come back to meditation seven times...")
-- Accept "ready enough" as readiness, but only if they mean NOW
-
-When user confirms they want to practice NOW (after identifying what and when), respond with:
-READY_TO_PRACTICE
----
-PRACTICE_NAME: [1-3 words from their own language]
-MESSAGE: [Brief affirmation, 1-2 sentences, Obi-Wai voice]
-
-Example:
-READY_TO_PRACTICE
----
-PRACTICE_NAME: LASSO
-MESSAGE: I see you. Ready enough. Two or three minutes. Your body knows.`;
+- Accept "ready enough" as readiness, but only if they mean NOW`;
 
     return {
       statusCode: 200,

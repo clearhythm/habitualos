@@ -84,7 +84,7 @@ permalink: /practice/chat/
       </div>
     </div>
 
-    <!-- "I'm Ready" Modal Overlay (appears after READY_TO_PRACTICE signal) -->
+    <!-- "I'm Ready" Modal Overlay (appears after show_practice_modal tool call) -->
     <div id="ready-button-container" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
       <div style="background: white; padding: 3rem 2rem; border-radius: 12px; text-align: center; max-width: 400px; margin: 0 1rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
         <button id="ready-button" class="btn btn-primary" style="border-radius: 24px;">
@@ -280,38 +280,16 @@ permalink: /practice/chat/
     }
   }
 
-  // Parse READY_TO_PRACTICE signal from response
-  function parseReadySignal(text) {
-    if (!text.includes('READY_TO_PRACTICE')) return null;
-
-    const lines = text.split('\n');
-    let practiceName = '';
-    let message = '';
-    let inMessage = false;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.startsWith('PRACTICE_NAME:')) {
-        practiceName = line.substring(14).trim();
-      } else if (line.startsWith('MESSAGE:')) {
-        message = line.substring(8).trim();
-        inMessage = true;
-      } else if (inMessage && line.trim() && !line.startsWith('READY_TO_PRACTICE') && !line.startsWith('---')) {
-        message += ' ' + line.trim();
-      }
-    }
-
-    if (practiceName) {
-      return { practiceName: practiceName.trim(), message: message.trim() };
-    }
-    return null;
-  }
-
-  // Get display text (without signal content)
-  function getDisplayText(text) {
-    const idx = text.indexOf('READY_TO_PRACTICE');
-    if (idx !== -1) return text.substring(0, idx).trim();
-    return text;
+  function showReadyModal(practiceName, message) {
+    currentPracticeData = {
+      practiceName,
+      fullSuggestion: message
+    };
+    readyButtonContainer.style.display = 'flex';
+    sendButton.disabled = true;
+    sendButton.style.background = '#ddd';
+    sendButton.style.cursor = 'not-allowed';
+    messageInput.disabled = true;
   }
 
   function showSurveyResultsSummary(summary) {
@@ -407,7 +385,6 @@ permalink: /practice/chat/
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let signalData = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -433,10 +410,9 @@ permalink: /practice/chat/
               if (data.tool === 'store_survey_results' && data.result?.success && data.result?.summary) {
                 showSurveyResultsSummary(data.result.summary);
               }
-            } else if (data.type === 'done') {
-              // Check for signal in the done event
-              if (data.hasSignal && data.signal) {
-                signalData = data.signal;
+              if (data.tool === 'show_practice_modal') {
+                const { practiceName, message } = data.result;
+                showReadyModal(practiceName, message);
               }
             } else if (data.type === 'error') {
               throw new Error(data.error);
@@ -448,52 +424,17 @@ permalink: /practice/chat/
       }
     }
 
-    // Capture tool HTML before finalizing (finalizeStreamingMessage clears streamingToolEvents)
-    const finalToolHtml = buildStreamingToolHtml();
-
     // Finalize the streaming message
     const { text: fullResponse } = finalizeStreamingMessage();
 
-    // Parse signal from the full response (backup check)
-    const parsedSignal = parseReadySignal(fullResponse);
-
-    // Get display text (without signal content)
-    const displayText = getDisplayText(fullResponse);
-
-    // Update the rendered message to show only display text (keep tool indicators)
-    if (displayText !== fullResponse && streamingMessageElement === null) {
-      const lastMessage = chatMessages.lastElementChild;
-      if (lastMessage && window.marked) {
-        lastMessage.innerHTML = finalToolHtml + marked.parse(displayText);
-      }
-    }
-
-    // Add to chat history (use display text)
+    // Add to chat history
     const assistantMessage = {
       role: 'assistant',
-      content: displayText || fullResponse,
+      content: fullResponse,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(assistantMessage);
     saveChatHistory(chatHistory);
-
-    // Handle ready to practice signal
-    if (parsedSignal || (signalData?.type === 'READY_TO_PRACTICE')) {
-      const readyData = parsedSignal || signalData.data;
-      currentPracticeData = {
-        practiceName: readyData.practiceName || readyData.PRACTICE_NAME,
-        fullSuggestion: displayText
-      };
-
-      // Show "I'm Ready" modal
-      readyButtonContainer.style.display = 'flex';
-
-      // Disable chat form
-      sendButton.disabled = true;
-      sendButton.style.background = '#ddd';
-      sendButton.style.cursor = 'not-allowed';
-      messageInput.disabled = true;
-    }
   }
 
   const toolLabels = {
