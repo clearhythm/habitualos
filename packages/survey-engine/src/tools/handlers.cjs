@@ -1,5 +1,7 @@
 const dbCore = require('@habitualos/db-core');
-const { getSurveyDefinition, createSurveyResponse, markActionCompleted } = require('../../index.cjs');
+const { getSurveyDefinition } = require('../../survey-definitions.cjs');
+const { createSurveyResponse } = require('../../survey-responses.cjs');
+const { markActionCompleted } = require('../../survey-actions.cjs');
 const { buildSurveyPrompt } = require('./prompts.cjs');
 
 const ACTIONS_COLLECTION = 'survey-actions';
