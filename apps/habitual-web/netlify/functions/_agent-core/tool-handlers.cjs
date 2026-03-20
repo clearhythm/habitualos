@@ -6,10 +6,11 @@
  */
 
 const { getAction, updateActionState, createAction } = require('../_services/db-actions.cjs');
-const { generateActionId } = require('../_utils/data-utils.cjs');
+const { generateActionId, generateMeasurementId } = require('../_utils/data-utils.cjs');
 const { createNote, getNotesByAgent, getNoteById, updateNote } = require('../_services/db-agent-notes.cjs');
 const { getDraftsByAgent, getDraftById, updateDraft } = require('../_services/db-agent-drafts.cjs');
 const { incrementAgentActionCount } = require('../_services/db-agents.cjs');
+const { createMeasurement } = require('../_services/db-measurements.cjs');
 const agentFilesystem = require('../_utils/agent-filesystem.cjs');
 
 /**
@@ -64,6 +65,16 @@ async function handleToolCall(toolBlock, userId, agentId, agent) {
 
   if (name === 'list_files') {
     return handleListFiles(input, agent);
+  }
+
+  // Asset tools
+  if (name === 'create_asset') {
+    return handleCreateAsset(input, userId, agentId);
+  }
+
+  // Measurement tools
+  if (name === 'store_measurement') {
+    return handleStoreMeasurement(input, userId, agentId);
   }
 
   // Review tools
@@ -393,6 +404,93 @@ async function handleListFiles(input, agent) {
   }
 
   return await agentFilesystem.listFiles(agentDataPath, input.path || '');
+}
+
+// --- Asset Tool Handlers ---
+
+async function handleCreateAsset(input, userId, agentId) {
+  const { title, type, content, language } = input;
+
+  if (!title || !type || !content) {
+    return { error: 'Missing required fields: title, type, and content are required' };
+  }
+
+  const actionId = generateActionId();
+
+  const actionData = {
+    _userId: userId,
+    agentId: agentId,
+    projectId: null,
+    goalId: null,
+    title: title.trim(),
+    description: '',
+    state: 'open',
+    priority: 'medium',
+    taskType: 'manual',
+    assignedTo: 'user',
+    taskConfig: {},
+    scheduleTime: null,
+    dueDate: null,
+    startedAt: null,
+    completedAt: null,
+    dismissedAt: null,
+    dismissedReason: null,
+    errorMessage: null,
+    type: type,
+    content: content,
+    language: language || null
+  };
+
+  await createAction(actionId, actionData);
+
+  return {
+    success: true,
+    message: `Created asset: "${title.trim()}"`,
+    asset: {
+      id: actionId,
+      title: title.trim(),
+      type,
+      content,
+      language: language || null
+    }
+  };
+}
+
+// --- Measurement Tool Handlers ---
+
+async function handleStoreMeasurement(input, userId, agentId) {
+  const { actionId, dimensions, overallNotes } = input;
+
+  if (!actionId || !Array.isArray(dimensions) || dimensions.length === 0) {
+    return { error: 'actionId and dimensions array are required' };
+  }
+
+  const action = await getAction(actionId);
+  if (!action || action._userId !== userId) {
+    return { error: 'Action not found or access denied' };
+  }
+
+  const measurementId = generateMeasurementId();
+  const measurementData = {
+    _userId: userId,
+    agentId,
+    actionId,
+    timestamp: new Date().toISOString(),
+    dimensions: dimensions.map(d => ({
+      name: d.name,
+      score: d.score,
+      notes: d.notes || null
+    })),
+    notes: overallNotes || null
+  };
+
+  await createMeasurement(measurementId, measurementData);
+
+  return {
+    success: true,
+    measurementId,
+    message: 'Check-in recorded successfully'
+  };
 }
 
 // --- Review Tool Handlers ---

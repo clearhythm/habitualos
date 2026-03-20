@@ -10,11 +10,7 @@ export default createChatStreamHandler({
   agent: {
     initEndpoint: "/api/agent-chat-init",
     toolExecuteEndpoint: "/api/agent-tool-execute",
-    signalPatterns: [
-      /^GENERATE_ACTIONS\s*\n---/m,
-      /^GENERATE_ASSET\s*\n---/m,
-      /^STORE_MEASUREMENT\s*\n---/m,
-    ],
+    signalPatterns: [],
   },
   "fox-ea": {
     initEndpoint: "/api/fox-ea-chat-init",

@@ -38,14 +38,14 @@ Docs live in:
 - Practices: `practice-{random}`
 - Users: `u-{timestamp}-{random}`
 
-**Agent Signals** (structured text responses Claude emits)
-- `GENERATE_ACTIONS` — agent wants to create a scheduled action
-- `GENERATE_ASSET` — agent wants to create an immediate deliverable
-- `STORE_MEASUREMENT` — agent has collected measurement check-in data
-
 **Agent Tools** (Claude API tool use)
+- `create_action` — create a new scheduled action
 - `get_action_details` — retrieve full action record
 - `update_action` — update title, description, priority, taskConfig
+- `complete_action` — mark an action as complete
+- `create_asset` — create an immediate deliverable (markdown, code, prompt, text)
+- `store_measurement` — record a measurement check-in with dimension scores
+- `create_note` / `get_notes` / `update_note` — lightweight note capture
 
 ## Local Development
 

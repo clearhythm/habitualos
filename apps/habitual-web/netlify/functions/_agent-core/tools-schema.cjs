@@ -195,6 +195,61 @@ const filesystemTools = [
 ];
 
 /**
+ * Asset creation tool
+ */
+const assetTools = [
+  {
+    name: "create_asset",
+    description: "Create an immediate deliverable for the user — a piece of content, code, prompt, or markdown document. Use this when the user asks you to produce something concrete they can use right away.",
+    input_schema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "The current agent's ID" },
+        title: { type: "string", description: "Short descriptive title for the asset" },
+        type: {
+          type: "string",
+          enum: ["markdown", "code", "prompt", "text"],
+          description: "Format of the asset content"
+        },
+        content: { type: "string", description: "Full content of the asset" },
+        language: { type: "string", description: "For code assets: the programming language" }
+      },
+      required: ["agentId", "title", "type", "content"]
+    }
+  }
+];
+
+/**
+ * Measurement check-in tool
+ */
+const measurementTools = [
+  {
+    name: "store_measurement",
+    description: "Store a measurement check-in for a measurement-type action. Use this when the user has provided scores or reflections for their tracked dimensions.",
+    input_schema: {
+      type: "object",
+      properties: {
+        actionId: { type: "string", description: "The measurement action ID (action-...)" },
+        dimensions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              score: { type: "number", description: "Score 1-10" },
+              notes: { type: "string" }
+            },
+            required: ["name", "score"]
+          }
+        },
+        overallNotes: { type: "string", description: "Any overall reflection notes for this check-in" }
+      },
+      required: ["actionId", "dimensions"]
+    }
+  }
+];
+
+/**
  * Review tools (only available during draft review sessions)
  */
 const reviewTools = [
@@ -234,7 +289,7 @@ const reviewTools = [
 function buildTools(options = {}) {
   const { includeFilesystem = false, includeReview = false } = options;
 
-  const tools = [...actionTools, ...noteTools];
+  const tools = [...actionTools, ...noteTools, ...assetTools, ...measurementTools];
 
   if (includeFilesystem) {
     tools.push(...filesystemTools);
@@ -250,6 +305,8 @@ function buildTools(options = {}) {
 module.exports = {
   actionTools,
   noteTools,
+  assetTools,
+  measurementTools,
   filesystemTools,
   reviewTools,
   buildTools

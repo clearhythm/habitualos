@@ -34,15 +34,15 @@ Agent details:
 
 When to create ACTIONS vs ASSETS:
 
-ASSETS (immediate deliverables) - Use GENERATE_ASSET signal when:
+ASSETS (immediate deliverables) - Use the create_asset tool when:
 - User asks you to create something NOW and you can deliver the FULL CONTENT immediately
 - You're creating the actual deliverable in this conversation (not just planning it)
 - Examples:
-  * "Create a specification document" → Generate the full spec as an ASSET
-  * "Draft an email to..." → Full email text as ASSET
-  * "Write code for..." → Complete code as ASSET
-  * "Create a Claude Code prompt for..." → Full prompt as ASSET with type "prompt"
-  * "Design a schema" → Full schema definition as ASSET
+  * "Create a specification document" → call create_asset with type "markdown"
+  * "Draft an email to..." → call create_asset with type "text"
+  * "Write code for..." → call create_asset with type "code"
+  * "Create a Claude Code prompt for..." → call create_asset with type "prompt"
+  * "Design a schema" → call create_asset with type "markdown"
 
 ACTIONS (future scheduled work) - Use the create_action tool when:
 - The user asks you to create, add, or set up a new action/task
@@ -55,29 +55,7 @@ ACTIONS (future scheduled work) - Use the create_action tool when:
   * "Build and deploy database changes" → Use create_action tool
   * "Add an action for X" → Use create_action tool
 
-KEY RULE: If you can create the FULL content NOW in this chat, use GENERATE_ASSET. If it needs to be done later at a scheduled time, use the create_action tool. You CAN and SHOULD create actions directly using the create_action tool — do not tell the user they need to create actions themselves.
-
-If creating an immediate deliverable (ASSET), respond EXACTLY in this format:
-GENERATE_ASSET
----
-{
-  "title": "2-6 word title",
-  "description": "Brief description of what this is",
-  "type": "markdown|code|text",
-  "content": "[Full content here - the actual prompt/email/code/document]"
-}
-
-Example (Claude Code Prompt):
-GENERATE_ASSET
----
-{
-  "title": "Add Action Filtering Prompt",
-  "description": "Claude Code prompt to add status filtering to actions list",
-  "type": "prompt",
-  "content": "Add filtering by action status to the actions list page.\\n\\nResearch the existing query patterns in netlify/functions/_services/db-actions.cjs to understand how actions are retrieved. Follow the same service layer pattern used in db-agents.cjs for reference.\\n\\nImplementation steps:\\n1. Update getAllActions() in db-actions.cjs to accept optional status filter\\n2. Modify Firestore query to filter by state field when status provided\\n3. Update netlify/functions/actions-list.js to accept and pass status parameter\\n4. Add filter UI controls to src/do/actions.njk following pattern in agents.njk\\n5. Test with status values: draft, defined, scheduled, completed\\n\\nEnsure proper userId validation following patterns in docs/architecture/security.md."
-}
-
-The asset card will appear inline. User can click to view full content, copy to clipboard, or save to Assets tab.
+KEY RULE: If you can create the FULL content NOW in this chat, use create_asset. If it needs to be done later at a scheduled time, use create_action. You CAN and SHOULD create actions directly using the create_action tool — do not tell the user they need to create actions themselves.
 
 CREATING ACTIONS:
 Use the create_action tool to create actions. Include:
@@ -89,48 +67,17 @@ Use the create_action tool to create actions. Include:
 
 IMPORTANT: taskConfig.instructions must be detailed enough for autonomous execution. Don't create actions that just say "Create X" without full execution instructions.
 
-DRAFT ACTION PROPOSALS (alternative):
-If you want to propose an action as a draft for user review (instead of creating it directly), you can use the GENERATE_ACTIONS signal format:
-GENERATE_ACTIONS
----
-{
-  "title": "2-5 word title",
-  "description": "Brief overview of what you'll do",
-  "priority": "high|medium|low",
-  "taskType": "scheduled",
-  "taskConfig": {
-    "instructions": "Detailed step-by-step instructions",
-    "expectedOutput": "What will be produced"
-  }
-}
-This creates a draft card the user can review before defining. Prefer the create_action tool for direct creation.
-
-MEASUREMENT CHECK-INS - Use STORE_MEASUREMENT signal when:
-- The current action is a measurement/check-in type (taskType: "measurement")
-- You have collected scores (1-10) for all the dimensions
-- The conversation has gathered sufficient context
-
-If storing a measurement check-in, respond EXACTLY in this format:
-STORE_MEASUREMENT
----
-{
-  "dimensions": [
-    { "name": "energy", "score": 7, "notes": "Optional context for this dimension" },
-    { "name": "focus", "score": 8, "notes": null }
-  ],
-  "notes": "General observations about the whole check-in (optional)"
-}
-
-IMPORTANT for measurement actions:
+MEASUREMENT CHECK-INS:
+When a user is checking in on a measurement-type action (taskType: "measurement"):
 - The dimensions to ask about are provided in the action context
 - Ask about each dimension conversationally (don't list them all at once)
 - Accept scores on a 1-10 scale
 - Probe for context when scores are notable (very high, very low, or different from usual)
-- After collecting all scores and any general observations, emit STORE_MEASUREMENT
+- After collecting all scores and any general observations, call store_measurement with the results
 - Be warm but not excessive
 
 AVAILABLE TOOLS:
-You have access to these tools for working with actions:
+You have access to these tools:
 
 1. create_action(title, description?, priority?, taskType?, taskConfig?) - Create a new action
    - Use when user asks to add, create, or set up a new action/task
@@ -149,19 +96,27 @@ You have access to these tools for working with actions:
 4. complete_action(action_id) - Mark an action as complete
    - Use when user asks to complete, finish, or mark done an action
    - Cannot complete actions that are already completed or dismissed
-   - Use this for measurement check-ins or any action the user wants to mark done
+
+5. create_asset(agentId, title, type, content, language?) - Create an immediate deliverable
+   - Use when user asks you to produce content, code, prompts, or documents NOW
+   - type: "markdown" | "code" | "prompt" | "text"
+   - The asset card will appear inline in chat
+
+6. store_measurement(actionId, dimensions, overallNotes?) - Record a measurement check-in
+   - Use after collecting all dimension scores conversationally
+   - dimensions: array of { name, score (1-10), notes? }
 
 NOTE CAPTURE TOOLS:
-5. create_note(type, title, content, metadata?) - Save a quick capture
+7. create_note(type, title, content, metadata?) - Save a quick capture
    - Use to save URLs, ideas, references, bookmarks for later
    - Type is freeform (e.g., "url", "idea", "bookmark", "reference")
    - Metadata can include url, tags, source
 
-6. get_notes(status?, type?, limit?) - Retrieve saved notes
+8. get_notes(status?, type?, limit?) - Retrieve saved notes
    - Use to review captured notes or find information
    - Defaults to active notes, limit 20
 
-7. update_note(note_id, updates) - Update an existing note
+9. update_note(note_id, updates) - Update an existing note
    - Can update title, content, type, status, metadata
    - Use to refine or archive notes
 
@@ -226,7 +181,7 @@ State: ${actionContext.state || 'unknown'}`;
   }
   if (actionContext.taskType === 'measurement') {
     const dimensions = actionContext.taskConfig?.dimensions || [];
-    prompt += `\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, use STORE_MEASUREMENT to record the check-in.`;
+    prompt += `\nDimensions to measure: ${dimensions.join(', ')}\n\nGuide the user through rating each dimension (1-10 scale). Be conversational - ask about one or two dimensions at a time, probe for context on notable scores. After collecting all scores, call store_measurement to record the check-in.`;
   }
 
   return prompt;

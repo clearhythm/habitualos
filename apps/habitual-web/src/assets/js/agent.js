@@ -263,21 +263,6 @@ let streamingMessageElement = null;
 let streamingText = '';
 let streamingStarted = false;
 
-// Signal keywords that should be hidden from display
-const SIGNAL_KEYWORDS = ['GENERATE_ACTIONS', 'GENERATE_ASSET', 'STORE_MEASUREMENT'];
-
-function getDisplayText(fullText) {
-  // Find the earliest signal start and only show content before it
-  let displayText = fullText;
-  for (const signal of SIGNAL_KEYWORDS) {
-    const pattern = new RegExp(`(^|\\n)${signal}`, 'm');
-    const match = displayText.match(pattern);
-    if (match) {
-      displayText = displayText.substring(0, match.index);
-    }
-  }
-  return displayText.trim();
-}
 
 function showStreamingMessage() {
   streamingText = '';
@@ -308,14 +293,11 @@ function appendStreamingText(text) {
     streamingMessageElement.style.borderLeftColor = '#2563eb';
   }
 
-  // Get display text (without signals)
-  const displayText = getDisplayText(streamingText);
-
   // Update content with cursor at end
   if (window.marked) {
-    streamingMessageElement.innerHTML = marked.parse(displayText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
+    streamingMessageElement.innerHTML = marked.parse(streamingText) + '<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: #2563eb; animation: blink 1s infinite;"></span>';
   } else {
-    streamingMessageElement.textContent = displayText;
+    streamingMessageElement.textContent = streamingText;
   }
   chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
@@ -346,22 +328,20 @@ function finalizeStreamingMessage() {
   const cursor = streamingMessageElement.querySelector('.streaming-cursor');
   if (cursor) cursor.remove();
 
-  // Get display text (without signals) for final render
-  const displayText = getDisplayText(streamingText);
-
-  // Re-render with final markdown (without signal content)
-  if (window.marked && displayText) {
-    streamingMessageElement.innerHTML = marked.parse(displayText);
-  } else if (displayText) {
-    streamingMessageElement.textContent = displayText;
+  // Re-render with final markdown
+  if (window.marked && streamingText) {
+    streamingMessageElement.innerHTML = marked.parse(streamingText);
+  } else if (streamingText) {
+    streamingMessageElement.textContent = streamingText;
   }
 
   const finalElement = streamingMessageElement;
+  const finalText = streamingText;
   streamingMessageElement = null;
   streamingStarted = false;
+  streamingText = '';
 
-  // Return full text for signal parsing, display text for chat history
-  return { element: finalElement, text: streamingText, displayText };
+  return { element: finalElement, text: finalText };
 }
 
 function hideStreamingMessage() {
@@ -1424,7 +1404,6 @@ async function handleStreamingChat(userId, message) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
-  let finalData = null;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -1447,8 +1426,13 @@ async function handleStreamingChat(userId, message) {
             showToolStatus(data.tool, 'start');
           } else if (data.type === 'tool_complete') {
             showToolStatus(data.tool, 'complete');
-          } else if (data.type === 'done') {
-            finalData = data;
+            if (data.tool === 'create_asset' && data.result?.success && data.result?.asset) {
+              handleAssetToolComplete(data.result.asset, userId);
+            } else if (data.tool === 'store_measurement' && data.result?.success) {
+              handleMeasurementToolComplete(data.result, userId);
+            } else if (data.tool === 'create_action' && data.result?.success && data.result?.action) {
+              loadActions();
+            }
           } else if (data.type === 'error') {
             throw new Error(data.error);
           }
@@ -1460,21 +1444,16 @@ async function handleStreamingChat(userId, message) {
   }
 
   // Finalize the streaming message
-  const { text: fullResponse, displayText } = finalizeStreamingMessage();
+  const { text: fullResponse } = finalizeStreamingMessage();
 
-  // Add to chat history (use displayText to exclude signal content)
+  // Add to chat history
   const assistantMessage = {
     role: 'assistant',
-    content: displayText || fullResponse,
+    content: fullResponse,
     timestamp: new Date().toISOString()
   };
   chatHistory.push(assistantMessage);
   saveAgentChatHistory(chatHistory);
-
-  // Handle signals from the response
-  if (finalData?.hasSignal && finalData.signal) {
-    await handleSignal(finalData.signal, fullResponse, userId);
-  }
 }
 
 async function handleNonStreamingChat(userId, message) {
@@ -1514,31 +1493,6 @@ async function handleNonStreamingChat(userId, message) {
     chatHistory.push(assistantMessage);
     saveAgentChatHistory(chatHistory);
 
-    // Handle draft actions
-    if (data.hasDraftActions && data.draftActions) {
-      draftActions = [...draftActions, ...data.draftActions];
-      saveDraftActions(draftActions);
-
-      data.draftActions.forEach(action => {
-        renderDraftActionCard(action);
-      });
-
-      const actionIds = data.draftActions.map(a => a.id);
-      saveChatToFirestore([], actionIds);
-    }
-
-    // Handle proposed assets
-    if (data.hasProposedAsset && data.proposedAsset) {
-      proposedAssets.push(data.proposedAsset);
-      renderProposedAssetCard(data.proposedAsset);
-      saveChatToFirestore([data.proposedAsset.id], []);
-    }
-
-    // Handle measurement check-in completion
-    if (data.hasMeasurement && data.measurementData && currentMeasurementActionId) {
-      await handleMeasurementCompletion(userId, data.measurementData);
-    }
-
   } catch (error) {
     log('error', 'Error sending message:', error);
     hideLoadingMessage();
@@ -1554,82 +1508,24 @@ async function handleNonStreamingChat(userId, message) {
   }
 }
 
-async function handleSignal(signal, fullResponse, userId) {
-  const { type, data } = signal;
-
-  if (type === 'GENERATE_ACTIONS' && data && !data.error) {
-    const draftAction = {
-      id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-      title: data.title,
-      description: data.description,
-      priority: data.priority || 'medium',
-      taskType: data.taskType || 'scheduled',
-      taskConfig: data.taskConfig || {},
-      state: 'draft',
-      agentId: agentId
-    };
-
-    draftActions.push(draftAction);
-    saveDraftActions(draftActions);
-    renderDraftActionCard(draftAction);
-    saveChatToFirestore([], [draftAction.id]);
-  }
-
-  if (type === 'GENERATE_ASSET' && data && !data.error) {
-    const draftAction = {
-      id: `draft-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-      title: data.title,
-      description: data.description,
-      taskType: 'manual',
-      type: data.type || 'text',
-      content: data.content,
-      priority: 'medium',
-      state: 'draft',
-      agentId: agentId
-    };
-
-    draftActions.push(draftAction);
-    saveDraftActions(draftActions);
-    renderDraftActionCard(draftAction);
-    saveChatToFirestore([], [draftAction.id]);
-  }
-
-  if (type === 'STORE_MEASUREMENT' && data && !data.error && currentMeasurementActionId) {
-    await handleMeasurementCompletion(userId, data);
-  }
+function handleAssetToolComplete(asset, userId) {
+  // Render asset as a proposed asset card
+  const proposedAsset = {
+    id: asset.id,
+    title: asset.title,
+    type: asset.type,
+    content: asset.content,
+    language: asset.language || null,
+    agentId: agentId
+  };
+  proposedAssets.push(proposedAsset);
+  renderProposedAssetCard(proposedAsset);
 }
 
-async function handleMeasurementCompletion(userId, measurementData) {
-  try {
-    const measurementResponse = await fetch('/.netlify/functions/measurement-create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        agentId,
-        actionId: currentMeasurementActionId,
-        dimensions: measurementData.dimensions,
-        notes: measurementData.notes || null
-      })
-    });
-
-    const measurementResult = await measurementResponse.json();
-
-    if (measurementResult.success) {
-      await completeAction(currentMeasurementActionId);
-
-      const completionMessage = {
-        role: 'system',
-        content: '✓ Check-in recorded',
-        timestamp: new Date().toISOString()
-      };
-      renderMessage('system', completionMessage.content);
-    } else {
-      log('error', 'Failed to store measurement:', measurementResult.error);
-    }
-  } catch (err) {
-    log('error', 'Error storing measurement:', err);
-  } finally {
+async function handleMeasurementToolComplete(result, userId) {
+  if (currentMeasurementActionId) {
+    await completeAction(currentMeasurementActionId);
+    renderMessage('system', '✓ Check-in recorded');
     currentMeasurementActionId = null;
     currentMeasurementActionContext = null;
   }
