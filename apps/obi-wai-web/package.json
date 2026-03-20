@@ -14,6 +14,7 @@
     "@anthropic-ai/sdk": "^0.71.2",
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/db-core": "workspace:*",
+    "@habitualos/frontend-utils": "workspace:*",
     "@habitualos/survey-engine": "workspace:*",
     "marked": "^15.0.12",
     "twilio": "^5.0.0"

@@ -406,10 +406,10 @@ permalink: /chat/
   let hasSurvey = false;
   if (!replyToMomentId) {
     try {
-      const res = await fetch(`/api/survey-check?userId=${encodeURIComponent(userId)}`);
+      const res = await fetch(`/api/chat-context?userId=${encodeURIComponent(userId)}`);
       if (res.ok) {
-        const data = await res.json();
-        hasSurvey = !!data.hasSurvey;
+        const ctx = await res.json();
+        hasSurvey = ctx.priority === 'survey';
       }
     } catch (e) { /* proceed without survey info */ }
 

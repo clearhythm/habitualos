@@ -13,6 +13,7 @@ const { getFocus, recalculateFocus } = require('./survey-focus.cjs');
 const { computeFocusDimensions } = require('./focus-algorithm.cjs');
 const { surveyTools } = require('./src/tools/schema.cjs');
 const { handleSurveyTool, SURVEY_TOOL_NAMES } = require('./src/tools/handlers.cjs');
+const { checkPendingSurvey } = require('./src/context-checks.cjs');
 
 module.exports = {
   // Definitions
@@ -38,5 +39,8 @@ module.exports = {
   // Tool-based sub-agent API
   surveyTools,
   handleSurveyTool,
-  SURVEY_TOOL_NAMES
+  SURVEY_TOOL_NAMES,
+
+  // Context checks
+  checkPendingSurvey
 };
