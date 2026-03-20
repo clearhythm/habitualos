@@ -30,6 +30,9 @@ TICKET-00   ←── run FIRST (package foundation)
 - `TICKET-03` — relationship-web all 3 signals → tools (requires TICKET-00)
 - `TICKET-04` — signal app FIT_SCORE_UPDATE → tool (independent, run anytime)
 
+**Phase 3 (cleanup, run last):**
+- `TICKET-05` — fix circular dependency in survey-engine handlers.cjs
+
 ---
 
 ## Signal Inventory (what gets removed)
