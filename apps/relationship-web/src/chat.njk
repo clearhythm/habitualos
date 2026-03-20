@@ -173,23 +173,6 @@ permalink: /chat/
     clearTimeout(thinkingTimer);
   }
 
-  // Create modals via shared component
-  const captureModalObj = createModal({
-    id: 'capture-modal',
-    emoji: '👒',
-    title: 'Ready to capture this?',
-    confirmLabel: 'Capture',
-    dismissLabel: 'No, keep talking'
-  });
-  const surveyModalObj = createModal({
-    id: 'survey-modal',
-    emoji: '🦥',
-    title: 'Save your replies?',
-    subtitle: "Here's what we'll save for you.",
-    confirmLabel: 'Save',
-    dismissLabel: 'Keep chatting'
-  });
-  let pendingSignal = null;
 
   // Streaming state
   let streamingMessageElement = null;
@@ -304,69 +287,34 @@ permalink: /chat/
       streamingMessageElement.style.borderLeftColor = '#4c1d95';
     }
 
-    // Filter out signal text — don't render anything from signals onward
-    let displayText = streamingText;
-    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT', 'SEND_REPLY'];
-    for (const marker of signalMarkers) {
-      const idx = displayText.indexOf(marker);
-      if (idx !== -1) {
-        displayText = displayText.substring(0, idx).trim();
-        break;
-      }
-    }
-    if (displayText !== streamingText && !displayText) {
-      streamingMessageElement.innerHTML = '<span class="thinking-label" style="color: rgba(255,255,255,0.5); font-style: italic;">Thinking...</span>';
-      return;
-    }
-
     // Update content with cursor at end
     if (window.marked) {
-      streamingMessageElement.innerHTML = marked.parse(displayText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: rgba(255,255,255,0.6); animation: blink 1s infinite;"></span>`;
+      streamingMessageElement.innerHTML = marked.parse(streamingText) + `<span class="streaming-cursor" style="display: inline-block; width: 2px; height: 1em; background: rgba(255,255,255,0.6); animation: blink 1s infinite;"></span>`;
     } else {
-      streamingMessageElement.textContent = displayText;
+      streamingMessageElement.textContent = streamingText;
     }
     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
   }
 
-  function finalizeStreamingMessage(signal = null) {
-    if (!streamingMessageElement) return { text: '', displayText: '', signal: null };
+  function finalizeStreamingMessage() {
+    if (!streamingMessageElement) return { text: '' };
 
     // Remove cursor and finalize content
     const cursor = streamingMessageElement.querySelector('.streaming-cursor');
     if (cursor) cursor.remove();
 
-    // Strip signal text from display and stored content
-    let displayText = streamingText;
-    const signalMarkers = ['SAVE_MOMENT', 'STORE_MEASUREMENT', 'SEND_REPLY'];
-    for (const marker of signalMarkers) {
-      const idx = displayText.indexOf(marker);
-      if (idx !== -1) {
-        displayText = displayText.substring(0, idx).trim();
-        break;
-      }
-    }
-    if (!displayText && signal) {
-      if (signal.type === 'STORE_MEASUREMENT') {
-        displayText = "Here are your check-in results.";
-      } else if (signal.type === 'SEND_REPLY') {
-        displayText = "Sending your reply now.";
-      } else {
-        displayText = "Looks like we're ready to capture this.";
-      }
+    if (window.marked && streamingText) {
+      streamingMessageElement.innerHTML = marked.parse(streamingText);
+    } else if (streamingText) {
+      streamingMessageElement.textContent = streamingText;
     }
 
-    // Re-render with final markdown (signal-stripped)
-    if (window.marked && displayText) {
-      streamingMessageElement.innerHTML = marked.parse(displayText);
-    } else if (displayText) {
-      streamingMessageElement.textContent = displayText;
-    }
-
+    const finalText = streamingText;
     streamingMessageElement = null;
     streamingText = '';
     streamingStarted = false;
 
-    return { text: displayText, displayText, signal };
+    return { text: finalText };
   }
 
   function hideStreamingMessage() {
@@ -498,117 +446,32 @@ permalink: /chat/
     renderMessage(msg.role, msg.content);
   });
 
-  // Handle signals — show appropriate confirmation popup
-  function handleSignal(signal) {
-    if (!signal) return;
-
-    if (signal.type === 'SEND_REPLY') {
-      return handleReplySignal(signal);
-    }
-    if (signal.type === 'STORE_MEASUREMENT') {
-      return handleSurveySignal(signal);
-    }
-    if (signal.type !== 'SAVE_MOMENT') return;
-
-    pendingSignal = signal;
-
-    // Show moment summary in modal
-    const data = signal.data || {};
-    const summary = data.content || 'A moment from your conversation.';
-    captureModalObj.contentEl.innerHTML = `<p style="margin: 0 0 1rem 0; font-size: 0.95rem; color: #666; line-height: 1.5; text-align: left;">${summary}</p>`;
-
-    // Show modal, disable chat
-    captureModalObj.show();
-    messageInput.disabled = true;
-    sendButton.disabled = true;
-    sendButton.style.background = 'rgba(255,255,255,0.2)';
-    sendButton.style.cursor = 'not-allowed';
-  }
-
-  // Handle STORE_MEASUREMENT signal — show survey results modal
-  function handleSurveySignal(signal) {
-    pendingSignal = signal;
-    const data = signal.data || {};
-    const dimensions = data.dimensions || [];
-
-    // Build scores display
-    let scoresHtml = '';
-    for (const dim of dimensions) {
-      const pct = Math.round((dim.score / 10) * 100);
-      scoresHtml += `
-        <div style="margin-bottom: 0.75rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-            <span style="font-size: 0.9rem; color: #333; font-weight: 500;">${dim.name}</span>
-            <span style="font-size: 0.9rem; color: #7c3aed; font-weight: 600;">${pct}%</span>
-          </div>
-          <div style="height: 6px; background: #f0e6ff; border-radius: 3px; overflow: hidden;">
-            <div style="height: 100%; width: ${pct}%; background: #7c3aed; border-radius: 3px;"></div>
-          </div>
-          ${dim.notes ? `<div style="font-size: 0.8rem; color: #888; margin-top: 0.25rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${dim.notes}</div>` : ''}
-        </div>
-      `;
-    }
-
-    surveyModalObj.contentEl.innerHTML = `<div style="margin: 0 0 1rem 0; text-align: left;">${scoresHtml}</div>`;
-
-    // Show modal, disable chat
-    surveyModalObj.show();
-    messageInput.disabled = true;
-    sendButton.disabled = true;
-    sendButton.style.background = 'rgba(255,255,255,0.2)';
-    sendButton.style.cursor = 'not-allowed';
-  }
-
-  // Handle SEND_REPLY signal — save reply and navigate back
-  async function handleReplySignal(signal) {
-    const data = signal.data || {};
-    const momentId = data.momentId || replyToMomentId;
-    const content = data.content;
-
-    if (!momentId || !content) {
-      showToast('Reply could not be saved.', { type: 'error' });
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/moment-reply-save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          momentId,
-          content,
-          repliedBy: userName
-        })
+  // Handle tool_complete events
+  function handleToolComplete(toolName) {
+    if (toolName === 'save_moment') {
+      showToast('Moment saved');
+    } else if (toolName === 'send_reply') {
+      clearChatHistory();
+      showToast('Reply sent!');
+      setTimeout(() => { window.location.href = '/'; }, 1200);
+    } else if (toolName === 'store_survey_results') {
+      const doneModal = createModal({
+        id: 'survey-done-modal',
+        emoji: '🦥',
+        title: 'Check-in saved!',
+        subtitle: "We'll check in with you again next week.",
+        confirmLabel: 'Done',
+        dismissLabel: 'Start new chat'
       });
-
-      const result = await response.json();
-      if (result.success) {
+      doneModal.confirmBtn.addEventListener('click', () => {
         clearChatHistory();
-
-        if (result.sunPoints > 0) {
-          // Show sun points award modal
-          const modal = createModal({
-            id: 'sun-points-modal',
-            emoji: '☀️',
-            title: `+${result.sunPoints} — Reply sent!`,
-            subtitle: 'You both earned sun points for showing up.',
-            confirmLabel: 'Nice'
-          });
-          modal.confirmBtn.addEventListener('click', () => {
-            window.location.href = '/';
-          });
-          modal.show();
-        } else {
-          showToast('Reply sent!');
-          setTimeout(() => { window.location.href = '/'; }, 1200);
-        }
-      } else {
-        showToast('Failed to save reply.', { type: 'error' });
-      }
-    } catch (error) {
-      console.error('Error saving reply:', error);
-      showToast('Failed to save reply.', { type: 'error' });
+        window.location.href = '/';
+      });
+      doneModal.dismissBtn.addEventListener('click', () => {
+        clearChatHistory();
+        window.location.reload();
+      });
+      doneModal.show();
     }
   }
 
@@ -650,93 +513,6 @@ permalink: /chat/
     return getChatId();
   }
 
-  // Capture confirm button — save chat then redirect to capture page
-  captureModalObj.confirmBtn.addEventListener('click', async () => {
-    captureModalObj.hide();
-    if (!pendingSignal) return;
-
-    const signalData = pendingSignal.data || {};
-    const chatId = await ensureChatSaved();
-
-    // Build capture URL with pre-filled data
-    const params = new URLSearchParams();
-    if (signalData.type) params.set('type', signalData.type);
-    if (signalData.content) params.set('content', signalData.content);
-    if (chatId) params.set('chatId', chatId);
-
-    pendingSignal = null;
-    window.location.href = `/capture/?${params.toString()}`;
-  });
-
-  // Capture dismiss button
-  captureModalObj.dismissBtn.addEventListener('click', () => {
-    captureModalObj.hide();
-    pendingSignal = null;
-    messageInput.disabled = false;
-    messageInput.focus();
-    updateSendButton();
-  });
-
-  // Survey confirm button — save check-in results
-  surveyModalObj.confirmBtn.addEventListener('click', async () => {
-    if (!pendingSignal) return;
-
-    surveyModalObj.confirmBtn.textContent = 'Saving...';
-    surveyModalObj.confirmBtn.disabled = true;
-
-    try {
-      const response = await fetch('/api/survey-measurement-save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, signal: pendingSignal })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        // Replace with completion modal
-        surveyModalObj.hide();
-        const doneModal = createModal({
-          id: 'survey-done-modal',
-          emoji: '🦥',
-          title: 'Check-in saved!',
-          subtitle: "We'll check in with you again next week.",
-          confirmLabel: 'Done',
-          dismissLabel: 'Start new chat'
-        });
-        doneModal.confirmBtn.addEventListener('click', () => {
-          clearChatHistory();
-          window.location.href = '/';
-        });
-        doneModal.dismissBtn.addEventListener('click', () => {
-          clearChatHistory();
-          window.location.reload();
-        });
-        doneModal.show();
-      } else {
-        showToast('Failed to save check-in.', { type: 'error' });
-        surveyModalObj.hide();
-        surveyModalObj.confirmBtn.textContent = 'Save';
-        surveyModalObj.confirmBtn.disabled = false;
-      }
-    } catch (error) {
-      console.error('Error saving survey:', error);
-      showToast('Failed to save check-in.', { type: 'error' });
-      surveyModalObj.hide();
-      surveyModalObj.confirmBtn.textContent = 'Save';
-      surveyModalObj.confirmBtn.disabled = false;
-    }
-
-    pendingSignal = null;
-  });
-
-  // Survey dismiss button
-  surveyModalObj.dismissBtn.addEventListener('click', () => {
-    surveyModalObj.hide();
-    pendingSignal = null;
-    messageInput.disabled = false;
-    messageInput.focus();
-    updateSendButton();
-  });
 
   // Streaming chat handler
   async function handleStreamingChat(message) {
@@ -768,7 +544,6 @@ permalink: /chat/
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let receivedSignal = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -787,11 +562,13 @@ permalink: /chat/
 
             if (data.type === 'token') {
               appendStreamingText(data.text);
-            } else if (data.type === 'done') {
-              // Check for signal
-              if (data.hasSignal && data.signal) {
-                receivedSignal = data.signal;
+            } else if (data.type === 'tool_start') {
+              // Show subtle indicator that tool is running
+              if (streamingMessageElement) {
+                streamingMessageElement.innerHTML = '<span class="thinking-label" style="color: rgba(255,255,255,0.5); font-style: italic;">Saving...</span>';
               }
+            } else if (data.type === 'tool_complete') {
+              handleToolComplete(data.tool);
             } else if (data.type === 'error') {
               throw new Error(data.error);
             }
@@ -803,7 +580,7 @@ permalink: /chat/
     }
 
     // Finalize the streaming message
-    const { text: fullResponse } = finalizeStreamingMessage(receivedSignal);
+    const { text: fullResponse } = finalizeStreamingMessage();
 
     // Add to chat history
     const assistantMessage = {
@@ -813,11 +590,6 @@ permalink: /chat/
     };
     chatHistory.push(assistantMessage);
     saveChatHistory(chatHistory);
-
-    // Handle signal if present
-    if (receivedSignal) {
-      await handleSignal(receivedSignal);
-    }
   }
 
   // Handle form submission

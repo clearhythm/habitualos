@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getMomentsByUserId, getMoment } = require('./_services/db-moments.cjs');
-const { getOpenSurveyAction, getResponsesByUser } = require('@habitualos/survey-engine');
+const { getOpenSurveyAction, getResponsesByUser, surveyTools } = require('@habitualos/survey-engine');
 const { getPartner, getPronouns } = require('./_services/partners.cjs');
 
 /**
@@ -113,24 +113,14 @@ You're here to listen, reflect, and help them make sense of what's happening in 
 When a moment emerges naturally from the conversation:
 1. Help them articulate it — ask clarifying questions to fill in the details (what happened, what stood out)
 2. When you have enough, offer a brief summary: "Here's what I'm hearing: [2-3 sentence synthesis]. Want to capture this?"
-3. If they confirm, emit the save signal (below). If they say no or want to keep talking, that's fine — not everything needs to be saved.
+3. If they confirm, call the save_moment tool. Always set addedBy to ${userName || 'their first name'}. If they say no or want to keep talking, that's fine — not everything needs to be saved.
 
-SAVE signal format — emit this ONLY when they confirm they want to capture:
-
-SAVE_MOMENT
----
-{
-  "type": "[happy|sad|hard]",
-  "content": "[synthesized description in their voice, with enough detail to be meaningful later]",
-  "occurredAt": "[ISO date if mentioned, or current time]"
-}
-
-Determine the emotional tone of the moment:
+Determine the emotional tone before calling save_moment:
 - "happy" — something positive, joyful, celebratory, or a moment of togetherness and solidarity. Even if the context was difficult, if it brought them closer or felt like a win together, it's happy.
 - "sad" — something sorrowful, disappointing, or involving loss
 - "hard" — a conflict, disagreement, or friction between them. Use this when there was tension, miscommunication, or hurt between partners — moments they want to capture to understand patterns.
 
-After the signal, say something brief and grounded. No fanfare.
+After calling save_moment, say something brief and grounded. No fanfare.
 
 Guidelines:
 - Don't steer every conversation toward capturing — follow their lead
@@ -174,22 +164,15 @@ IMPORTANT RULES for the scored check-in (growth areas only):
 - Never linger on a dimension longer than needed. The goal is to keep moving.
 - Do NOT list upcoming dimensions or tell them how many are left
 - Keep it conversational — this should feel like a check-in with a friend, not a form
-- EARLY EXIT: If the user wants to stop mid-survey (says "no", "I'm done", "not right now", etc.), do NOT just drop the data. Offer to save what they've shared: "No problem. Want me to save your responses to this week's survey?" If yes, emit the STORE_MEASUREMENT signal immediately with whatever dimensions were covered — do NOT show a summary or ask for confirmation first, just emit the signal and say something brief. If no, acknowledge warmly and move to normal conversation. Either way, the survey won't come back this week.
+- EARLY EXIT: If the user wants to stop mid-survey (says "no", "I'm done", "not right now", etc.), do NOT just drop the data. Offer to save what they've shared: "No problem. Want me to save your responses to this week's survey?" If yes, call store_survey_results immediately with whatever dimensions were covered — do NOT show a summary or ask for confirmation first, just call the tool and say something brief. If no, acknowledge warmly and move to normal conversation. Either way, the survey won't come back this week.
 - Only score the growth areas (first ${Math.min(3, surveyMode.dimensions.length)} dimensions). Do NOT ask for scores on the strengths.
-- After reflecting on the LAST growth area, do NOT ask "Ready for the next one?" or similar. Instead, offer to save: "That's all three — want me to save your check-in?" If yes, emit the STORE_MEASUREMENT signal immediately — do NOT show a summary or ask for additional confirmation. If no, acknowledge warmly and move to normal conversation.
+- After reflecting on the LAST growth area, do NOT ask "Ready for the next one?" or similar. Instead, offer to save: "That's all three — want me to save your check-in?" If yes, call store_survey_results immediately — do NOT show a summary or ask for additional confirmation. If no, acknowledge warmly and move to normal conversation.
 
-Once they confirm, emit the measurement signal:
+When they confirm, call store_survey_results with:
+- surveyActionId: "${surveyMode.actionId}"
+- dimensions: array of { name, score, notes } for each covered dimension (notes in the user's own words, first person)
 
-STORE_MEASUREMENT
----
-{
-  "surveyActionId": "${surveyMode.actionId}",
-  "dimensions": [
-    { "name": "DimensionName", "score": 7, "notes": "Direct quote or close paraphrase in the user's own words — first person, their voice, not a summary" }
-  ]
-}
-
-After the signal, say something brief and grounded. Then return to normal conversation.`;
+After calling the tool, say something brief and grounded. Then return to normal conversation.`;
     }
 
     // Reply mode prompt — when user is replying to a partner's moment
@@ -229,16 +212,12 @@ Your role in reply mode:
 - A few sentences is plenty for a reply
 - Don't steer toward capturing a new moment — this is about responding to an existing one
 
-When ${userP.they}'s ready, confirm the reply and emit:
+When ${userName} is ready, confirm the reply and call send_reply with:
+- momentId: "${replyMoment.id}"
+- content: the reply in ${userName}'s voice — warm, direct, and brief
+- repliedBy: "${userName}"
 
-SEND_REPLY
----
-{
-  "momentId": "${replyMoment.id}",
-  "content": "[${userName}'s reply, in ${userP.their} voice — warm, direct, and brief]"
-}
-
-After the signal, say something brief and grounded. No fanfare.`;
+After calling the tool, say something brief and grounded. No fanfare.`;
         }
       } catch (err) {
         console.warn('[rely-chat-init] Reply moment fetch failed (non-fatal):', err.message);
@@ -252,13 +231,66 @@ After the signal, say something brief and grounded. No fanfare.`;
     if (surveyMode) availableModes.push('survey');
     if (replyMode) availableModes.push('reply');
 
+    const tools = [
+      {
+        name: 'save_moment',
+        description: 'Save a relationship moment the user wants to capture — something meaningful that happened with someone important to them. Call this only after the user confirms they want to capture it.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            type: {
+              type: 'string',
+              enum: ['happy', 'sad', 'hard'],
+              description: 'Emotional tone: happy (positive/joyful), sad (sorrowful/loss), hard (conflict/tension between partners)'
+            },
+            content: {
+              type: 'string',
+              description: 'Synthesized description of the moment in the user\'s voice, with enough detail to be meaningful later'
+            },
+            addedBy: {
+              type: 'string',
+              description: 'First name of the person capturing this moment (always the current user\'s first name)'
+            },
+            occurredAt: {
+              type: 'string',
+              description: 'ISO date when it happened, if mentioned. Omit to default to now.'
+            }
+          },
+          required: ['type', 'content', 'addedBy']
+        }
+      },
+      {
+        name: 'send_reply',
+        description: 'Send a reply to a partner\'s relationship moment. Call this after the user has crafted their reply and confirmed they\'re ready to send.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            momentId: {
+              type: 'string',
+              description: 'The ID of the moment being replied to'
+            },
+            content: {
+              type: 'string',
+              description: 'The reply content in the user\'s voice — warm, direct, and brief'
+            },
+            repliedBy: {
+              type: 'string',
+              description: 'First name of the person sending the reply (always the current user\'s first name)'
+            }
+          },
+          required: ['momentId', 'content', 'repliedBy']
+        }
+      },
+      ...surveyTools
+    ];
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
         systemMessages: [{ type: 'text', text: fullPrompt, cache_control: { type: 'ephemeral' } }],
-        tools: [], // Relly has no tools - signal-based
+        tools,
         availableModes,
         surveyActionId: surveyMode?.actionId || null,
         replyMode: replyMode || null

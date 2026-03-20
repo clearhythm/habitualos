@@ -9,8 +9,8 @@ import { createChatStreamHandler } from "./_lib/chat-stream-core.ts";
 export default createChatStreamHandler({
   rely: {
     initEndpoint: "/api/rely-chat-init",
-    toolExecuteEndpoint: null, // No tools - signal-based like Obi-Wai
-    signalPatterns: [/^SAVE_MOMENT\s*\n---/m, /^STORE_MEASUREMENT\s*\n---/m, /^SEND_REPLY\s*\n---/m],
+    toolExecuteEndpoint: "/api/rely-tool-execute",
+    signalPatterns: [],
   },
 });
 
