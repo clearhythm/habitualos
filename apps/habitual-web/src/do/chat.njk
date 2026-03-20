@@ -325,10 +325,30 @@ permalink: /do/chat/
   chatMessages.appendChild(headerDiv);
 
   // Initialize chat with opening message or load history
+  const APP_MESSAGES = {
+    default: "What would you like to focus on today?"
+    // add priority keys here as new priority types are introduced
+  };
+
   if (chatHistory.length === 0) {
+    let openingContent = APP_MESSAGES.default;
+    try {
+      const ctx = await fetch(`/.netlify/functions/chat-context?userId=${encodeURIComponent(userId)}`).then(r => r.json());
+      if (ctx.priority && APP_MESSAGES[ctx.priority]) {
+        openingContent = APP_MESSAGES[ctx.priority];
+      } else if (ctx.priority) {
+        const PACKAGE_DEFAULTS = {
+          survey: "There's a check-in ready for you. Want to do that first, or dive right in?"
+        };
+        openingContent = PACKAGE_DEFAULTS[ctx.priority] || APP_MESSAGES.default;
+      }
+    } catch (e) {
+      // Silently fall back to default on error
+    }
+
     const openingMessage = {
       role: 'assistant',
-      content: "What would you like to focus on today?",
+      content: openingContent,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(openingMessage);

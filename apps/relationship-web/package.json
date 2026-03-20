@@ -15,6 +15,7 @@
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/chat-storage": "workspace:*",
     "@habitualos/db-core": "workspace:*",
+    "@habitualos/frontend-utils": "workspace:*",
     "@habitualos/survey-engine": "workspace:*",
     "marked": "^15.0.12",
     "resend": "^4.0.0"

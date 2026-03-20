@@ -332,10 +332,30 @@ permalink: /practice/chat/
   }
 
   // Initialize chat with opening message or load history
+  const APP_MESSAGES = {
+    survey: "Before we get going — there's a quick check-in waiting. Want to do that first, or just get to it?",
+    default: "What would you like to practice today?"
+  };
+
   if (chatHistory.length === 0) {
+    let openingContent = APP_MESSAGES.default;
+    try {
+      const ctx = await fetch(`/.netlify/functions/chat-context?userId=${encodeURIComponent(userId)}`).then(r => r.json());
+      if (ctx.priority && APP_MESSAGES[ctx.priority]) {
+        openingContent = APP_MESSAGES[ctx.priority];
+      } else if (ctx.priority) {
+        const PACKAGE_DEFAULTS = {
+          survey: "There's a check-in ready for you. Want to do that first, or dive right in?"
+        };
+        openingContent = PACKAGE_DEFAULTS[ctx.priority] || APP_MESSAGES.default;
+      }
+    } catch (e) {
+      // Silently fall back to default on error
+    }
+
     const openingMessage = {
       role: 'assistant',
-      content: "What would you like to practice today?",
+      content: openingContent,
       timestamp: new Date().toISOString()
     };
     chatHistory.push(openingMessage);

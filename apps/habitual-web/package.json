@@ -15,6 +15,7 @@
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/chat-storage": "workspace:*",
     "@habitualos/db-core": "workspace:*",
+    "@habitualos/frontend-utils": "workspace:*",
     "marked": "^15.0.12",
     "node-cron": "^4.2.1",
     "uuid": "^13.0.0"
