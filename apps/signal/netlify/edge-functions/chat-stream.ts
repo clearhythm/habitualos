@@ -9,17 +9,17 @@ export default createChatStreamHandler({
   "signal-visitor": {
     initEndpoint: "/api/signal-visitor-init",
     toolExecuteEndpoint: "/api/signal-tool-execute",
-    signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
+    signalPatterns: [],
   },
   "signal-onboard": {
     initEndpoint: "/api/signal-onboard-init",
     toolExecuteEndpoint: "/api/signal-tool-execute",
-    signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
+    signalPatterns: [],
   },
   "signal-owner": {
     initEndpoint: "/api/signal-owner-init",
     toolExecuteEndpoint: "/api/signal-tool-execute",
-    signalPatterns: [/^FIT_SCORE_UPDATE\s*\n---/m],
+    signalPatterns: [],
   },
 });
 

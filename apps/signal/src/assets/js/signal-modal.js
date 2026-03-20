@@ -87,10 +87,6 @@ function removeThinking() {
 
 // ─── Shared: score panel ──────────────────────────────────────────────────────
 
-function stripScoreBlock(text) {
-  return text.replace(/\n*FIT_SCORE_UPDATE\s*\n---\s*\n\{[\s\S]*?\}/m, '').trim();
-}
-
 function resetScorePanel() {
   overallRingEl.style.strokeDashoffset = RING_CIRCUMFERENCE;
   overallScoreEl.textContent = '—';
@@ -508,16 +504,25 @@ async function sendMessage(text) {
 
         if (event.type === 'token') {
           fullResponse += event.text;
-          assistantEl.textContent = stripScoreBlock(fullResponse);
+          assistantEl.textContent = fullResponse;
           messagesEl.scrollTop = messagesEl.scrollHeight;
+        } else if (event.type === 'tool_complete') {
+          if (event.tool === 'update_fit_score') {
+            const { scores, reason, nextStep } = event.result;
+            const nextStepLabels = {
+              hot: 'Hot fit — worth prioritizing',
+              warm: 'Warm fit — worth staying connected',
+              cold: 'Probably not the right fit right now',
+              ready: "You're Signal-ready",
+              building: 'Keep building your history',
+              pass: 'Signal may not be the right fit yet',
+            };
+            updateScorePanel({ ...scores, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+          }
         } else if (event.type === 'done') {
           fullResponse = event.fullResponse || fullResponse;
-          if (event.hasSignal && event.signal?.type === 'FIT_SCORE_UPDATE') {
-            updateScorePanel(event.signal.data);
-          }
-          const clean = stripScoreBlock(fullResponse);
-          assistantEl.textContent = clean;
-          state.chatHistory.push({ role: 'assistant', content: clean });
+          assistantEl.textContent = fullResponse;
+          state.chatHistory.push({ role: 'assistant', content: fullResponse });
           if (activeAgent.persist) await activeAgent.persist();
         } else if (event.type === 'error') {
           removeThinking();

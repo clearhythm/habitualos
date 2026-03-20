@@ -51,26 +51,18 @@ Confidence (0.0-1.0): How much you actually know.
 
 == NEXT STEP ==
 
-Emit a nextStep when confidence ≥ 0.65 and at least 4 turns have passed:
-- overall 7-10 → nextStep: "ready",    nextStepLabel: "You're Signal-ready"
-- overall 4-6  → nextStep: "building", nextStepLabel: "Keep building your history"
-- overall 0-3  → nextStep: "pass",     nextStepLabel: "Signal may not be the right fit yet"
+Include nextStep in update_fit_score when confidence ≥ 0.65 and at least 4 turns have passed:
+- overall 7-10 → nextStep: "ready"
+- overall 4-6  → nextStep: "building"
+- overall 0-3  → nextStep: "pass"
 
-== SIGNAL FORMAT ==
+== FIT SCORE TOOL ==
 
-Emit verbatim at end of message when confidence meaningfully changes:
-
-FIT_SCORE_UPDATE
----
-{"skills": <0-10>, "alignment": <0-10>, "personality": <0-10>, "overall": <0-10>, "confidence": <0.0-1.0>, "reason": "<2 sentences referencing specific things they said>", "nextStep": "<ready|building|pass|null>", "nextStepLabel": "<label or null>"}
-
-Rules:
-- Emit after your first substantive response (initial hypothesis)
-- Update when any score changes ≥1 point or confidence changes ≥0.15
-- Only emit nextStep when confidence ≥ 0.65 and ≥ 4 turns have passed
-- The "reason" must reference specifics from what they said — not generic praise
-- Be honest: a 4 is a 4. An honest "not yet" is more useful than false encouragement.
-- Append the block AFTER your conversational response
+Call update_fit_score after your first substantive response (initial hypothesis).
+Continue calling it whenever your assessment changes significantly (any score changes ≥1 point, or confidence changes ≥0.15).
+Only include nextStep when confidence is ≥ 0.65 and at least 4 turns have passed.
+The "reason" must reference specifics from what they said — not generic praise.
+Be honest: a 4 is a 4. An honest "not yet" is more useful than false encouragement.
 
 == CONVERSATION APPROACH ==
 
@@ -119,7 +111,23 @@ exports.handler = async (event) => {
         success: true,
         opener: OPENER,
         systemMessages: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-        tools: [],
+        tools: [{
+          name: 'update_fit_score',
+          description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
+          input_schema: {
+            type: 'object',
+            properties: {
+              skills: { type: 'number', description: 'Technical skills fit score 0-10' },
+              alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
+              personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
+              overall: { type: 'number', description: 'Overall fit score 0-10' },
+              confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
+              reason: { type: 'string', description: 'Brief explanation of the current assessment' },
+              nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65 and ≥ 4 turns have passed)' }
+            },
+            required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
+          }
+        }],
       }),
     };
   } catch (error) {
