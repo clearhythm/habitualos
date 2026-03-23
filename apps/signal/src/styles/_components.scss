@@ -30,6 +30,12 @@
     &:hover { border-color: rgba(255, 255, 255, 0.65); opacity: 1; }
   }
 
+  &-auth {
+    padding: $space-md $space-xl;
+    margin-top: $space-lg;
+    justify-content: center;
+  }
+
   &-danger {
     background: #c0392b;
     color: #fff;
