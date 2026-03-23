@@ -7,6 +7,12 @@
 const loading = document.getElementById('dash-loading');
 const main    = document.getElementById('dash-main');
 
+// Null-safe helpers — both pages share this script but have different DOM subsets
+function $on(id, event, handler) { const el = document.getElementById(id); if (el) el.addEventListener(event, handler); }
+function setVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function setHidden(id, hidden) { const el = document.getElementById(id); if (el) el.hidden = hidden; }
+
 let ownerConfig = null;
 let selectedFile = null;
 let parsedConversations = null;
@@ -52,42 +58,42 @@ function showUnauth() {
 function renderDashboard(config) {
   const { signalId, displayName, contextText = '', personas = [], anthropicApiKey, contactLinks = {} } = config;
 
-  document.getElementById('dash-display-name').textContent = displayName;
-  document.getElementById('dash-signal-id').textContent = signalId;
-  document.getElementById('dash-preview-link').href = `/widget/?id=${signalId}`;
+  setText('dash-display-name', displayName);
+  setText('dash-signal-id', signalId);
+  const previewLink = document.getElementById('dash-preview-link');
+  if (previewLink) previewLink.href = `/widget/?id=${signalId}`;
 
   const snippet = `<script src="https://signal.habitualos.com/assets/js/signal-embed.js" data-signal-id="${signalId}"><\/script>`;
-  document.getElementById('embed-code').textContent = snippet;
+  setText('embed-code', snippet);
 
-  document.getElementById('context-text').value = contextText;
+  setVal('context-text', contextText);
 
   // LinkedIn source
   const linkedin = config.sources?.linkedin || '';
-  document.getElementById('linkedin-text').value = linkedin;
+  setVal('linkedin-text', linkedin);
   const linkedinUpdated = config.sources?.linkedinUpdatedAt;
-  if (linkedinUpdated) {
-    document.getElementById('linkedin-updated').textContent = 'Last updated ' + new Date(linkedinUpdated).toLocaleDateString();
-  }
-  document.getElementById('apikey-hint').textContent = anthropicApiKey
+  if (linkedinUpdated) setText('linkedin-updated', 'Last updated ' + new Date(linkedinUpdated).toLocaleDateString());
+
+  setText('apikey-hint', anthropicApiKey
     ? 'API key is saved. Enter a new value to replace it.'
-    : 'No key saved yet. Without it, your widget uses the shared Signal key (rate limited).';
+    : 'No key saved yet. Without it, your widget uses the shared Signal key (rate limited).');
 
   // Contact links
-  document.getElementById('link-calendar').value = contactLinks.calendar || '';
-  document.getElementById('link-linkedin').value = contactLinks.linkedin || '';
-  document.getElementById('link-substack').value = contactLinks.substack || '';
-  document.getElementById('link-other').value = contactLinks.other || '';
+  setVal('link-calendar', contactLinks.calendar || '');
+  setVal('link-linkedin', contactLinks.linkedin || '');
+  setVal('link-substack', contactLinks.substack || '');
+  setVal('link-other', contactLinks.other || '');
 
   // Gap Q&A prefill from existing profile
   const wp = config.wantsProfile || {};
-  if (wp.opportunities?.length) document.getElementById('gap-opportunities').value = wp.opportunities.join(', ');
-  if (wp.excitedBy?.length) document.getElementById('gap-excited-by').value = wp.excitedBy.join(', ');
-  if (wp.workStyle) document.getElementById('gap-work-style').value = wp.workStyle;
-  if (wp.notLookingFor?.length) document.getElementById('gap-not-looking-for').value = wp.notLookingFor.join(', ');
+  if (wp.opportunities?.length) setVal('gap-opportunities', wp.opportunities.join(', '));
+  if (wp.excitedBy?.length) setVal('gap-excited-by', wp.excitedBy.join(', '));
+  if (wp.workStyle) setVal('gap-work-style', wp.workStyle);
+  if (wp.notLookingFor?.length) setVal('gap-not-looking-for', wp.notLookingFor.join(', '));
 
   const pp = config.personalityProfile || {};
-  if (pp.communicationStyle) document.getElementById('gap-collab-style').value = pp.communicationStyle;
-  if (pp.problemApproach) document.getElementById('gap-problem-approach').value = pp.problemApproach;
+  if (pp.communicationStyle) setVal('gap-collab-style', pp.communicationStyle);
+  if (pp.problemApproach) setVal('gap-problem-approach', pp.problemApproach);
 
   renderPersonas(personas);
 }
@@ -112,40 +118,39 @@ function renderContextStats(data) {
   if (!stats || stats.total === 0) return;
 
   // Stats card
-  const statsEl = document.getElementById('context-stats');
-  statsEl.hidden = false;
-  document.getElementById('stat-total').textContent = stats.total;
-  document.getElementById('stat-processed').textContent = stats.processed;
-  document.getElementById('stat-claude').textContent = stats.bySource?.claude || 0;
-  document.getElementById('stat-chatgpt').textContent = stats.bySource?.chatgpt || 0;
-  document.getElementById('stat-last-upload').textContent = lastUploadAt
-    ? new Date(lastUploadAt).toLocaleDateString() : '—';
+  setHidden('context-stats', false);
+  setText('stat-total', stats.total);
+  setText('stat-processed', stats.processed);
+  setText('stat-claude', stats.bySource?.claude || 0);
+  setText('stat-chatgpt', stats.bySource?.chatgpt || 0);
+  setText('stat-last-upload', lastUploadAt ? new Date(lastUploadAt).toLocaleDateString() : '—');
 
   // Show delete button
-  document.getElementById('context-delete-btn').hidden = false;
+  setHidden('context-delete-btn', false);
 
   // Completeness
   if (skillsProfile || wantsProfile || personalityProfile) {
-    document.getElementById('completeness-grid').hidden = false;
+    setHidden('completeness-grid', false);
     setCompleteness('skills', skillsProfile?.completeness || 0);
     setCompleteness('alignment', wantsProfile?.completeness || 0);
     setCompleteness('personality', personalityProfile?.completeness || 0);
 
     // Show gap Q&A cards for weak dimensions
-    if ((wantsProfile?.completeness || 0) < 0.3) document.getElementById('gap-alignment').hidden = false;
-    if ((personalityProfile?.completeness || 0) < 0.3) document.getElementById('gap-personality').hidden = false;
+    if ((wantsProfile?.completeness || 0) < 0.3) setHidden('gap-alignment', false);
+    if ((personalityProfile?.completeness || 0) < 0.3) setHidden('gap-personality', false);
   }
 }
 
 function setCompleteness(dim, value) {
   const pct = Math.round(value * 100);
-  document.getElementById(`completeness-${dim}`).style.width = `${pct}%`;
-  document.getElementById(`completeness-${dim}-pct`).textContent = `${pct}% from history`;
+  const bar = document.getElementById(`completeness-${dim}`);
+  if (bar) bar.style.width = `${pct}%`;
+  setText(`completeness-${dim}-pct`, `${pct}% from history`);
 }
 
 // ─── File upload ──────────────────────────────────────────────────────────────
 
-document.getElementById('context-file-input').addEventListener('change', (e) => {
+$on('context-file-input', 'change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
   selectedFile = file;
@@ -223,7 +228,7 @@ function parseExport(data) {
   throw new Error('Unknown format — expected Claude or ChatGPT export');
 }
 
-document.getElementById('context-upload-btn').addEventListener('click', async () => {
+$on('context-upload-btn', 'click', async () => {
   if (!parsedConversations || !detectedSource) return;
 
   const btn = document.getElementById('context-upload-btn');
@@ -309,12 +314,13 @@ document.getElementById('context-upload-btn').addEventListener('click', async ()
 });
 
 function setProgress(pct, label) {
-  document.getElementById('upload-progress-fill').style.width = `${pct}%`;
-  document.getElementById('upload-progress-label').textContent = label;
+  const fill = document.getElementById('upload-progress-fill');
+  if (fill) fill.style.width = `${pct}%`;
+  setText('upload-progress-label', label);
 }
 
 // Delete all history
-document.getElementById('context-delete-btn').addEventListener('click', async () => {
+$on('context-delete-btn', 'click', async () => {
   if (!confirm('Delete all uploaded conversation history? This cannot be undone.')) return;
 
   try {
@@ -325,21 +331,21 @@ document.getElementById('context-delete-btn').addEventListener('click', async ()
     });
     const data = await res.json();
     if (data.success) {
-      document.getElementById('upload-status').textContent = `Deleted ${data.deleted} conversations.`;
-      document.getElementById('context-stats').hidden = true;
-      document.getElementById('completeness-grid').hidden = true;
-      document.getElementById('context-delete-btn').hidden = true;
-      document.getElementById('gap-alignment').hidden = true;
-      document.getElementById('gap-personality').hidden = true;
+      setText('upload-status', `Deleted ${data.deleted} conversations.`);
+      setHidden('context-stats', true);
+      setHidden('completeness-grid', true);
+      setHidden('context-delete-btn', true);
+      setHidden('gap-alignment', true);
+      setHidden('gap-personality', true);
     }
   } catch {
-    document.getElementById('upload-status').textContent = 'Error deleting history.';
+    setText('upload-status', 'Error deleting history.');
   }
 });
 
 // ─── Gap Q&A saves ────────────────────────────────────────────────────────────
 
-document.getElementById('gap-alignment-save-btn').addEventListener('click', async () => {
+$on('gap-alignment-save-btn', 'click', async () => {
   const opportunities = document.getElementById('gap-opportunities').value.trim().split(',').map(s => s.trim()).filter(Boolean);
   const excitedBy = document.getElementById('gap-excited-by').value.trim().split(',').map(s => s.trim()).filter(Boolean);
   const workStyle = document.getElementById('gap-work-style').value.trim();
@@ -354,7 +360,7 @@ document.getElementById('gap-alignment-save-btn').addEventListener('click', asyn
   }, 'gap-alignment-status');
 });
 
-document.getElementById('gap-personality-save-btn').addEventListener('click', async () => {
+$on('gap-personality-save-btn', 'click', async () => {
   const communicationStyle = document.getElementById('gap-collab-style').value.trim();
   const problemApproach = document.getElementById('gap-problem-approach').value.trim();
 
@@ -369,7 +375,7 @@ document.getElementById('gap-personality-save-btn').addEventListener('click', as
 
 // ─── Contact links ────────────────────────────────────────────────────────────
 
-document.getElementById('links-save-btn').addEventListener('click', () => {
+$on('links-save-btn', 'click', () => {
   saveField({
     contactLinks: {
       calendar: document.getElementById('link-calendar').value.trim(),
@@ -438,6 +444,7 @@ function formatTimeAgo(ms) {
 
 function renderPersonas(personas) {
   const list = document.getElementById('personas-list');
+  if (!list) return;
   list.innerHTML = '';
   personas.forEach((p, i) => list.appendChild(buildPersonaRow(p, i)));
 }
@@ -471,7 +478,7 @@ function buildPersonaRow(persona, index) {
   return row;
 }
 
-document.getElementById('add-persona-btn').addEventListener('click', () => {
+$on('add-persona-btn', 'click', () => {
   const list = document.getElementById('personas-list');
   if (list.children.length >= 4) { alert('Maximum 4 personas.'); return; }
   list.appendChild(buildPersonaRow({ key: '', label: '', opener: '' }, list.children.length));
@@ -496,17 +503,17 @@ async function saveField(patch, statusId) {
   setTimeout(() => { status.textContent = ''; }, 3000);
 }
 
-document.getElementById('context-form').addEventListener('submit', (e) => {
+$on('context-form', 'submit', (e) => {
   e.preventDefault();
   saveField({ contextText: document.getElementById('context-text').value }, 'context-status');
 });
 
-document.getElementById('linkedin-form').addEventListener('submit', (e) => {
+$on('linkedin-form', 'submit', (e) => {
   e.preventDefault();
   saveField({ sources: { linkedin: document.getElementById('linkedin-text').value } }, 'linkedin-status');
 });
 
-document.getElementById('personas-save-btn').addEventListener('click', () => {
+$on('personas-save-btn', 'click', () => {
   const rows = document.querySelectorAll('.dash-persona-row');
   const personas = Array.from(rows).map(row => ({
     label: row.querySelector('.dash-persona-label').value.trim(),
@@ -517,7 +524,7 @@ document.getElementById('personas-save-btn').addEventListener('click', () => {
   saveField({ personas }, 'personas-status');
 });
 
-document.getElementById('apikey-form').addEventListener('submit', (e) => {
+$on('apikey-form', 'submit', (e) => {
   e.preventDefault();
   const key = document.getElementById('apikey-input').value.trim();
   if (key && !key.startsWith('sk-ant-')) {
@@ -529,7 +536,7 @@ document.getElementById('apikey-form').addEventListener('submit', (e) => {
   document.getElementById('apikey-hint').textContent = 'API key is saved. Enter a new value to replace it.';
 });
 
-document.getElementById('copy-embed-btn').addEventListener('click', () => {
+$on('copy-embed-btn', 'click', () => {
   const code = document.getElementById('embed-code').textContent;
   navigator.clipboard.writeText(code).then(() => {
     const btn = document.getElementById('copy-embed-btn');
@@ -543,7 +550,7 @@ document.getElementById('copy-embed-btn').addEventListener('click', () => {
 let currentEvalId = null;
 let currentResumeId = null;
 
-document.getElementById('eval-form').addEventListener('submit', async (e) => {
+$on('eval-form', 'submit', async (e) => {
   e.preventDefault();
 
   const content = document.getElementById('eval-content').value.trim();

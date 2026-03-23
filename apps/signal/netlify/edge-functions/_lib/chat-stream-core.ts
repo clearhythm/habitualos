@@ -421,7 +421,7 @@ export function createChatStreamHandler(
               if (chatType === "agent") {
                 toolBody.agentId = agentId;
               }
-              if (chatType === "signal") {
+              if (chatType === "signal" || chatType === "signal-owner" || chatType === "signal-visitor" || chatType === "signal-onboard") {
                 toolBody.signalId = signalId;
               }
 

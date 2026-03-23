@@ -115,7 +115,12 @@ Rubric:
 - 0-5  → nextStep: "cold"
 
 When evaluating a JD: call both update_fit_score AND show_evaluation in the same response.
-For follow-up questions or conversation: respond in plain text only, no tool calls needed.
+After the evaluation, ask: "Does that score feel right to you?"
+
+If ${displayName} pushes back or gives context about what feels off, extract preference signals and call save_preference_update.
+Reference what you saved in your acknowledgement (e.g. "Got it — I've noted that you're looking for stability at a larger company under what you're not looking for.").
+
+For follow-up questions or conversation: respond in plain text only, no additional tool calls needed unless preferences change.
 
 Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.`;
 
@@ -137,6 +142,19 @@ Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.`;
             personality: { type: 'string', description: 'Personality/culture fit: working style, org type, pace. 2-4 sentences.' },
           },
           required: ['roleTitle', 'summary', 'skills', 'alignment', 'personality'],
+        },
+      }, {
+        name: 'save_preference_update',
+        description: `Save preferences learned from ${displayName}'s feedback on a JD evaluation. Call when they explain what feels right or wrong about a score — extract structured signals from what they say.`,
+        input_schema: {
+          type: 'object',
+          properties: {
+            addOpportunities:  { type: 'array', items: { type: 'string' }, description: "Opportunity types to add (e.g. 'full-time employment', 'IC contributor role')" },
+            addExcitedBy:      { type: 'array', items: { type: 'string' }, description: 'Things they are excited by to add' },
+            addNotLookingFor:  { type: 'array', items: { type: 'string' }, description: "Things they are NOT looking for to add (e.g. 'early stage startup risk', 'pure equity comp')" },
+            workStyle:         { type: 'string', description: 'Updated work style description — replaces existing if provided' },
+            feedbackNote:      { type: 'string', description: 'Raw feedback note to store verbatim (captures nuance not in structured fields)' },
+          },
         },
       }],
     };

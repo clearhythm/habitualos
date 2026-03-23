@@ -25,6 +25,8 @@
         document.addEventListener('DOMContentLoaded', function() {
           var el = document.getElementById('nav-dashboard');
           if (el) el.removeAttribute('hidden');
+          var el2 = document.getElementById('nav-profile');
+          if (el2) el2.removeAttribute('hidden');
         });
       }
     })();
@@ -42,6 +44,7 @@
             <li><a href="/demo/" id="sidemenu-demo-open">Score your Signal</a></li>
             <li><a href="/waitlist/">Create yours</a></li>
             <li hidden id="nav-dashboard"><a href="/dashboard/">Dashboard</a></li>
+            <li hidden id="nav-profile"><a href="/profile/">Profile</a></li>
           </ul>
           <div class="sidemenu-footer-row">
             <img src="/assets/images/signal-logo.png" alt="" class="sidemenu-logo">

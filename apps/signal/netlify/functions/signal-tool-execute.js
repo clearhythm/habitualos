@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { searchChunks } = require('./_services/db-signal-context.cjs');
+const { getOwnerBySignalId, updateOwner } = require('./_services/db-signal-owners.cjs');
 
 const STOPWORDS = new Set(['the','a','an','and','or','for','to','in','of','on','is','are','was','were','with','that','this']);
 
@@ -70,6 +71,61 @@ exports.handler = async (event) => {
         statusCode: 200,
         headers: { ...CORS, 'Content-Type': 'application/json' },
         body: JSON.stringify({ result })
+      };
+    }
+
+    if (name === 'save_preference_update') {
+      if (!signalId) {
+        return {
+          statusCode: 200,
+          headers: { ...CORS, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: { error: 'signalId required to save preferences' } })
+        };
+      }
+
+      const owner = await getOwnerBySignalId(signalId);
+      if (!owner) {
+        return {
+          statusCode: 200,
+          headers: { ...CORS, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: { error: 'Owner not found' } })
+        };
+      }
+
+      const current = owner.wantsProfile || {};
+      const patch = {};
+
+      if (input.addOpportunities?.length) {
+        patch['wantsProfile.opportunities'] = [...new Set([...(current.opportunities || []), ...input.addOpportunities])];
+      }
+      if (input.addExcitedBy?.length) {
+        patch['wantsProfile.excitedBy'] = [...new Set([...(current.excitedBy || []), ...input.addExcitedBy])];
+      }
+      if (input.addNotLookingFor?.length) {
+        patch['wantsProfile.notLookingFor'] = [...new Set([...(current.notLookingFor || []), ...input.addNotLookingFor])];
+      }
+      if (input.workStyle) {
+        patch['wantsProfile.workStyle'] = input.workStyle;
+      }
+      if (input.feedbackNote) {
+        const existing = owner.preferenceFeedback || [];
+        patch['preferenceFeedback'] = [...existing, { note: input.feedbackNote, date: new Date().toISOString() }];
+      }
+
+      if (Object.keys(patch).length === 0) {
+        return {
+          statusCode: 200,
+          headers: { ...CORS, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ result: { ok: true, updated: [], message: 'No changes to save' } })
+        };
+      }
+
+      await updateOwner(signalId, patch);
+
+      return {
+        statusCode: 200,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: { ok: true, updated: Object.keys(patch) } })
       };
     }
 
