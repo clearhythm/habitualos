@@ -176,8 +176,10 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Failed to parse evaluation response' }) };
     }
 
-    // Ensure overall is an integer
+    // Normalise score: add personality (null — not assessable in batch eval), compute overall
     if (parsed.score) {
+      parsed.score.personality = null;
+      parsed.score.confidence = parsed.confidence || 0;
       parsed.score.overall = Math.round((parsed.score.skills * 0.55) + (parsed.score.alignment * 0.45));
     }
 
@@ -187,6 +189,7 @@ exports.handler = async (event) => {
       evalId,
       signalId,
       userId,
+      mode: 'dashboard',
       opportunity: {
         type: opportunityForPrompt.type,
         title: opportunityForPrompt.title,

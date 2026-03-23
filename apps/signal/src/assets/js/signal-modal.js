@@ -63,7 +63,41 @@ let state = {
   turnCount: 0,
   lastScore: null,
   ownerConfig: null,
+  currentEvalId: null,  // tracks open evaluation for upsert
 };
+
+// ─── Evaluation persistence ────────────────────────────────────────────────────
+
+async function createEvalRecord({ roleTitle, summary, scores } = {}) {
+  if (!state.signalId) return;
+  try {
+    const res = await fetch('/api/signal-evaluation-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        signalId: state.signalId,
+        userId: state.userId,
+        mode: state.mode,
+        roleTitle: roleTitle || null,
+        summary: summary || null,
+        scores: scores || null,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) state.currentEvalId = data.evalId;
+  } catch (err) {
+    console.warn('[signal-modal] eval create failed (non-fatal):', err);
+  }
+}
+
+function upsertEvalScores(scores) {
+  if (!state.currentEvalId || !state.signalId) return;
+  fetch('/api/signal-evaluation-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ evalId: state.currentEvalId, signalId: state.signalId, scores }),
+  }).catch(() => {});  // fire and forget
+}
 
 // ─── Shared: message rendering ────────────────────────────────────────────────
 
@@ -478,6 +512,7 @@ async function transition(modeName, options = {}) {
     turnCount: 0,
     lastScore: null,
     ownerConfig: null,
+    currentEvalId: null,
   };
 
   activeAgent = AGENTS[modeName];
@@ -555,6 +590,8 @@ async function sendMessage(text) {
                 </div>
               </div>`;
             messagesEl.scrollTop = messagesEl.scrollHeight;
+            // Persist to signal-evaluations (JD path) — scores arrive via update_fit_score
+            createEvalRecord({ roleTitle, summary });
           } else if (event.tool === 'update_fit_score') {
             const { skills, alignment, personality, overall, confidence, reason, nextStep } = event.result || {};
             const nextStepLabels = {
@@ -566,6 +603,10 @@ async function sendMessage(text) {
               pass: 'Signal may not be the right fit yet',
             };
             updateScorePanel({ skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+            // Upsert scores onto open eval record if one exists
+            if (state.currentEvalId) {
+              upsertEvalScores({ skills, alignment, personality, confidence });
+            }
           }
         } else if (event.type === 'done') {
           fullResponse = event.fullResponse || fullResponse;
@@ -576,6 +617,15 @@ async function sendMessage(text) {
             messagesEl.scrollTop = messagesEl.scrollHeight;
           }
           state.chatHistory.push({ role: 'assistant', content: fullResponse });
+          // Conversational path: no JD was pasted but confidence is sufficient — create record now
+          if (!state.currentEvalId && state.lastScore && state.lastScore.confidence >= 0.5) {
+            const { skills, alignment, personality, confidence } = state.lastScore;
+            createEvalRecord({ scores: { skills, alignment, personality, confidence } });
+          } else if (state.currentEvalId && state.lastScore) {
+            // Final upsert with latest scores at end of turn
+            const { skills, alignment, personality, confidence } = state.lastScore;
+            upsertEvalScores({ skills, alignment, personality, confidence });
+          }
           if (activeAgent.persist) await activeAgent.persist();
         } else if (event.type === 'error') {
           removeThinking();

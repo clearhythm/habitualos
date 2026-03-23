@@ -20,6 +20,15 @@ exports.handler = async (event) => {
     const { signalId, toolUse } = JSON.parse(event.body);
     const { name, input } = toolUse;
 
+    // show_evaluation is rendered client-side; server just acknowledges
+    if (name === 'show_evaluation') {
+      return {
+        statusCode: 200,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result: { ok: true } })
+      };
+    }
+
     if (name === 'update_fit_score') {
       const { skills, alignment, personality, overall, confidence, reason, nextStep } = input;
       return {
