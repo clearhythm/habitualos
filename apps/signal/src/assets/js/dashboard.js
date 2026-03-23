@@ -62,6 +62,8 @@ function renderDashboard(config) {
 
   setText('dash-display-name', displayName);
   setText('dash-signal-id', signalId);
+  // Keep first name fresh in localStorage for nav display
+  if (displayName) localStorage.setItem('signal-owner-name', displayName.split(' ')[0]);
   const previewLink = document.getElementById('dash-preview-link');
   if (previewLink) previewLink.href = `/widget/?id=${signalId}`;
 

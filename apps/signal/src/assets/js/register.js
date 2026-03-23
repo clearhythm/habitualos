@@ -20,6 +20,7 @@ const verifyBtn    = document.getElementById('verify-btn');
 const backBtn      = document.getElementById('back-btn');
 
 let pendingEmail = '';
+let pendingDisplayName = '';
 
 // ─── Slug auto-fill from name ─────────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ registerForm.addEventListener('submit', async (e) => {
       showError(registerErr, data.error || 'Something went wrong. Please try again.');
     } else {
       pendingEmail = email;
+      pendingDisplayName = displayName;
       verifySub.textContent = `We sent a 6-digit code to ${email}.`;
       stepRegister.hidden = true;
       stepVerify.hidden = false;
@@ -98,6 +100,7 @@ verifyForm.addEventListener('submit', async (e) => {
     } else {
       // Store signalId in localStorage for dashboard session
       localStorage.setItem('signal-owner-id', data.signalId);
+      localStorage.setItem('signal-owner-name', pendingDisplayName.split(' ')[0]);
       window.location.href = '/dashboard/';
     }
   } catch {

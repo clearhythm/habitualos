@@ -153,6 +153,39 @@ body.sidemenu-open .sidemenu-overlay {
   opacity: 1;
 }
 
+// ─── Sidemenu auth ───────────────────────────────────────────────────────────
+
+.sidemenu-auth {
+  margin-top: $space-lg;
+  padding-top: $space-md;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidemenu-auth-state {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  flex-wrap: wrap;
+}
+
+.sidemenu-auth-name {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sidemenu-auth-link {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+
+  &:hover { color: rgba(255, 255, 255, 0.8); }
+}
+
 // ─── Sidemenu footer ─────────────────────────────────────────────────────────
 
 .sidemenu-footer-row {
