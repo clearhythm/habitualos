@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
+const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError } = require('./_services/signal-init-shared.cjs');
+
 
 /**
  * POST /api/signal-visitor-init
@@ -11,89 +13,6 @@ const { decrypt } = require('./_services/crypto.cjs');
  * Phase 3+: also injects synthesized profiles + top evidence chunks.
  */
 
-// ─── Erik's hardcoded context ─────────────────────────────────────────────────
-
-const ERIK_CONTEXT = `
-== BACKGROUND ==
-
-Education & Research:
-- Stanford University, biological sciences — ranked first in class
-- Beckman Scholar; published research in neuroscience and cognitive science
-- Deep foundation in how humans learn, change behavior, and form habits
-
-Enterprise Product (25+ years, 100M+ users):
-- Apple: product work on consumer and developer experiences
-- Intuit: led UX and product improvements, 20% support call reduction
-- Realtor.com: drove $45M revenue impact, 14% paid conversion lift
-- Capital One: 300% ROI increase on product initiatives
-
-Behavioral Health:
-- Founded Healify in 2020 — behavioral health platform, 1M+ mood assessments processed
-- Licensed somatic therapist — treated 100+ patients through hypnotherapy and nervous system regulation
-- Rare combination: trained clinician who can also ship
-
-Agentic AI (current, production):
-- Building HabitualOS since 2024 — a production multi-agent AI system he uses daily
-- Builds with Claude API, Netlify edge functions, Firestore, 11ty
-- Real agentic systems: tools, streaming, multi-turn, signal protocols — not demos
-- Signal (this conversation) is itself a live example of that work
-`;
-
-const ERIK_SKILLS_PROFILE = {
-  coreSkills: [
-    'Agentic AI systems', 'Product strategy', 'Behavioral science',
-    'System prompt design', 'Streaming architecture', 'Firestore data modeling',
-    'Edge function development', 'Consumer product', 'Clinical therapy',
-    'UX leadership', 'Revenue-tied product decisions', 'Founding-level product work'
-  ],
-  domains: ['Agentic AI', 'Behavioral health', 'Consumer product', 'Enterprise software', 'Neuroscience'],
-  technologies: ['Claude API', 'Netlify edge functions', 'Firestore', '11ty', 'TypeScript', 'Node.js', 'SCSS'],
-  projectTypes: ['Production AI systems', 'Behavioral health platforms', 'Consumer apps at scale', 'Clinical validation'],
-  completeness: 0.9
-};
-
-const ERIK_WANTS_PROFILE = {
-  workTypes: ['Agentic AI systems', 'Behavioral product', 'AI-native products'],
-  opportunities: ['Senior product leadership', 'AI leadership', 'Fractional CPO', 'Advisory'],
-  excitedBy: ['Behavioral science + AI intersection', 'Production systems that help people', 'Founding-stage work'],
-  workStyle: 'Collaborative, direct, async-friendly. Prefers real outcomes over polished decks.',
-  openTo: ['Remote', 'Hybrid', 'SF / LA'],
-  notLookingFor: ['Pure management without craft', 'Pre-product-market-fit pivoting without clear thesis'],
-  completeness: 0.85
-};
-
-const ERIK_PERSONALITY_PROFILE = {
-  communicationStyle: 'direct, warm, intellectually honest',
-  intellectualStyle: 'systems thinker, first-principles, empirical',
-  problemApproach: 'Challenges assumptions before building; asks clarifying questions; moves fast once direction is clear',
-  completeness: 0.85
-};
-
-const ERIK_PERSONAS = {
-  recruiter: {
-    opener: "Paste the job description and I'll score the fit directly — skills, alignment, working style. Or describe the role if you don't have it handy.",
-    strategy: `Recruiters should be prompted to paste a job description. If they provide one, treat it as a high-information input and score immediately.
-If they describe the role conversationally, ask targeted follow-ups: seniority level, primary challenge (product strategy / agentic AI / behavioral / other), company stage.
-Be direct about where Erik is a strong match and where he's not.`
-  },
-  founder: {
-    opener: "I can tell you what Erik has built, what worked, and where his experience might overlap with what you're working on. What are you building?",
-    strategy: `Understand what they're building and what kind of collaborator they need, then score fit.
-Ask about: the problem they're solving, their current stage, what they need (product thinking / AI architecture / both / something else).
-Surface how Erik's work at Healify and HabitualOS may be relevant.`
-  },
-  colleague: {
-    opener: "Erik builds agentic AI systems, designs behavioral health products, and writes real code. What are you working on, or what brings you here?",
-    strategy: `Understand what they're working on and whether there's meaningful overlap with Erik's work.
-Ask about: their current project, their role, what intersection with Erik's work they're curious about.`
-  },
-  curious: {
-    opener: "I'm an AI built on Erik's work history — spanning neuroscience research, enterprise product at scale, clinical therapy, and agentic AI systems. What brings you here?",
-    strategy: `Understand what drew them here and help them find what's most relevant.
-Ask open questions to understand their background, curiosity, or context.
-Adapt the conversation toward whatever dimension seems most interesting to them.`
-  }
-};
 
 // ─── System prompt builders ───────────────────────────────────────────────────
 
@@ -211,19 +130,9 @@ Conversational length: 2-4 sentences per response. No filler. No "Great question
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: CORS, body: '' };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return corsOptions();
+  if (event.httpMethod !== 'POST') return methodNotAllowed();
 
   try {
     const { userId, signalId, persona = 'curious' } = JSON.parse(event.body);
@@ -233,39 +142,33 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Valid userId required' }) };
     }
 
-    const useOwnerConfig = signalId && signalId !== 'erik-burns';
-    let displayName, contextText, personaConfig, ownerApiKey;
-    let skillsProfile, wantsProfile, personalityProfile;
-
-    if (useOwnerConfig) {
-      const owner = await getOwnerBySignalId(signalId);
-      if (!owner || owner.status !== 'active') {
-        return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
-      }
-
-      displayName = owner.displayName;
-      contextText = owner.contextText || '';
-      skillsProfile = owner.skillsProfile || null;
-      wantsProfile = owner.wantsProfile || null;
-      personalityProfile = owner.personalityProfile || null;
-
-      const matchedPersona = (owner.personas || []).find(p => p.key === persona) || owner.personas?.[0];
-      personaConfig = matchedPersona
-        ? { opener: matchedPersona.opener, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` }
-        : { opener: `I'm an AI built on ${displayName}'s work history. What brings you here?`, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` };
-
-      if (owner.anthropicApiKey) {
-        try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-      }
-    } else {
-      displayName = 'Erik Burns';
-      contextText = ERIK_CONTEXT;
-      skillsProfile = ERIK_SKILLS_PROFILE;
-      wantsProfile = ERIK_WANTS_PROFILE;
-      personalityProfile = ERIK_PERSONALITY_PROFILE;
-      const personaKey = Object.keys(ERIK_PERSONAS).includes(persona) ? persona : 'curious';
-      personaConfig = ERIK_PERSONAS[personaKey];
+    if (!signalId) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'signalId required' }) };
     }
+
+    const owner = await getOwnerBySignalId(signalId);
+    if (!owner || owner.status !== 'active') {
+      return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
+    }
+
+    const displayName = owner.displayName;
+    const linkedin = owner.sources?.linkedin || '';
+    const contextText = [
+      linkedin ? `== LINKEDIN PROFILE ==\n${linkedin}` : '',
+      owner.contextText || ''
+    ].filter(Boolean).join('\n\n');
+    const skillsProfile = owner.skillsProfile || null;
+    const wantsProfile = owner.wantsProfile || null;
+    const personalityProfile = owner.personalityProfile || null;
+    let ownerApiKey;
+    if (owner.anthropicApiKey) {
+      try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
+    }
+
+    const matchedPersona = (owner.personas || []).find(p => p.key === persona) || owner.personas?.[0];
+    const personaConfig = matchedPersona
+      ? { opener: matchedPersona.opener, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` }
+      : { opener: `I'm an AI built on ${displayName}'s work history. What brings you here?`, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` };
 
     // Build system prompt
     const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
@@ -313,6 +216,7 @@ Your first message is already set. Begin evidence gathering immediately after. D
 
     const response = {
       success: true,
+      displayName,
       opener: personaConfig.opener,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       tools: [{
@@ -328,23 +232,7 @@ Your first message is already set. Begin evidence gathering immediately after. D
           },
           required: ['query']
         }
-      }, {
-        name: 'update_fit_score',
-        description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
-        input_schema: {
-          type: 'object',
-          properties: {
-            skills: { type: 'number', description: 'Technical skills fit score 0-10' },
-            alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
-            personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
-            overall: { type: 'number', description: 'Overall fit score 0-10' },
-            confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
-            reason: { type: 'string', description: 'Brief explanation of the current assessment' },
-            nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65)' }
-          },
-          required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
-        }
-      }]
+      }, UPDATE_FIT_SCORE_TOOL]
     };
 
     if (ownerApiKey) {
@@ -358,7 +246,6 @@ Your first message is already set. Begin evidence gathering immediately after. D
     };
 
   } catch (error) {
-    console.error('[signal-visitor-init] ERROR:', error);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return serverError('signal-visitor-init', error);
   }
 };

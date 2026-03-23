@@ -3,6 +3,7 @@ layout: base.njk
 title: "Signal — Dashboard"
 description: "Manage your Signal widget."
 pageScript: /assets/js/dashboard.js
+showDemoModal: true
 ---
 
 <div class="dash-wrap">
@@ -36,15 +37,28 @@ pageScript: /assets/js/dashboard.js
         </div>
       </section>
 
-      <!-- Context text -->
+      <!-- Sources -->
       <section class="dash-section">
         <h2 class="dash-section-title">Your background</h2>
-        <p class="dash-section-desc">Paste your work history, bio, or any context Signal should know about you. This is what the agent draws on when scoring fit.</p>
-        <form id="context-form">
-          <textarea class="dash-textarea" id="context-text" rows="10"
-            placeholder="Describe your background, what you've built, where you excel, what you're looking for…"></textarea>
+        <p class="dash-section-desc">These sources feed your Signal profile. LinkedIn is your career narrative; additional context is anything else worth knowing.</p>
+
+        <form id="linkedin-form" style="margin-bottom:1.5rem;">
+          <label class="signal-label">LinkedIn profile <span class="dash-source-tag">sources.linkedin</span></label>
+          <p class="signal-field-hint" id="linkedin-updated"></p>
+          <textarea class="dash-textarea" id="linkedin-text" rows="8"
+            placeholder="Paste your LinkedIn profile text here…"></textarea>
           <div class="dash-form-actions">
-            <button type="submit" class="btn btn-primary" id="context-save-btn">Save</button>
+            <button type="submit" class="btn btn-primary" id="linkedin-save-btn">Save LinkedIn</button>
+            <span class="dash-save-status" id="linkedin-status"></span>
+          </div>
+        </form>
+
+        <form id="context-form">
+          <label class="signal-label">Additional context <span class="dash-source-tag">contextText</span></label>
+          <textarea class="dash-textarea" id="context-text" rows="6"
+            placeholder="Anything else Signal should know — current focus, constraints, what you're not looking for…"></textarea>
+          <div class="dash-form-actions">
+            <button type="submit" class="btn btn-primary" id="context-save-btn">Save context</button>
             <span class="dash-save-status" id="context-status"></span>
           </div>
         </form>
@@ -253,14 +267,5 @@ pageScript: /assets/js/dashboard.js
     </div>
   </div>
 
-  <!-- Not authenticated -->
-  <div id="dash-unauth" hidden class="signal-auth-wrap">
-    <div class="signal-auth-card">
-      <p class="signal-hero-eyebrow">Signal</p>
-      <h1 class="signal-auth-title">Dashboard</h1>
-      <p class="signal-auth-sub">You need to register or log in to access your dashboard.</p>
-      <a href="/register/" class="btn btn-primary">Create your Signal</a>
-    </div>
-  </div>
 
 </div>

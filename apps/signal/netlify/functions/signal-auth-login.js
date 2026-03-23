@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { db, admin } = require('@habitualos/db-core');
-const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
+const { getOwnerBySignalId, getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
+const { getUserById, getUserByEmail } = require('@habitualos/auth-server');
 const { sendVerificationCode } = require('./_services/email.cjs');
 
 const CODE_TTL_MS = 15 * 60 * 1000;
@@ -19,9 +20,11 @@ const CORS = {
  * POST /api/signal-auth-login
  *
  * Sends a verification code to an existing owner's email.
- * Used by the embed widget /signin command flow.
  *
- * Body: { email, signalId }
+ * Two modes:
+ * - Widget /signin: { email, signalId } — verifies email matches owner
+ * - Dashboard signin: { email } only — looks up owner by email
+ *
  * Returns: { success } or { success: false, error }
  */
 exports.handler = async (event) => {
@@ -33,20 +36,33 @@ exports.handler = async (event) => {
   try {
     const { email, signalId } = JSON.parse(event.body);
 
-    if (!email || !signalId) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'email and signalId required' }) };
+    if (!email) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'email required' }) };
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    let owner;
 
-    // Look up the owner by signalId and verify email matches
-    const owner = await getOwnerBySignalId(signalId);
-    if (!owner || owner.status !== 'active') {
-      return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
-    }
-
-    if (owner.email && owner.email.toLowerCase().trim() !== normalizedEmail) {
-      return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Email does not match this Signal' }) };
+    if (signalId) {
+      // Widget mode: look up owner by signalId, verify email matches
+      owner = await getOwnerBySignalId(signalId);
+      if (!owner || owner.status !== 'active') {
+        return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
+      }
+      const user = await getUserById(owner._userId);
+      if (!user || user._email !== normalizedEmail) {
+        return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Email does not match this Signal' }) };
+      }
+    } else {
+      // Dashboard mode: look up owner by email via users collection
+      const user = await getUserByEmail(normalizedEmail);
+      if (!user) {
+        return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'No account found for this email' }) };
+      }
+      owner = await getOwnerByUserId(user.id);
+      if (!owner || owner.status !== 'active') {
+        return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'No Signal found for this account' }) };
+      }
     }
 
     // Issue a fresh verification code
@@ -56,8 +72,7 @@ exports.handler = async (event) => {
     await db.collection('signal-auth-codes').doc(normalizedEmail).set({
       code,
       expiresAt,
-      userId: owner.userId,
-      signalId,
+      userId: owner._userId,
       _updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 

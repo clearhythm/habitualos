@@ -45,9 +45,8 @@ async function createOwner(signalId, data) {
 
 async function updateOwner(signalId, patch) {
   const ref = db.collection(COLLECTION).doc(signalId);
-  await ref.set(
-    { ...patch, _updatedAt: admin.firestore.FieldValue.serverTimestamp() },
-    { merge: true }
+  await ref.update(
+    { ...patch, _updatedAt: admin.firestore.FieldValue.serverTimestamp() }
   );
   return { signalId };
 }

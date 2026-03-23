@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError } = require('./_services/signal-init-shared.cjs');
 
 /**
  * POST /api/signal-demo-init
@@ -9,12 +10,6 @@ require('dotenv').config();
  * Returns the same { success, opener, systemMessages, tools } shape as
  * signal-chat-init.js so the same edge function / stream infrastructure works.
  */
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
 
 const OPENER = "I'm Signal — a fit-scoring AI built on real work history. I help professionals make their AI work visible and legible to the people who matter. Tell me: what's the most interesting thing you've built or solved with AI in the last few months?";
 
@@ -92,12 +87,8 @@ Conversational length: 2-4 sentences per response. No filler.
 Your first message is already set. Begin evidence gathering immediately after the visitor responds.`;
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: CORS, body: '' };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return corsOptions();
+  if (event.httpMethod !== 'POST') return methodNotAllowed();
 
   try {
     // userId is optional for the demo — if not provided, it's an ephemeral session
@@ -111,27 +102,10 @@ exports.handler = async (event) => {
         success: true,
         opener: OPENER,
         systemMessages: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-        tools: [{
-          name: 'update_fit_score',
-          description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
-          input_schema: {
-            type: 'object',
-            properties: {
-              skills: { type: 'number', description: 'Technical skills fit score 0-10' },
-              alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
-              personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
-              overall: { type: 'number', description: 'Overall fit score 0-10' },
-              confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
-              reason: { type: 'string', description: 'Brief explanation of the current assessment' },
-              nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65 and ≥ 4 turns have passed)' }
-            },
-            required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
-          }
-        }],
+        tools: [UPDATE_FIT_SCORE_TOOL],
       }),
     };
   } catch (error) {
-    console.error('[signal-demo-init] ERROR:', error);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return serverError('signal-onboard-init', error);
   }
 };

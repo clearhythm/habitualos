@@ -65,11 +65,14 @@
   // Expose openModal for signal-modal.js to call
   window.signalModalOpen = openModal;
 
-  // Sidemenu "Score your Signal" — delegate to signalOpen (no signalId → onboard mode)
+  // Sidemenu "Score your Signal" — owner mode if signed in, otherwise onboard
   if (sidemenuDemoOpen && modal) {
     sidemenuDemoOpen.addEventListener('click', function (e) {
       e.preventDefault();
-      if (window.signalOpen) window.signalOpen();
+      var ownerSignalId = localStorage.getItem('signal-owner-id');
+      if (window.signalOpen) {
+        window.signalOpen(ownerSignalId ? { mode: 'owner', signalId: ownerSignalId } : {});
+      }
     });
   }
 

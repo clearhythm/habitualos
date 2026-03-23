@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
+const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError } = require('./_services/signal-init-shared.cjs');
 
 /**
  * POST /api/signal-owner-init
@@ -10,65 +11,7 @@ const { decrypt } = require('./_services/crypto.cjs');
  * is evaluating opportunities against their own profile, not being evaluated by a visitor.
  */
 
-// ─── Erik's hardcoded context (mirrors signal-visitor-init.js) ───────────────
-
-const ERIK_CONTEXT = `
-== BACKGROUND ==
-
-Education & Research:
-- Stanford University, biological sciences — ranked first in class
-- Beckman Scholar; published research in neuroscience and cognitive science
-- Deep foundation in how humans learn, change behavior, and form habits
-
-Enterprise Product (25+ years, 100M+ users):
-- Apple: product work on consumer and developer experiences
-- Intuit: led UX and product improvements, 20% support call reduction
-- Realtor.com: drove $45M revenue impact, 14% paid conversion lift
-- Capital One: 300% ROI increase on product initiatives
-
-Behavioral Health:
-- Founded Healify in 2020 — behavioral health platform, 1M+ mood assessments processed
-- Licensed somatic therapist — treated 100+ patients through hypnotherapy and nervous system regulation
-- Rare combination: trained clinician who can also ship
-
-Agentic AI (current, production):
-- Building HabitualOS since 2024 — a production multi-agent AI system he uses daily
-- Builds with Claude API, Netlify edge functions, Firestore, 11ty
-- Real agentic systems: tools, streaming, multi-turn, signal protocols — not demos
-- Signal (this conversation) is itself a live example of that work
-`;
-
-const ERIK_SKILLS_PROFILE = {
-  coreSkills: [
-    'Agentic AI systems', 'Product strategy', 'Behavioral science',
-    'System prompt design', 'Streaming architecture', 'Firestore data modeling',
-    'Edge function development', 'Consumer product', 'Clinical therapy',
-    'UX leadership', 'Revenue-tied product decisions', 'Founding-level product work'
-  ],
-  domains: ['Agentic AI', 'Behavioral health', 'Consumer product', 'Enterprise software', 'Neuroscience'],
-  technologies: ['Claude API', 'Netlify edge functions', 'Firestore', '11ty', 'TypeScript', 'Node.js', 'SCSS'],
-  projectTypes: ['Production AI systems', 'Behavioral health platforms', 'Consumer apps at scale', 'Clinical validation'],
-  completeness: 0.9
-};
-
-const ERIK_WANTS_PROFILE = {
-  workTypes: ['Agentic AI systems', 'Behavioral product', 'AI-native products'],
-  opportunities: ['Senior product leadership', 'AI leadership', 'Fractional CPO', 'Advisory'],
-  excitedBy: ['Behavioral science + AI intersection', 'Production systems that help people', 'Founding-stage work'],
-  workStyle: 'Collaborative, direct, async-friendly. Prefers real outcomes over polished decks.',
-  openTo: ['Remote', 'Hybrid', 'SF / LA'],
-  notLookingFor: ['Pure management without craft', 'Pre-product-market-fit pivoting without clear thesis'],
-  completeness: 0.85
-};
-
-const ERIK_PERSONALITY_PROFILE = {
-  communicationStyle: 'direct, warm, intellectually honest',
-  intellectualStyle: 'systems thinker, first-principles, empirical',
-  problemApproach: 'Challenges assumptions before building; asks clarifying questions; moves fast once direction is clear',
-  completeness: 0.85
-};
-
-// ─── Profile section builders (mirrors signal-visitor-init.js) ───────────────
+// ─── Profile section builders ─────────────────────────────────────────────────
 
 function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile) {
   const sections = [];
@@ -105,50 +48,38 @@ Personality: ${pct(personalityProfile?.completeness)} confidence`;
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
 const OPENER = "You're viewing your own Signal. Paste a job description to see how you'd score against it — or ask me anything about your profile.";
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 exports.handler = async (event) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: CORS, body: '' };
-  }
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return corsOptions();
+  if (event.httpMethod !== 'POST') return methodNotAllowed();
 
   try {
     const { signalId } = JSON.parse(event.body || '{}');
 
-    const useOwnerConfig = signalId && signalId !== 'erik-burns';
-    let displayName, contextText, ownerApiKey;
-    let skillsProfile, wantsProfile, personalityProfile;
+    if (!signalId) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'signalId required' }) };
+    }
 
-    if (useOwnerConfig) {
-      const owner = await getOwnerBySignalId(signalId);
-      if (!owner || owner.status !== 'active') {
-        return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
-      }
-      displayName = owner.displayName;
-      contextText = owner.contextText || '';
-      skillsProfile = owner.skillsProfile || null;
-      wantsProfile = owner.wantsProfile || null;
-      personalityProfile = owner.personalityProfile || null;
-      if (owner.anthropicApiKey) {
-        try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-      }
-    } else {
-      displayName = 'Erik Burns';
-      contextText = ERIK_CONTEXT;
-      skillsProfile = ERIK_SKILLS_PROFILE;
-      wantsProfile = ERIK_WANTS_PROFILE;
-      personalityProfile = ERIK_PERSONALITY_PROFILE;
+    const owner = await getOwnerBySignalId(signalId);
+    if (!owner || owner.status !== 'active') {
+      return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
+    }
+
+    const displayName = owner.displayName;
+    const linkedin = owner.sources?.linkedin || '';
+    const contextText = [
+      linkedin ? `== LINKEDIN PROFILE ==\n${linkedin}` : '',
+      owner.contextText || ''
+    ].filter(Boolean).join('\n\n');
+    const skillsProfile = owner.skillsProfile || null;
+    const wantsProfile = owner.wantsProfile || null;
+    const personalityProfile = owner.personalityProfile || null;
+    let ownerApiKey;
+    if (owner.anthropicApiKey) {
+      try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
     }
 
     const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
@@ -183,32 +114,30 @@ Rubric:
 - 6-7  → nextStep: "warm"
 - 0-5  → nextStep: "cold"
 
-Call update_fit_score after your first substantive response, and again whenever scores change meaningfully.
-Include nextStep when confidence ≥ 0.65.
+When evaluating a JD: call both update_fit_score AND show_evaluation in the same response.
+For follow-up questions or conversation: respond in plain text only, no tool calls needed.
 
-Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.
-Keep responses concise. This is a diagnostic tool, not an interview.`;
+Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.`;
 
     const response = {
       success: true,
+      displayName,
       opener: OPENER,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      tools: [{
-        name: 'update_fit_score',
-        description: 'Update the fit score display based on what you\'ve learned in the conversation. Call this after your initial response, and again whenever your assessment changes significantly (score change ≥1 or confidence change ≥0.15).',
+      tools: [UPDATE_FIT_SCORE_TOOL, {
+        name: 'show_evaluation',
+        description: 'Display a structured fit evaluation in the chat. Call this whenever a job description is pasted, alongside update_fit_score.',
         input_schema: {
           type: 'object',
           properties: {
-            skills: { type: 'number', description: 'Technical skills fit score 0-10' },
-            alignment: { type: 'number', description: 'Values/working style alignment score 0-10' },
-            personality: { type: 'number', description: 'Personality/culture fit score 0-10' },
-            overall: { type: 'number', description: 'Overall fit score 0-10' },
-            confidence: { type: 'number', description: 'Confidence in this assessment 0-1' },
-            reason: { type: 'string', description: 'Brief explanation of the current assessment' },
-            nextStep: { type: 'string', description: 'What should happen next (only include when confidence ≥ 0.65)' }
+            roleTitle:   { type: 'string', description: 'Role title — use exact title from JD, or infer a short descriptive one' },
+            summary:     { type: 'string', description: 'Bottom-line paragraph: why this score, the core tension or fit. Direct, second person, 2-4 sentences.' },
+            skills:      { type: 'string', description: 'Skills dimension analysis: what matches, what gaps. 2-4 sentences, cite specifics.' },
+            alignment:   { type: 'string', description: 'Alignment dimension: does this match what they want. 2-4 sentences.' },
+            personality: { type: 'string', description: 'Personality/culture fit: working style, org type, pace. 2-4 sentences.' },
           },
-          required: ['skills', 'alignment', 'personality', 'overall', 'confidence']
-        }
+          required: ['roleTitle', 'summary', 'skills', 'alignment', 'personality'],
+        },
       }],
     };
 
@@ -221,7 +150,6 @@ Keep responses concise. This is a diagnostic tool, not an interview.`;
     };
 
   } catch (error) {
-    console.error('[signal-owner-init] ERROR:', error);
-    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return serverError('signal-owner-init', error);
   }
 };

@@ -6,7 +6,6 @@
 
 const loading = document.getElementById('dash-loading');
 const main    = document.getElementById('dash-main');
-const unauth  = document.getElementById('dash-unauth');
 
 let ownerConfig = null;
 let selectedFile = null;
@@ -44,8 +43,8 @@ let detectedSource = null;
 })();
 
 function showUnauth() {
-  loading.hidden = true;
-  unauth.hidden = false;
+  const dest = encodeURIComponent(location.pathname);
+  location.replace('/signin/?next=' + dest);
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
@@ -61,6 +60,14 @@ function renderDashboard(config) {
   document.getElementById('embed-code').textContent = snippet;
 
   document.getElementById('context-text').value = contextText;
+
+  // LinkedIn source
+  const linkedin = config.sources?.linkedin || '';
+  document.getElementById('linkedin-text').value = linkedin;
+  const linkedinUpdated = config.sources?.linkedinUpdatedAt;
+  if (linkedinUpdated) {
+    document.getElementById('linkedin-updated').textContent = 'Last updated ' + new Date(linkedinUpdated).toLocaleDateString();
+  }
   document.getElementById('apikey-hint').textContent = anthropicApiKey
     ? 'API key is saved. Enter a new value to replace it.'
     : 'No key saved yet. Without it, your widget uses the shared Signal key (rate limited).';
@@ -494,6 +501,11 @@ document.getElementById('context-form').addEventListener('submit', (e) => {
   saveField({ contextText: document.getElementById('context-text').value }, 'context-status');
 });
 
+document.getElementById('linkedin-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  saveField({ sources: { linkedin: document.getElementById('linkedin-text').value } }, 'linkedin-status');
+});
+
 document.getElementById('personas-save-btn').addEventListener('click', () => {
   const rows = document.querySelectorAll('.dash-persona-row');
   const personas = Array.from(rows).map(row => ({
@@ -570,6 +582,26 @@ document.getElementById('eval-form').addEventListener('submit', async (e) => {
   }
 });
 
+function renderJdSummary(jd) {
+  if (!jd) return '';
+  const row = (label, items) => items?.length
+    ? `<div class="jd-summary-row"><span class="jd-summary-label">${label}</span><ul class="jd-summary-list">${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul></div>`
+    : '';
+  const meta = [jd.compensation, jd.workModel].filter(Boolean).map(escHtml).join(' · ');
+  return `
+    <div class="jd-summary-block">
+      <div class="jd-summary-header">
+        <span class="jd-summary-title">${escHtml(jd.roleTitle || 'Role')}${jd.level ? ` <span class="jd-summary-level">${escHtml(jd.level)}</span>` : ''}</span>
+        ${meta ? `<span class="jd-summary-meta">${meta}</span>` : ''}
+      </div>
+      ${row('Responsibilities', jd.responsibilities)}
+      ${row('Must have', jd.mustHave)}
+      ${row('Nice to have', jd.niceToHave)}
+      ${row('Culture', jd.cultureSignals)}
+    </div>
+  `;
+}
+
 function renderEvalResult(data) {
   const panel = document.getElementById('eval-result');
   const score = data.score || {};
@@ -593,6 +625,7 @@ function renderEvalResult(data) {
   }).join('');
 
   panel.innerHTML = `
+    ${renderJdSummary(data.jdSummary)}
     <div class="eval-score-row">
       <div class="eval-overall-score ${scoreClass}">${overall}<span class="eval-score-denom">/10</span></div>
       <div class="eval-score-dims">

@@ -43,7 +43,21 @@ exports.handler = async (event) => {
     }
 
     if (patch.contextText !== undefined) {
-      update.contextText = String(patch.contextText).slice(0, 20000); // cap at 20k chars
+      update.contextText = String(patch.contextText).slice(0, 20000);
+    }
+
+    if (patch.sources !== undefined) {
+      if (typeof patch.sources !== 'object') {
+        return { statusCode: 400, body: JSON.stringify({ success: false, error: 'sources must be an object' }) };
+      }
+      if (patch.sources.linkedin !== undefined) {
+        update['sources.linkedin'] = String(patch.sources.linkedin).slice(0, 30000);
+        update['sources.linkedinUpdatedAt'] = new Date().toISOString();
+      }
+      if (patch.sources.resume !== undefined) {
+        update['sources.resume'] = String(patch.sources.resume).slice(0, 30000);
+        update['sources.resumeUpdatedAt'] = new Date().toISOString();
+      }
     }
 
     if (patch.personas !== undefined) {

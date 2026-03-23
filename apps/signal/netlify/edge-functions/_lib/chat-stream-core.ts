@@ -275,7 +275,7 @@ export function createChatStreamHandler(
     let initBody: Record<string, unknown> = { userId };
     if (chatType === "agent") {
       initBody = { userId, agentId, actionContext, reviewContext };
-    } else if (chatType === "signal") {
+    } else if (chatType === "signal" || chatType === "signal-visitor" || chatType === "signal-owner" || chatType === "signal-onboard") {
       initBody = { userId, signalId, persona };
     } else {
       // For other chat types (fox-ea, obi-wai, rely, etc.)
@@ -438,7 +438,7 @@ export function createChatStreamHandler(
               const toolData = await toolResponse.json();
               const toolResult = toolData.result || { error: "Tool execution failed" };
 
-              await send({ type: "tool_complete", tool: toolUseBlock.name });
+              await send({ type: "tool_complete", tool: toolUseBlock.name, result: toolUseBlock.input });
 
               toolResults.push({
                 type: "tool_result",

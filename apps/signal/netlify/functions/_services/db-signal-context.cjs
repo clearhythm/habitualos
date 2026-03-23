@@ -120,6 +120,28 @@ async function countPendingChunks(signalId) {
 }
 
 /**
+ * Create a single already-processed chunk (e.g. from Claude Code session ingest).
+ * Skips if the doc already exists (idempotent by conversationId).
+ */
+async function createProcessedChunk(signalId, conversationId, fields) {
+  const docId = `${signalId}-${conversationId}`;
+  const ref = db.collection(COLLECTION).doc(docId);
+  const snap = await ref.get();
+  if (snap.exists) return { created: false, docId };
+
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await ref.set({
+    signalId,
+    conversationId,
+    ...fields,
+    status: 'processed',
+    _createdAt: now,
+    _processedAt: now
+  });
+  return { created: true, docId };
+}
+
+/**
  * Update a chunk after extraction.
  */
 async function updateChunk(docId, fields) {
@@ -242,6 +264,7 @@ async function deleteAllChunks(signalId) {
 module.exports = {
   getExistingConversationIds,
   createPendingChunks,
+  createProcessedChunk,
   getPendingChunks,
   countPendingChunks,
   updateChunk,

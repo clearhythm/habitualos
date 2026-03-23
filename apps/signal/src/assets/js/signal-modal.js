@@ -40,6 +40,10 @@ const nextStepEl        = document.getElementById('signal-next-step');
 const nextStepLabelEl   = document.getElementById('next-step-label');
 const nextStepActionsEl = document.getElementById('next-step-actions');
 
+// Modal header
+const modalTitleEl      = document.querySelector('.signal-modal-title');
+const scoreLabelEl      = document.getElementById('signal-score-label');
+
 // Ring geometry (r=52)
 const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
 overallRingEl.style.strokeDasharray = RING_CIRCUMFERENCE;
@@ -63,10 +67,19 @@ let state = {
 
 // ─── Shared: message rendering ────────────────────────────────────────────────
 
+function renderMarkdown(text) {
+  if (typeof marked === 'undefined') return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return marked.parse(text, { breaks: true });
+}
+
 function appendMessage(role, text) {
   const el = document.createElement('div');
   el.className = `signal-message signal-message--${role}`;
-  el.textContent = text;
+  if (role === 'assistant') {
+    el.innerHTML = renderMarkdown(text);
+  } else {
+    el.textContent = text;
+  }
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return el;
@@ -106,7 +119,8 @@ function resetScorePanel() {
 }
 
 function updateScorePanel(data) {
-  const { skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: label, turn } = data;
+  const { skills, alignment, personality, confidence, reason, nextStep, nextStepLabel: label, turn } = data;
+  const overall = Math.round(skills * 0.50 + alignment * 0.35 + personality * 0.15);
   state.lastScore = data;
 
   if (overallWrapEl) {
@@ -135,10 +149,8 @@ function updateScorePanel(data) {
   confidenceBarEl.style.width = `${Math.round(confidence * 100)}%`;
   confidencePctEl.textContent = `${Math.round(confidence * 100)}%`;
 
-  if (reason && confidence >= 0.4) {
-    reasonEl.textContent = reason;
-    reasonEl.classList.add('visible');
-  }
+  reasonEl.textContent = '';
+  reasonEl.classList.remove('visible');
 
   if (window.innerWidth < 768 && scoreBarMobile) {
     scoreBarMobile.classList.add('is-visible');
@@ -256,6 +268,9 @@ const AGENTS = {
           body: JSON.stringify({ userId: state.userId, signalId: state.signalId, persona }),
         });
         const data = await res.json();
+        if (data.displayName && modalTitleEl) {
+          modalTitleEl.textContent = data.displayName;
+        }
         if (data.opener) {
           state.chatHistory.push({ role: 'assistant', content: data.opener });
           appendMessage('assistant', data.opener);
@@ -387,6 +402,9 @@ const AGENTS = {
           body: JSON.stringify({ signalId: state.signalId }),
         });
         const data = await res.json();
+        if (data.displayName && modalTitleEl) {
+          modalTitleEl.innerHTML = `${data.displayName} <span class="signal-modal-owner-badge">owner</span>`;
+        }
         if (data.opener) {
           state.chatHistory.push({ role: 'assistant', content: data.opener });
           appendMessage('assistant', data.opener);
@@ -435,6 +453,19 @@ async function transition(modeName, options = {}) {
   inputEl.value = '';
   inputEl.style.height = 'auto';
 
+  // Reset modal header and score label
+  if (modalTitleEl) {
+    modalTitleEl.innerHTML = modeName === 'owner'
+      ? 'Signal Fit <span class="signal-modal-owner-badge">owner</span>'
+      : 'Signal Fit';
+  }
+  if (scoreLabelEl) scoreLabelEl.textContent = 'Summary of Scores';
+  if (modeName === 'owner') {
+    inputEl.placeholder = 'Paste a job description to score your fit…';
+  } else {
+    inputEl.placeholder = 'Tell me about your AI work…';
+  }
+
   // Reset state
   state = {
     mode: modeName,
@@ -469,6 +500,7 @@ async function sendMessage(text) {
 
   let assistantEl = null;
   let fullResponse = '';
+  let evaluationRendered = false;
 
   try {
     const payload = activeAgent.buildPayload(text);
@@ -484,8 +516,7 @@ async function sendMessage(text) {
     const decoder = new TextDecoder();
     let buffer = '';
 
-    removeThinking();
-    assistantEl = appendMessage('assistant', '');
+    // Don't create the message el yet — wait for done to render formatted HTML
 
     while (true) {
       const { done, value } = await reader.read();
@@ -504,11 +535,28 @@ async function sendMessage(text) {
 
         if (event.type === 'token') {
           fullResponse += event.text;
-          assistantEl.textContent = fullResponse;
-          messagesEl.scrollTop = messagesEl.scrollHeight;
+          // Buffer silently — render on done to avoid raw markdown flash
         } else if (event.type === 'tool_complete') {
-          if (event.tool === 'update_fit_score') {
-            const { scores, reason, nextStep } = event.result;
+          if (event.tool === 'show_evaluation') {
+            evaluationRendered = true;
+            const { roleTitle, summary, skills, alignment, personality } = event.result || {};
+            const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const el = appendMessage('assistant', '');
+            el.innerHTML = `
+              <div class="eval-output">
+                <h2 class="eval-output-heading">Fit Score</h2>
+                <h3 class="eval-output-role">${esc(roleTitle)}</h3>
+                <p class="eval-output-summary">${esc(summary)}</p>
+                <h3 class="eval-output-breakdown">Detailed Breakdown</h3>
+                <div class="eval-output-dims">
+                  <div class="eval-output-dim"><strong>Skills</strong><p>${esc(skills)}</p></div>
+                  <div class="eval-output-dim"><strong>Alignment</strong><p>${esc(alignment)}</p></div>
+                  <div class="eval-output-dim"><strong>Personality</strong><p>${esc(personality)}</p></div>
+                </div>
+              </div>`;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          } else if (event.tool === 'update_fit_score') {
+            const { skills, alignment, personality, overall, confidence, reason, nextStep } = event.result || {};
             const nextStepLabels = {
               hot: 'Hot fit — worth prioritizing',
               warm: 'Warm fit — worth staying connected',
@@ -517,11 +565,16 @@ async function sendMessage(text) {
               building: 'Keep building your history',
               pass: 'Signal may not be the right fit yet',
             };
-            updateScorePanel({ ...scores, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+            updateScorePanel({ skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
           }
         } else if (event.type === 'done') {
           fullResponse = event.fullResponse || fullResponse;
-          assistantEl.textContent = fullResponse;
+          removeThinking();
+          if (!evaluationRendered && fullResponse.trim()) {
+            assistantEl = appendMessage('assistant', '');
+            assistantEl.innerHTML = renderMarkdown(fullResponse);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          }
           state.chatHistory.push({ role: 'assistant', content: fullResponse });
           if (activeAgent.persist) await activeAgent.persist();
         } else if (event.type === 'error') {
@@ -534,6 +587,7 @@ async function sendMessage(text) {
   } catch (err) {
     removeThinking();
     if (assistantEl) assistantEl.remove();
+    else if (fullResponse) { assistantEl = appendMessage('assistant', ''); assistantEl.innerHTML = renderMarkdown(fullResponse); }
     appendMessage('assistant', 'Connection error. Please try again.');
     console.error('[signal-modal] Stream error:', err);
   }

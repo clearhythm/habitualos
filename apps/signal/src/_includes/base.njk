@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles/main.css">
   <script>
     (function() {
@@ -57,10 +61,11 @@
   </main>
 
   {% if showDemoModal %}
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <div class="signal-modal-overlay" id="signal-modal" aria-modal="true" role="dialog" hidden>
     <div class="signal-modal-inner">
       <div class="signal-modal-header">
-        <span class="signal-modal-title">Signal Readiness</span>
+        <span class="signal-modal-title">Signal Fit</span>
         <button class="signal-modal-close" id="signal-modal-close" aria-label="Close">
           <span></span><span></span>
         </button>
@@ -70,7 +75,7 @@
 
           <div class="signal-panel signal-panel--score">
             <div class="signal-score-header">
-              <span class="signal-score-label">Signal Readiness</span>
+              <span class="signal-score-label" id="signal-score-label">Summary of Scores</span>
               <span class="signal-confidence-label">Confidence <span id="confidence-pct">—</span></span>
             </div>
             <div class="signal-overall-wrap" id="overall-wrap">
@@ -132,7 +137,7 @@
                 class="signal-input"
                 id="signal-input"
                 placeholder="Tell me about your AI work…"
-                rows="1"
+                rows="3"
                 aria-label="Your message"
                 disabled
               ></textarea>

@@ -2,9 +2,46 @@
 
 Full reference for the Signal app. Read this before exploring the codebase.
 
+## Product Vision
+
+Signal is a professional profile that builds itself from your actual AI-assisted work — and lets anyone honestly evaluate fit against it.
+
+**The core problem it solves:** Developers doing serious AI-assisted work have a rich, real history of what they've built, decided, and shipped. That history lives in Claude Code sessions, commit messages, architectural decisions, and tradeoffs navigated. None of it is legible to evaluators. GitHub shows what you built, not how you think. Resumes are self-reported. LinkedIn is noise.
+
+**What Signal does instead:**
+- Captures session context automatically as you work in Claude Code (via CLAUDE.md instruction + git hook)
+- Synthesizes that history into a structured, evidence-grounded profile (skills, wants, personality)
+- Lets anyone — a recruiter, a founder, a potential collaborator — paste a job description and get an immediate, honest fit score
+- Embeds as a widget on your own site so evaluation happens where you already exist
+
+**Who it's for:** Developers doing real AI-assisted work. Not a general professional network. The profile can't be faked because it's grounded in what you actually built.
+
+**Primary use cases:**
+1. Owner pastes a JD → gets honest fit score before deciding whether to apply
+2. Visitor (recruiter, founder) pastes a JD → sees fit score against the owner's real profile
+3. Widget on owner's site surfaces both use cases in one embedded experience
+
+**What it is not:** A chatbot that talks about you. Conversation is optional and additive. The primary interface is JD in → structured score out.
+
+## Profile Feed Architecture
+
+Signal profiles are built from three complementary sources:
+
+### 1. Claude Code session summaries (primary — rich context)
+At commit time, Claude Code generates a structured session summary covering: what problem was being solved, what was designed or decided, technologies used, tradeoffs made. Posted to `/api/signal-ingest`. Triggered by CLAUDE.md instruction — runs every time a commit is made in a Claude Code session.
+
+### 2. Git post-commit hook (automatic — lightweight)
+A standard `.git/hooks/post-commit` script sends commit hash, message, and metadata to `/api/signal-ingest` as a fallback. Less rich than a session summary but requires no memory or intent. Catches commits made outside Claude Code sessions.
+
+### 3. Manual conversation exports (supplementary)
+Claude.ai and ChatGPT both export conversation history as JSON. The existing upload pipeline (`signal-context-upload` → `signal-context-process`) handles these. Useful for bootstrapping or one-time historical imports. Not the primary ongoing feed.
+
+### Weekly synthesis
+A scheduled function aggregates all new chunks into updated `skillsProfile`, `wantsProfile`, `personalityProfile` on the owner doc. Profiles improve automatically as more sessions are captured.
+
 ## Overview
 
-Signal is a matchmaking concierge widget. A signal owner uploads their LLM conversation export, Signal processes it into a structured skills/wants/personality profile, and embeds a chat widget on the owner's site. Visitors chat with an AI that represents the owner's professional identity. The owner can also run opportunity evaluations and generate targeted resumes/cover letters.
+Signal is a matchmaking concierge widget. A signal owner's profile is built automatically from their Claude Code work history. Visitors — recruiters, founders, collaborators — can paste a job description and immediately get a structured fit score against that profile. The owner can also evaluate opportunities themselves and generate targeted resumes/cover letters.
 
 ---
 
