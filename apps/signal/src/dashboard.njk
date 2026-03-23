@@ -78,4 +78,5 @@ showDemoModal: true
 
 </div>
 
-{% include "confirm-modal.njk" %}
+{% from "confirm-modal.njk" import render as confirmModal %}
+{{ confirmModal("Delete this evaluation?", confirmLabel="Delete") }}

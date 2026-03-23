@@ -1,11 +1,13 @@
-<div id="confirm-modal" class="confirm-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="confirm-modal-message">
+{% macro render(message="Are you sure?", confirmLabel="Delete", cancelLabel="Cancel", id="confirm-modal") %}
+<div id="{{ id }}" class="confirm-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="{{ id }}-message">
   <div class="confirm-modal">
-    <p class="confirm-modal-message" id="confirm-modal-message">Are you sure?</p>
+    <p class="confirm-modal-message" id="{{ id }}-message">{{ message }}</p>
     <div class="confirm-modal-actions">
-      <button class="btn btn-ghost" id="confirm-modal-cancel">Cancel</button>
-      <button class="btn btn-danger" id="confirm-modal-ok">Delete</button>
+      <button class="btn btn-ghost" data-confirm-cancel>{{ cancelLabel }}</button>
+      <button class="btn btn-danger" data-confirm-ok>{{ confirmLabel }}</button>
     </div>
   </div>
 </div>
 
 <script type="module" src="/assets/js/confirm-modal.js"></script>
+{% endmacro %}
