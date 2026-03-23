@@ -166,6 +166,8 @@ body.sidemenu-open .sidemenu-overlay {
   align-items: center;
   gap: $space-sm;
   flex-wrap: wrap;
+
+  &[hidden] { display: none; }
 }
 
 .sidemenu-auth-name {
