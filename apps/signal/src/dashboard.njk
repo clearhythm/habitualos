@@ -78,5 +78,5 @@ showDemoModal: true
 
 </div>
 
-{% from "small-modal.njk" import confirm as smallModalConfirm %}
-{{ smallModalConfirm("Delete this evaluation?", confirmLabel="Delete") }}
+{% from "modal.njk" import confirm %}
+{{ confirm("Delete this evaluation?", confirmLabel="Delete") }}

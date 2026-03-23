@@ -1,13 +1,13 @@
 /**
- * small-modal.js
- * Powers small-modal.njk macro instances.
+ * modal.js
+ * Powers modal.njk macro instances (small type).
  *
- * Usage from any module on a page that includes the macro:
- *   const ok = await window.smallModal('Delete this evaluation?');
- *   const ok = await window.smallModal('Remove?', { confirmLabel: 'Remove' });
+ * Usage from any module on a page that includes the confirm macro:
+ *   const ok = await window.modal('Delete this evaluation?');
+ *   const ok = await window.modal('Remove?', { confirmLabel: 'Remove' });
  *
- * Multiple modals on one page: give each a unique id in the macro call,
- * then target by id: window.smallModal_my-id('message').
+ * Multiple modals on one page: give each a unique id,
+ * then target by id: window.modal_my-id('message').
  */
 
 function initModal(overlay) {
@@ -43,12 +43,12 @@ function initModal(overlay) {
 }
 
 // Wire up all small modals on this page
-const modals = document.querySelectorAll('.small-modal-overlay');
+const modals = document.querySelectorAll('.modal-overlay--small');
 modals.forEach(overlay => {
-  window[`smallModal_${overlay.id}`] = initModal(overlay);
+  window[`modal_${overlay.id}`] = initModal(overlay);
 });
 
-// Convenience: window.smallModal() targets the first one
+// Convenience: window.modal() targets the first one
 if (modals.length) {
-  window.smallModal = window[`smallModal_${modals[0].id}`];
+  window.modal = window[`modal_${modals[0].id}`];
 }
