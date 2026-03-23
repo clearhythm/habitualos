@@ -29,4 +29,10 @@
 
     &:hover { border-color: rgba(255, 255, 255, 0.65); opacity: 1; }
   }
+
+  &-danger {
+    background: #c0392b;
+    color: #fff;
+  }
 }
+
