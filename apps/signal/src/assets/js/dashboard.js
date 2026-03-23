@@ -764,6 +764,14 @@ async function loadEvaluationHistory() {
   } catch {}
 }
 
+function evalWhoLabel(ev) {
+  const mode = ev.mode || '';
+  if (mode === 'dashboard' || mode === 'signal-owner') return 'Owner';
+  if (mode === 'signal-visitor') return ev.visitorName ? escHtml(ev.visitorName) : 'Visitor';
+  if (mode === 'signal-onboard') return 'Onboard';
+  return mode ? escHtml(mode) : '—';
+}
+
 function renderEvalHistory(evaluations) {
   const wrap = document.getElementById('eval-history-wrap');
   const list = document.getElementById('eval-history-list');
@@ -778,11 +786,32 @@ function renderEvalHistory(evaluations) {
     row.className = 'eval-history-row';
     row.innerHTML = `
       <div class="dash-lead-score ${scoreClass}">${overall}</div>
+      <div class="eval-history-who">${evalWhoLabel(ev)}</div>
       <div class="eval-history-info">
         <div class="eval-history-title-text">${escHtml(ev.title)}</div>
         <div class="dash-lead-meta">${escHtml(tags.join(' · '))}${timeAgo ? ` · ${timeAgo}` : ''}</div>
       </div>
+      <button class="eval-history-delete" aria-label="Delete evaluation" title="Delete">×</button>
     `;
+    row.querySelector('.eval-history-delete').addEventListener('click', async () => {
+      row.style.opacity = '0.4';
+      try {
+        const res = await fetch('/api/signal-evaluation-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: window.__userId, evalId: ev.evalId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          row.remove();
+          if (!list.children.length) wrap.hidden = true;
+        } else {
+          row.style.opacity = '';
+        }
+      } catch {
+        row.style.opacity = '';
+      }
+    });
     list.appendChild(row);
   });
 

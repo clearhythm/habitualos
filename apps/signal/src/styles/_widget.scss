@@ -1523,13 +1523,38 @@
 
 .eval-history-row {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto auto 1fr auto;
   gap: $space-md;
   align-items: center;
   background: $color-bg;
   border: 1px solid $color-border;
   border-radius: 8px;
   padding: $space-sm $space-md;
+}
+
+.eval-history-who {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: $color-text-muted;
+  white-space: nowrap;
+}
+
+.eval-history-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $color-text-muted;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.4;
+  transition: opacity 0.15s, color 0.15s;
+
+  &:hover {
+    opacity: 1;
+    color: #c0392b;
+  }
 }
 
 .eval-history-info {
