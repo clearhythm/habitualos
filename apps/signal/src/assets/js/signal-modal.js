@@ -5,6 +5,8 @@
  * Transition between modes via transition() — only path into any mode.
  */
 
+import { apiUrl } from './api.js';
+
 // ─── DOM refs (queried at parse time — modal HTML guaranteed by {% if showDemoModal %}) ──
 
 const personaWrapEl    = document.getElementById('persona-wrap');
@@ -71,7 +73,7 @@ let state = {
 async function createEvalRecord({ roleTitle, summary, scores } = {}) {
   if (!state.signalId) return;
   try {
-    const res = await fetch('/api/signal-evaluation-save', {
+    const res = await fetch(apiUrl('/api/signal-evaluation-save'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -92,7 +94,7 @@ async function createEvalRecord({ roleTitle, summary, scores } = {}) {
 
 function upsertEvalScores(scores) {
   if (!state.currentEvalId || !state.signalId) return;
-  fetch('/api/signal-evaluation-save', {
+  fetch(apiUrl('/api/signal-evaluation-save'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ evalId: state.currentEvalId, signalId: state.signalId, scores }),
@@ -219,7 +221,7 @@ const AGENTS = {
       personaBtnsEl.innerHTML = '';
 
       try {
-        const res = await fetch('/api/signal-onboard-init', {
+        const res = await fetch(apiUrl('/api/signal-onboard-init'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
@@ -296,7 +298,7 @@ const AGENTS = {
       sendBtnEl.disabled = false;
       inputEl.focus();
       try {
-        const res = await fetch('/api/signal-visitor-init', {
+        const res = await fetch(apiUrl('/api/signal-visitor-init'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: state.userId, signalId: state.signalId, persona }),
@@ -321,7 +323,7 @@ const AGENTS = {
       personaBtnsEl.innerHTML = '';
 
       try {
-        const res = await fetch('/api/signal-config-get', {
+        const res = await fetch(apiUrl('/api/signal-config-get'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signalId: state.signalId }),
@@ -409,7 +411,7 @@ const AGENTS = {
         const mode = state.chatId ? 'append' : 'create';
         const body = { userId: state.userId, messages: state.chatHistory, mode };
         if (state.chatId) body.chatId = state.chatId;
-        const res = await fetch('/api/signal-chat-save', {
+        const res = await fetch(apiUrl('/api/signal-chat-save'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -430,7 +432,7 @@ const AGENTS = {
       state.userId = window.__userId;
       personaWrapEl.style.display = 'none';
       try {
-        const res = await fetch('/api/signal-owner-init', {
+        const res = await fetch(apiUrl('/api/signal-owner-init'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signalId: state.signalId }),
@@ -539,7 +541,7 @@ async function sendMessage(text) {
 
   try {
     const payload = activeAgent.buildPayload(text);
-    const res = await fetch('/api/signal-chat-stream', {
+    const res = await fetch(apiUrl('/api/signal-chat-stream'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

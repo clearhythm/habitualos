@@ -4,6 +4,8 @@
  * Phase 3: adds upload flow, gap Q&A, contact links, leads.
  */
 
+import { apiUrl } from './api.js';
+
 const loading = document.getElementById('dash-loading');
 const main    = document.getElementById('dash-main');
 
@@ -25,7 +27,7 @@ let detectedSource = null;
   if (!signalId) { showUnauth(); return; }
 
   try {
-    const res = await fetch('/api/signal-config-get', {
+    const res = await fetch(apiUrl('/api/signal-config-get'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ signalId })
@@ -102,7 +104,7 @@ function renderDashboard(config) {
 
 async function loadContextStatus() {
   try {
-    const res = await fetch('/api/signal-context-status', {
+    const res = await fetch(apiUrl('/api/signal-context-status'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId })
@@ -240,7 +242,7 @@ $on('context-upload-btn', 'click', async () => {
 
   try {
     // Phase A: Upload (dedup + create pending chunks)
-    const uploadRes = await fetch('/api/signal-context-upload', {
+    const uploadRes = await fetch(apiUrl('/api/signal-context-upload'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -272,7 +274,7 @@ $on('context-upload-btn', 'click', async () => {
       const pct = Math.round((done / total) * 90);
       setProgress(pct, `Extracting ${done}/${total}…`);
 
-      const processRes = await fetch('/api/signal-context-process', {
+      const processRes = await fetch(apiUrl('/api/signal-context-process'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: window.__userId, limit: 4 })
@@ -287,7 +289,7 @@ $on('context-upload-btn', 'click', async () => {
 
     // Phase C: Synthesize profiles
     setProgress(95, 'Synthesizing profiles…');
-    await fetch('/api/signal-context-synthesize', {
+    await fetch(apiUrl('/api/signal-context-synthesize'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId })
@@ -324,7 +326,7 @@ $on('context-delete-btn', 'click', async () => {
   if (!confirm('Delete all uploaded conversation history? This cannot be undone.')) return;
 
   try {
-    const res = await fetch('/api/signal-context-delete', {
+    const res = await fetch(apiUrl('/api/signal-context-delete'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId })
@@ -390,7 +392,7 @@ $on('links-save-btn', 'click', () => {
 
 async function loadLeads() {
   try {
-    const res = await fetch('/api/signal-leads-get', {
+    const res = await fetch(apiUrl('/api/signal-leads-get'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId })
@@ -490,7 +492,7 @@ async function saveField(patch, statusId) {
   const status = document.getElementById(statusId);
   status.textContent = 'Saving…';
   try {
-    const res = await fetch('/api/signal-config-set', {
+    const res = await fetch(apiUrl('/api/signal-config-set'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId, patch })
@@ -566,7 +568,7 @@ $on('eval-form', 'submit', async (e) => {
   document.getElementById('eval-generated').hidden = true;
 
   try {
-    const res = await fetch('/api/signal-evaluate', {
+    const res = await fetch(apiUrl('/api/signal-evaluate'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -666,7 +668,7 @@ async function generateResume() {
   status.textContent = '';
 
   try {
-    const res = await fetch('/api/signal-resume-generate', {
+    const res = await fetch(apiUrl('/api/signal-resume-generate'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId, evaluationId: currentEvalId })
@@ -693,7 +695,7 @@ async function generateCover() {
   status.textContent = '';
 
   try {
-    const res = await fetch('/api/signal-cover-generate', {
+    const res = await fetch(apiUrl('/api/signal-cover-generate'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId, evaluationId: currentEvalId, resumeId: currentResumeId || undefined })
@@ -753,7 +755,7 @@ function renderGeneratedContent(panelId, label, text) {
 
 async function loadEvaluationHistory() {
   try {
-    const res = await fetch('/api/signal-evaluations-get', {
+    const res = await fetch(apiUrl('/api/signal-evaluations-get'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId })
@@ -797,7 +799,7 @@ function renderEvalHistory(evaluations) {
       if (!confirm('Delete this evaluation?')) return;
       row.style.opacity = '0.4';
       try {
-        const res = await fetch('/api/signal-evaluation-delete', {
+        const res = await fetch(apiUrl('/api/signal-evaluation-delete'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: window.__userId, evalId: ev.evalId }),

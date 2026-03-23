@@ -2,6 +2,8 @@
  * register.js — Signal registration flow (2-step: form → verify code)
  */
 
+import { apiUrl } from './api.js';
+
 const stepRegister = document.getElementById('step-register');
 const stepVerify   = document.getElementById('step-verify');
 const registerForm = document.getElementById('register-form');
@@ -49,7 +51,7 @@ registerForm.addEventListener('submit', async (e) => {
   const signalId    = slugInput.value.trim();
 
   try {
-    const res = await fetch('/api/signal-register', {
+    const res = await fetch(apiUrl('/api/signal-register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: window.__userId, email, displayName, signalId })
@@ -84,7 +86,7 @@ verifyForm.addEventListener('submit', async (e) => {
   const code = document.getElementById('field-code').value.trim();
 
   try {
-    const res = await fetch('/api/signal-auth-verify', {
+    const res = await fetch(apiUrl('/api/signal-auth-verify'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: pendingEmail, code })
@@ -128,7 +130,7 @@ function showError(el, msg) {
   if (existingSignalId) {
     // Verify it's still valid
     try {
-      const res = await fetch('/api/signal-config-get', {
+      const res = await fetch(apiUrl('/api/signal-config-get'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ signalId: existingSignalId })
