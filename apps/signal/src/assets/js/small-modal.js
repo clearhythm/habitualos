@@ -1,18 +1,19 @@
 /**
- * confirm-modal.js
- * Powers confirm-modal.njk macro instances.
- * Exposes window.confirmModal(message, options) as a Promise-based
- * replacement for window.confirm().
+ * small-modal.js
+ * Powers small-modal.njk macro instances.
  *
  * Usage from any module on a page that includes the macro:
- *   const ok = await window.confirmModal('Delete this evaluation?');
- *   const ok = await window.confirmModal('Remove?', { confirmLabel: 'Remove', id: 'my-modal' });
+ *   const ok = await window.smallModal('Delete this evaluation?');
+ *   const ok = await window.smallModal('Remove?', { confirmLabel: 'Remove' });
+ *
+ * Multiple modals on one page: give each a unique id in the macro call,
+ * then target by id: window.smallModal_my-id('message').
  */
 
 function initModal(overlay) {
   const messageEl = overlay.querySelector('[id$="-message"]');
-  const okBtn     = overlay.querySelector('[data-confirm-ok]');
-  const cancelBtn = overlay.querySelector('[data-confirm-cancel]');
+  const okBtn     = overlay.querySelector('[data-modal-ok]');
+  const cancelBtn = overlay.querySelector('[data-modal-cancel]');
 
   let _resolve = null;
 
@@ -41,15 +42,13 @@ function initModal(overlay) {
   };
 }
 
-// Wire up all modals on this page; default (first) is exposed as window.confirmModal
-const modals = document.querySelectorAll('.confirm-modal-overlay');
+// Wire up all small modals on this page
+const modals = document.querySelectorAll('.small-modal-overlay');
 modals.forEach(overlay => {
-  const open = initModal(overlay);
-  // Register by id so callers can target a specific modal
-  window[`confirmModal_${overlay.id}`] = open;
+  window[`smallModal_${overlay.id}`] = initModal(overlay);
 });
 
-// Convenience: window.confirmModal() always targets the first modal on the page
+// Convenience: window.smallModal() targets the first one
 if (modals.length) {
-  window.confirmModal = window[`confirmModal_${modals[0].id}`];
+  window.smallModal = window[`smallModal_${modals[0].id}`];
 }

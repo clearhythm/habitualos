@@ -1,0 +1,13 @@
+{% macro confirm(message="Are you sure?", confirmLabel="Delete", cancelLabel="Cancel", id="small-modal") %}
+<div id="{{ id }}" class="small-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="{{ id }}-message">
+  <div class="small-modal">
+    <p class="small-modal-message" id="{{ id }}-message">{{ message }}</p>
+    <div class="small-modal-actions">
+      <button class="btn btn-ghost" data-modal-cancel>{{ cancelLabel }}</button>
+      <button class="btn btn-danger" data-modal-ok>{{ confirmLabel }}</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/assets/js/small-modal.js"></script>
+{% endmacro %}

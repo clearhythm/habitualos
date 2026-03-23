@@ -796,7 +796,7 @@ function renderEvalHistory(evaluations) {
       <button class="eval-history-delete" aria-label="Delete evaluation" title="Delete">×</button>
     `;
     row.querySelector('.eval-history-delete').addEventListener('click', async () => {
-      if (!await window.confirmModal('Delete this evaluation?')) return;
+      if (!await window.smallModal('Delete this evaluation?')) return;
       row.style.opacity = '0.4';
       try {
         const res = await fetch(apiUrl('/api/signal-evaluation-delete'), {
