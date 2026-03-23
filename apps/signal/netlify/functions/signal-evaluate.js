@@ -2,6 +2,7 @@ require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { db, admin } = require('@habitualos/db-core');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
+const { buildContextText, buildProfileSection, buildCoverageSection } = require('./_services/signal-init-shared.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
 const { searchChunks } = require('./_services/db-signal-context.cjs');
 
@@ -20,38 +21,6 @@ function extractTerms(text, limit = 25) {
   )].slice(0, limit);
 }
 
-function buildProfileText(owner) {
-  const { skillsProfile, wantsProfile, personalityProfile } = owner;
-  const sections = [];
-
-  // Primary sources: LinkedIn and contextText (always present even before synthesis)
-  const linkedin = owner.sources?.linkedin || '';
-  const contextText = owner.contextText || '';
-  if (linkedin) sections.push(`== LINKEDIN PROFILE ==\n${linkedin.slice(0, 6000)}`);
-  if (contextText) sections.push(`== ADDITIONAL CONTEXT ==\n${contextText.slice(0, 3000)}`);
-
-  // Synthesized profiles (populated after conversation upload)
-  const synthesized = [];
-  if (skillsProfile) {
-    if (skillsProfile.coreSkills?.length) synthesized.push(`Skills: ${skillsProfile.coreSkills.join(', ')}`);
-    if (skillsProfile.domains?.length) synthesized.push(`Domains: ${skillsProfile.domains.join(', ')}`);
-    if (skillsProfile.technologies?.length) synthesized.push(`Stack: ${skillsProfile.technologies.join(', ')}`);
-    if (skillsProfile.projectTypes?.length) synthesized.push(`Project types: ${skillsProfile.projectTypes.join(', ')}`);
-  }
-  if (wantsProfile) {
-    if (wantsProfile.opportunities?.length) synthesized.push(`Open to: ${wantsProfile.opportunities.join(', ')}`);
-    if (wantsProfile.excitedBy?.length) synthesized.push(`Excited by: ${wantsProfile.excitedBy.join(', ')}`);
-    if (wantsProfile.workStyle) synthesized.push(`Work style: ${wantsProfile.workStyle}`);
-    if (wantsProfile.notLookingFor?.length) synthesized.push(`Not looking for: ${wantsProfile.notLookingFor.join(', ')}`);
-  }
-  if (personalityProfile) {
-    if (personalityProfile.communicationStyle) synthesized.push(`Communication: ${personalityProfile.communicationStyle}`);
-    if (personalityProfile.intellectualStyle) synthesized.push(`Intellectual style: ${personalityProfile.intellectualStyle}`);
-  }
-  if (synthesized.length) sections.push(`== SYNTHESIZED PROFILE ==\n${synthesized.join('\n')}`);
-
-  return sections.length ? sections.join('\n\n') : 'No profile data available.';
-}
 
 function buildEvidenceText(chunks) {
   if (!chunks.length) return 'No matching work history evidence found.';
@@ -181,7 +150,9 @@ exports.handler = async (event) => {
     const chunks = terms.length ? await searchChunks(signalId, terms, 8).catch(() => []) : [];
 
     // Step 3: Score
-    const profileText = buildProfileText(owner);
+    const profileSection = buildProfileSection(owner.displayName, skillsProfile, wantsProfile, personalityProfile);
+    const coverageSection = buildCoverageSection(skillsProfile, wantsProfile, personalityProfile);
+    const profileText = [buildContextText(owner), profileSection, coverageSection].filter(Boolean).join('\n\n');
     const evidenceText = buildEvidenceText(chunks);
     const opportunityForPrompt = {
       type: opportunity.type || 'free-text',

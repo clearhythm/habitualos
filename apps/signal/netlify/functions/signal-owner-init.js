@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
-const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError } = require('./_services/signal-init-shared.cjs');
+const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError, buildContextText, buildProfileSection, buildCoverageSection } = require('./_services/signal-init-shared.cjs');
 
 /**
  * POST /api/signal-owner-init
@@ -11,42 +11,7 @@ const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError 
  * is evaluating opportunities against their own profile, not being evaluated by a visitor.
  */
 
-// ─── Profile section builders ─────────────────────────────────────────────────
-
-function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile) {
-  const sections = [];
-  if (skillsProfile) {
-    sections.push(`== SKILLS (demonstrated) ==
-Core: ${(skillsProfile.coreSkills || []).join(', ')}
-Domains: ${(skillsProfile.domains || []).join(', ')}
-Stack: ${(skillsProfile.technologies || []).join(', ')}`);
-  }
-  if (wantsProfile) {
-    const parts = [];
-    if ((wantsProfile.opportunities || []).length) parts.push(`Open to: ${wantsProfile.opportunities.join(', ')}`);
-    if ((wantsProfile.excitedBy || []).length) parts.push(`Excited by: ${wantsProfile.excitedBy.join(', ')}`);
-    if (wantsProfile.workStyle) parts.push(`Style: ${wantsProfile.workStyle}`);
-    if ((wantsProfile.notLookingFor || []).length) parts.push(`Not looking for: ${wantsProfile.notLookingFor.join(', ')}`);
-    if (parts.length) sections.push(`== ALIGNMENT (what ${displayName} wants) ==\n${parts.join('\n')}`);
-  }
-  if (personalityProfile) {
-    sections.push(`== PERSONALITY (from work history) ==
-Communication: ${personalityProfile.communicationStyle || ''}
-Intellectual: ${personalityProfile.intellectualStyle || ''}
-Approach: ${personalityProfile.problemApproach || ''}`);
-  }
-  return sections.join('\n\n');
-}
-
-function buildCoverageSection(skillsProfile, wantsProfile, personalityProfile) {
-  const pct = (v) => v != null ? `${Math.round((v || 0) * 100)}%` : 'not yet synthesized';
-  return `== DIMENSION COVERAGE FROM HISTORY ==
-Skills: ${pct(skillsProfile?.completeness)} confidence
-Alignment: ${pct(wantsProfile?.completeness)} confidence
-Personality: ${pct(personalityProfile?.completeness)} confidence`;
-}
-
-// ─── CORS ─────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 const OPENER = "You're viewing your own Signal. Paste a job description to see how you'd score against it — or ask me anything about your profile.";
 
@@ -69,11 +34,7 @@ exports.handler = async (event) => {
     }
 
     const displayName = owner.displayName;
-    const linkedin = owner.sources?.linkedin || '';
-    const contextText = [
-      linkedin ? `== LINKEDIN PROFILE ==\n${linkedin}` : '',
-      owner.contextText || ''
-    ].filter(Boolean).join('\n\n');
+    const contextText = buildContextText(owner);
     const skillsProfile = owner.skillsProfile || null;
     const wantsProfile = owner.wantsProfile || null;
     const personalityProfile = owner.personalityProfile || null;

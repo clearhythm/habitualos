@@ -50,4 +50,62 @@ function serverError(label, error) {
   return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
 }
 
-module.exports = { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, ok, serverError };
+// ─── Owner profile builders (shared across all init + eval endpoints) ─────────
+
+/**
+ * Builds the linkedin + contextText block injected as "background" in every prompt.
+ * Caps LinkedIn at 6000 chars and contextText at 3000 to stay within prompt budgets.
+ */
+function buildContextText(owner) {
+  const linkedin = owner.sources?.linkedin || '';
+  const contextText = owner.contextText || '';
+  return [
+    linkedin ? `== LINKEDIN PROFILE ==\n${linkedin.slice(0, 6000)}` : '',
+    contextText ? contextText.slice(0, 3000) : '',
+  ].filter(Boolean).join('\n\n');
+}
+
+/**
+ * Builds the structured SKILLS / ALIGNMENT / PERSONALITY sections from synthesized profiles.
+ */
+function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile) {
+  const sections = [];
+  if (skillsProfile) {
+    sections.push(`== SKILLS (demonstrated) ==
+Core: ${(skillsProfile.coreSkills || []).join(', ')}
+Domains: ${(skillsProfile.domains || []).join(', ')}
+Stack: ${(skillsProfile.technologies || []).join(', ')}`);
+  }
+  if (wantsProfile) {
+    const parts = [];
+    if ((wantsProfile.opportunities || []).length) parts.push(`Open to: ${wantsProfile.opportunities.join(', ')}`);
+    if ((wantsProfile.excitedBy || []).length) parts.push(`Excited by: ${wantsProfile.excitedBy.join(', ')}`);
+    if (wantsProfile.workStyle) parts.push(`Style: ${wantsProfile.workStyle}`);
+    if ((wantsProfile.notLookingFor || []).length) parts.push(`Not looking for: ${wantsProfile.notLookingFor.join(', ')}`);
+    if (parts.length) sections.push(`== ALIGNMENT (what ${displayName} wants) ==\n${parts.join('\n')}`);
+  }
+  if (personalityProfile) {
+    sections.push(`== PERSONALITY (from work history) ==
+Communication: ${personalityProfile.communicationStyle || ''}
+Intellectual: ${personalityProfile.intellectualStyle || ''}
+Approach: ${personalityProfile.problemApproach || ''}`);
+  }
+  return sections.join('\n\n');
+}
+
+/**
+ * Builds the dimension confidence/coverage section.
+ */
+function buildCoverageSection(skillsProfile, wantsProfile, personalityProfile, includeNote = false) {
+  const pct = (v) => v != null ? `${Math.round((v || 0) * 100)}%` : 'not yet synthesized';
+  const note = includeNote ? '\n(Low % means gaps were filled by manual input or defaults — be transparent when scoring)' : '';
+  return `== DIMENSION COVERAGE FROM HISTORY ==
+Skills: ${pct(skillsProfile?.completeness)} confidence
+Alignment: ${pct(wantsProfile?.completeness)} confidence
+Personality: ${pct(personalityProfile?.completeness)} confidence${note}`;
+}
+
+module.exports = {
+  CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, ok, serverError,
+  buildContextText, buildProfileSection, buildCoverageSection,
+};
