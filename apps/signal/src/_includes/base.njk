@@ -14,43 +14,11 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles/main.css">
   <script>
-    (function() {
-      const userId = localStorage.getItem('userId') || (() => {
-        const id = 'u-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        localStorage.setItem('userId', id);
-        return id;
-      })();
-      window.__userId = userId;
-
-      document.addEventListener('DOMContentLoaded', function() {
-        const signedIn = !!localStorage.getItem('signal-owner-id');
-
-        if (signedIn) {
-          var dash = document.getElementById('nav-dashboard');
-          if (dash) dash.removeAttribute('hidden');
-          var prof = document.getElementById('nav-profile');
-          if (prof) prof.removeAttribute('hidden');
-
-          var signedInEl  = document.getElementById('nav-signed-in');
-          var signedOutEl = document.getElementById('nav-signed-out');
-          var nameEl      = document.getElementById('nav-auth-name');
-          if (signedInEl)  signedInEl.removeAttribute('hidden');
-          if (signedOutEl) signedOutEl.setAttribute('hidden', '');
-          if (nameEl) {
-            var firstName = localStorage.getItem('signal-owner-name') || '';
-            nameEl.textContent = firstName;
-          }
-
-          var signOutBtn = document.getElementById('nav-signout-btn');
-          if (signOutBtn) {
-            signOutBtn.addEventListener('click', function() {
-              localStorage.removeItem('signal-owner-id');
-              localStorage.removeItem('signal-owner-name');
-              window.location.href = '/';
-            });
-          }
-        }
-      });
+    // userId must be available before any module scripts run
+    window.__userId = localStorage.getItem('userId') || (function() {
+      var id = 'u-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem('userId', id);
+      return id;
     })();
   </script>
 </head>
@@ -70,7 +38,7 @@
           </ul>
 
           <div class="sidemenu-auth">
-            <div id="nav-signed-out" class="sidemenu-auth-state">
+            <div id="nav-signed-out" class="sidemenu-auth-state" hidden>
               <a href="/signin/" class="sidemenu-auth-link">Sign in</a>
             </div>
             <div id="nav-signed-in" class="sidemenu-auth-state" hidden>
@@ -113,5 +81,37 @@
   {% if pageScript %}
   <script type="module" src="{{ pageScript }}"></script>
   {% endif %}
+
+  <script>
+    // Auth nav state — runs after body so elements exist, no DOMContentLoaded needed
+    (function() {
+      var signedIn = !!localStorage.getItem('signal-owner-id');
+      var signedOutEl = document.getElementById('nav-signed-out');
+      var signedInEl  = document.getElementById('nav-signed-in');
+
+      if (signedIn) {
+        if (signedInEl)  signedInEl.removeAttribute('hidden');
+
+        var nameEl = document.getElementById('nav-auth-name');
+        if (nameEl) nameEl.textContent = localStorage.getItem('signal-owner-name') || '';
+
+        var dash = document.getElementById('nav-dashboard');
+        if (dash) dash.removeAttribute('hidden');
+        var prof = document.getElementById('nav-profile');
+        if (prof) prof.removeAttribute('hidden');
+
+        var signOutBtn = document.getElementById('nav-signout-btn');
+        if (signOutBtn) {
+          signOutBtn.addEventListener('click', function() {
+            localStorage.removeItem('signal-owner-id');
+            localStorage.removeItem('signal-owner-name');
+            window.location.href = '/';
+          });
+        }
+      } else {
+        if (signedOutEl) signedOutEl.removeAttribute('hidden');
+      }
+    })();
+  </script>
 </body>
 </html>
