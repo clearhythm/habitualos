@@ -1,15 +1,14 @@
-/**
- * API base URL resolver.
- *
- * Defaults to relative paths (works in production and netlify dev).
- * Set window.__API_BASE to override — useful for testing against a specific server.
- *
- * Example:
- *   window.__API_BASE = 'http://localhost:8888';  // point dashboard at local functions
- */
+// Detect environment from hostname
+const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
-const BASE = (typeof window !== 'undefined' && window.__API_BASE) || '';
+export const APP_ENV =
+  hostname === 'localhost' || hostname === '127.0.0.1' ? 'local' : 'prod';
+
+export const API_BASE_URL =
+  APP_ENV === 'local'
+    ? 'http://localhost:8888'
+    : 'https://signal.habitualos.com';
 
 export function apiUrl(path) {
-  return `${BASE}${path}`;
+  return `${API_BASE_URL}${path}`;
 }
