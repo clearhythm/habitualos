@@ -1312,6 +1312,8 @@
   display: flex;
   flex-direction: column;
   gap: $space-md;
+
+  &[hidden] { display: none; }
 }
 
 .jd-summary-block {
