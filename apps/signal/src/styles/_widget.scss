@@ -3,7 +3,7 @@
 .signal-widget {
   display: grid;
   grid-template-columns: 280px 1fr;
-  min-height: calc(100dvh - 56px);
+  min-height: calc(100dvh - 72px);
   max-width: 1100px;
   margin: 0 auto;
   padding: $space-xl;
@@ -330,12 +330,12 @@
 .signal-panel--chat {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 56px - 2 * #{$space-xl});
+  height: calc(100dvh - 72px - 2 * #{$space-xl});
   max-height: 800px;
 
   @media (max-width: $breakpoint-md) {
     order: 1;
-    height: calc(100dvh - 56px - 80px); // leave room for compact score bar
+    height: calc(100dvh - 72px - 80px); // leave room for compact score bar
     max-height: none;
   }
 }
@@ -734,7 +734,7 @@
   justify-content: center;
   align-items: flex-start;
   padding: $space-2xl $space-lg;
-  min-height: calc(100dvh - 56px);
+  min-height: calc(100dvh - 72px);
 }
 
 .signal-auth-card {
