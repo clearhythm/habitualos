@@ -4,7 +4,7 @@ const { db, admin } = require('@habitualos/db-core');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
 
-const RESCORE_PROMPT = ({ displayName, originalScore, opportunity, strengths, gaps, resumeText }) => `You are re-evaluating the fit score for ${displayName} after they tailored their resume for a specific opportunity.
+const RESCORE_PROMPT = ({ displayName, originalScore, opportunity, strengths, gaps, resumeText }) => `You are re-evaluating the full fit assessment for ${displayName} after they tailored their resume for a specific opportunity.
 
 == OPPORTUNITY ==
 Title: ${opportunity.title}
@@ -24,26 +24,35 @@ ${gaps.length ? gaps.map(g => `- ${g.gap} (${g.severity}${g.closeable ? ', close
 == TAILORED RESUME ==
 ${resumeText}
 
-Re-evaluate the skills fit score based on how well the tailored resume now presents this candidate's experience for the opportunity. The alignment score does not change (that's about what the candidate wants, not how they present themselves).
-
-Specifically analyze:
-1. Does the resume now use language that directly matches the opportunity's requirements?
-2. Are bullets concrete with real outcomes that address the must-have criteria?
-3. Were closeable gaps reframed effectively?
+Re-evaluate fit based on the tailored resume. The alignment score does not change (that reflects what the candidate wants, not how they present themselves). Everything else — skills score, summary, strengths, and gaps — should reflect how the tailored resume now presents the candidate.
 
 Return ONLY valid JSON:
 {
   "skills": <integer 0-10, revised skills fit>,
   "alignment": ${originalScore.alignment},
   "overall": <integer 0-10, weighted: skills*0.55 + alignment*0.45>,
-  "improvementSummary": "<1-2 sentences explaining why the tailored resume scores better overall>",
+  "summary": "<updated bottom-line summary: why this score, core tension or fit. 2-4 sentences, second person>",
+  "strengths": [
+    "<updated fit signal — reflect what the tailored resume now demonstrates>",
+    "<another strength>"
+  ],
+  "gaps": [
+    {
+      "dimension": "skills",
+      "gap": "<remaining gap or concern>",
+      "severity": "low|moderate|high",
+      "closeable": true|false,
+      "framing": "<how to address it, if closeable>"
+    }
+  ],
+  "improvementSummary": "<1-2 sentences on what improved and why>",
   "changeDetails": [
-    "<specific change made and why it helps, e.g. 'Reframed the management gap as cross-functional leadership, directly matching the JD requirement'>",
+    "<specific change made and why it helps>",
     "<another specific change>"
   ]
 }
 
-changeDetails should have 2-4 items. Be specific about what changed from the original and why each change improves the score. If the score did not improve, explain honestly why.`;
+strengths: 2-4 items. gaps: only include gaps that remain meaningful after the resume changes — drop or downgrade ones that were addressed. changeDetails: 2-4 items, specific. If the score did not improve, explain honestly why.`;
 
 function buildResumeText(content) {
   if (!content) return 'No resume content available.';
@@ -110,7 +119,7 @@ exports.handler = async (event) => {
     const client = new Anthropic({ apiKey });
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{
         role: 'user',
         content: RESCORE_PROMPT({
@@ -141,8 +150,12 @@ exports.handler = async (event) => {
     };
     const delta = newScore.overall - (originalScore.overall ?? 0);
 
-    // Persist rescore result on the evaluation
+    // Upsert the full evaluation with updated score, summary, strengths, gaps
     await db.collection('signal-evaluations').doc(evaluationId).set({
+      score: newScore,
+      summary: parsed.summary || evaluation.summary || '',
+      strengths: parsed.strengths || evaluation.strengths || [],
+      gaps: parsed.gaps || evaluation.gaps || [],
       rescoreResult: {
         newScore,
         originalScore,
@@ -162,6 +175,9 @@ exports.handler = async (event) => {
         newScore,
         originalScore,
         delta,
+        summary: parsed.summary || '',
+        strengths: parsed.strengths || [],
+        gaps: parsed.gaps || [],
         improvementSummary: parsed.improvementSummary || '',
         changeDetails: parsed.changeDetails || []
       })
