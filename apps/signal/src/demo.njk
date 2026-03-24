@@ -1,0 +1,40 @@
+---
+layout: base.njk
+title: "Signal — Live Demo"
+description: "See Signal in action. Chat with a live developer profile and get a real fit score."
+showDemoModal: true
+---
+
+<div class="signal-skyline-section">
+  <div class="container">
+    <div class="signal-skyline-cta">
+      <h1 class="signal-skyline-headline">Signal, live.</h1>
+      <p class="signal-skyline-sub">
+        A live Signal profile, built from real coding sessions. Ask about the work, paste in a job description, or just explore — you'll get a real fit score as the conversation develops.
+      </p>
+      <div class="signal-cta-row">
+        <button class="btn btn-primary" id="demo-open-btn">Open Signal →</button>
+        <a href="/waitlist/" class="btn btn-outline">Join the waitlist</a>
+      </div>
+    </div>
+  </div>
+  <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-skyline-img" aria-hidden="true">
+</div>
+
+<script>
+  function openDemo() {
+    window.signalOpen({ mode: 'visitor', signalId: 'signal-demo' });
+  }
+  document.getElementById('demo-open-btn').addEventListener('click', openDemo);
+  // Auto-pop once the modal module is ready
+  var attempts = 0;
+  var autoOpen = setInterval(function() {
+    attempts++;
+    if (typeof window.signalOpen === 'function') {
+      clearInterval(autoOpen);
+      openDemo();
+    } else if (attempts > 40) {
+      clearInterval(autoOpen);
+    }
+  }, 50);
+</script>

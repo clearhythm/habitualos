@@ -650,6 +650,14 @@
   padding-top: $space-2xl;
   padding-bottom: $space-2xl;
   min-height: 480px;
+
+  // On inner pages (no preceding sections), fill to near full viewport and center content
+  .main > & {
+    min-height: calc(100dvh - 72px);
+    display: flex;
+    align-items: center;
+    .container { width: 100%; }
+  }
 }
 
 .signal-skyline-cta {
@@ -1969,11 +1977,9 @@
 }
 
 .signal-qualify-heading {
-  font-size: $font-size-sm;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: $color-text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: $color-text;
   margin-bottom: $space-md;
 }
 
