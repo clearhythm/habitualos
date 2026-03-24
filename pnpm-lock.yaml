@@ -42,6 +42,9 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      '@habitualos/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/frontend-utils
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -86,6 +89,9 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      '@habitualos/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/frontend-utils
       '@habitualos/survey-engine':
         specifier: workspace:*
         version: link:../../packages/survey-engine
@@ -120,6 +126,9 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      '@habitualos/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/frontend-utils
       '@habitualos/survey-engine':
         specifier: workspace:*
         version: link:../../packages/survey-engine
