@@ -555,6 +555,37 @@ let currentEvalId = null;
 let currentResumeId = null;
 let currentEvalData = null;
 
+// Shared two-phase eval runner — usable by dashboard form and any other eval entry point.
+// onProgress(msg) receives status updates between steps.
+async function runEval({ userId, content, title, onProgress }) {
+  // Phase 1: distill the JD (fast, Haiku)
+  onProgress('Analyzing job description…');
+  const distillRes = await fetch(apiUrl('/api/signal-jd-distill'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, content })
+  });
+  const distillData = await distillRes.json();
+  // Fall through gracefully if distillation fails — evaluate will distill inline
+  const { jdSummary, distilledContent } = distillData.success ? distillData : {};
+
+  // Phase 2: score fit (Sonnet)
+  onProgress('Scoring fit…');
+  const evalRes = await fetch(apiUrl('/api/signal-evaluate'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      opportunity: { type: 'free-text', title: title || 'Untitled', content },
+      jdSummary,
+      distilledContent,
+    })
+  });
+  const data = await evalRes.json();
+  if (!data.success) throw new Error(data.error || 'Evaluation failed');
+  return data;
+}
+
 $on('eval-form', 'submit', async (e) => {
   e.preventDefault();
 
@@ -571,19 +602,16 @@ $on('eval-form', 'submit', async (e) => {
   document.getElementById('eval-generated').hidden = true;
 
   try {
-    const res = await fetch(apiUrl('/api/signal-evaluate'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: window.__userId,
-        opportunity: { type: 'free-text', title: title || 'Untitled', content }
-      })
+    const data = await runEval({
+      userId: window.__userId,
+      content,
+      title,
+      onProgress: (msg) => { status.textContent = msg; },
     });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Evaluation failed');
 
     currentEvalId = data.evaluationId;
     currentResumeId = null;
+    status.textContent = '';
     renderEvalResult(data);
     loadEvaluationHistory();
   } catch (err) {

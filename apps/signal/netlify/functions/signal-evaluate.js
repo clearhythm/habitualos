@@ -90,7 +90,8 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, opportunity } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { userId, opportunity } = body;
 
     if (!userId || !userId.startsWith('u-')) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Valid userId required' }) };
@@ -118,30 +119,33 @@ exports.handler = async (event) => {
     const client = new Anthropic({ apiKey });
     const rawContent = String(opportunity.content).slice(0, 8000);
 
-    // Step 1: Distill the JD — strip boilerplate, extract signal
-    let jdSummary = null;
-    let distilledContent = rawContent;
-    try {
-      const distillMsg = await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
-        messages: [{ role: 'user', content: JD_DISTILL_PROMPT(rawContent) }]
-      });
-      const distillRaw = distillMsg.content[0]?.text || '{}';
-      const distillMatch = distillRaw.match(/\{[\s\S]*\}/);
-      jdSummary = JSON.parse(distillMatch ? distillMatch[0] : distillRaw);
-      // Flatten distilled JD for scoring prompt
-      distilledContent = [
-        `Role: ${jdSummary.roleTitle} (${jdSummary.level || 'unspecified level'})`,
-        jdSummary.responsibilities?.length ? `Responsibilities:\n${jdSummary.responsibilities.map(r => `- ${r}`).join('\n')}` : '',
-        jdSummary.mustHave?.length ? `Must have:\n${jdSummary.mustHave.map(r => `- ${r}`).join('\n')}` : '',
-        jdSummary.niceToHave?.length ? `Nice to have:\n${jdSummary.niceToHave.map(r => `- ${r}`).join('\n')}` : '',
-        jdSummary.cultureSignals?.length ? `Culture signals:\n${jdSummary.cultureSignals.map(r => `- ${r}`).join('\n')}` : '',
-        jdSummary.compensation ? `Compensation: ${jdSummary.compensation}` : '',
-        jdSummary.workModel ? `Work model: ${jdSummary.workModel}` : '',
-      ].filter(Boolean).join('\n\n');
-    } catch (err) {
-      console.warn('[signal-evaluate] JD distillation failed, using raw:', err.message);
+    // Use pre-distilled content if provided (client called signal-jd-distill first),
+    // otherwise fall back to distilling inline.
+    let jdSummary = body.jdSummary || null;
+    let distilledContent = body.distilledContent || rawContent;
+
+    if (!body.distilledContent) {
+      try {
+        const distillMsg = await client.messages.create({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 512,
+          messages: [{ role: 'user', content: JD_DISTILL_PROMPT(rawContent) }]
+        });
+        const distillRaw = distillMsg.content[0]?.text || '{}';
+        const distillMatch = distillRaw.match(/\{[\s\S]*\}/);
+        jdSummary = JSON.parse(distillMatch ? distillMatch[0] : distillRaw);
+        distilledContent = [
+          `Role: ${jdSummary.roleTitle} (${jdSummary.level || 'unspecified level'})`,
+          jdSummary.responsibilities?.length ? `Responsibilities:\n${jdSummary.responsibilities.map(r => `- ${r}`).join('\n')}` : '',
+          jdSummary.mustHave?.length ? `Must have:\n${jdSummary.mustHave.map(r => `- ${r}`).join('\n')}` : '',
+          jdSummary.niceToHave?.length ? `Nice to have:\n${jdSummary.niceToHave.map(r => `- ${r}`).join('\n')}` : '',
+          jdSummary.cultureSignals?.length ? `Culture signals:\n${jdSummary.cultureSignals.map(r => `- ${r}`).join('\n')}` : '',
+          jdSummary.compensation ? `Compensation: ${jdSummary.compensation}` : '',
+          jdSummary.workModel ? `Work model: ${jdSummary.workModel}` : '',
+        ].filter(Boolean).join('\n\n');
+      } catch (err) {
+        console.warn('[signal-evaluate] JD distillation failed, using raw:', err.message);
+      }
     }
 
     // Step 2: Search for relevant evidence chunks
