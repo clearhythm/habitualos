@@ -3,16 +3,16 @@ layout: base.njk
 title: "Signal — Replace the silence with feedback."
 description: "Signal builds your developer profile from your actual coding sessions — Claude Code, Cursor, Codex — and tells you honestly where you fit before you apply."
 showDemoModal: true
+bodyClass: hero-light
 ---
 
 <div class="signal-home-gradient">
-  <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-hero-skyline" aria-hidden="true">
   <div class="container">
     <section class="signal-hero-split">
       <div class="signal-hero-copy">
-        <h1 class="signal-hero-headline">Replace the silence<br>with feedback.</h1>
+        <h1 class="signal-hero-headline">Replace the silence with&hellip; <em>feedback.</em></h1>
         <p class="signal-hero-sub">
-          Signal builds a profile from your <em>actual coding sessions</em>, and helps you feel less alone in your job search. Know <strong>where to focus and what to apply for</strong>, before you send anything.
+          Applying for a job often feels like guesswork. Signal trains on <em>your actual coding sessions</em> to help you focus your search before you ever even apply.
         </p>
         <div class="signal-cta-row">
           <a href="/waitlist/" class="btn btn-primary">Join the waitlist</a>
@@ -24,17 +24,52 @@ showDemoModal: true
         <div class="signal-card-carousel" id="signal-carousel">
           <div class="signal-sample-card">
 
+            <p class="signal-sample-label">Sample Fit Score</p>
+
             <div class="signal-carousel-track">
               <div class="signal-carousel-inner" id="carousel-inner">
 
                 <div class="signal-carousel-slide is-active" data-slide="0">
-                  <p class="signal-sample-label">Sample Fit Score</p>
-                  <p class="signal-eval-role signal-eval-role--header">PayPal &middot; Staff Design Engineer (AI/Agentic)</p>
+                  <p class="signal-eval-role signal-eval-role--header">Stripe &middot; Design Lead, Developer Infrastructure</p>
+                  <hr class="signal-card-rule">
                   <div class="signal-card-top">
                     <div class="signal-ring-wrap" aria-hidden="true">
                       <svg class="signal-sample-ring" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
-                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">8</text>
+                        <text x="50" y="53" text-anchor="middle" dominant-baseline="central" class="signal-ring-score">9</text>
+                      </svg>
+                    </div>
+                    <div class="signal-sample-bars">
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Skills</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
+                        <span class="signal-sample-score">9</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Alignment</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
+                        <span class="signal-sample-score">9</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Personality</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="80"></div></div>
+                        <span class="signal-sample-score">8</span>
+                      </div>
+                    </div>
+                  </div>
+                  <hr class="signal-card-rule">
+                  <p class="signal-eval-recommendation">Apply Now.</p>
+                  <p class="signal-eval-summary">Systems thinking and developer empathy are exactly what Stripe&rsquo;s infra teams look for. This is your kind of problem space &mdash; prioritize it.</p>
+                </div>
+
+                <div class="signal-carousel-slide" data-slide="1">
+                  <p class="signal-eval-role signal-eval-role--header">PayPal &middot; Staff Design Engineer (AI/Agentic)</p>
+                  <hr class="signal-card-rule">
+                  <div class="signal-card-top">
+                    <div class="signal-ring-wrap" aria-hidden="true">
+                      <svg class="signal-sample-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
+                        <text x="50" y="53" text-anchor="middle" dominant-baseline="central" class="signal-ring-score">8</text>
                       </svg>
                     </div>
                     <div class="signal-sample-bars">
@@ -60,47 +95,14 @@ showDemoModal: true
                   <p class="signal-eval-summary">Strong fit across all three dimensions. The one real question: is &ldquo;Agentic&rdquo; genuine innovation or just a title? Worth finding out.</p>
                 </div>
 
-                <div class="signal-carousel-slide" data-slide="1">
-                  <p class="signal-sample-label">Sample Fit Score</p>
-                  <p class="signal-eval-role signal-eval-role--header">Stripe &middot; Design Lead, Developer Infrastructure</p>
-                  <div class="signal-card-top">
-                    <div class="signal-ring-wrap" aria-hidden="true">
-                      <svg class="signal-sample-ring" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
-                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">9</text>
-                      </svg>
-                    </div>
-                    <div class="signal-sample-bars">
-                      <div class="signal-sample-row">
-                        <span class="signal-sample-dim">Skills</span>
-                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
-                        <span class="signal-sample-score">9</span>
-                      </div>
-                      <div class="signal-sample-row">
-                        <span class="signal-sample-dim">Alignment</span>
-                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
-                        <span class="signal-sample-score">9</span>
-                      </div>
-                      <div class="signal-sample-row">
-                        <span class="signal-sample-dim">Personality</span>
-                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="80"></div></div>
-                        <span class="signal-sample-score">8</span>
-                      </div>
-                    </div>
-                  </div>
-                  <hr class="signal-card-rule">
-                  <p class="signal-eval-recommendation">Strong Candidate.</p>
-                  <p class="signal-eval-summary">Systems thinking and developer empathy are exactly what Stripe&rsquo;s infra teams look for. This is your kind of problem space &mdash; prioritize it.</p>
-                </div>
-
                 <div class="signal-carousel-slide" data-slide="2">
-                  <p class="signal-sample-label">Sample Fit Score</p>
                   <p class="signal-eval-role signal-eval-role--header">Meta &middot; Senior IC, AI Surfaces</p>
+                  <hr class="signal-card-rule">
                   <div class="signal-card-top">
                     <div class="signal-ring-wrap" aria-hidden="true">
                       <svg class="signal-sample-ring" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
-                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">6</text>
+                        <text x="50" y="53" text-anchor="middle" dominant-baseline="central" class="signal-ring-score">6</text>
                       </svg>
                     </div>
                     <div class="signal-sample-bars">
@@ -131,15 +133,15 @@ showDemoModal: true
 
             <hr class="signal-card-rule">
             <p class="signal-card-footer">
-              <img src="/assets/images/signal-logo.png" alt="" class="signal-footer-icon">
+              <img src="/assets/favicon-32x32.png" alt="" class="signal-footer-icon">
               <span>Powered by <strong>Signal</strong> &mdash; built on real code, not r&eacute;sum&eacute;s.</span>
             </p>
 
           </div>
 
           <div class="signal-carousel-dots" role="tablist" aria-label="Evaluation samples">
-            <button class="signal-dot is-active" data-index="0" aria-label="PayPal sample" aria-selected="true"></button>
-            <button class="signal-dot" data-index="1" aria-label="Stripe sample" aria-selected="false"></button>
+            <button class="signal-dot is-active" data-index="0" aria-label="Stripe sample" aria-selected="true"></button>
+            <button class="signal-dot" data-index="1" aria-label="PayPal sample" aria-selected="false"></button>
             <button class="signal-dot" data-index="2" aria-label="Meta sample" aria-selected="false"></button>
           </div>
 
@@ -151,45 +153,97 @@ showDemoModal: true
 
 <div class="signal-page-body">
 
-  <section class="signal-section">
+  <section class="signal-section" id="what">
     <div class="container">
-      <div class="signal-section-inner">
-        <div class="signal-section-heading">
-          <h2>Know where your skills actually fit</h2>
-        </div>
-        <div class="signal-section-body">
-          <p>Paste any job description. Signal scores your fit based on what you've actually built in Claude Code, Cursor, or Codex — not what your resume says. Skills, Alignment, Personality. An honest read in minutes.</p>
+      <h2 class="signal-section-title">What Signal Does</h2>
+      <p class="signal-section-intro">Signal provides two different interfaces that help make your job search strategy more effective, and help you find the best fit for your unique strengths and interests.</p>
+
+      <div class="signal-modes-grid">
+        <div class="signal-mode-item" onclick="window.location.href='/waitlist/'" role="link" tabindex="0">
+          <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg></div>
+          <h3>Score Job Listings</h3>
+          <p class="signal-mode-subtitle">Know where your skills actually fit</p>
+          <p>Signal scores any job description you paste into it based on what you've actually built, not what your resume says. Skills, Alignment, Personality. An honest read in minutes.</p>
           <ul class="signal-mode-steps">
             <li class="signal-mode-step">Build your profile from real coding session history</li>
             <li class="signal-mode-step">Get an honest fit score against any JD in seconds</li>
-            <li class="signal-mode-step">Understand exactly why you're a match — or not</li>
+            <li class="signal-mode-step">Understand exactly why you're a match (or not)</li>
           </ul>
           <a href="/waitlist/" class="btn btn-outline">Get early access →</a>
         </div>
-      </div>
 
-      <div class="signal-section-inner signal-section-inner--divided">
-        <div class="signal-section-heading">
-          <h2>Let your work speak for itself</h2>
-        </div>
-        <div class="signal-section-body">
-          <p>Share your Signal with recruiters or engineering leads. They have a real conversation with your actual coding history and walk away with a live fit score — no resume ping-pong.</p>
+        <div class="signal-mode-item" onclick="window.location.href='/waitlist/'" role="link" tabindex="0">
+          <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304-.002a3.75 3.75 0 010 5.304m-7.425 2.122a6.75 6.75 0 010-9.546m9.546.001a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg></div>
+          <h3>Market Your Skills</h3>
+          <p class="signal-mode-subtitle">Let your work speak for itself</p>
+          <p>Share your Signal with recruiters or engineering leads. They have a real conversation with your coding history and walk away with a live fit score. No resume ping-pong.</p>
           <ul class="signal-mode-steps">
             <li class="signal-mode-step">Visitors pick their role and what they're hiring for</li>
             <li class="signal-mode-step">Signal surfaces relevant evidence from your sessions</li>
             <li class="signal-mode-step">Both sides know where things stand in minutes</li>
           </ul>
-          <button class="btn btn-outline" onclick="window.signalOpen && window.signalOpen()">See the visitor experience →</button>
+          <a href="/waitlist/" class="btn btn-outline">Get early access →</a>
         </div>
       </div>
     </div>
   </section>
 
-  <div class="container">
-    <div class="signal-footer-cta">
-      <p class="signal-footer-cta-text">Built for developers who've been doing real work with AI tools.</p>
-      <a href="/waitlist/" class="btn btn-ghost">Join the waitlist</a>
+  <section class="signal-section signal-section--light" id="how">
+    <div class="container">
+      <h2 class="signal-section-title">How Signal Works</h2>
+      <p class="signal-section-intro">The job search is full of silence. At the same time, you generate real work signals every time you open up your coding client. Signal is built to increase your leverage in any job search, starting with the work you've already done.</p>
+
+      <div class="signal-problem-solution">
+        <div class="signal-ps-item">
+          <p class="signal-ps-problem">Your resume doesn't show what you've actually built.</p>
+          <p class="signal-ps-solution">Resumes are summaries written under pressure, optimized for keywords. They flatten your real work into bullet points that rarely capture what you actually shipped, debugged, or figured out. Signal starts somewhere different.</p>
+        </div>
+        <div class="signal-ps-item">
+          <p class="signal-ps-problem">Your sessions become your profile.</p>
+          <p class="signal-ps-solution">Every time you've worked through a problem in Claude Code, Cursor, or Codex — that's real evidence. Signal processes those sessions and extracts what actually happened: the technologies you used, the problems you solved, the architectural decisions you made. No form to fill out. The work is already there.</p>
+        </div>
+        <div class="signal-ps-item">
+          <p class="signal-ps-problem">Know where you fit, honestly.</p>
+          <p class="signal-ps-solution">Paste a job description. Signal scores your fit across Skills, Alignment, and Personality — grounded in your actual history, not your resume claims. An honest read in five minutes is worth more than three rounds of interviews that go nowhere.</p>
+        </div>
+        <div class="signal-ps-item">
+          <p class="signal-ps-problem">It works both ways.</p>
+          <p class="signal-ps-solution">Share your Signal with recruiters or engineering leads. They have a real conversation with it and walk away with a live fit score — without a resume ever changing hands.</p>
+        </div>
+      </div>
+
+      <div class="signal-scoring-section">
+        <div>
+          <h2 class="signal-how-title">The fit score</h2>
+          <p class="signal-how-sub">Three dimensions, each grounded in real evidence from your coding history.</p>
+        </div>
+        <div class="signal-score-dim-list">
+          <div class="signal-score-dim-card">
+            <h3>Skills <span class="signal-score-range">0–10</span></h3>
+            <p>Overlap between what the role needs and what you've actually built. Specific languages, frameworks, project types, and outcomes — not keywords on a resume.</p>
+          </div>
+          <div class="signal-score-dim-card">
+            <h3>Alignment <span class="signal-score-range">0–10</span></h3>
+            <p>Not just whether you can do the work — but whether you actually want to. Draws on what you've expressed excitement about and your stated deal-breakers.</p>
+          </div>
+          <div class="signal-score-dim-card">
+            <h3>Personality <span class="signal-score-range">0–10</span></h3>
+            <p>Inferred from how you work, not a questionnaire. How you approach problems, communicate, and make decisions — matched against patterns in your actual sessions.</p>
+          </div>
+        </div>
+      </div>
     </div>
+  </section>
+
+  <div class="signal-skyline-section">
+    <div class="container">
+      <div class="signal-skyline-cta">
+        <h2 class="signal-skyline-headline">You've Done the Work.<br>Now let it speak.</h2>
+        <p class="signal-skyline-sub">Early access is for developers who've been building with AI tools (Claude Code, Cursor, or Codex) and have real session history to draw from. If that's you, Signal is ready to put that work to use for you.</p>
+        <a href="/waitlist/" class="btn btn-primary">Join the waitlist</a>
+      </div>
+    </div>
+    <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-skyline-img" aria-hidden="true">
   </div>
 
 </div>

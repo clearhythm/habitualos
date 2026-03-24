@@ -22,7 +22,7 @@
     })();
   </script>
 </head>
-<body>
+<body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
 
   <nav class="navbar">
     <div class="sidemenu">
@@ -48,7 +48,7 @@
           </div>
 
           <div class="sidemenu-footer-row">
-            <img src="/assets/images/signal-logo.png" alt="" class="sidemenu-logo">
+            <img src="/assets/favicon-32x32.png" alt="" class="sidemenu-logo">
             <p class="sidemenu-copyright">Signal — Professional networking built on real work</p>
           </div>
         </div>
@@ -71,8 +71,8 @@
 
   <footer class="site-footer">
     <div class="container">
-      <img src="/assets/images/signal-logo.png" alt="" class="footer-logo">
-      <p>© 2026 Signal. Built by Erik Burns on HabitualOS.</p>
+      <img src="/assets/favicon-32x32.png" alt="" class="footer-logo">
+      <p>© 2026 Erik Burns | Signal, built on HabitualOS</p>
       <p><a href="/waitlist/">Join the waitlist</a> &middot; <a href="https://habitualos.com" target="_blank" rel="noopener">HabitualOS</a></p>
     </div>
   </footer>

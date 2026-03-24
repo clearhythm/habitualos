@@ -18,6 +18,17 @@
     background: $color-sidemenu-bg;
     border-bottom-color: rgba(255, 255, 255, 0.08);
   }
+
+  .hero-light &.active {
+    background: #fff;
+    border-bottom-color: rgba(15, 23, 42, 0.1);
+  }
+}
+
+// Light hero — dark navbar text always
+.hero-light .navbar {
+  .navbar-brand { color: #0f172a; }
+  .toggle span { background: #0f172a; }
 }
 
 .navbar-brand-icon {
@@ -46,7 +57,7 @@
   white-space: nowrap;
   text-decoration: none;
 
-  &:hover { text-decoration: none; opacity: 0.8; }
+  &:hover { text-decoration: none; }
 }
 
 // ─── Sidemenu toggle (hamburger) ─────────────────────────────────────────────

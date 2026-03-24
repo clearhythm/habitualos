@@ -1,3 +1,12 @@
+@font-face {
+  font-family: 'Copernicus';
+  src: url('/assets/fonts/copernicus-book.woff') format('woff'),
+       url('/assets/fonts/copernicus-book.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 // ─── Signal Widget Layout ──────────────────────────────────────────────────────
 
 .signal-widget {
@@ -607,31 +616,89 @@
   position: relative;
   margin-top: -72px;
   padding-top: 72px;
-  padding-bottom: 160px;
+  padding-bottom: $space-2xl;
   border-bottom: 1px solid $color-border;
   background:
     radial-gradient(ellipse at 65% 20%, rgba(124, 58, 237, 0.12) 0%, transparent 55%),
     radial-gradient(ellipse at 20% 60%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+}
+
+// Light hero variant
+.hero-light .signal-home-gradient {
+  background: linear-gradient(to bottom left, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #f8faff 100%);
+  border-bottom-color: #bfdbfe;
+}
+
+.hero-light .signal-hero-headline {
+  color: #0f172a;
+  em { color: #7c3aed; font-style: italic; }
+}
+
+.hero-light .signal-hero-sub {
+  color: #475569;
+}
+
+.hero-light .signal-hero-split .btn-outline {
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.35);
+  &:hover { border-color: rgba(15, 23, 42, 0.65); }
+}
+
+.signal-skyline-section {
+  position: relative;
+  overflow: hidden;
+  padding-top: $space-2xl;
+  padding-bottom: $space-2xl;
+  min-height: 480px;
+}
+
+.signal-skyline-cta {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  padding-bottom: $space-2xl;
 
   @media (max-width: $breakpoint-md) {
-    padding-bottom: 120px;
+    padding-bottom: 100px;
   }
 }
 
-.signal-hero-skyline {
+.signal-skyline-headline {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: $color-text;
+  margin-bottom: $space-lg;
+}
+
+.signal-skyline-sub {
+  font-size: $font-size-lg;
+  color: $color-text-muted;
+  line-height: 1.7;
+  max-width: 520px;
+  margin-bottom: $space-xl;
+}
+
+.signal-skyline-img {
+  display: block;
   position: absolute;
   bottom: 0;
-  left: 0;
-  width: 100%;
+  left: 55%;
+  width: 55%;
   height: auto;
-  max-height: 240px;
-  object-fit: cover;
-  object-position: bottom center;
   filter: invert(1);
+  mix-blend-mode: screen;
   opacity: 0.25;
+  transform: translateX(-50%) scaleX(-1);
   pointer-events: none;
   user-select: none;
-  z-index: 0;
+
+  @media (max-width: $breakpoint-md) {
+    left: 50%;
+    width: 100%;
+    opacity: 0.5;
+    transform: translateX(-50%) scaleX(-1);
+  }
 }
 
 // Sections below hero — wrapper only
@@ -643,14 +710,12 @@
   grid-template-columns: 1fr 1fr;
   gap: $space-2xl;
   align-items: center;
-  min-height: calc(100dvh - 72px);
-  padding: $space-2xl 0;
+  padding: 5rem 0 4rem;
 
   @media (max-width: $breakpoint-md) {
     grid-template-columns: 1fr;
     gap: $space-xl;
-    min-height: auto;
-    padding: $space-xl 0;
+    padding: $space-2xl 0;
   }
 }
 
@@ -658,17 +723,128 @@
   .signal-hero-eyebrow {
     justify-content: flex-start;
   }
+
+  @media (max-width: $breakpoint-md) {
+    text-align: center;
+  }
 }
 
 .signal-hero-card {
   display: flex;
   justify-content: center;
+  width: 100%;
+  min-width: 0;
 }
 
 // Full-width editorial sections
 .signal-section {
   padding: 4rem 0 7rem;
   background: linear-gradient(to bottom, #130e28, #0a0d1a);
+}
+
+.signal-section--light {
+  background: linear-gradient(to bottom left, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #fff 100%);
+
+  .signal-section-title,
+  .signal-mode-product-name { color: #0f172a; }
+  .signal-section-intro { color: #475569; }
+
+  .signal-ps-problem { color: #0f172a; }
+  .signal-ps-solution { color: #475569; }
+  .signal-how-title { color: #0f172a; }
+  .signal-how-sub { color: #475569; }
+
+  .signal-score-dim-card {
+    background: #fff;
+    border-color: rgba(15, 23, 42, 0.1);
+    h3 { color: #0f172a; }
+    p { color: #475569; }
+  }
+
+  .signal-scoring-section { border-top-color: rgba(15, 23, 42, 0.08); }
+}
+
+.signal-section-title {
+  font-size: 2.75rem;
+  font-weight: 500;
+  color: $color-text;
+  line-height: 1.2;
+  margin-bottom: $space-md;
+}
+
+.signal-section-intro {
+  font-size: $font-size-lg;
+  color: $color-text-muted;
+  max-width: 560px;
+  margin-bottom: $space-2xl;
+  line-height: 1.7;
+}
+
+.signal-modes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-2xl;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-xl;
+  }
+}
+
+.signal-mode-product-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: $color-primary;
+  margin-bottom: $space-xs;
+}
+
+.signal-mode-item {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: $space-xl;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(196, 181, 253, 0.3);
+    transform: translateY(-2px);
+  }
+
+  h3 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    margin-bottom: $space-xs;
+    color: $color-primary;
+  }
+
+  p {
+    color: $color-text-muted;
+    line-height: 1.7;
+    margin-bottom: $space-lg;
+  }
+}
+
+.signal-mode-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: $space-md;
+  color: $color-text;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.signal-mode-subtitle {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  margin-bottom: $space-lg;
+  font-style: italic;
 }
 
 .signal-section-inner {
@@ -739,18 +915,18 @@
 }
 
 .signal-hero-headline {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.1;
   margin-bottom: $space-lg;
   color: $color-text;
 }
 
 .signal-hero-sub {
-  font-size: $font-size-lg;
+  font-size: 1.125rem;
   color: $color-text-muted;
-  line-height: 1.6;
-  max-width: 560px;
+  line-height: 1.7;
+  max-width: 480px;
   margin-bottom: $space-xl;
 }
 
@@ -758,6 +934,16 @@
   display: flex;
   gap: $space-md;
   flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    align-items: center;
+
+    .btn {
+      width: 70%;
+      justify-content: center;
+    }
+  }
 }
 
 // How it works
@@ -2025,11 +2211,12 @@
 
 .signal-sample-card {
   width: 100%;
-  max-width: 560px;
-  background: rgba(15, 23, 42, 0.85);
+  max-width: 440px;
+  box-sizing: border-box;
+  background: #0f172a;
   border: 1px solid rgba(196, 181, 253, 0.2);
   border-radius: 16px;
-  padding: $space-xl $space-xl $space-lg;
+  padding: $space-xl;
   transition: border-color 0.2s;
 
   &:hover {
@@ -2038,11 +2225,11 @@
 }
 
 .signal-sample-label {
-  font-size: 1.25rem;
-  font-weight: 500;
+  font-size: 1.375rem;
+  font-weight: 600;
   text-align: center;
   color: rgba(255, 255, 255, 0.75);
-  margin: 0 0 $space-lg;
+  margin: 0 0 $space-sm;
 }
 
 .signal-card-top {
@@ -2067,8 +2254,9 @@
 }
 
 .signal-ring-score {
-  font-size: 42px;
-  font-weight: 700;
+  font-family: 'Copernicus', Garamond, Georgia, serif;
+  font-size: 46px;
+  font-weight: 400;
   fill: rgba(255, 255, 255, 0.92);
 }
 
@@ -2125,6 +2313,10 @@
   margin: $space-md 0 $space-sm;
 }
 
+.signal-sample-card > .signal-card-rule {
+  margin: $space-sm 0 $space-sm;
+}
+
 .signal-card-footer {
   display: flex;
   align-items: center;
@@ -2132,6 +2324,7 @@
   font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.55);
   margin: 0;
+  padding-top: $space-sm;
 
   strong { color: rgba(255, 255, 255, 0.85); }
 }
@@ -2147,7 +2340,8 @@
 
 .signal-card-carousel {
   width: 100%;
-  max-width: 560px;
+  max-width: 440px;
+  min-width: 0;
   position: relative;
 }
 
@@ -2176,25 +2370,38 @@
 .signal-carousel-dots {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 1px;
   margin-top: $space-md;
 }
 
 .signal-dot {
-  width: 8px;
-  height: 8px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: background 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  &:hover { background: rgba(255, 255, 255, 0.45); }
+  &::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.35);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
 
-  &.is-active {
+  &:hover::after { border-color: rgba(15, 23, 42, 0.65); }
+
+  &.is-active::after {
     background: $color-primary;
-    transform: scale(1.25);
+    border-color: $color-primary;
+    transform: scale(1.2);
   }
 }
 
@@ -2217,7 +2424,7 @@
 
   &--header {
     text-align: center;
-    margin: -$space-sm 0 $space-md;
+    margin: 0 0 $space-md;
   }
 }
 
@@ -2232,7 +2439,7 @@
   font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.65);
   line-height: 1.6;
-  margin: 0 0 $space-md;
+  margin: 0;
 }
 
 .signal-eval-toggle {
