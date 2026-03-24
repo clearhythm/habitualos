@@ -100,6 +100,7 @@ body.sidemenu-open .toggle span:nth-child(3) {
   z-index: 400;
   pointer-events: none;
   visibility: hidden;
+  overflow: hidden;
   transition: visibility 0s 0.35s;
 }
 
@@ -129,8 +130,7 @@ body.sidemenu-open {
   @media (min-width: $breakpoint-md) {
     // Desktop: partial panel with visible page behind
     width: 340px;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   ul {
