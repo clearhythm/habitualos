@@ -207,6 +207,15 @@
   }
 }
 
+.signal-score-recommendation {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: $color-text;
+  margin: $space-sm 0 0;
+
+  &[hidden] { display: none; }
+}
+
 .signal-score-footer {
   margin-top: auto;
 }
@@ -586,12 +595,115 @@
 }
 
 .signal-hero {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: $space-2xl $space-lg 0;
+  padding: $space-2xl 0 0;
 
   @media (max-width: $breakpoint-md) {
-    padding: $space-xl $space-lg 0;
+    padding: $space-xl 0 0;
+  }
+}
+
+// Homepage hero gradient backdrop
+.signal-home-gradient {
+  position: relative;
+  margin-top: -72px;
+  padding-top: 72px;
+  padding-bottom: 160px;
+  border-bottom: 1px solid $color-border;
+  background:
+    radial-gradient(ellipse at 65% 20%, rgba(124, 58, 237, 0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 60%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+
+  @media (max-width: $breakpoint-md) {
+    padding-bottom: 120px;
+  }
+}
+
+.signal-hero-skyline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
+  object-fit: cover;
+  object-position: bottom center;
+  filter: invert(1);
+  opacity: 0.25;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+// Sections below hero — wrapper only
+.signal-page-body {}
+
+// Full-viewport split hero (homepage)
+.signal-hero-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-2xl;
+  align-items: center;
+  min-height: calc(100dvh - 72px);
+  padding: $space-2xl 0;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-xl;
+    min-height: auto;
+    padding: $space-xl 0;
+  }
+}
+
+.signal-hero-copy {
+  .signal-hero-eyebrow {
+    justify-content: flex-start;
+  }
+}
+
+.signal-hero-card {
+  display: flex;
+  justify-content: center;
+}
+
+// Full-width editorial sections
+.signal-section {
+  padding: 4rem 0 7rem;
+  background: linear-gradient(to bottom, #130e28, #0a0d1a);
+}
+
+.signal-section-inner {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: $space-2xl;
+  align-items: start;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+  }
+}
+
+.signal-section-inner--divided {
+  margin-top: $space-2xl;
+  padding-top: $space-2xl;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.signal-section-heading {
+  h2 {
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+  }
+}
+
+.signal-section-body {
+  p {
+    font-size: $font-size-lg;
+    color: $color-text-muted;
+    line-height: 1.7;
+    margin: 0 0 $space-lg;
   }
 }
 
@@ -616,8 +728,6 @@
   gap: $space-xs;
   font-size: $font-size-sm;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: $color-primary;
   margin-bottom: $space-md;
 }
@@ -652,9 +762,7 @@
 
 // How it works
 .signal-how {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: $space-2xl $space-lg;
+  padding: $space-2xl 0;
 }
 
 .signal-how-title {
@@ -671,16 +779,20 @@
 }
 
 .signal-steps {
-  display: flex;
-  flex-direction: column;
-  gap: $space-lg;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-xl;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+  }
 }
 
 .signal-step {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: $space-md;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
 }
 
 .signal-step-num {
@@ -695,6 +807,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-bottom: $space-xs;
 }
 
 .signal-step-title {
@@ -711,9 +824,7 @@
 
 // Footer CTA
 .signal-footer-cta {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: $space-2xl $space-lg;
+  padding: $space-2xl 0;
   border-top: 1px solid $color-border;
   display: flex;
   justify-content: space-between;
@@ -1909,30 +2020,29 @@
 .signal-sample-section {
   display: flex;
   justify-content: center;
-  padding: $space-xl $space-lg $space-2xl;
+  padding: $space-xl 0 $space-2xl;
 }
 
 .signal-sample-card {
   width: 100%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.03);
+  max-width: 560px;
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(196, 181, 253, 0.2);
   border-radius: 16px;
-  padding: $space-lg;
+  padding: $space-xl $space-xl $space-lg;
   transition: border-color 0.2s;
 
   &:hover {
-    border-color: rgba(196, 181, 253, 0.4);
+    border-color: rgba(196, 181, 253, 0.35);
   }
 }
 
 .signal-sample-label {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0 0 $space-md;
+  font-size: 1.25rem;
+  font-weight: 500;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 $space-lg;
 }
 
 .signal-card-top {
@@ -1951,8 +2061,8 @@
 }
 
 .signal-sample-ring {
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   display: block;
 }
 
@@ -1977,30 +2087,32 @@
 }
 
 .signal-sample-dim {
-  font-size: $font-size-sm;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.45);
-  width: 76px;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  width: 86px;
   flex-shrink: 0;
   text-align: right;
 }
 
 .signal-sample-track {
   flex: 1;
-  height: 8px;
+  height: 10px;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
 .signal-sample-fill {
   height: 100%;
-  background: #9d6ef5;
-  border-radius: 4px;
+  background: #059669;
+  border-radius: 5px;
+  width: 0;
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .signal-sample-score {
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
   width: 20px;
@@ -2018,10 +2130,10 @@
   align-items: center;
   gap: $space-sm;
   font-size: $font-size-sm;
-  color: rgba(196, 181, 253, 0.6);
+  color: rgba(255, 255, 255, 0.55);
   margin: 0;
 
-  strong { color: rgba(196, 181, 253, 0.85); }
+  strong { color: rgba(255, 255, 255, 0.85); }
 }
 
 .signal-footer-icon {
@@ -2031,12 +2143,310 @@
   flex-shrink: 0;
 }
 
+// ─── Homepage carousel ────────────────────────────────────────────────────────
+
+.signal-card-carousel {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+}
+
+.signal-carousel-track {
+  overflow: hidden;
+  width: 100%;
+}
+
+.signal-carousel-inner {
+  display: flex;
+  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.signal-carousel-slide {
+  flex: none;
+  // width set by JS to match track
+  opacity: 0;
+  transition: opacity 0.9s ease;
+
+  &.is-active {
+    opacity: 1;
+  }
+}
+
+.signal-carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: $space-md;
+}
+
+.signal-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+
+  &:hover { background: rgba(255, 255, 255, 0.45); }
+
+  &.is-active {
+    background: $color-primary;
+    transform: scale(1.25);
+  }
+}
+
+// ─── Expandable eval card (homepage hero) ─────────────────────────────────────
+
+.signal-eval-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $space-md;
+  margin-bottom: $space-sm;
+  flex-wrap: wrap;
+}
+
+.signal-eval-role {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+  line-height: 1.4;
+
+  &--header {
+    text-align: center;
+    margin: -$space-sm 0 $space-md;
+  }
+}
+
+.signal-eval-recommendation {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+}
+
+.signal-eval-summary {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+  margin: 0 0 $space-md;
+}
+
+.signal-eval-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: $font-size-sm;
+  color: $color-primary;
+  cursor: pointer;
+  font-family: $font-family;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.15s;
+  margin-bottom: $space-sm;
+
+  &:hover { opacity: 0.75; }
+
+  .signal-eval-toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.65em;
+  }
+
+  &[aria-expanded="true"] .signal-eval-toggle-icon {
+    transform: rotate(180deg);
+  }
+}
+
+.signal-eval-details {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  margin-bottom: $space-sm;
+
+  &[hidden] { display: none; }
+}
+
+.signal-eval-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.signal-eval-section-heading {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+}
+
+.signal-eval-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    font-size: $font-size-sm;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.5;
+    padding-left: 1em;
+    position: relative;
+
+    &::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #059669;
+      font-size: 0.75em;
+      top: 0.15em;
+    }
+  }
+
+  &--gaps li::before {
+    content: '·';
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1.2em;
+    top: -0.05em;
+  }
+}
+
 // ─── How Signal Works page ────────────────────────────────────────────────────
 
+// ─── Two-mode cards (homepage) ────────────────────────────────────────────────
+
+.signal-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-xl;
+  padding: $space-2xl 0;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-lg;
+    padding: $space-xl 0;
+  }
+}
+
+.signal-mode-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid $color-border;
+  border-radius: 16px;
+  padding: $space-xl;
+}
+
+.signal-mode-tag {
+  display: inline-block;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+  margin-bottom: $space-md;
+}
+
+.signal-mode-title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+}
+
+.signal-mode-desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.65;
+  margin: 0 0 $space-lg;
+}
+
+.signal-mode-steps {
+  list-style: none;
+  margin: 0 0 $space-lg;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+}
+
+.signal-mode-step {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  display: flex;
+  align-items: baseline;
+  gap: $space-sm;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba($color-primary, 0.5);
+    flex-shrink: 0;
+    margin-top: 0.4em;
+  }
+}
+
+// ─── Problem / Solution pairs ─────────────────────────────────────────────────
+
+.signal-problem-solution {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2xl;
+}
+
+.signal-ps-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-xl;
+  padding-bottom: $space-2xl;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+    gap: $space-md;
+  }
+}
+
+.signal-ps-problem {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  color: $color-text;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.signal-ps-solution {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  line-height: 1.7;
+  margin: 0;
+}
+
+// ─── How it works page section labels ─────────────────────────────────────────
+
+.signal-flow-label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+  margin-bottom: $space-sm;
+}
+
+// ─── Scoring section ──────────────────────────────────────────────────────────
+
 .signal-scoring-section {
-  max-width: 780px;
-  margin: 0 auto;
-  padding: 0 $space-lg $space-2xl;
+  padding: 0 0 $space-2xl;
   display: flex;
   flex-direction: column;
   gap: $space-2xl;

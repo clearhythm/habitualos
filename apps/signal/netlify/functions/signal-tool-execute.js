@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { searchChunks } = require('./_services/db-signal-context.cjs');
 const { getOwnerBySignalId, updateOwner } = require('./_services/db-signal-owners.cjs');
+const { createEvaluation, upsertEvaluation } = require('./_services/db-signal-evaluations.cjs');
 
 const STOPWORDS = new Set(['the','a','an','and','or','for','to','in','of','on','is','are','was','were','with','that','this']);
 
@@ -17,15 +18,26 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { signalId, toolUse } = JSON.parse(event.body);
+    const { signalId, userId, currentEvalId, toolUse } = JSON.parse(event.body);
     const { name, input } = toolUse;
 
-    // show_evaluation is rendered client-side; server just acknowledges
-    if (name === 'show_evaluation') {
+    if (name === 'evaluate_fit') {
+      const { roleTitle, summary, strengths, gaps, skills, alignment, personality, confidence, recommendation, nextStep } = input;
+      const score = { skills: Number(skills || 0), alignment: Number(alignment || 0), personality: personality != null ? Number(personality) : null, confidence: Number(confidence || 0) };
+
+      let evalId;
+      if (currentEvalId) {
+        await upsertEvaluation(currentEvalId, { score, summary, strengths, gaps, recommendation });
+        evalId = currentEvalId;
+      } else {
+        const created = await createEvaluation({ signalId, userId: userId || null, mode: 'widget', roleTitle, summary, score, strengths, gaps, recommendation });
+        evalId = created.evalId;
+      }
+
       return {
         statusCode: 200,
         headers: { ...CORS, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result: { ok: true } })
+        body: JSON.stringify({ result: { ok: true, evalId, roleTitle, summary, strengths, gaps, score, recommendation: recommendation || null, nextStep: nextStep || null } })
       };
     }
 
@@ -35,12 +47,7 @@ exports.handler = async (event) => {
         statusCode: 200,
         headers: { ...CORS, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          result: {
-            ok: true,
-            scores: { skills, alignment, personality, overall, confidence },
-            reason: reason || null,
-            nextStep: nextStep || null
-          }
+          result: { ok: true, skills, alignment, personality, overall, confidence, reason: reason || null, nextStep: nextStep || null }
         })
       };
     }

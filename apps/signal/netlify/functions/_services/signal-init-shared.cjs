@@ -105,7 +105,33 @@ Alignment: ${pct(wantsProfile?.completeness)} confidence
 Personality: ${pct(personalityProfile?.completeness)} confidence${note}`;
 }
 
+/**
+ * The evaluate_fit tool definition used by owner mode.
+ * Combines show_evaluation + update_fit_score into one atomic call.
+ * Claude provides full eval data; server saves to Firestore and returns evalId.
+ */
+const EVALUATE_FIT_TOOL = {
+  name: 'evaluate_fit',
+  description: 'Evaluate and display a complete fit assessment for a job description. Call this when a JD is pasted — covers scoring, display, and saving in one call.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      roleTitle:      { type: 'string', description: 'Role title — use the first line of the JD if it reads like a title. Never paraphrase or invent.' },
+      summary:        { type: 'string', description: 'Bottom-line overview: why this score, core tension or fit. 2-4 sentences, second person.' },
+      strengths:      { type: 'array', items: { type: 'string' }, description: '2-4 specific fit signals — genuine matches across skills, alignment, or culture.' },
+      gaps:           { type: 'array', items: { type: 'string' }, description: '2-4 honest considerations — gaps, misalignments, or watch-outs. Include dimension context (e.g. "Alignment: seeking stability, role is high-ambiguity").' },
+      skills:         { type: 'number', description: 'Technical skills fit score 0-10' },
+      alignment:      { type: 'number', description: 'Values/working style alignment score 0-10' },
+      personality:    { type: 'number', description: 'Personality/culture fit score 0-10, or null if insufficient info' },
+      confidence:     { type: 'number', description: 'Confidence in this assessment 0-1' },
+      recommendation: { type: 'string', description: 'strong-candidate|worth-applying|stretch|poor-fit' },
+      nextStep:       { type: 'string', description: 'hot|warm|cold (only include when confidence ≥ 0.65)' },
+    },
+    required: ['roleTitle', 'summary', 'strengths', 'gaps', 'skills', 'alignment', 'confidence'],
+  },
+};
+
 module.exports = {
-  CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, ok, serverError,
+  CORS, UPDATE_FIT_SCORE_TOOL, EVALUATE_FIT_TOOL, corsOptions, methodNotAllowed, ok, serverError,
   buildContextText, buildProfileSection, buildCoverageSection,
 };

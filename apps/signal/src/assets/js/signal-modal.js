@@ -37,6 +37,9 @@ const scoreBarMobile  = document.getElementById('score-bar-mobile');
 const scoreBarNumEl   = document.getElementById('score-bar-num');
 const scoreBarLabelEl = document.getElementById('score-bar-label');
 
+// Recommendation label
+const recommendationEl  = document.getElementById('signal-recommendation');
+
 // Next step panel
 const nextStepEl        = document.getElementById('signal-next-step');
 const nextStepLabelEl   = document.getElementById('next-step-label');
@@ -154,6 +157,7 @@ function resetScorePanel() {
   if (overallWrapEl) overallWrapEl.classList.remove('is-visible', 'is-pulsing');
   if (scoreBarMobile) scoreBarMobile.classList.remove('is-visible');
   if (scorePanelEl) scorePanelEl.style.display = '';
+  if (recommendationEl) { recommendationEl.textContent = ''; recommendationEl.hidden = true; }
 }
 
 function updateScorePanel(data) {
@@ -468,6 +472,7 @@ const AGENTS = {
         signalId: state.signalId,
         message: text,
         chatHistory: state.chatHistory.slice(0, -1),
+        ...(state.currentEvalId ? { currentEvalId: state.currentEvalId } : {}),
       };
     },
 
@@ -544,6 +549,7 @@ async function sendMessage(text) {
   let assistantEl = null;
   let fullResponse = '';
   let evaluationRendered = false;
+  let evaluationSavedThisTurn = false;
 
   try {
     const payload = activeAgent.buildPayload(text);
@@ -580,9 +586,11 @@ async function sendMessage(text) {
           fullResponse += event.text;
           // Buffer silently — render on done to avoid raw markdown flash
         } else if (event.type === 'tool_complete') {
-          if (event.tool === 'show_evaluation') {
+          if (event.tool === 'evaluate_fit') {
             evaluationRendered = true;
-            const { roleTitle, summary, strengths, gaps } = event.result || {};
+            evaluationSavedThisTurn = true;
+            const { evalId, roleTitle, summary, strengths, gaps, score, recommendation, nextStep } = event.result || {};
+            if (evalId) state.currentEvalId = evalId;
             const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const strengthsHtml = (strengths || []).map(s => `<li class="eval-strength-item">${esc(s)}</li>`).join('');
             const gapsHtml = (gaps || []).map(g => `<li class="eval-gap-item">${esc(g)}</li>`).join('');
@@ -595,10 +603,27 @@ async function sendMessage(text) {
                 ${gapsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">Potential Gaps</h4><ul class="eval-items-list">${gapsHtml}</ul></div>` : ''}
               </div>`;
             messagesEl.scrollTop = messagesEl.scrollHeight;
-            // Persist to signal-evaluations (JD path) — scores arrive via update_fit_score
-            createEvalRecord({ roleTitle, summary, strengths: strengths || [], gaps: gaps || [] });
+            if (recommendation && recommendationEl) {
+              const recLabels = {
+                'strong-candidate': 'Strong Candidate.',
+                'worth-applying': 'Worth Applying.',
+                'stretch': 'Stretch Role.',
+                'poor-fit': 'Poor Fit.',
+              };
+              recommendationEl.textContent = recLabels[recommendation] || '';
+              recommendationEl.hidden = !recLabels[recommendation];
+            }
+            if (score) {
+              const nextStepLabels = {
+                hot: 'Hot fit — worth prioritizing',
+                warm: 'Warm fit — worth staying connected',
+                cold: 'Probably not the right fit right now',
+              };
+              updateScorePanel({ ...score, reason: null, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+            }
           } else if (event.tool === 'update_fit_score') {
-            const { skills, alignment, personality, overall, confidence, reason, nextStep } = event.result || {};
+            // Visitor mode: incremental score updates (no eval card)
+            const { skills, alignment, personality, confidence, reason, nextStep } = event.result || {};
             const nextStepLabels = {
               hot: 'Hot fit — worth prioritizing',
               warm: 'Warm fit — worth staying connected',
@@ -607,8 +632,7 @@ async function sendMessage(text) {
               building: 'Keep building your history',
               pass: 'Signal may not be the right fit yet',
             };
-            updateScorePanel({ skills, alignment, personality, overall, confidence, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
-            // Upsert scores onto open eval record if one exists
+            updateScorePanel({ skills, alignment, personality, confidence, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
             if (state.currentEvalId) {
               upsertEvalScores({ skills, alignment, personality, confidence });
             }
@@ -622,14 +646,15 @@ async function sendMessage(text) {
             messagesEl.scrollTop = messagesEl.scrollHeight;
           }
           state.chatHistory.push({ role: 'assistant', content: fullResponse });
-          // Conversational path: no JD was pasted but confidence is sufficient — create record now
-          if (!state.currentEvalId && state.lastScore && state.lastScore.confidence >= 0.5) {
-            const { skills, alignment, personality, confidence } = state.lastScore;
-            createEvalRecord({ scores: { skills, alignment, personality, confidence } });
-          } else if (state.currentEvalId && state.lastScore) {
-            // Final upsert with latest scores at end of turn
-            const { skills, alignment, personality, confidence } = state.lastScore;
-            upsertEvalScores({ skills, alignment, personality, confidence });
+          // Conversational path (visitor mode only): no eval_fit tool was called this turn
+          if (!evaluationSavedThisTurn) {
+            if (!state.currentEvalId && state.lastScore && state.lastScore.confidence >= 0.5) {
+              const { skills, alignment, personality, confidence } = state.lastScore;
+              createEvalRecord({ scores: { skills, alignment, personality, confidence } });
+            } else if (state.currentEvalId && state.lastScore) {
+              const { skills, alignment, personality, confidence } = state.lastScore;
+              upsertEvalScores({ skills, alignment, personality, confidence });
+            }
           }
           if (activeAgent.persist) await activeAgent.persist();
         } else if (event.type === 'error') {

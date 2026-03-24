@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
-const { CORS, UPDATE_FIT_SCORE_TOOL, corsOptions, methodNotAllowed, serverError, buildContextText, buildProfileSection, buildCoverageSection } = require('./_services/signal-init-shared.cjs');
+const { CORS, EVALUATE_FIT_TOOL, corsOptions, methodNotAllowed, serverError, buildContextText, buildProfileSection, buildCoverageSection } = require('./_services/signal-init-shared.cjs');
 
 /**
  * POST /api/signal-owner-init
@@ -69,8 +69,8 @@ ${coverageSection}
 == SCORING ==
 
 Primary use case: the owner pastes a job description to evaluate fit.
-If they paste a JD, score immediately — you have both sides of the equation.
-Set confidence to 0.75+ on JD input. Call update_fit_score in the same response.
+If they paste a JD, call evaluate_fit immediately — one call covers scoring, display, and saving.
+Set confidence to 0.75+ on JD input.
 
 Score three dimensions:
 - Skills (0-10): Overlap between JD requirements and ${displayName}'s demonstrated capabilities
@@ -82,7 +82,6 @@ Rubric:
 - 6-7  → nextStep: "warm"
 - 0-5  → nextStep: "cold"
 
-When evaluating a JD: call both update_fit_score AND show_evaluation in the same response.
 After the evaluation, ask: "Does that score feel right to you?"
 
 If ${displayName} pushes back or gives context about what feels off, extract preference signals and call save_preference_update.
@@ -105,20 +104,7 @@ Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.${eval
       displayName,
       opener,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      tools: [UPDATE_FIT_SCORE_TOOL, {
-        name: 'show_evaluation',
-        description: 'Display a structured fit evaluation in the chat. Call this whenever a job description is pasted, alongside update_fit_score.',
-        input_schema: {
-          type: 'object',
-          properties: {
-            roleTitle:   { type: 'string', description: 'Role title — use the first line of the JD if it reads like a title (short, no trailing punctuation). Only fall back to extracting from body text if the first line is clearly not a title. Never paraphrase or invent.' },
-            summary:     { type: 'string', description: 'Bottom-line overview: why this score, core tension or fit. Direct, second person, 2-4 sentences.' },
-            strengths:   { type: 'array', items: { type: 'string' }, description: '2-4 specific fit signals — genuine matches across skills, alignment, or culture. Short direct phrases, cite specifics where possible.' },
-            gaps:        { type: 'array', items: { type: 'string' }, description: '2-4 honest considerations — gaps, misalignments, or watch-outs. Short direct phrases. Include dimension context (e.g. "Alignment: seeking stability, role is high-ambiguity").' },
-          },
-          required: ['roleTitle', 'summary', 'strengths', 'gaps'],
-        },
-      }, {
+      tools: [EVALUATE_FIT_TOOL, {
         name: 'save_preference_update',
         description: `Save preferences learned from ${displayName}'s feedback on a JD evaluation. Call when they explain what feels right or wrong about a score — extract structured signals from what they say.`,
         input_schema: {

@@ -38,7 +38,7 @@
 
   if (navbar) {
     function updateNavbar() {
-      navbar.classList.toggle('active', window.scrollY > 10);
+      navbar.classList.toggle('active', window.scrollY > 40);
     }
     updateNavbar();
     window.addEventListener('scroll', updateNavbar, { passive: true });

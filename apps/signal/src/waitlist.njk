@@ -1,50 +1,54 @@
 ---
 layout: base.njk
-title: "Signal — Create your Signal"
+title: "Signal — Join the waitlist"
 description: "Get early access to Signal — a professional fit-scoring agent trained on your actual AI work history."
 ---
 
-<section class="signal-hero">
-  <p class="signal-hero-eyebrow">Early Access</p>
-  <h1 class="signal-hero-headline">You've done the work.<br>Now let it speak.</h1>
-  <p class="signal-hero-sub">
-    Signal trains a fit-scoring agent on your actual AI conversation history.
-    Visitors have a real conversation with your work — and walk away with an honest score.
-  </p>
+<div class="container">
+  <div class="container-narrow">
 
-  <div class="signal-qualify-block">
-    <p class="signal-qualify-heading">To create yours, you'll need:</p>
-    <ul class="signal-qualify-list">
-      <li>At least a few months of meaningful work done with Claude, ChatGPT, or similar tools</li>
-      <li>The ability to export those conversation histories</li>
-      <li>Willingness to share that data to train your agent</li>
-    </ul>
-    <p class="signal-qualify-note">If that's you, you're in the right place.</p>
+    <section class="signal-hero">
+      <h1 class="signal-hero-headline">You've done the work.<br>Now let it speak.</h1>
+      <p class="signal-hero-sub">
+        Signal builds your developer profile from your actual coding sessions and helps you know where you fit — before you apply.
+      </p>
+
+      <div class="signal-qualify-block">
+        <p class="signal-qualify-heading">To create yours, you'll need:</p>
+        <ul class="signal-qualify-list">
+          <li>At least a few months of meaningful work done with Claude Code, Cursor, Codex, or similar tools</li>
+          <li>The ability to export those session histories</li>
+          <li>Willingness to share that data to train your profile</li>
+        </ul>
+        <p class="signal-qualify-note">If that's you, you're in the right place.</p>
+      </div>
+
+      <div id="waitlist-form-wrap">
+        <form id="waitlist-form" class="signal-waitlist-form">
+          <input
+            type="email"
+            id="waitlist-email"
+            class="signal-waitlist-input"
+            placeholder="your@email.com"
+            required
+            autocomplete="email"
+          />
+          <button type="submit" class="btn btn-primary" id="waitlist-submit">Request early access</button>
+        </form>
+        <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
+      </div>
+
+      <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
+        <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
+      </div>
+
+      <p class="signal-waitlist-demo-link">
+        Not sure yet? <a href="/widget/">Try Erik's Signal first →</a>
+      </p>
+    </section>
+
   </div>
-
-  <div id="waitlist-form-wrap">
-    <form id="waitlist-form" class="signal-waitlist-form">
-      <input
-        type="email"
-        id="waitlist-email"
-        class="signal-waitlist-input"
-        placeholder="your@email.com"
-        required
-        autocomplete="email"
-      />
-      <button type="submit" class="btn btn-primary" id="waitlist-submit">Request early access</button>
-    </form>
-    <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
-  </div>
-
-  <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
-    <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
-  </div>
-
-  <p class="signal-waitlist-demo-link">
-    Not sure yet? <a href="/widget/">Try Erik's Signal first →</a>
-  </p>
-</section>
+</div>
 
 <script>
 (function() {

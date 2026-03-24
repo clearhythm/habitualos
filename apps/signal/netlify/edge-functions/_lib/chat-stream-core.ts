@@ -230,7 +230,8 @@ export function createChatStreamHandler(
       // Signal-specific
       signalId,
       persona,
-    } = body as RequestBody & { signalId?: string; persona?: string };
+      currentEvalId,
+    } = body as RequestBody & { signalId?: string; persona?: string; currentEvalId?: string };
 
     // Get chat type configuration
     const config = chatTypeConfigs[chatType];
@@ -423,6 +424,7 @@ export function createChatStreamHandler(
               }
               if (chatType === "signal" || chatType === "signal-owner" || chatType === "signal-visitor" || chatType === "signal-onboard") {
                 toolBody.signalId = signalId;
+                if (currentEvalId) toolBody.currentEvalId = currentEvalId;
               }
 
               // Execute tool via Node.js function
@@ -438,7 +440,7 @@ export function createChatStreamHandler(
               const toolData = await toolResponse.json();
               const toolResult = toolData.result || { error: "Tool execution failed" };
 
-              await send({ type: "tool_complete", tool: toolUseBlock.name, result: toolUseBlock.input });
+              await send({ type: "tool_complete", tool: toolUseBlock.name, result: toolResult });
 
               toolResults.push({
                 type: "tool_result",

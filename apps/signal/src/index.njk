@@ -1,62 +1,262 @@
 ---
 layout: base.njk
-title: "Signal — You've done the work. Now let it speak."
-description: "Signal is an AI built on your actual work history — not a resume. Visitors have a real conversation and walk away with an honest fit score."
+title: "Signal — Replace the silence with feedback."
+description: "Signal builds your developer profile from your actual coding sessions — Claude Code, Cursor, Codex — and tells you honestly where you fit before you apply."
 showDemoModal: true
 ---
 
-<section class="signal-hero signal-hero--home">
-  <p class="signal-hero-eyebrow">
-    <img src="/assets/images/signal-logo.png" alt="" class="signal-hero-eyebrow-icon" aria-hidden="true">Signal
-  </p>
-  <h1 class="signal-hero-headline">You've done the work.<br>Now let it speak.</h1>
-  <p class="signal-hero-sub">
-    You've been shipping real things with AI. Your resume doesn't show that.
-    Signal does — through conversation, not claims.
-  </p>
-  <div class="signal-cta-row">
-    <button class="btn btn-primary" onclick="window.signalOpen && window.signalOpen()">Score your Signal</button>
-    <a href="/how-it-works/" class="btn btn-outline">How it works →</a>
-  </div>
-</section>
-
-<section class="signal-sample-section">
-  <div class="signal-sample-card" onclick="window.signalOpen && window.signalOpen()" style="cursor:pointer" role="button" tabindex="0" aria-label="Open Signal demo">
-    <p class="signal-sample-label">Sample Signal Readiness Score</p>
-    <div class="signal-card-top">
-      <div class="signal-ring-wrap" aria-hidden="true">
-        <svg class="signal-sample-ring" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#9d6ef5" stroke-width="4"/>
-          <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">8</text>
-        </svg>
+<div class="signal-home-gradient">
+  <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-hero-skyline" aria-hidden="true">
+  <div class="container">
+    <section class="signal-hero-split">
+      <div class="signal-hero-copy">
+        <h1 class="signal-hero-headline">Replace the silence<br>with feedback.</h1>
+        <p class="signal-hero-sub">
+          Signal builds a profile from your <em>actual coding sessions</em>, and helps you feel less alone in your job search. Know <strong>where to focus and what to apply for</strong>, before you send anything.
+        </p>
+        <div class="signal-cta-row">
+          <a href="/waitlist/" class="btn btn-primary">Join the waitlist</a>
+          <a href="/how-it-works/" class="btn btn-outline">How it works</a>
+        </div>
       </div>
-      <div class="signal-sample-bars">
-        <div class="signal-sample-row">
-          <span class="signal-sample-dim">Skills</span>
-          <div class="signal-sample-track"><div class="signal-sample-fill" style="width:90%"></div></div>
-          <span class="signal-sample-score">9</span>
+
+      <div class="signal-hero-card" aria-label="Sample fit scores">
+        <div class="signal-card-carousel" id="signal-carousel">
+          <div class="signal-sample-card">
+
+            <div class="signal-carousel-track">
+              <div class="signal-carousel-inner" id="carousel-inner">
+
+                <div class="signal-carousel-slide is-active" data-slide="0">
+                  <p class="signal-sample-label">Sample Fit Score</p>
+                  <p class="signal-eval-role signal-eval-role--header">PayPal &middot; Staff Design Engineer (AI/Agentic)</p>
+                  <div class="signal-card-top">
+                    <div class="signal-ring-wrap" aria-hidden="true">
+                      <svg class="signal-sample-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
+                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">8</text>
+                      </svg>
+                    </div>
+                    <div class="signal-sample-bars">
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Skills</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
+                        <span class="signal-sample-score">9</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Alignment</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="80"></div></div>
+                        <span class="signal-sample-score">8</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Personality</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="80"></div></div>
+                        <span class="signal-sample-score">8</span>
+                      </div>
+                    </div>
+                  </div>
+                  <hr class="signal-card-rule">
+                  <p class="signal-eval-recommendation">Worth Applying.</p>
+                  <p class="signal-eval-summary">Strong fit across all three dimensions. The one real question: is &ldquo;Agentic&rdquo; genuine innovation or just a title? Worth finding out.</p>
+                </div>
+
+                <div class="signal-carousel-slide" data-slide="1">
+                  <p class="signal-sample-label">Sample Fit Score</p>
+                  <p class="signal-eval-role signal-eval-role--header">Stripe &middot; Design Lead, Developer Infrastructure</p>
+                  <div class="signal-card-top">
+                    <div class="signal-ring-wrap" aria-hidden="true">
+                      <svg class="signal-sample-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
+                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">9</text>
+                      </svg>
+                    </div>
+                    <div class="signal-sample-bars">
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Skills</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
+                        <span class="signal-sample-score">9</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Alignment</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="90"></div></div>
+                        <span class="signal-sample-score">9</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Personality</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="80"></div></div>
+                        <span class="signal-sample-score">8</span>
+                      </div>
+                    </div>
+                  </div>
+                  <hr class="signal-card-rule">
+                  <p class="signal-eval-recommendation">Strong Candidate.</p>
+                  <p class="signal-eval-summary">Systems thinking and developer empathy are exactly what Stripe&rsquo;s infra teams look for. This is your kind of problem space &mdash; prioritize it.</p>
+                </div>
+
+                <div class="signal-carousel-slide" data-slide="2">
+                  <p class="signal-sample-label">Sample Fit Score</p>
+                  <p class="signal-eval-role signal-eval-role--header">Meta &middot; Senior IC, AI Surfaces</p>
+                  <div class="signal-card-top">
+                    <div class="signal-ring-wrap" aria-hidden="true">
+                      <svg class="signal-sample-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="#0f172a" stroke="#7c3aed" stroke-width="4"/>
+                        <text x="52" y="57" text-anchor="middle" dominant-baseline="middle" class="signal-ring-score">6</text>
+                      </svg>
+                    </div>
+                    <div class="signal-sample-bars">
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Skills</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="70"></div></div>
+                        <span class="signal-sample-score">7</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Alignment</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="60"></div></div>
+                        <span class="signal-sample-score">6</span>
+                      </div>
+                      <div class="signal-sample-row">
+                        <span class="signal-sample-dim">Personality</span>
+                        <div class="signal-sample-track"><div class="signal-sample-fill" data-width="60"></div></div>
+                        <span class="signal-sample-score">6</span>
+                      </div>
+                    </div>
+                  </div>
+                  <hr class="signal-card-rule">
+                  <p class="signal-eval-recommendation">Stretch Role.</p>
+                  <p class="signal-eval-summary">Your AI product instincts are real, but Meta&rsquo;s IC ladder here skews toward deep ML research background. Save the energy for better fits.</p>
+                </div>
+
+              </div>
+            </div>
+
+            <hr class="signal-card-rule">
+            <p class="signal-card-footer">
+              <img src="/assets/images/signal-logo.png" alt="" class="signal-footer-icon">
+              <span>Powered by <strong>Signal</strong> &mdash; built on real code, not r&eacute;sum&eacute;s.</span>
+            </p>
+
+          </div>
+
+          <div class="signal-carousel-dots" role="tablist" aria-label="Evaluation samples">
+            <button class="signal-dot is-active" data-index="0" aria-label="PayPal sample" aria-selected="true"></button>
+            <button class="signal-dot" data-index="1" aria-label="Stripe sample" aria-selected="false"></button>
+            <button class="signal-dot" data-index="2" aria-label="Meta sample" aria-selected="false"></button>
+          </div>
+
         </div>
-        <div class="signal-sample-row">
-          <span class="signal-sample-dim">Alignment</span>
-          <div class="signal-sample-track"><div class="signal-sample-fill" style="width:72%"></div></div>
-          <span class="signal-sample-score">7</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="signal-page-body">
+
+  <section class="signal-section">
+    <div class="container">
+      <div class="signal-section-inner">
+        <div class="signal-section-heading">
+          <h2>Know where your skills actually fit</h2>
         </div>
-        <div class="signal-sample-row">
-          <span class="signal-sample-dim">Personality</span>
-          <div class="signal-sample-track"><div class="signal-sample-fill" style="width:80%"></div></div>
-          <span class="signal-sample-score">8</span>
+        <div class="signal-section-body">
+          <p>Paste any job description. Signal scores your fit based on what you've actually built in Claude Code, Cursor, or Codex — not what your resume says. Skills, Alignment, Personality. An honest read in minutes.</p>
+          <ul class="signal-mode-steps">
+            <li class="signal-mode-step">Build your profile from real coding session history</li>
+            <li class="signal-mode-step">Get an honest fit score against any JD in seconds</li>
+            <li class="signal-mode-step">Understand exactly why you're a match — or not</li>
+          </ul>
+          <a href="/waitlist/" class="btn btn-outline">Get early access →</a>
+        </div>
+      </div>
+
+      <div class="signal-section-inner signal-section-inner--divided">
+        <div class="signal-section-heading">
+          <h2>Let your work speak for itself</h2>
+        </div>
+        <div class="signal-section-body">
+          <p>Share your Signal with recruiters or engineering leads. They have a real conversation with your actual coding history and walk away with a live fit score — no resume ping-pong.</p>
+          <ul class="signal-mode-steps">
+            <li class="signal-mode-step">Visitors pick their role and what they're hiring for</li>
+            <li class="signal-mode-step">Signal surfaces relevant evidence from your sessions</li>
+            <li class="signal-mode-step">Both sides know where things stand in minutes</li>
+          </ul>
+          <button class="btn btn-outline" onclick="window.signalOpen && window.signalOpen()">See the visitor experience →</button>
         </div>
       </div>
     </div>
-    <hr class="signal-card-rule">
-    <p class="signal-card-footer">
-      <img src="/assets/images/signal-logo.png" alt="" class="signal-footer-icon">
-      <span>Powered by <strong>Signal</strong> — professional networking built on real work, not résumés.</span>
-    </p>
-  </div>
-</section>
+  </section>
 
-<div class="signal-footer-cta">
-  <p class="signal-footer-cta-text">Want your own Signal? Powered by your AI conversation history.</p>
-  <a href="/waitlist/" class="btn btn-ghost">Join the waitlist</a>
+  <div class="container">
+    <div class="signal-footer-cta">
+      <p class="signal-footer-cta-text">Built for developers who've been doing real work with AI tools.</p>
+      <a href="/waitlist/" class="btn btn-ghost">Join the waitlist</a>
+    </div>
+  </div>
+
 </div>
+
+<script>
+  (function () {
+    var track  = document.querySelector('.signal-carousel-track');
+    var inner  = document.getElementById('carousel-inner');
+    var slides = Array.from(document.querySelectorAll('.signal-carousel-slide'));
+    var dots   = Array.from(document.querySelectorAll('.signal-dot'));
+    if (!track || !inner || !slides.length) return;
+
+    var current = 0;
+    var timer = null;
+    var INTERVAL = 9000;
+
+    function setWidths() {
+      var w = track.offsetWidth;
+      slides.forEach(function (s) { s.style.width = w + 'px'; });
+      inner.style.transform = 'translateX(-' + (current * w) + 'px)';
+    }
+
+    function animateBars(slide) {
+      var fills = slide.querySelectorAll('.signal-sample-fill[data-width]');
+      fills.forEach(function (el) { el.style.width = '0'; });
+      setTimeout(function () {
+        fills.forEach(function (el) { el.style.width = el.dataset.width + '%'; });
+      }, 80);
+    }
+
+    function goTo(index) {
+      if (index === current) return;
+      slides[current].classList.remove('is-active');
+      dots[current].classList.remove('is-active');
+      dots[current].setAttribute('aria-selected', 'false');
+      current = index;
+      inner.style.transform = 'translateX(-' + (index * track.offsetWidth) + 'px)';
+      slides[current].classList.add('is-active');
+      dots[current].classList.add('is-active');
+      dots[current].setAttribute('aria-selected', 'true');
+      animateBars(slides[current]);
+    }
+
+    function startTimer() {
+      timer = setInterval(function () { goTo((current + 1) % slides.length); }, INTERVAL);
+    }
+
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () {
+        clearInterval(timer);
+        goTo(parseInt(dot.dataset.index, 10));
+        startTimer();
+      });
+    });
+
+    window.addEventListener('resize', setWidths);
+    setWidths();
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          animateBars(slides[0]);
+          startTimer();
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.3 });
+    observer.observe(slides[0]);
+  })();
+</script>
