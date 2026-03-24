@@ -22,7 +22,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return methodNotAllowed();
 
   try {
-    const { signalId } = JSON.parse(event.body || '{}');
+    const { signalId, evalContext } = JSON.parse(event.body || '{}');
 
     if (!signalId) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'signalId required' }) };
@@ -83,12 +83,27 @@ Reference what you saved in your acknowledgement (e.g. "Got it — I've noted th
 
 For follow-up questions or conversation: respond in plain text only, no additional tool calls needed unless preferences change.
 
-Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.`;
+Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.${evalSection}`;
+
+    let opener;
+    if (evalContext?.roleTitle) {
+      const s = evalContext.score || {};
+      opener = `I see you just evaluated **${evalContext.roleTitle}** — ${s.overall ?? '?'}/10 overall (Skills ${s.skills ?? '?'}, Alignment ${s.alignment ?? '?'}). Does that score feel right, or is something off?`;
+    } else {
+      opener = OPENER;
+    }
+
+    let evalSection = '';
+    if (evalContext?.roleTitle) {
+      const s = evalContext.score || {};
+      const gaps = (evalContext.gaps || []).map(g => typeof g === 'string' ? g : g.gap);
+      evalSection = `\n\n== RECENT EVALUATION ==\nRole: ${evalContext.roleTitle}\nScore: ${s.overall ?? '?'}/10 overall — Skills ${s.skills ?? '?'}, Alignment ${s.alignment ?? '?'}\nSummary: ${evalContext.summary || ''}\nWhat Fits: ${(evalContext.strengths || []).join('; ')}\nPotential Gaps: ${gaps.join('; ')}\n\nThe owner is likely here to discuss or refine this evaluation. Reference it directly.`;
+    }
 
     const response = {
       success: true,
       displayName,
-      opener: OPENER,
+      opener,
       systemMessages: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
       tools: [UPDATE_FIT_SCORE_TOOL, {
         name: 'show_evaluation',

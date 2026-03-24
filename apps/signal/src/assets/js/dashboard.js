@@ -553,6 +553,7 @@ $on('copy-embed-btn', 'click', () => {
 
 let currentEvalId = null;
 let currentResumeId = null;
+let currentEvalData = null;
 
 $on('eval-form', 'submit', async (e) => {
   e.preventDefault();
@@ -614,6 +615,7 @@ function renderJdSummary(jd) {
 }
 
 function renderEvalResult(data) {
+  currentEvalData = data;
   const panel = document.getElementById('eval-result');
   const score = data.score || {};
   const overall = score.overall || 0;
@@ -651,6 +653,7 @@ function renderEvalResult(data) {
     ${gapsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">Potential Gaps</h4><ul class="eval-items-list">${gapsHtml}</ul></div>` : ''}
     ${data.evidenceUsed?.length ? `<div class="eval-evidence-note">Evidence: ${escHtml(data.evidenceUsed.join(' · '))}</div>` : ''}
     <div class="eval-actions">
+      <button type="button" class="btn btn-outline" id="eval-refine-btn">Refine Fit →</button>
       <button type="button" class="btn btn-ghost" id="eval-resume-btn">Generate resume →</button>
       <button type="button" class="btn btn-ghost" id="eval-cover-btn">Generate cover letter →</button>
       <span class="dash-save-status" id="eval-gen-status"></span>
@@ -659,6 +662,21 @@ function renderEvalResult(data) {
 
   panel.hidden = false;
 
+  document.getElementById('eval-refine-btn').addEventListener('click', () => {
+    const ownerSignalId = localStorage.getItem('signal-owner-id');
+    if (!ownerSignalId || !currentEvalData) return;
+    window.signalOpen({
+      mode: 'owner',
+      signalId: ownerSignalId,
+      evalContext: {
+        roleTitle: currentEvalData.roleTitle || document.getElementById('eval-title')?.value || '',
+        score: currentEvalData.score,
+        summary: currentEvalData.summary,
+        strengths: currentEvalData.strengths || [],
+        gaps: currentEvalData.gaps || [],
+      },
+    });
+  });
   document.getElementById('eval-resume-btn').addEventListener('click', generateResume);
   document.getElementById('eval-cover-btn').addEventListener('click', generateCover);
 }
