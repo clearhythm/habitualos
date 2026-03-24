@@ -48,6 +48,13 @@ exports.handler = async (event) => {
       ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile)
       : '';
 
+    let evalSection = '';
+    if (evalContext?.roleTitle) {
+      const s = evalContext.score || {};
+      const gaps = (evalContext.gaps || []).map(g => typeof g === 'string' ? g : g.gap);
+      evalSection = `\n\n== RECENT EVALUATION ==\nRole: ${evalContext.roleTitle}\nScore: ${s.overall ?? '?'}/10 overall — Skills ${s.skills ?? '?'}, Alignment ${s.alignment ?? '?'}\nSummary: ${evalContext.summary || ''}\nWhat Fits: ${(evalContext.strengths || []).join('; ')}\nPotential Gaps: ${gaps.join('; ')}\n\nThe owner is likely here to discuss or refine this evaluation. Reference it directly.`;
+    }
+
     const systemPrompt = `You are Signal in owner diagnostic mode. The person speaking with you is ${displayName} — the owner of this Signal profile.
 
 You have ${displayName}'s full profile. Use it to score job descriptions honestly against their actual skills, alignment, and personality.
@@ -91,13 +98,6 @@ Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.${eval
       opener = `I see you just evaluated **${evalContext.roleTitle}** — ${s.overall ?? '?'}/10 overall (Skills ${s.skills ?? '?'}, Alignment ${s.alignment ?? '?'}). Does that score feel right, or is something off?`;
     } else {
       opener = OPENER;
-    }
-
-    let evalSection = '';
-    if (evalContext?.roleTitle) {
-      const s = evalContext.score || {};
-      const gaps = (evalContext.gaps || []).map(g => typeof g === 'string' ? g : g.gap);
-      evalSection = `\n\n== RECENT EVALUATION ==\nRole: ${evalContext.roleTitle}\nScore: ${s.overall ?? '?'}/10 overall — Skills ${s.skills ?? '?'}, Alignment ${s.alignment ?? '?'}\nSummary: ${evalContext.summary || ''}\nWhat Fits: ${(evalContext.strengths || []).join('; ')}\nPotential Gaps: ${gaps.join('; ')}\n\nThe owner is likely here to discuss or refine this evaluation. Reference it directly.`;
     }
 
     const response = {
