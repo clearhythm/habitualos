@@ -3,16 +3,16 @@
 set -e
 
 echo "Deploying to production..."
-OUTPUT=$(netlify deploy --prod --json 2>&1)
-echo "$OUTPUT"
+# Write JSON to a temp file to avoid ANSI escape code contamination
+DEPLOY_JSON=$(mktemp)
+echo "y" | netlify deploy --prod --json 2>/dev/null > "$DEPLOY_JSON" || true
+cat "$DEPLOY_JSON"
 
-DEPLOY_ID=$(echo "$OUTPUT" | node -e "
-  let d = '';
-  process.stdin.on('data', c => d += c);
-  process.stdin.on('end', () => {
-    try { process.stdout.write(JSON.parse(d).deploy_id || ''); } catch(e) {}
-  });
+DEPLOY_ID=$(node -e "
+  const d = require('fs').readFileSync('$DEPLOY_JSON', 'utf8');
+  try { process.stdout.write(JSON.parse(d).deploy_id || ''); } catch(e) {}
 ")
+rm -f "$DEPLOY_JSON"
 
 if [ -n "$DEPLOY_ID" ]; then
   echo "Re-locking deploy $DEPLOY_ID..."
