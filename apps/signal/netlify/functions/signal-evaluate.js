@@ -167,7 +167,7 @@ exports.handler = async (event) => {
 
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [{ role: 'user', content: EVAL_PROMPT({ profileText, evidenceText, opportunity: opportunityForPrompt }) }]
     });
 
