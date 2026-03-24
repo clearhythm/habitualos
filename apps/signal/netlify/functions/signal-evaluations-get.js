@@ -41,6 +41,11 @@ exports.handler = async (event) => {
           summary: data.summary || '',
           resumeGenerated: data.resumeGenerated || false,
           coverLetterGenerated: data.coverLetterGenerated || false,
+          mode: data.mode || '',
+          reasoning: data.reasoning || null,
+          strengths: data.strengths || [],
+          gaps: data.gaps || [],
+          jdSummary: data.jdSummary || null,
           _createdAt: data._createdAt
         };
       })

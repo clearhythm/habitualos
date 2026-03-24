@@ -70,7 +70,7 @@ let state = {
 
 // ─── Evaluation persistence ────────────────────────────────────────────────────
 
-async function createEvalRecord({ roleTitle, summary, scores } = {}) {
+async function createEvalRecord({ roleTitle, summary, scores, strengths, gaps } = {}) {
   if (!state.signalId) return;
   try {
     const res = await fetch(apiUrl('/api/signal-evaluation-save'), {
@@ -83,6 +83,8 @@ async function createEvalRecord({ roleTitle, summary, scores } = {}) {
         roleTitle: roleTitle || null,
         summary: summary || null,
         scores: scores || null,
+        strengths: strengths || null,
+        gaps: gaps || null,
       }),
     });
     const data = await res.json();
@@ -576,24 +578,21 @@ async function sendMessage(text) {
         } else if (event.type === 'tool_complete') {
           if (event.tool === 'show_evaluation') {
             evaluationRendered = true;
-            const { roleTitle, summary, skills, alignment, personality } = event.result || {};
+            const { roleTitle, summary, strengths, gaps } = event.result || {};
             const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const strengthsHtml = (strengths || []).map(s => `<li class="eval-strength-item">${esc(s)}</li>`).join('');
+            const gapsHtml = (gaps || []).map(g => `<li class="eval-gap-item">${esc(g)}</li>`).join('');
             const el = appendMessage('assistant', '');
             el.innerHTML = `
               <div class="eval-output">
-                <h2 class="eval-output-heading">Fit Score</h2>
                 <h3 class="eval-output-role">${esc(roleTitle)}</h3>
                 <p class="eval-output-summary">${esc(summary)}</p>
-                <h3 class="eval-output-breakdown">Detailed Breakdown</h3>
-                <div class="eval-output-dims">
-                  <div class="eval-output-dim"><strong>Skills</strong><p>${esc(skills)}</p></div>
-                  <div class="eval-output-dim"><strong>Alignment</strong><p>${esc(alignment)}</p></div>
-                  <div class="eval-output-dim"><strong>Personality</strong><p>${esc(personality)}</p></div>
-                </div>
+                ${strengthsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">What Fits</h4><ul class="eval-items-list">${strengthsHtml}</ul></div>` : ''}
+                ${gapsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">Potential Gaps</h4><ul class="eval-items-list">${gapsHtml}</ul></div>` : ''}
               </div>`;
             messagesEl.scrollTop = messagesEl.scrollHeight;
             // Persist to signal-evaluations (JD path) — scores arrive via update_fit_score
-            createEvalRecord({ roleTitle, summary });
+            createEvalRecord({ roleTitle, summary, strengths: strengths || [], gaps: gaps || [] });
           } else if (event.tool === 'update_fit_score') {
             const { skills, alignment, personality, overall, confidence, reason, nextStep } = event.result || {};
             const nextStepLabels = {

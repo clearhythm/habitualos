@@ -96,13 +96,12 @@ Be honest. A 5 is a 5. ${displayName} needs accurate signal, not flattery.`;
         input_schema: {
           type: 'object',
           properties: {
-            roleTitle:   { type: 'string', description: 'Role title — use exact title from JD, or infer a short descriptive one' },
-            summary:     { type: 'string', description: 'Bottom-line paragraph: why this score, the core tension or fit. Direct, second person, 2-4 sentences.' },
-            skills:      { type: 'string', description: 'Skills dimension analysis: what matches, what gaps. 2-4 sentences, cite specifics.' },
-            alignment:   { type: 'string', description: 'Alignment dimension: does this match what they want. 2-4 sentences.' },
-            personality: { type: 'string', description: 'Personality/culture fit: working style, org type, pace. 2-4 sentences.' },
+            roleTitle:   { type: 'string', description: 'Role title — use the first line of the JD if it reads like a title (short, no trailing punctuation). Only fall back to extracting from body text if the first line is clearly not a title. Never paraphrase or invent.' },
+            summary:     { type: 'string', description: 'Bottom-line overview: why this score, core tension or fit. Direct, second person, 2-4 sentences.' },
+            strengths:   { type: 'array', items: { type: 'string' }, description: '2-4 specific fit signals — genuine matches across skills, alignment, or culture. Short direct phrases, cite specifics where possible.' },
+            gaps:        { type: 'array', items: { type: 'string' }, description: '2-4 honest considerations — gaps, misalignments, or watch-outs. Short direct phrases. Include dimension context (e.g. "Alignment: seeking stability, role is high-ambiguity").' },
           },
-          required: ['roleTitle', 'summary', 'skills', 'alignment', 'personality'],
+          required: ['roleTitle', 'summary', 'strengths', 'gaps'],
         },
       }, {
         name: 'save_preference_update',

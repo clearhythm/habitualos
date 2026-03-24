@@ -11,7 +11,7 @@ permalink: /signin/
     <div id="state-authed" hidden>
       <h1 class="signal-auth-title">Welcome back</h1>
       <p class="signal-auth-sub" id="authed-name"></p>
-      <a href="/dashboard/" class="btn btn-primary btn-auth">Go to dashboard →</a>
+      <a href="/dashboard/" class="btn btn-primary">Go to dashboard →</a>
       <p style="margin-top:1.5rem;text-align:center;">
         <a href="#" id="signout-link" style="color:rgba(255,255,255,0.5);font-size:0.875rem;">Sign out</a>
       </p>
@@ -21,11 +21,13 @@ permalink: /signin/
     <div id="state-email">
       <h1 class="signal-auth-title">Sign in</h1>
       <p class="signal-auth-sub">Enter the email you registered with.</p>
-      <div style="margin-top:1.5rem;">
-        <input id="email-input" type="email" class="signal-input-field"
-          placeholder="you@example.com" autocomplete="email" style="width:100%;box-sizing:border-box;" />
-        <div id="email-error" class="signal-auth-error" hidden></div>
-        <button id="email-btn" class="btn btn-primary btn-auth">Send code</button>
+      <div class="signal-auth-form">
+        <div style="width:100%;">
+          <input id="email-input" type="email" class="signal-input-field"
+            placeholder="you@example.com" autocomplete="email" />
+          <div id="email-error" class="signal-auth-error" hidden></div>
+        </div>
+        <button id="email-btn" class="btn btn-primary">Send code</button>
       </div>
     </div>
 
@@ -33,13 +35,15 @@ permalink: /signin/
     <div id="state-code" hidden>
       <h1 class="signal-auth-title">Check your email</h1>
       <p class="signal-auth-sub" id="code-sub"></p>
-      <div style="margin-top:1.5rem;">
-        <input id="code-input" type="text" inputmode="numeric" class="signal-input-field"
-          placeholder="6-digit code" maxlength="6" autocomplete="one-time-code"
-          style="width:100%;box-sizing:border-box;letter-spacing:0.25em;font-size:1.25rem;text-align:center;" />
-        <div id="code-error" class="signal-auth-error" hidden></div>
-        <button id="code-btn" class="btn btn-primary btn-auth">Verify</button>
-        <p style="margin-top:1rem;text-align:center;">
+      <div class="signal-auth-form">
+        <div style="width:100%;">
+          <input id="code-input" type="text" inputmode="numeric" class="signal-input-field"
+            placeholder="6-digit code" maxlength="6" autocomplete="one-time-code"
+            style="letter-spacing:0.25em;font-size:1.25rem;text-align:center;" />
+          <div id="code-error" class="signal-auth-error" hidden></div>
+        </div>
+        <button id="code-btn" class="btn btn-primary">Verify</button>
+        <p style="text-align:center;">
           <a href="#" id="back-link" style="color:rgba(255,255,255,0.5);font-size:0.875rem;">← Use a different email</a>
         </p>
       </div>

@@ -156,7 +156,12 @@ exports.handler = async (event) => {
     const evidenceText = buildEvidenceText(chunks);
     const opportunityForPrompt = {
       type: opportunity.type || 'free-text',
-      title: jdSummary?.roleTitle || String(opportunity.title || 'Untitled').slice(0, 200),
+      title: (() => {
+        if (opportunity.title?.trim()) return opportunity.title.trim();
+        const firstLine = rawContent.split('\n').map(l => l.trim()).find(l => l.length > 0) || '';
+        if (firstLine.length > 0 && firstLine.length < 100 && !/[.!?]$/.test(firstLine)) return firstLine;
+        return jdSummary?.roleTitle || 'Untitled';
+      })(),
       content: distilledContent
     };
 

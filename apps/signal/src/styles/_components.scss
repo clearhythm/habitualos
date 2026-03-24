@@ -1,7 +1,7 @@
 .btn {
   display: inline-flex;
   align-items: center;
-  padding: $space-sm $space-lg;
+  padding: $space-md $space-xl;
   border-radius: 6px;
   font-size: $font-size-base;
   font-weight: 500;
@@ -9,7 +9,8 @@
   border: none;
   transition: opacity 0.15s;
 
-  &:hover { opacity: 0.85; text-decoration: none; }
+  &:hover:not(:disabled) { opacity: 0.85; text-decoration: none; }
+  &:disabled { cursor: not-allowed; opacity: 0.5; }
 
   &-primary {
     background: $color-primary;
@@ -28,12 +29,6 @@
     border: 1px solid rgba(255, 255, 255, 0.35);
 
     &:hover { border-color: rgba(255, 255, 255, 0.65); opacity: 1; }
-  }
-
-  &-auth {
-    padding: $space-md $space-xl;
-    margin-top: $space-lg;
-    justify-content: center;
   }
 
   &-danger {

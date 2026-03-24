@@ -754,7 +754,7 @@
 
 .signal-auth-sub {
   color: $color-text-muted;
-  margin-bottom: $space-xl;
+  margin-bottom: $space-md;
   line-height: 1.6;
 }
 
@@ -768,6 +768,7 @@
   display: flex;
   flex-direction: column;
   gap: $space-lg;
+  align-items: flex-start;
 }
 
 .signal-field {
@@ -1445,22 +1446,37 @@
   gap: $space-xs;
 }
 
-.eval-strength-item {
-  font-size: $font-size-sm;
-  color: #4ade80;
-}
-
+.eval-strength-item,
 .eval-gap-item {
   font-size: $font-size-sm;
   color: $color-text-muted;
+  display: flex;
+  gap: $space-sm;
 
-  &.eval-gap-mod { color: #fbbf24; }
-  &.eval-gap-high { color: #f87171; }
+  &::before {
+    flex-shrink: 0;
+    width: 1em;
+  }
 }
 
+.eval-strength-item::before { content: '✓'; }
+.eval-gap-item::before      { content: '△'; }
+
 .eval-gap-frame {
-  color: $color-text-muted;
   font-style: italic;
+}
+
+.eval-section {
+  margin-top: $space-md;
+}
+
+.eval-section-heading {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 $space-xs;
 }
 
 .eval-evidence-note {

@@ -29,7 +29,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return methodNotAllowed();
 
   try {
-    const { evalId, signalId, userId, mode, roleTitle, summary, scores } = JSON.parse(event.body || '{}');
+    const { evalId, signalId, userId, mode, roleTitle, summary, scores, strengths, gaps } = JSON.parse(event.body || '{}');
 
     if (!signalId) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'signalId required' }) };
@@ -81,6 +81,8 @@ exports.handler = async (event) => {
         confidence: scores?.confidence != null ? Number(scores.confidence) : null,
       },
       summary: summary || '',
+      strengths: strengths || [],
+      gaps: gaps || [],
       _createdAt: ts,
     });
 

@@ -627,12 +627,13 @@ function renderEvalResult(data) {
   const rec = recLabels[data.recommendation] || data.recommendation || '';
 
   const strengthsHtml = (data.strengths || []).map(s =>
-    `<li class="eval-strength-item">✓ ${escHtml(s)}</li>`
+    `<li class="eval-strength-item">${escHtml(s)}</li>`
   ).join('');
 
   const gapsHtml = (data.gaps || []).map(g => {
-    const sevClass = g.severity === 'high' ? ' eval-gap-high' : g.severity === 'moderate' ? ' eval-gap-mod' : '';
-    return `<li class="eval-gap-item${sevClass}">△ ${escHtml(g.gap)}${g.closeable && g.framing ? `<span class="eval-gap-frame"> — ${escHtml(g.framing)}</span>` : ''}</li>`;
+    const text = typeof g === 'string' ? g : g.gap;
+    const framing = typeof g === 'object' && g.closeable && g.framing ? `<span class="eval-gap-frame"> — ${escHtml(g.framing)}</span>` : '';
+    return `<li class="eval-gap-item">${escHtml(text)}${framing}</li>`;
   }).join('');
 
   panel.innerHTML = `
@@ -646,7 +647,8 @@ function renderEvalResult(data) {
       <div class="eval-recommendation">${escHtml(rec)}</div>
     </div>
     <p class="eval-summary">${escHtml(data.summary || '')}</p>
-    ${strengthsHtml || gapsHtml ? `<ul class="eval-items-list">${strengthsHtml}${gapsHtml}</ul>` : ''}
+    ${strengthsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">What Fits</h4><ul class="eval-items-list">${strengthsHtml}</ul></div>` : ''}
+    ${gapsHtml ? `<div class="eval-section"><h4 class="eval-section-heading">Potential Gaps</h4><ul class="eval-items-list">${gapsHtml}</ul></div>` : ''}
     ${data.evidenceUsed?.length ? `<div class="eval-evidence-note">Evidence: ${escHtml(data.evidenceUsed.join(' · '))}</div>` : ''}
     <div class="eval-actions">
       <button type="button" class="btn btn-ghost" id="eval-resume-btn">Generate resume →</button>
@@ -659,6 +661,22 @@ function renderEvalResult(data) {
 
   document.getElementById('eval-resume-btn').addEventListener('click', generateResume);
   document.getElementById('eval-cover-btn').addEventListener('click', generateCover);
+}
+
+function loadHistoryEval(ev) {
+  currentEvalId = ev.evalId;
+  currentResumeId = null;
+  renderEvalResult({
+    score:          ev.score,
+    recommendation: ev.recommendation,
+    summary:        ev.summary,
+    strengths:      ev.strengths || [],
+    gaps:           ev.gaps || [],
+    jdSummary:      ev.jdSummary || null,
+    reasoning:      ev.reasoning || null,
+    evidenceUsed:   [],
+  });
+  document.getElementById('eval-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function generateResume() {
@@ -797,6 +815,11 @@ function renderEvalHistory(evaluations) {
       </div>
       <button class="eval-history-delete" aria-label="Delete evaluation" title="Delete">×</button>
     `;
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.eval-history-delete')) return;
+      loadHistoryEval(ev);
+    });
     row.querySelector('.eval-history-delete').addEventListener('click', async () => {
       if (!await window.modal('Delete this evaluation?')) return;
       row.style.opacity = '0.4';
