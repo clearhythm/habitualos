@@ -74,8 +74,9 @@ exports.handler = async (event) => {
 
     const sessionDate = date || new Date().toISOString();
     // Dedup key: use provided id (e.g. commit hash) or generate from source+repo+date
+    const safeRepo = repo.replace(/[^a-zA-Z0-9_-]/g, '-');
     const conversationId = providedConversationId ||
-      `${source}-${repo}-${sessionDate.slice(0, 16).replace(/[^0-9]/g, '')}`;
+      `${source}-${safeRepo}-${sessionDate.slice(0, 16).replace(/[^0-9]/g, '')}`;
 
     // Concepts = union of all searchable terms
     const concepts = [...new Set([...topics, ...skills, ...technologies, ...projects])];
