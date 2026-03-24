@@ -1,5 +1,7 @@
 *, *::before, *::after { box-sizing: border-box; }
 
+html { scroll-behavior: smooth; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -9,6 +11,7 @@ html, body {
   color: $color-text;
   line-height: 1.6;
 }
+
 
 a { color: $color-primary; text-decoration: none; }
 a:hover { text-decoration: underline; }

@@ -27,6 +27,14 @@
     overlay.addEventListener('click', closeMenu);
   }
 
+  // Close sidemenu when an anchor link is clicked
+  var sidemenuLinks = document.querySelectorAll('.sidemenu-left a[href]');
+  sidemenuLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+      closeMenu();
+    });
+  });
+
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       closeMenu();
@@ -48,7 +56,8 @@
   // Sets html bg so iOS rubber-band overscroll matches header (top) or footer (bottom)
 
   var htmlEl = document.documentElement;
-  var OVERSCROLL_TOP = '#0f172a';    // matches $color-bg (page/body)
+  var isHeroLight = document.body.classList.contains('hero-light');
+  var OVERSCROLL_TOP = isHeroLight ? '#c7e3ff' : '#0f172a';
   var OVERSCROLL_BOTTOM = '#080d17'; // matches $color-sidemenu-bg (footer)
 
   function updateHtmlBg() {

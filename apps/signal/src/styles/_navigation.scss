@@ -31,6 +31,9 @@
   .toggle span { background: #0f172a; }
 }
 
+// When sidemenu is open, X is always white (panel is dark)
+body.sidemenu-open.hero-light .navbar .toggle span { background: $color-text; }
+
 .navbar-brand-icon {
   width: 22px;
   height: 22px;

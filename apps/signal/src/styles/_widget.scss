@@ -625,7 +625,7 @@
 
 // Light hero variant
 .hero-light .signal-home-gradient {
-  background: linear-gradient(to bottom left, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #f8faff 100%);
+  background: linear-gradient(to bottom, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #f8faff 100%);
   border-bottom-color: #bfdbfe;
 }
 
@@ -638,7 +638,8 @@
   color: #475569;
 }
 
-.hero-light .signal-hero-split .btn-outline {
+.hero-light .signal-hero-split .btn-outline,
+.signal-skyline-section .btn-outline {
   color: #0f172a;
   border-color: rgba(15, 23, 42, 0.35);
   &:hover { border-color: rgba(15, 23, 42, 0.65); }
@@ -650,6 +651,7 @@
   padding-top: $space-2xl;
   padding-bottom: $space-2xl;
   min-height: 480px;
+  background: linear-gradient(to bottom, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #f8faff 100%);
 
   // On inner pages (no preceding sections), fill to near full viewport and center content
   .main > & {
@@ -675,13 +677,13 @@
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 600;
   line-height: 1.15;
-  color: $color-text;
+  color: #0f172a;
   margin-bottom: $space-lg;
 }
 
 .signal-skyline-sub {
   font-size: $font-size-lg;
-  color: $color-text-muted;
+  color: #475569;
   line-height: 1.7;
   max-width: 520px;
   margin-bottom: $space-xl;
@@ -694,9 +696,9 @@
   left: 55%;
   width: 55%;
   height: auto;
-  filter: invert(1);
-  mix-blend-mode: screen;
-  opacity: 0.25;
+  filter: none;
+  mix-blend-mode: multiply;
+  opacity: 0.1;
   transform: translateX(-50%) scaleX(-1);
   pointer-events: none;
   user-select: none;
@@ -746,12 +748,13 @@
 
 // Full-width editorial sections
 .signal-section {
-  padding: 4rem 0 7rem;
+  scroll-margin-top: 72px;
+  padding: 5rem 0 4rem;
   background: linear-gradient(to bottom, #130e28, #0a0d1a);
 }
 
 .signal-section--light {
-  background: linear-gradient(to bottom left, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #fff 100%);
+  background: linear-gradient(to bottom, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #fff 100%);
 
   .signal-section-title,
   .signal-mode-product-name { color: #0f172a; }
@@ -794,6 +797,15 @@
   .signal-score-configurable { color: $color-primary; }
 
   .signal-scoring-section { border-top-color: rgba(15, 23, 42, 0.08); }
+
+  // How Signal Works cards on light bg
+  .signal-how-step {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(15, 23, 42, 0.1);
+  }
+
+  .signal-how-step-title { color: #0f172a; }
+  .signal-how-step-body p { color: #475569; }
 }
 
 .signal-section-title {
@@ -2748,7 +2760,9 @@
   display: block;
   font-size: $font-size-base;
   font-style: normal;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.45);
+
+  a { color: rgba(255, 255, 255, 0.85); }
 }
 
 // ─── Scoring section ──────────────────────────────────────────────────────────
