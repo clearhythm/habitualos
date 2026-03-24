@@ -653,6 +653,23 @@
   min-height: 480px;
   background: linear-gradient(to bottom, #c7e3ff 0%, #dbeafe 30%, #eef5ff 65%, #f8faff 100%);
 
+  &--dark {
+    background: linear-gradient(to bottom, #130e28, #0a0d1a);
+
+    .signal-skyline-headline { color: $color-text; }
+    .signal-skyline-sub { color: $color-text-muted; }
+    .signal-skyline-img {
+      filter: invert(1);
+      mix-blend-mode: screen;
+      opacity: 0.15;
+    }
+    .btn-outline {
+      color: $color-text;
+      border-color: rgba(255, 255, 255, 0.35);
+      &:hover { border-color: rgba(255, 255, 255, 0.65); }
+    }
+  }
+
   // On inner pages (no preceding sections), fill to near full viewport and center content
   .main > & {
     min-height: calc(100dvh - 72px);
@@ -2111,7 +2128,7 @@
 
 .site-footer {
   background: $color-sidemenu-bg;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   padding: $space-xl $space-lg;
   text-align: center;
 
@@ -2130,16 +2147,33 @@
 
   a {
     color: $color-text-muted;
-    transition: color 0.15s;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
 
-    &:hover { color: $color-text; }
+  &:hover a { color: rgba(255, 255, 255, 0.85); }
+  &:hover a:hover { color: $color-text; }
+}
+
+.footer-logo-link {
+  display: inline-flex;
+  border-radius: 8px;
+  padding: 4px;
+  transition: background 0.2s, box-shadow 0.2s;
+
+  &:hover, &:active {
+    background: rgba(124, 58, 237, 0.15);
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+
+    .footer-logo { opacity: 1; }
   }
 }
 
 .footer-logo {
-  height: 24px;
+  height: 32px;
   width: auto;
   opacity: 0.6;
+  transition: opacity 0.2s;
 }
 
 // ─── Demo modal overlay ────────────────────────────────────────────────────────

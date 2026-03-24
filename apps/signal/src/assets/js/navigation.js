@@ -57,7 +57,7 @@
 
   var htmlEl = document.documentElement;
   var isHeroLight = document.body.classList.contains('hero-light');
-  var OVERSCROLL_TOP = isHeroLight ? '#c7e3ff' : '#0f172a';
+  var OVERSCROLL_TOP = isHeroLight ? '#c7e3ff' : '#130e28';
   var OVERSCROLL_BOTTOM = '#080d17'; // matches $color-sidemenu-bg (footer)
 
   function updateHtmlBg() {
