@@ -185,53 +185,108 @@ bodyClass: hero-light
           <a href="/waitlist/" class="btn btn-outline">Get early access →</a>
         </div>
       </div>
+
+      <blockquote class="signal-pull-quote">
+        <p>Why do resumes suck? They are static summaries written under pressure, optimized for bullshit. They flatten your real work into bullet points that rarely capture what you actually shipped, debugged, or learned. And also&hellip; they waste paper.</p>
+        <cite class="signal-pull-quote-cite">&mdash; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</cite>
+      </blockquote>
+
     </div>
   </section>
 
-  <section class="signal-section signal-section--light" id="how">
+  <section class="signal-section signal-section--light" id="fit-score">
+    <div class="container">
+      <h2 class="signal-section-title">The Fit Score</h2>
+      <p class="signal-section-intro">A precise algorithm that scores any work opportunity across your profile, interests, and personality match. It generates a joint score from 0–10 that tells you — and Signal — how strong this opportunity fits, and what to do next.</p>
+
+      <div class="signal-score-table">
+        <div class="signal-score-row signal-score-row--header">
+          <span>Score</span>
+          <span>Signal Fit</span>
+          <span>Strategy</span>
+          <span>Action</span>
+        </div>
+        <div class="signal-score-row signal-score-row--hot">
+          <span class="signal-score-range-label">8–10</span>
+          <span class="signal-score-fit">Hot</span>
+          <span>Prioritize and follow up</span>
+          <span class="signal-score-action">Book a call <span class="signal-score-configurable">(configurable)</span></span>
+        </div>
+        <div class="signal-score-row signal-score-row--warm">
+          <span class="signal-score-range-label">6–7</span>
+          <span class="signal-score-fit">Warm</span>
+          <span>Stay connected</span>
+          <span class="signal-score-action">Add to network <span class="signal-score-configurable">(configurable)</span></span>
+        </div>
+        <div class="signal-score-row signal-score-row--cold">
+          <span class="signal-score-range-label">0–5</span>
+          <span class="signal-score-fit">Cold</span>
+          <span>Pass</span>
+          <span class="signal-score-action">No action</span>
+        </div>
+      </div>
+
+<div class="signal-score-dim-list">
+        <div class="signal-score-dim-card">
+          <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" /></svg></div>
+          <h3>Skills <span class="signal-score-range">0–10</span></h3>
+          <p>Overlap between what the role needs and what you've actually built. Specific languages, frameworks, project types, and outcomes, not keywords on a resume.</p>
+        </div>
+        <div class="signal-score-dim-card">
+          <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" /></svg></div>
+          <h3>Alignment <span class="signal-score-range">0–10</span></h3>
+          <p>Not just whether you can do the work, but whether you actually want to. Draws on what you've expressed excitement about and your stated deal-breakers.</p>
+        </div>
+        <div class="signal-score-dim-card">
+          <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg></div>
+          <h3>Personality <span class="signal-score-range">0–10</span></h3>
+          <p>Inferred from how you work, not a questionnaire. How you approach problems, communicate, and make decisions — matched against patterns in your actual sessions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="signal-section" id="how">
     <div class="container">
       <h2 class="signal-section-title">How Signal Works</h2>
       <p class="signal-section-intro">The job search is full of silence. At the same time, you generate real work signals every time you open up your coding client. Signal is built to increase your leverage in any job search, starting with the work you've already done.</p>
 
-      <div class="signal-problem-solution">
-        <div class="signal-ps-item">
-          <p class="signal-ps-problem">Your resume doesn't show what you've actually built.</p>
-          <p class="signal-ps-solution">Resumes are summaries written under pressure, optimized for keywords. They flatten your real work into bullet points that rarely capture what you actually shipped, debugged, or figured out. Signal starts somewhere different.</p>
+      <div class="signal-how-steps">
+
+        <div class="signal-how-step">
+          <div class="signal-how-step-num">1</div>
+          <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Connect Your GitHub</h3>
+            <p>Connect your GitHub repo and Signal builds your profile directly from your commit history. No forms, no resume upload. As you score job listings, you can flag what fits and what doesn't. Signal builds your profile of what you are seeking automatically over time.</p>
+          </div>
         </div>
-        <div class="signal-ps-item">
-          <p class="signal-ps-problem">Your sessions become your profile.</p>
-          <p class="signal-ps-solution">Every time you've worked through a problem in Claude Code, Cursor, or Codex — that's real evidence. Signal processes those sessions and extracts what actually happened: the technologies you used, the problems you solved, the architectural decisions you made. No form to fill out. The work is already there.</p>
+
+        <div class="signal-how-step">
+          <div class="signal-how-step-num">2</div>
+          <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Add Coding Hooks</h3>
+            <p>Add a commit hook to your Claude Code, Cursor, or Codex setup and Signal logs your session automatically every time you commit. Automatically capture the tools you used, the problems you solved, and how you got there. The more you work, the stronger your signal gets.</p>
+          </div>
         </div>
-        <div class="signal-ps-item">
-          <p class="signal-ps-problem">Know where you fit, honestly.</p>
-          <p class="signal-ps-solution">Paste a job description. Signal scores your fit across Skills, Alignment, and Personality — grounded in your actual history, not your resume claims. An honest read in five minutes is worth more than three rounds of interviews that go nowhere.</p>
+
+        <div class="signal-how-step">
+          <div class="signal-how-step-num">3</div>
+          <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Your Profile Adapts</h3>
+            <p>Signal gets smarter the more you use it. Every job listing you score, every reaction you give, every conversation with the agent, it all sharpens the picture of who you are and what you're actually looking for.</p>
+          </div>
         </div>
-        <div class="signal-ps-item">
-          <p class="signal-ps-problem">It works both ways.</p>
-          <p class="signal-ps-solution">Share your Signal with recruiters or engineering leads. They have a real conversation with it and walk away with a live fit score — without a resume ever changing hands.</p>
+
+        <div class="signal-how-step">
+          <div class="signal-how-step-num">4</div>
+          <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Share Your Signal</h3>
+            <p>Share a link or drop the Signal widget anywhere with a single JS snippet: on your portfolio, your GitHub profile, wherever. As people interact with it, they find out what you can deliver. You can even configure automated follow-ups, so you can make <em>the right connections</em>, more easily.</p>
+          </div>
         </div>
+
       </div>
 
-      <div class="signal-scoring-section">
-        <div>
-          <h2 class="signal-how-title">The fit score</h2>
-          <p class="signal-how-sub">Three dimensions, each grounded in real evidence from your coding history.</p>
-        </div>
-        <div class="signal-score-dim-list">
-          <div class="signal-score-dim-card">
-            <h3>Skills <span class="signal-score-range">0–10</span></h3>
-            <p>Overlap between what the role needs and what you've actually built. Specific languages, frameworks, project types, and outcomes — not keywords on a resume.</p>
-          </div>
-          <div class="signal-score-dim-card">
-            <h3>Alignment <span class="signal-score-range">0–10</span></h3>
-            <p>Not just whether you can do the work — but whether you actually want to. Draws on what you've expressed excitement about and your stated deal-breakers.</p>
-          </div>
-          <div class="signal-score-dim-card">
-            <h3>Personality <span class="signal-score-range">0–10</span></h3>
-            <p>Inferred from how you work, not a questionnaire. How you approach problems, communicate, and make decisions — matched against patterns in your actual sessions.</p>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 

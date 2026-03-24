@@ -759,7 +759,31 @@
     border-color: rgba(15, 23, 42, 0.1);
     h3 { color: #0f172a; }
     p { color: #475569; }
+    .signal-mode-icon { color: $color-primary; }
   }
+
+  .signal-score-table {
+    border-color: rgba(15, 23, 42, 0.12);
+    background: #fff;
+  }
+
+  .signal-score-row {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+    &:last-child { border-bottom: none; }
+  }
+
+  .signal-score-row--header {
+    background: rgba(15, 23, 42, 0.04);
+    color: #64748b;
+  }
+
+  .signal-score-range-label { color: #0f172a; }
+  .signal-score-row--hot .signal-score-fit { color: #059669; }
+  .signal-score-row--warm .signal-score-fit { color: #d97706; }
+  .signal-score-row--cold .signal-score-fit { color: #64748b; }
+  .signal-score-action { color: #475569; }
+  .signal-score-configurable { color: $color-primary; }
 
   .signal-scoring-section { border-top-color: rgba(15, 23, 42, 0.08); }
 }
@@ -2650,6 +2674,77 @@
   margin-bottom: $space-sm;
 }
 
+// ─── How Signal Works steps ───────────────────────────────────────────────────
+
+.signal-how-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-lg;
+  margin-bottom: $space-2xl;
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.signal-how-step {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: $space-xl;
+}
+
+.signal-how-step-num {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: $color-primary;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $space-md;
+}
+
+.signal-how-step-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: $color-text;
+  margin-bottom: $space-sm;
+}
+
+.signal-how-step-body {
+  p {
+    color: rgba(255, 255, 255, 0.65);
+    line-height: 1.7;
+    margin: 0;
+  }
+}
+
+// ─── Pull quote ───────────────────────────────────────────────────────────────
+
+.signal-pull-quote {
+  font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+  line-height: 1.7;
+  color: #475569;
+  border-left: 3px solid $color-primary;
+  padding: $space-md $space-xl;
+  margin: $space-2xl 0;
+  max-width: 680px;
+  font-style: italic;
+
+  p { margin: 0 0 $space-sm; }
+}
+
+.signal-pull-quote-cite {
+  display: block;
+  font-size: $font-size-sm;
+  font-style: normal;
+  color: #94a3b8;
+}
+
 // ─── Scoring section ──────────────────────────────────────────────────────────
 
 .signal-scoring-section {
@@ -2658,6 +2753,7 @@
   flex-direction: column;
   gap: $space-2xl;
 }
+
 
 .signal-score-dim-list {
   display: flex;
@@ -2671,8 +2767,8 @@
 }
 
 .signal-score-dim-card {
-  background: $color-bg-muted;
-  border: 1px solid $color-border;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: $space-lg;
 
@@ -2687,7 +2783,7 @@
   }
 
   p {
-    font-size: $font-size-sm;
+    font-size: $font-size-base;
     color: $color-text-muted;
     line-height: 1.65;
     margin: 0;
@@ -2698,6 +2794,67 @@
   font-size: $font-size-sm;
   font-weight: 400;
   color: $color-text-muted;
+}
+
+// ─── Fit score table ──────────────────────────────────────────────────────────
+
+.signal-score-table {
+  margin-top: $space-2xl;
+  margin-bottom: $space-2xl;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.signal-score-row {
+  display: grid;
+  grid-template-columns: 60px 100px 1fr 1fr;
+  gap: $space-lg;
+  padding: $space-md $space-xl;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  &:last-child { border-bottom: none; }
+
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 50px 80px 1fr;
+    .signal-score-action { display: none; }
+    &.signal-score-row--header span:nth-child(4) { display: none; }
+  }
+}
+
+.signal-score-row--header {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-text-muted;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.signal-score-range-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.signal-score-fit {
+  font-weight: 600;
+  font-size: $font-size-base;
+}
+
+.signal-score-row--hot .signal-score-fit { color: #34d399; }
+.signal-score-row--warm .signal-score-fit { color: #fbbf24; }
+.signal-score-row--cold .signal-score-fit { color: $color-text-muted; }
+
+.signal-score-action {
+  color: $color-text-muted;
+}
+
+.signal-score-configurable {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  opacity: 0.7;
 }
 
 .signal-score-formula,

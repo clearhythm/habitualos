@@ -29,12 +29,16 @@
       {% include "nav.njk" %}
       <div class="sidemenu-main" id="sidemenu-main">
         <div class="sidemenu-left">
-          <ul>
-            <li><a href="/how-it-works/">How Signal Works</a></li>
-            <li><a href="/demo/" id="sidemenu-demo-open">Score your Signal</a></li>
-            <li><a href="/waitlist/">Create yours</a></li>
-            <li hidden id="nav-dashboard"><a href="/dashboard/">Dashboard</a></li>
-            <li hidden id="nav-profile"><a href="/profile/">Profile</a></li>
+          <ul id="nav-marketing-links">
+            <li><a href="/">Welcome</a></li>
+            <li><a href="/#what">What Signal Does</a></li>
+            <li><a href="/#fit-score">The Fit Score</a></li>
+            <li><a href="/#how">How Signal Works</a></li>
+            <li><a href="/waitlist/">Join the Waitlist</a></li>
+          </ul>
+          <ul id="nav-app-links" hidden>
+            <li><a href="/dashboard/">Dashboard</a></li>
+            <li><a href="/profile/">Profile</a></li>
           </ul>
 
           <div class="sidemenu-auth">
@@ -71,9 +75,9 @@
 
   <footer class="site-footer">
     <div class="container">
-      <img src="/assets/favicon-32x32.png" alt="" class="footer-logo">
-      <p>© 2026 Erik Burns | Signal, built on HabitualOS</p>
-      <p><a href="/waitlist/">Join the waitlist</a> &middot; <a href="https://habitualos.com" target="_blank" rel="noopener">HabitualOS</a></p>
+      <a href="/waitlist/"><img src="/assets/favicon-32x32.png" alt="" class="footer-logo"></a>
+      <p>An <a href="https://erikburns.com">Erik Burns</a> site © 2026 all rights reserved<br/>
+      Signal was built with <a href="https://habitualos.com">HabitualOS</a></p>
     </div>
   </footer>
 
@@ -90,15 +94,15 @@
       var signedInEl  = document.getElementById('nav-signed-in');
 
       if (signedIn) {
-        if (signedInEl)  signedInEl.removeAttribute('hidden');
+        if (signedInEl) signedInEl.removeAttribute('hidden');
 
         var nameEl = document.getElementById('nav-auth-name');
         if (nameEl) nameEl.textContent = localStorage.getItem('signal-owner-name') || '';
 
-        var dash = document.getElementById('nav-dashboard');
-        if (dash) dash.removeAttribute('hidden');
-        var prof = document.getElementById('nav-profile');
-        if (prof) prof.removeAttribute('hidden');
+        var marketingLinks = document.getElementById('nav-marketing-links');
+        if (marketingLinks) marketingLinks.setAttribute('hidden', '');
+        var appLinks = document.getElementById('nav-app-links');
+        if (appLinks) appLinks.removeAttribute('hidden');
 
         var signOutBtn = document.getElementById('nav-signout-btn');
         if (signOutBtn) {
