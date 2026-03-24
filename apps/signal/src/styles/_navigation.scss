@@ -100,14 +100,15 @@ body.sidemenu-open .toggle span:nth-child(3) {
   z-index: 400;
   pointer-events: none;
   visibility: hidden;
+  opacity: 0;
   overflow: hidden;
-  transition: visibility 0s 0.35s;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 
 body.sidemenu-open .sidemenu-main {
   pointer-events: all;
   visibility: visible;
-  transition: visibility 0s 0s;
+  opacity: 1;
 }
 
 body.sidemenu-open {
@@ -122,8 +123,6 @@ body.sidemenu-open {
   display: flex;
   flex-direction: column;
   padding: 88px $space-xl $space-xl $space-xl;
-  transform: translateX(-100%);
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 401;
 
@@ -152,10 +151,6 @@ body.sidemenu-open {
 
     &:hover { opacity: 0.65; text-decoration: none; }
   }
-}
-
-body.sidemenu-open .sidemenu-left {
-  transform: translateX(0);
 }
 
 // Overlay covers the full viewport behind the panel (not just the flex remainder)
