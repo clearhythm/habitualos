@@ -2604,7 +2604,7 @@
 
 .signal-mode-steps {
   list-style: none;
-  margin: 0 0 $space-lg;
+  margin: $space-sm 0 $space-xl;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -2612,7 +2612,7 @@
 }
 
 .signal-mode-step {
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   color: $color-text-muted;
   display: flex;
   align-items: baseline;
@@ -2734,7 +2734,7 @@
 .signal-pull-quote {
   font-size: clamp(1.1rem, 2.5vw, 1.35rem);
   line-height: 1.7;
-  color: #475569;
+  color: rgba(255, 255, 255, 0.55);
   border-left: 3px solid $color-primary;
   padding: $space-md $space-xl;
   margin: $space-2xl 0;
@@ -2746,7 +2746,7 @@
 
 .signal-pull-quote-cite {
   display: block;
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   font-style: normal;
   color: #94a3b8;
 }
