@@ -1525,6 +1525,52 @@
   line-height: 1.6;
 }
 
+// Rescore result (shown after resume generation)
+
+.eval-rescore-loading {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-sm;
+}
+
+.eval-rescore-result {
+  margin-bottom: $space-md;
+  padding-bottom: $space-md;
+  border-bottom: 1px solid $color-border;
+}
+
+.eval-rescore-score {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.eval-rescore-delta {
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.eval-rescore-positive { color: #2d9e6b; }
+.eval-rescore-negative { color: #c0392b; }
+.eval-rescore-neutral  { color: $color-text-muted; }
+
+.eval-rescore-summary {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0.25rem 0 0.5rem;
+  line-height: 1.5;
+}
+
+.eval-rescore-changes {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  line-height: 1.5;
+
+  li { margin-bottom: 0.2rem; }
+}
+
 // Evaluation history
 
 .eval-history-title {

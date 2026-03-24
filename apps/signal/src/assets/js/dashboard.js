@@ -698,11 +698,54 @@ async function generateResume() {
 
     currentResumeId = data.resumeId;
     renderGeneratedContent('eval-resume-panel', 'Resume', formatResume(data.content));
+    rescoreFromResume(data.resumeId);
   } catch (err) {
     status.textContent = `Error: ${err.message}`;
   } finally {
     btn.disabled = false;
     btn.textContent = 'Generate resume →';
+  }
+}
+
+async function rescoreFromResume(resumeId) {
+  const panel = document.getElementById('eval-resume-panel');
+  if (!panel || !currentEvalId) return;
+
+  const indicator = document.createElement('div');
+  indicator.className = 'eval-rescore-loading';
+  indicator.textContent = 'Recalculating fit score…';
+  panel.prepend(indicator);
+
+  try {
+    const res = await fetch(apiUrl('/api/signal-resume-rescore'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.__userId, evaluationId: currentEvalId, resumeId })
+    });
+    const data = await res.json();
+    if (!data.success) return;
+
+    const delta = data.delta;
+    const sign = delta > 0 ? '+' : '';
+    const deltaClass = delta > 0 ? 'eval-rescore-positive' : delta < 0 ? 'eval-rescore-negative' : 'eval-rescore-neutral';
+    const changeItems = (data.changeDetails || [])
+      .map(c => `<li>${escHtml(c)}</li>`)
+      .join('');
+
+    const block = document.createElement('div');
+    block.className = 'eval-rescore-result';
+    block.innerHTML = `
+      <div class="eval-rescore-score ${deltaClass}">
+        Fit score: ${escHtml(String(data.originalScore.overall))} → ${escHtml(String(data.newScore.overall))}
+        <span class="eval-rescore-delta">(${sign}${delta})</span>
+      </div>
+      ${data.improvementSummary ? `<p class="eval-rescore-summary">${escHtml(data.improvementSummary)}</p>` : ''}
+      ${changeItems ? `<ul class="eval-rescore-changes">${changeItems}</ul>` : ''}
+    `;
+
+    indicator.replaceWith(block);
+  } catch {
+    indicator.remove();
   }
 }
 
