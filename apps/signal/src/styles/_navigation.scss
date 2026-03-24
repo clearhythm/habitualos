@@ -36,40 +36,51 @@
 // ─── Sidemenu toggle (hamburger) ─────────────────────────────────────────────
 
 .sidemenu .toggle {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-  padding: 8px;
-  z-index: 600;
+  width: 24px;
+  height: 18px;
   position: relative;
+  padding: 10px 10px 10px 0;
+  cursor: pointer;
+  z-index: 600;
   background: none;
   border: none;
+  flex-shrink: 0;
 
   span {
     display: block;
+    position: absolute;
+    height: 3px;
     width: 24px;
-    height: 2px;
     background: $color-text;
-    border-radius: 1px;
-    transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+    border-radius: 2px;
+    left: 0;
+    transform: rotate(0deg);
+    transition: top 0.25s ease-in-out, transform 0.25s ease-in-out,
+                opacity 0.25s ease-in-out, width 0.25s ease-in-out,
+                height 0.25s ease-in-out, left 0.25s ease-in-out;
   }
 
-  span:nth-child(1) { width: 85%; }
-  span:nth-child(3) { width: 65%; }
+  span:nth-child(1) { top: 0; width: 85%; }
+  span:nth-child(2) { top: 8px; }
+  span:nth-child(3) { top: 16px; width: 65%; }
 }
 
 // Open state — toggle becomes ×
 body.sidemenu-open .toggle span:nth-child(1) {
+  top: 7px;
   width: 24px;
-  transform: translateY(7px) rotate(45deg);
+  height: 4px;
+  transform: rotate(135deg);
 }
 body.sidemenu-open .toggle span:nth-child(2) {
   opacity: 0;
+  left: -60px;
 }
 body.sidemenu-open .toggle span:nth-child(3) {
+  top: 7px;
   width: 24px;
-  transform: translateY(-7px) rotate(-45deg);
+  height: 4px;
+  transform: rotate(-135deg);
 }
 
 // ─── Sidemenu panel ───────────────────────────────────────────────────────────
@@ -99,8 +110,8 @@ body.sidemenu-open {
 }
 
 .sidemenu-left {
-  width: 300px;
-  max-width: 85vw;
+  // Mobile: fills full screen
+  width: 100%;
   height: 100%;
   background: $color-sidemenu-bg;
   display: flex;
@@ -112,7 +123,10 @@ body.sidemenu-open {
   z-index: 401;
 
   @media (min-width: $breakpoint-md) {
+    // Desktop: partial panel with visible page behind
     width: 340px;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5);
   }
 
   ul {
@@ -140,14 +154,21 @@ body.sidemenu-open .sidemenu-left {
   transform: translateX(0);
 }
 
+// On mobile, no overlay — the panel fills the screen
 .sidemenu-right {
-  flex: 1;
+  display: none;
+
+  @media (min-width: $breakpoint-md) {
+    flex: 1;
+    display: block;
+  }
 }
 
 .sidemenu-overlay {
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  // Lighter overlay so the page background stays visible and distinct from sidemenu
+  background: rgba(0, 0, 0, 0.3);
   opacity: 0;
   transition: opacity 0.35s ease;
   cursor: pointer;

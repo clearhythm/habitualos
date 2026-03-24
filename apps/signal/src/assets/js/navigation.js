@@ -9,7 +9,6 @@
 
   // ─── Sidemenu ───────────────────────────────────────────────────────────────
 
-  function openMenu() { body.classList.add('sidemenu-open'); }
   function closeMenu() { body.classList.remove('sidemenu-open'); }
 
   if (toggle) {
@@ -44,6 +43,19 @@
     updateNavbar();
     window.addEventListener('scroll', updateNavbar, { passive: true });
   }
+
+  // ─── Overscroll background ──────────────────────────────────────────────────
+  // Sets html bg so iOS rubber-band overscroll matches header (top) or footer (bottom)
+
+  var htmlEl = document.documentElement;
+  var OVERSCROLL_TOP = '#0f172a';    // matches $color-bg (page/body)
+  var OVERSCROLL_BOTTOM = '#080d17'; // matches $color-sidemenu-bg (footer)
+
+  function updateHtmlBg() {
+    htmlEl.style.background = window.scrollY < 10 ? OVERSCROLL_TOP : OVERSCROLL_BOTTOM;
+  }
+  updateHtmlBg();
+  window.addEventListener('scroll', updateHtmlBg, { passive: true });
 
   // ─── Modal ──────────────────────────────────────────────────────────────────
 
