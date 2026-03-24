@@ -437,7 +437,10 @@ const AGENTS = {
         const res = await fetch(apiUrl('/api/signal-owner-init'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signalId: state.signalId }),
+          body: JSON.stringify({
+            signalId: state.signalId,
+            ...(state.evalContext ? { evalContext: state.evalContext } : {}),
+          }),
         });
         const data = await res.json();
         if (data.displayName && modalTitleEl) {
@@ -517,6 +520,7 @@ async function transition(modeName, options = {}) {
     lastScore: null,
     ownerConfig: null,
     currentEvalId: null,
+    evalContext: options.evalContext || null,
   };
 
   activeAgent = AGENTS[modeName];
