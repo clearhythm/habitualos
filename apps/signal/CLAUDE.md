@@ -29,3 +29,9 @@ See root `CLAUDE.md` for shared patterns (auth, data layer, endpoint structure).
 npm run start     # netlify dev
 npm run eleventy:serve  # 11ty only (port 8081)
 ```
+
+## API Testing
+
+Run `node scripts/test-api.js` against a running local dev server (`npm run start`).
+Keep `scripts/test-api.js` up to date when adding or changing endpoints or field names.
+Tests use userId `u-test-migration-001` — clean up test data manually in Firestore if needed.
