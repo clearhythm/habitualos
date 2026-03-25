@@ -14,16 +14,15 @@
 
 {% macro widget() %}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<div class="signal-modal-overlay modal-overlay modal-overlay--full" id="signal-modal" aria-modal="true" role="dialog" hidden>
-  <div class="signal-modal-inner">
-    <div class="signal-modal-header">
-      <span class="signal-modal-title">Signal Fit</span>
-      <button class="signal-modal-close" id="signal-modal-close" aria-label="Close">
-        <span></span><span></span>
-      </button>
-    </div>
-    <div class="signal-modal-body">
-      <div class="signal-widget" id="signal-widget">
+<div class="signal-modal-overlay" id="signal-modal" aria-modal="true" role="dialog" hidden>
+  <div class="signal-modal-header">
+    <span class="signal-modal-title"><img src="/assets/favicon-32x32.png" alt="" class="navbar-brand-icon" aria-hidden="true">Signal Fit</span>
+    <button class="signal-modal-close" id="signal-modal-close" aria-label="Close">
+      <span></span><span></span>
+    </button>
+  </div>
+  <div class="signal-modal-body">
+    <div class="signal-widget" id="signal-widget">
 
         <div class="signal-panel signal-panel--score">
           <div class="signal-score-header">
@@ -111,7 +110,7 @@
 
       </div>
     </div>
-  </div>
 </div>
+
 <script type="module" src="/assets/js/signal-modal.js"></script>
 {% endmacro %}

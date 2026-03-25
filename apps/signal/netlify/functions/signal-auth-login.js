@@ -72,7 +72,7 @@ exports.handler = async (event) => {
     await db.collection('signal-auth-codes').doc(normalizedEmail).set({
       code,
       expiresAt,
-      userId: owner._userId,
+      _userId: owner._userId,
       _updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
 

@@ -29,7 +29,7 @@ exports.handler = async (event) => {
 
     const ref = db.collection('signal-evaluations').doc(evalId);
     const snap = await ref.get();
-    if (!snap.exists || snap.data().signalId !== owner.id) {
+    if (!snap.exists || snap.data()._signalId !== owner.id) {
       return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Evaluation not found' }) };
     }
 

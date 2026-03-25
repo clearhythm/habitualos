@@ -354,13 +354,21 @@ bodyClass: hero-light
       });
     });
 
-    // Touch swipe
+    function openDemo() {
+      if (window.signalOpen) window.signalOpen({ mode: 'visitor', signalId: 'signal-demo' });
+    }
+
+    // Desktop click
+    track.addEventListener('click', openDemo);
+
+    // Touch: swipe to navigate, tap to open demo
     var touchStartX = 0;
     track.addEventListener('touchstart', function (e) {
       touchStartX = e.touches[0].clientX;
     }, { passive: true });
     track.addEventListener('touchend', function (e) {
       var dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) < 10) { openDemo(); return; }
       if (Math.abs(dx) < 40) return;
       clearInterval(timer);
       goTo(dx < 0 ? Math.min(current + 1, slides.length - 1) : Math.max(current - 1, 0));

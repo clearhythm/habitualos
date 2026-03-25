@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     const normalizedEmail = email.toLowerCase().trim();
     const ref = db.collection('signal-waitlist').doc(normalizedEmail);
     await ref.set({
-      email: normalizedEmail,
+      _email: normalizedEmail,
       context: String(context).slice(0, 500),
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });

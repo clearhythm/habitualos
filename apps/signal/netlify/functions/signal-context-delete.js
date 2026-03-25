@@ -28,10 +28,10 @@ exports.handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Owner not found or not active' }) };
     }
 
-    const deleted = await deleteAllChunks(owner.signalId);
+    const deleted = await deleteAllChunks(owner.id);
 
     // Reset synthesized profiles and stats
-    await updateOwner(owner.signalId, {
+    await updateOwner(owner.id, {
       skillsProfile: null,
       wantsProfile: null,
       personalityProfile: null,

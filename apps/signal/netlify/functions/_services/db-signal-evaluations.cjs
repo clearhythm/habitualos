@@ -19,9 +19,9 @@ async function createEvaluation({ signalId, userId, mode, roleTitle, summary, sc
   const p = score?.personality != null ? Number(score.personality) : null;
 
   await db.collection('signal-evaluations').doc(evalId).set({
-    evalId,
-    signalId,
-    userId: userId || null,
+    _evalId: evalId,
+    _signalId: signalId,
+    _userId: userId || null,
     mode: mode || 'widget',
     opportunity: {
       title: roleTitle || null,

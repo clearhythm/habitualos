@@ -44,8 +44,8 @@ exports.handler = async (event) => {
 
     const docId = `${signalId}-${visitorId}`;
     await db.collection('signal-leads').doc(docId).set({
-      signalId,
-      visitorId,
+      _signalId: signalId,
+      _visitorId: visitorId,
       name: String(name || '').slice(0, 100),
       email: String(email || '').slice(0, 200),
       score: Number(score) || 0,

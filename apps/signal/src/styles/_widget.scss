@@ -13,7 +13,7 @@
   display: grid;
   grid-template-columns: 280px 1fr;
   min-height: calc(100dvh - 72px);
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: $space-xl;
   gap: $space-xl;
@@ -65,8 +65,7 @@
   gap: $space-md;
 
   @media (max-width: $breakpoint-md) {
-    order: 2;
-    padding: $space-md;
+    display: none; // replaced by compact score bar on mobile
   }
 }
 
@@ -317,17 +316,17 @@
 // ─── Compact mobile score bar ──────────────────────────────────────────────────
 
 .signal-score-bar-mobile {
-  display: none; // shown via JS on mobile after first score
+  display: none;
   align-items: center;
   gap: 10px;
   padding: 8px 16px;
-  background: $color-bg-muted;
-  border: 1px solid rgba(196, 181, 253, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(196, 181, 253, 0.15);
   border-radius: 10px;
-  order: 0; // appears before chat panel
+  order: 0;
 
   @media (max-width: $breakpoint-md) {
-    &.is-visible { display: flex; }
+    display: flex; // always visible on mobile
   }
 }
 
@@ -419,9 +418,6 @@
   gap: $space-md;
   scroll-behavior: smooth;
 
-  &:empty {
-    display: none;
-  }
 }
 
 // Individual message bubbles
@@ -2184,7 +2180,7 @@
 .signal-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 13, 23, 0.96);
+  background: linear-gradient(to bottom, #130e28, #0a0d1a);
   z-index: 2000;
   display: flex;
   flex-direction: column;
@@ -2192,33 +2188,30 @@
   &[hidden] { display: none; }
 }
 
-.signal-modal-inner {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 1100px;
-  height: 100%;
-  margin: 0 auto;
-}
-
 .signal-modal-header {
+  position: relative;
+  width: 100%;
+  height: 72px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: $space-sm $space-lg;
-  border-bottom: 1px solid $color-border;
+  justify-content: flex-end;
+  padding: 0 $space-lg;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
 .signal-modal-title {
-  font-size: $font-size-sm;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: $color-text-muted;
+  color: $color-text;
   display: flex;
   align-items: center;
-  gap: $space-xs;
+  gap: $space-sm;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .signal-modal-owner-badge {
@@ -2231,35 +2224,33 @@
   border: 1px solid rgba(124, 58, 237, 0.25);
   border-radius: 4px;
   padding: 1px 6px;
+  pointer-events: auto;
 }
 
 .signal-modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   background: none;
   border: none;
   cursor: pointer;
   position: relative;
-  padding: 0;
+  padding: 10px;
   flex-shrink: 0;
 
   span {
     display: block;
-    width: 20px;
-    height: 2px;
-    background: $color-text-muted;
+    width: 24px;
+    height: 3px;
+    background: $color-text;
     position: absolute;
-    border-radius: 1px;
+    border-radius: 2px;
     transition: background 0.15s;
 
     &:first-child { transform: rotate(45deg); }
     &:last-child  { transform: rotate(-45deg); }
   }
 
-  &:hover span { background: $color-text; }
+  &:hover span { background: rgba(255, 255, 255, 0.6); }
 }
 
 .signal-modal-body {
@@ -2273,10 +2264,23 @@
     flex: 1;
     min-height: 0;
     height: 100%;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .signal-panel--chat {
     height: 100%;
+    max-height: none;
+  }
+
+  .signal-panel {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .signal-panel--score {
+    border-color: rgba(196, 181, 253, 0.15);
   }
 }
 
@@ -2427,6 +2431,7 @@
 .signal-carousel-track {
   overflow: hidden;
   width: 100%;
+  cursor: pointer;
 }
 
 .signal-carousel-inner {

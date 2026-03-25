@@ -34,7 +34,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Owner not found or not active' }) };
     }
 
-    const signalId = owner.signalId;
+    const signalId = owner.id;
     const chunks = await getAllProcessedChunks(signalId);
 
     if (chunks.length === 0) {

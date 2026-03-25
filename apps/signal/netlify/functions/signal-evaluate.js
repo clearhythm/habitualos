@@ -195,9 +195,9 @@ exports.handler = async (event) => {
     // Store evaluation
     const evalId = `eval-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     await db.collection('signal-evaluations').doc(evalId).set({
-      evalId,
-      signalId,
-      userId,
+      _evalId: evalId,
+      _signalId: signalId,
+      _userId: userId,
       mode: 'dashboard',
       opportunity: {
         type: opportunityForPrompt.type,

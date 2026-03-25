@@ -88,14 +88,14 @@ exports.handler = async (event) => {
 
     // Load evaluation
     const evalSnap = await db.collection('signal-evaluations').doc(evaluationId).get();
-    if (!evalSnap.exists || evalSnap.data().userId !== userId) {
+    if (!evalSnap.exists || evalSnap.data()._userId !== userId) {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Evaluation not found' }) };
     }
     const evaluation = evalSnap.data();
 
     // Load resume
     const resumeSnap = await db.collection('signal-resumes').doc(resumeId).get();
-    if (!resumeSnap.exists || resumeSnap.data().userId !== userId) {
+    if (!resumeSnap.exists || resumeSnap.data()._userId !== userId) {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Resume not found' }) };
     }
     const resume = resumeSnap.data();

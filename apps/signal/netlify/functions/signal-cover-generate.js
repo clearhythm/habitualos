@@ -58,7 +58,7 @@ exports.handler = async (event) => {
 
     // Load evaluation
     const evalSnap = await db.collection('signal-evaluations').doc(evaluationId).get();
-    if (!evalSnap.exists || evalSnap.data().userId !== userId) {
+    if (!evalSnap.exists || evalSnap.data()._userId !== userId) {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Evaluation not found' }) };
     }
     const evaluation = evalSnap.data();
@@ -127,11 +127,11 @@ exports.handler = async (event) => {
     // Store cover letter
     const coverId = `cover-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     await db.collection('signal-covers').doc(coverId).set({
-      coverId,
-      evaluationId,
-      resumeId: resumeId || null,
-      signalId: owner.id,
-      userId,
+      _coverId: coverId,
+      _evaluationId: evaluationId,
+      _resumeId: resumeId || null,
+      _signalId: owner.id,
+      _userId: userId,
       content: parsed,
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     });

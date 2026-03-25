@@ -49,7 +49,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Owner not found or not active' }) };
     }
 
-    const signalId = owner.signalId;
+    const signalId = owner.id;
 
     // Cap at 500 conversations per upload
     const incoming = conversations.slice(0, 500).map(conv => ({

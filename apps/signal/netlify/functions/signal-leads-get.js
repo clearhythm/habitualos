@@ -27,7 +27,7 @@ exports.handler = async (event) => {
     }
 
     const snap = await db.collection('signal-leads')
-      .where('signalId', '==', owner.signalId)
+      .where('_signalId', '==', owner.id)
       .get();
 
     const leads = snap.docs

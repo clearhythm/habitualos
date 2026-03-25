@@ -73,7 +73,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ success: false, error: 'Owner not found or not active' }) };
     }
 
-    const signalId = owner.signalId;
+    const signalId = owner.id;
 
     // Resolve API key: owner's key if set, else Signal's key
     let apiKey = process.env.ANTHROPIC_API_KEY;

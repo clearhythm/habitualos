@@ -30,8 +30,21 @@ npm run start     # netlify dev
 npm run eleventy:serve  # 11ty only (port 8081)
 ```
 
-## API Testing
+## Testing
 
-Run `node scripts/test-api.js` against a running local dev server (`npm run start`).
-Keep `scripts/test-api.js` up to date when adding or changing endpoints or field names.
-Tests use userId `u-test-migration-001` — clean up test data manually in Firestore if needed.
+Tests live in `tests/`. Run against a local dev server (`npm run start`):
+
+```
+node tests/api.test.js                           # localhost:8888
+SIGNAL_USER_ID=u-xxx node tests/api.test.js      # include owner-auth tests
+node tests/api.test.js https://signal.habitualos.com  # run against prod
+```
+
+**When to run:** after any endpoint change, field rename, or schema update.
+**Keep up to date:** when adding endpoints or changing request/response shapes, update `tests/api.test.js`.
+
+**Firestore migration** (one-time, run after field renames):
+```
+node tests/migrate-fields.cjs --dry-run   # preview changes
+node tests/migrate-fields.cjs             # apply
+```

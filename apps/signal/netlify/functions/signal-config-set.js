@@ -85,7 +85,7 @@ exports.handler = async (event) => {
       update.anthropicApiKey = key ? encrypt(key) : '';
     }
 
-    await updateOwner(owner.signalId, update);
+    await updateOwner(owner.id, update);
 
     return {
       statusCode: 200,

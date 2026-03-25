@@ -97,7 +97,7 @@ exports.handler = async (event) => {
 
     // Load evaluation
     const evalSnap = await db.collection('signal-evaluations').doc(evaluationId).get();
-    if (!evalSnap.exists || evalSnap.data().userId !== userId) {
+    if (!evalSnap.exists || evalSnap.data()._userId !== userId) {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Evaluation not found' }) };
     }
     const evaluation = evalSnap.data();
@@ -147,10 +147,10 @@ exports.handler = async (event) => {
     // Store resume
     const resumeId = `resume-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     await db.collection('signal-resumes').doc(resumeId).set({
-      resumeId,
-      evaluationId,
-      signalId,
-      userId,
+      _resumeId: resumeId,
+      _evaluationId: evaluationId,
+      _signalId: signalId,
+      _userId: userId,
       content: parsed,
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     });

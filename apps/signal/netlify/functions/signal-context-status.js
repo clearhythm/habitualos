@@ -30,7 +30,7 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
     }
 
-    const stats = await getContextStats(owner.signalId);
+    const stats = await getContextStats(owner.id);
 
     return {
       statusCode: 200,

@@ -32,7 +32,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'No verification code found for this email' }) };
     }
 
-    const { code: storedCode, expiresAt, userId } = codeSnap.data();
+    const { code: storedCode, expiresAt, _userId: userId } = codeSnap.data();
 
     if (String(code).trim() !== String(storedCode)) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Incorrect code' }) };
@@ -48,7 +48,7 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Owner not found' }) };
     }
 
-    const { signalId, displayName } = owner;
+    const { _signalId: signalId, displayName } = owner;
 
     // Activate if pending (first-time verification)
     if (owner.status === 'pending') {

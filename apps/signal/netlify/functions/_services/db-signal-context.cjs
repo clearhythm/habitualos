@@ -66,8 +66,8 @@ async function createPendingChunks(signalId, conversations) {
       const docId = `${signalId}-${conv.conversationId}`;
       const ref = colRef.doc(docId);
       batch.set(ref, {
-        signalId,
-        conversationId: conv.conversationId,
+        _signalId: signalId,
+        _conversationId: conv.conversationId,
         source: conv.source,
         title: conv.title,
         date: conv.date,
@@ -101,7 +101,7 @@ async function createPendingChunks(signalId, conversations) {
  */
 async function getPendingChunks(signalId, limit = 5) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .where('status', '==', 'pending')
     .limit(limit)
     .get();
@@ -113,7 +113,7 @@ async function getPendingChunks(signalId, limit = 5) {
  */
 async function countPendingChunks(signalId) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .where('status', '==', 'pending')
     .get();
   return snap.size;
@@ -131,8 +131,8 @@ async function createProcessedChunk(signalId, conversationId, fields) {
 
   const now = admin.firestore.FieldValue.serverTimestamp();
   await ref.set({
-    signalId,
-    conversationId,
+    _signalId: signalId,
+    _conversationId: conversationId,
     ...fields,
     status: 'processed',
     _createdAt: now,
@@ -156,7 +156,7 @@ async function updateChunk(docId, fields) {
  */
 async function getAllProcessedChunks(signalId) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .where('status', '==', 'processed')
     .get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -168,7 +168,7 @@ async function getAllProcessedChunks(signalId) {
  */
 async function getTopChunks(signalId, limit = 15) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .where('status', '==', 'processed')
     .get();
 
@@ -188,7 +188,7 @@ async function getTopChunks(signalId, limit = 15) {
  */
 async function searchChunks(signalId, queryTerms, limit = 5) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .where('status', '==', 'processed')
     .get();
 
@@ -223,7 +223,7 @@ async function searchChunks(signalId, queryTerms, limit = 5) {
  */
 async function getContextStats(signalId) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .get();
 
   let total = 0, processed = 0, pending = 0;
@@ -246,7 +246,7 @@ async function getContextStats(signalId) {
  */
 async function deleteAllChunks(signalId) {
   const snap = await db.collection(COLLECTION)
-    .where('signalId', '==', signalId)
+    .where('_signalId', '==', signalId)
     .get();
 
   if (snap.empty) return 0;

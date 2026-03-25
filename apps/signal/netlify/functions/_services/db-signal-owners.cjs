@@ -36,7 +36,7 @@ async function createOwner(signalId, data) {
   if (exists) throw new Error(`Signal ID '${signalId}' is already taken`);
   await ref.set({
     ...data,
-    signalId,
+    _signalId: signalId,
     _createdAt: admin.firestore.FieldValue.serverTimestamp(),
     _updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });

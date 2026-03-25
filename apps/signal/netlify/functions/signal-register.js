@@ -70,8 +70,8 @@ exports.handler = async (event) => {
     const codeRef = db.collection('signal-auth-codes').doc(normalizedEmail);
     await codeRef.set({
       code,
-      userId,
-      signalId,
+      _userId: userId,
+      _signalId: signalId,
       expiresAt: new Date(Date.now() + CODE_TTL_MS).toISOString(),
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     });

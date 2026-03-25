@@ -26,14 +26,14 @@ exports.handler = async (event) => {
     }
 
     const snap = await db.collection('signal-evaluations')
-      .where('signalId', '==', owner.id)
+      .where('_signalId', '==', owner.id)
       .get();
 
     const evaluations = snap.docs
       .map(d => {
         const data = d.data();
         return {
-          evalId: data.evalId,
+          evalId: data._evalId,
           title: data.opportunity?.title || 'Untitled',
           type: data.opportunity?.type || 'free-text',
           score: data.score || {},

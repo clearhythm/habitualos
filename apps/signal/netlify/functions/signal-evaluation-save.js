@@ -65,9 +65,9 @@ exports.handler = async (event) => {
     const p = scores?.personality != null ? Number(scores.personality) : null;
 
     await db.collection('signal-evaluations').doc(newEvalId).set({
-      evalId: newEvalId,
-      signalId,
-      userId: userId || null,
+      _evalId: newEvalId,
+      _signalId: signalId,
+      _userId: userId || null,
       mode: mode || 'widget',
       opportunity: {
         title: roleTitle || null,
