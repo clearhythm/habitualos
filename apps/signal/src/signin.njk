@@ -2,6 +2,7 @@
 layout: base.njk
 title: "Signal — Sign In"
 permalink: /signin/
+bodyClass: "page-signin"
 ---
 
 <div class="signal-auth-wrap">
@@ -171,6 +172,7 @@ permalink: /signin/
       // Write session
       localStorage.setItem('signal-owner-id', data.signalId);
       localStorage.setItem('userId', data.userId);
+      if (data.displayName) localStorage.setItem('signal-owner-name', data.displayName.split(' ')[0]);
       location.replace(getRedirectDest());
     } catch {
       showError('code-error', 'Something went wrong. Please try again.');

@@ -1090,14 +1090,15 @@
 .signal-auth-wrap {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   padding: $space-2xl $space-lg;
-  min-height: calc(100dvh - 72px);
+  height: calc(100dvh - 144px);
+  box-sizing: border-box;
 }
 
 .signal-auth-card {
-  background: $color-bg-muted;
-  border: 1px solid $color-border;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: $space-xl;
   width: 100%;
@@ -1997,8 +1998,8 @@
 // ─── Waitlist page ───────────────────────────────────────────────────────────
 
 .signal-qualify-block {
-  background: $color-bg-muted;
-  border: 1px solid $color-border;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   padding: $space-lg;
   margin: $space-xl 0;
@@ -2040,6 +2041,8 @@
   font-size: $font-size-sm;
   color: $color-text-muted;
   margin: 0;
+
+  a { color: $color-text; text-decoration: none; }
 }
 
 .signal-waitlist-form {
