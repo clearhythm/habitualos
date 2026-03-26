@@ -66,13 +66,13 @@ exports.handler = async (event) => {
 
 ## Signal Session Logging
 
-At commit time, generate a structured session summary and POST it to `https://signal.habitualos.com/api/signal-ingest` (or `http://localhost:8888/api/signal-ingest` in dev). This feeds Erik's Signal profile with real work history.
+At commit time, POST a structured session summary to `https://signal.habitualos.com/api/signal-ingest` (or `http://localhost:8888/api/signal-ingest` in dev). Do this every session without being asked.
 
-Summary should cover:
-- What problem was being solved
-- What was designed, decided, or built
-- Technologies and patterns used
-- Key tradeoffs or architectural decisions made
+The ingest captures three dimensions — skills, personality, alignment. All three matter. Personality traces are the most underbuilt and highest value. Always look for *how* Erik worked, not just *what* was built.
+
+**skills** — what was demonstrated technically
+**personalitySignals** — behavioral observations: how friction was handled, scope decisions, self-correction, aesthetic judgment, directness, tolerance for ambiguity. Be specific and observational, not evaluative.
+**wants** — only include if alignment signals appeared: stated preferences, what Erik chose when unconstrained, what he pushed back on or toward
 
 ```json
 {
@@ -80,14 +80,19 @@ Summary should cover:
   "signalId": "erik-burns",
   "source": "claude-code",
   "repo": "<repo name>",
-  "summary": "<rich session summary>",
+  "summary": "<rich session summary — what problem, what was built, key decisions>",
   "topics": ["<topic>"],
   "skills": ["<skill>"],
-  "technologies": ["<tech>"]
+  "technologies": ["<tech>"],
+  "personalitySignals": [
+    "<specific behavioral observation>",
+    "<e.g. 'self-corrected on tone mid-session and named it explicitly'>",
+    "<e.g. 'cut scope when aesthetics felt wrong rather than shipping anyway'>"
+  ],
+  "wants": ["<only if alignment signals present — what Erik is moving toward>"],
+  "keyInsight": "<optional: one sharp observation about the session>"
 }
 ```
-
-Do this every session at commit time without being asked.
 
 ## Working with User
 

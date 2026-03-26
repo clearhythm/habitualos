@@ -15,6 +15,22 @@ Standalone Netlify app in the HabitualOS monorepo.
 - AI: Claude API via `@anthropic-ai/sdk`
 - Auth: `@habitualos/auth-server`
 
+## Design Philosophy & Standing Directive
+
+Signal's purpose is human potentiation — understanding what the behavioral record of someone's work reveals about who they are. Hiring is the current context, not the ceiling.
+
+**Three dimensions. Always.**
+When touching `signal-ingest.js`, profile synthesis, chat tool definitions, eval scoring, or RAG context:
+- **Skills** — what was done (easiest to extract, already working)
+- **Personality** — *how* someone worked: friction responses, scope decisions, self-correction, aesthetic judgment (most underbuilt, highest value)
+- **Alignment** — what someone is moving toward (sparse in work sessions, rich in conversation)
+
+**The prompt IS the data.** How Erik works with AI is behavioral signal, not just task log. The ingest should capture the *person*, not just the *project*.
+
+**When building anything that touches the profile or synthesis layer**, ask: does this code capture how someone worked, not just what they built? If personality traces are being lost or ignored, that's a design failure worth flagging.
+
+See `docs/design.md` for the full framework.
+
 ## Architecture Reference
 
 See `docs/architecture.md` for the full reference: all 9 Firestore collections, all endpoints, streaming chat flow, RAG pipeline, and env vars.
