@@ -38,7 +38,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         stats,
-        lastUploadAt: owner.contextStats?.lastUploadAt || null,
+        lastUploadAt: [owner.contextStats?.lastUploadAt, owner.contextStats?.lastIngestAt]
+          .filter(Boolean).sort().pop() || null,
         skillsProfile: owner.skillsProfile || null,
         wantsProfile: owner.wantsProfile || null,
         personalityProfile: owner.personalityProfile || null

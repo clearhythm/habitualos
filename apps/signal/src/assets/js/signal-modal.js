@@ -29,6 +29,7 @@ const alignmentValEl   = document.getElementById('alignment-value');
 const personalityValEl = document.getElementById('personality-value');
 const confidenceBarEl  = document.getElementById('confidence-bar');
 const confidencePctEl  = document.getElementById('confidence-pct');
+const confidenceSectionEl = document.querySelector('.signal-confidence-section');
 const reasonEl         = document.getElementById('signal-reason');
 
 // Compact mobile score bar
@@ -40,14 +41,10 @@ const scoreBarLabelEl = document.getElementById('score-bar-label');
 // Recommendation label
 const recommendationEl  = document.getElementById('signal-recommendation');
 
-// Next step panel
-const nextStepEl        = document.getElementById('signal-next-step');
-const nextStepLabelEl   = document.getElementById('next-step-label');
-const nextStepActionsEl = document.getElementById('next-step-actions');
-
 // Modal header
 const modalTitleEl      = document.querySelector('.signal-modal-title');
 const scoreLabelEl      = document.getElementById('signal-score-label');
+
 
 // Ring geometry (r=52)
 const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
@@ -68,8 +65,32 @@ let state = {
   turnCount: 0,
   lastScore: null,
   ownerConfig: null,
-  currentEvalId: null,  // tracks open evaluation for upsert
+  currentEvalId: null,
+  agentAvatarUrl: null,
 };
+
+// Left panel phase refs
+const agentIntroEl  = document.getElementById('signal-agent-left');
+const scoreInnerEl  = document.getElementById('signal-score-inner');
+const scoreTabEl    = document.getElementById('tab-score');
+const scoreTabBadge = document.getElementById('tab-score-badge');
+
+function switchTab(name) {
+  document.querySelectorAll('.signal-tab').forEach(t => t.classList.remove('is-active'));
+  const activeTab = document.querySelector(`[data-tab="${name}"]`);
+  activeTab?.classList.add('is-active');
+  if (name === 'score') {
+    agentIntroEl?.classList.add('is-done');
+    scoreInnerEl?.classList.add('is-active');
+  } else {
+    agentIntroEl?.classList.remove('is-done');
+    scoreInnerEl?.classList.remove('is-active');
+  }
+}
+
+document.querySelectorAll('.signal-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
 
 // ─── Evaluation persistence ────────────────────────────────────────────────────
 
@@ -117,20 +138,26 @@ function appendMessage(role, text) {
   const el = document.createElement('div');
   el.className = `signal-message signal-message--${role}`;
   if (role === 'assistant') {
-    el.innerHTML = renderMarkdown(text);
+    const content = document.createElement('div');
+    content.className = 'signal-message-content';
+    content.innerHTML = renderMarkdown(text);
+    el.appendChild(content);
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return content;
   } else {
     el.textContent = text;
+    messagesEl.appendChild(el);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return el;
   }
-  messagesEl.appendChild(el);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-  return el;
 }
 
 function showThinking() {
   const el = document.createElement('div');
   el.className = 'signal-message signal-message--assistant signal-thinking';
   el.id = 'thinking-indicator';
-  el.innerHTML = '<span></span><span></span><span></span>';
+  el.innerHTML = `<div class="signal-message-content"><span></span><span></span><span></span></div>`;
   messagesEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -143,15 +170,16 @@ function removeThinking() {
 
 function resetScorePanel() {
   overallRingEl.style.strokeDashoffset = RING_CIRCUMFERENCE;
-  overallScoreEl.textContent = '—';
+  overallScoreEl.textContent = '';
   skillsBarEl.style.width = '0%';
   alignmentBarEl.style.width = '0%';
   personalityBarEl.style.width = '0%';
-  skillsValEl.textContent = '—';
-  alignmentValEl.textContent = '—';
-  personalityValEl.textContent = '—';
-  confidenceBarEl.style.width = '0%';
-  confidencePctEl.textContent = '—';
+  skillsValEl.textContent = '';
+  alignmentValEl.textContent = '';
+  personalityValEl.textContent = '';
+  if (confidenceBarEl) confidenceBarEl.style.width = '0%';
+  confidencePctEl.textContent = '';
+  if (confidenceSectionEl) confidenceSectionEl.hidden = true;
   reasonEl.textContent = '';
   reasonEl.classList.remove('visible');
   if (overallWrapEl) overallWrapEl.classList.remove('is-visible', 'is-pulsing');
@@ -161,9 +189,15 @@ function resetScorePanel() {
 }
 
 function updateScorePanel(data) {
-  const { skills, alignment, personality, confidence, reason, nextStep, nextStepLabel: label, turn } = data;
+  const { skills, alignment, personality, confidence, reason } = data;
   const overall = Math.round(skills * 0.50 + alignment * 0.35 + personality * 0.15);
   state.lastScore = data;
+
+  // Auto-switch to score on first score, update badge
+  if (!scoreInnerEl.classList.contains('is-active')) {
+    switchTab('score');
+  }
+  if (scoreTabBadge) scoreTabBadge.textContent = overall;
 
   if (overallWrapEl) {
     if (!overallWrapEl.classList.contains('is-visible')) {
@@ -188,8 +222,9 @@ function updateScorePanel(data) {
   overallRingEl.style.strokeDashoffset = offset;
   overallScoreEl.textContent = overall;
 
-  confidenceBarEl.style.width = `${Math.round(confidence * 100)}%`;
+  if (confidenceBarEl) confidenceBarEl.style.width = `${Math.round(confidence * 100)}%`;
   confidencePctEl.textContent = `${Math.round(confidence * 100)}%`;
+  if (confidenceSectionEl) confidenceSectionEl.hidden = false;
 
   reasonEl.textContent = '';
   reasonEl.classList.remove('visible');
@@ -201,11 +236,6 @@ function updateScorePanel(data) {
     if (scorePanelEl) scorePanelEl.style.display = 'none';
   }
 
-  if (nextStep && label && confidence >= 0.65) {
-    if (activeAgent?.renderNextStep) {
-      activeAgent.renderNextStep(nextStep, label);
-    }
-  }
 }
 
 // ─── Sub-agents ───────────────────────────────────────────────────────────────
@@ -255,29 +285,6 @@ const AGENTS = {
       };
     },
 
-    renderNextStep(step, label) {
-      nextStepLabelEl.textContent = label;
-      nextStepActionsEl.innerHTML = '';
-      if (step === 'ready') {
-        const a = document.createElement('a');
-        a.href = '/waitlist/';
-        a.className = 'btn btn-primary';
-        a.textContent = 'Join the waitlist →';
-        nextStepActionsEl.appendChild(a);
-      } else if (step === 'building') {
-        const p = document.createElement('p');
-        p.className = 'signal-next-step-body';
-        p.textContent = 'Keep shipping. Strong Signal candidates have months of real, varied AI work. Come back when you have more to show.';
-        nextStepActionsEl.appendChild(p);
-      } else if (step === 'pass') {
-        const p = document.createElement('p');
-        p.className = 'signal-next-step-body';
-        p.textContent = 'Signal may not be the right tool for you right now — but that can change. Dig deeper into your AI workflow and revisit.';
-        nextStepActionsEl.appendChild(p);
-      }
-      nextStepEl.hidden = false;
-    },
-
     persist: null,
   },
 
@@ -324,31 +331,78 @@ const AGENTS = {
 
     async init() {
       state.userId = window.__userId;
-      personaWrapEl.style.display = '';
-      personaPromptEl.textContent = 'Loading…';
-      personaBtnsEl.innerHTML = '';
+      personaWrapEl.style.display = 'none';
 
-      try {
-        const res = await fetch(apiUrl('/api/signal-config-get'), {
+
+      // Fetch config + context-status in parallel
+      const [configResult, statusResult] = await Promise.allSettled([
+        fetch(apiUrl('/api/signal-config-get'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signalId: state.signalId }),
-        });
-        const data = await res.json();
-        state.ownerConfig = data.success ? data.config : AGENTS.visitor._fallbackConfig(state.signalId);
-      } catch {
-        state.ownerConfig = AGENTS.visitor._fallbackConfig(state.signalId);
+        }).then(r => r.json()),
+        fetch(apiUrl('/api/signal-context-status'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ signalId: state.signalId }),
+        }).then(r => r.json()),
+      ]);
+
+      const config = configResult.status === 'fulfilled' && configResult.value.success
+        ? configResult.value.config
+        : AGENTS.visitor._fallbackConfig(state.signalId);
+      state.ownerConfig = config;
+
+      const total = statusResult.status === 'fulfilled' && statusResult.value.success
+        ? statusResult.value.stats?.total : null;
+
+      // Populate left panel agent intro
+      const name = config.displayName || state.signalId;
+      state.agentAvatarUrl = config.agentAvatarUrl || '/assets/images/signal-agent.png';
+      const agentNameEl = document.getElementById('signal-agent-left-name');
+      if (agentNameEl) agentNameEl.textContent = `${name.split(' ')[0]}'s Agent`;
+      const agentSubEl = document.getElementById('signal-agent-left-sub');
+      if (agentSubEl) agentSubEl.textContent = `Work History for ${name}`;
+      const credsEl = document.getElementById('signal-agent-left-creds');
+      if (credsEl) {
+        const items = [];
+        if (total) items.push(`${total} Claude Code sessions`);
+        items.push('<a href="https://github.com/clearhythm" target="_blank" rel="noopener" class="signal-cred-link">2 repositories →</a>');
+        const lastActive = (statusResult.status === 'fulfilled' && statusResult.value.lastUploadAt)
+          ? (() => {
+              const d = new Date(statusResult.value.lastUploadAt);
+              const days = Math.round((Date.now() - d.getTime()) / 86400000);
+              const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+              return days === 0 ? `today at ${time}` : days === 1 ? 'yesterday' : `${days} days ago`;
+            })()
+          : null;
+        const introEl = document.getElementById('signal-agent-creds-intro');
+        if (introEl) introEl.textContent = `My agent is designed to help you assess my fit for any project, collaboration, or role. It's trained on my living work history across:`;
+
+        const contactEl = document.getElementById('signal-agent-contact');
+        if (contactEl && config.contactLinks) {
+          const { calendar, linkedin } = config.contactLinks;
+          if (calendar) {
+            contactEl.innerHTML = `<a href="${calendar}" target="_blank" rel="noopener" class="btn btn-outline signal-contact-btn">Book a call →</a>`;
+          } else if (linkedin) {
+            contactEl.innerHTML = `<a href="${linkedin}" target="_blank" rel="noopener" class="btn btn-outline signal-contact-btn">Connect on LinkedIn →</a>`;
+          }
+        }
+        credsEl.innerHTML = items.map(t => `<li>${t}</li>`).join('');
+        const updatedEl = document.getElementById('signal-agent-updated');
+        if (updatedEl) updatedEl.textContent = lastActive ? `Last updated ${lastActive}` : '';
       }
 
-      personaPromptEl.textContent = "I'm an AI built on this person's work history. Who are you?";
-      (state.ownerConfig.personas || []).forEach(p => {
-        const btn = document.createElement('button');
-        btn.className = 'signal-persona-btn';
-        btn.dataset.persona = p.key;
-        btn.textContent = p.label;
-        btn.addEventListener('click', () => AGENTS.visitor._selectPersona(p.key));
-        personaBtnsEl.appendChild(btn);
-      });
+      // Greeting as first chat bubble
+      const greeting = `Hi! Ask me anything about ${name.split(' ')[0]}'s recent work, or paste a job description and I'll evaluate the fit. Need a sense of what this is all about? Just say so and I'll help orient you.`;
+      state.currentPersona = 'colleague';
+      state.chatHistory.push({ role: 'assistant', content: greeting });
+      appendMessage('assistant', greeting);
+
+      // Enable input
+      inputEl.disabled = false;
+      sendBtnEl.disabled = false;
+      inputEl.placeholder = 'Paste a JD or ask anything…';
     },
 
     buildPayload(text) {
@@ -360,56 +414,6 @@ const AGENTS = {
         message: text,
         chatHistory: state.chatHistory.slice(0, -1),
       };
-    },
-
-    renderNextStep(step, label) {
-      nextStepLabelEl.textContent = label;
-      nextStepActionsEl.innerHTML = '';
-      const links = state.ownerConfig?.contactLinks || {};
-
-      if (step === 'hot') {
-        // Hot (8-10): book a call + connect
-        if (links.calendar) {
-          const a = document.createElement('a');
-          a.href = links.calendar;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.className = 'btn btn-primary signal-next-btn';
-          a.textContent = 'Book a call →';
-          nextStepActionsEl.appendChild(a);
-        }
-        if (links.linkedin) {
-          const a = document.createElement('a');
-          a.href = links.linkedin;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.className = 'btn signal-next-btn';
-          a.textContent = 'Connect on LinkedIn →';
-          nextStepActionsEl.appendChild(a);
-        }
-      } else if (step === 'warm') {
-        // Warm (6-7): add to network
-        if (links.linkedin) {
-          const a = document.createElement('a');
-          a.href = links.linkedin;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.className = 'btn signal-next-btn';
-          a.textContent = 'Add to network →';
-          nextStepActionsEl.appendChild(a);
-        }
-        if (links.substack) {
-          const a = document.createElement('a');
-          a.href = links.substack;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.className = 'btn signal-next-btn';
-          a.textContent = 'Follow on Substack →';
-          nextStepActionsEl.appendChild(a);
-        }
-      }
-      // 'cold' (0-5): label only, no action buttons
-      nextStepEl.hidden = false;
     },
 
     async persist() {
@@ -447,8 +451,8 @@ const AGENTS = {
           }),
         });
         const data = await res.json();
-        if (data.displayName && modalTitleEl) {
-          modalTitleEl.innerHTML = `${data.displayName} <span class="signal-modal-owner-badge">owner</span>`;
+        if (modalTitleEl) {
+          modalTitleEl.innerHTML = `Signal Fit <span class="signal-modal-owner-badge">owner</span>`;
         }
         if (data.opener) {
           state.chatHistory.push({ role: 'assistant', content: data.opener });
@@ -476,7 +480,6 @@ const AGENTS = {
       };
     },
 
-    renderNextStep: null,
     persist: null,
   },
 };
@@ -493,19 +496,22 @@ async function transition(modeName, options = {}) {
   resetScorePanel();
   personaBtnsEl.innerHTML = '';
   personaWrapEl.style.display = '';
-  nextStepEl.hidden = true;
   inputEl.disabled = true;
   sendBtnEl.disabled = true;
   inputEl.value = '';
   inputEl.style.height = 'auto';
+  agentIntroEl?.classList.remove('is-done');
+  scoreInnerEl?.classList.remove('is-active');
+  if (scoreTabEl) { scoreTabEl.classList.remove('is-active'); }
+  if (scoreTabBadge) scoreTabBadge.textContent = '';
+  document.querySelector('[data-tab="profile"]')?.classList.add('is-active');
 
   // Reset modal header and score label
   if (modalTitleEl) {
-    modalTitleEl.innerHTML = modeName === 'owner'
-      ? 'Signal Fit <span class="signal-modal-owner-badge">owner</span>'
-      : 'Signal Fit';
+    const badge = modeName === 'owner' ? ' <span class="signal-modal-owner-badge">owner</span>' : '';
+    modalTitleEl.innerHTML = `Signal Fit${badge}`;
   }
-  if (scoreLabelEl) scoreLabelEl.textContent = 'Summary of Scores';
+  if (scoreLabelEl) scoreLabelEl.textContent = 'Fit Score';
   if (modeName === 'owner') {
     inputEl.placeholder = 'Paste a job description to score your fit…';
   } else {
@@ -589,12 +595,13 @@ async function sendMessage(text) {
           if (event.tool === 'evaluate_fit') {
             evaluationRendered = true;
             evaluationSavedThisTurn = true;
-            const { evalId, roleTitle, summary, strengths, gaps, score, recommendation, nextStep } = event.result || {};
+            const { evalId, roleTitle, summary, strengths, gaps, score, recommendation } = event.result || {};
             if (evalId) state.currentEvalId = evalId;
             const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const strengthsHtml = (strengths || []).map(s => `<li class="eval-strength-item">${esc(s)}</li>`).join('');
             const gapsHtml = (gaps || []).map(g => `<li class="eval-gap-item">${esc(g)}</li>`).join('');
             const el = appendMessage('assistant', '');
+            el.closest('.signal-message')?.classList.add('signal-message--eval');
             el.innerHTML = `
               <div class="eval-output">
                 <h3 class="eval-output-role">${esc(roleTitle)}</h3>
@@ -614,25 +621,12 @@ async function sendMessage(text) {
               recommendationEl.hidden = !recLabels[recommendation];
             }
             if (score) {
-              const nextStepLabels = {
-                hot: 'Hot fit — worth prioritizing',
-                warm: 'Warm fit — worth staying connected',
-                cold: 'Probably not the right fit right now',
-              };
-              updateScorePanel({ ...score, reason: null, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+              updateScorePanel({ ...score, reason: null });
             }
           } else if (event.tool === 'update_fit_score') {
             // Visitor mode: incremental score updates (no eval card)
-            const { skills, alignment, personality, confidence, reason, nextStep } = event.result || {};
-            const nextStepLabels = {
-              hot: 'Hot fit — worth prioritizing',
-              warm: 'Warm fit — worth staying connected',
-              cold: 'Probably not the right fit right now',
-              ready: "You're Signal-ready",
-              building: 'Keep building your history',
-              pass: 'Signal may not be the right fit yet',
-            };
-            updateScorePanel({ skills, alignment, personality, confidence, reason, nextStep, nextStepLabel: nextStepLabels[nextStep] || null });
+            const { skills, alignment, personality, confidence, reason } = event.result || {};
+            updateScorePanel({ skills, alignment, personality, confidence, reason });
             if (state.currentEvalId) {
               upsertEvalScores({ skills, alignment, personality, confidence });
             }

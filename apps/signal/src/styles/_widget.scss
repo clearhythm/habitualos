@@ -37,6 +37,99 @@
   }
 }
 
+// ─── Panel tabs ───────────────────────────────────────────────────────────────
+
+.signal-panel-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.signal-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: $space-md $space-md;
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xs;
+  transition: color 0.2s;
+
+  &.is-active {
+    color: $color-text;
+    border-bottom: 2px solid $color-primary;
+    margin-bottom: -1px;
+  }
+
+}
+
+.signal-tab-badge {
+  background: $color-primary;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 18px;
+  text-align: center;
+
+  &:empty { display: none; }
+}
+
+// ─── Profile card (right panel, pre-chat) ─────────────────────────────────────
+
+.signal-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+  padding: $space-2xl $space-xl;
+  gap: $space-md;
+  border-bottom: 1px solid $color-border;
+}
+
+.signal-panel-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: 10px $space-lg;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.signal-footer-cta {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  transition: color 0.2s;
+
+  img { width: 16px; height: 16px; transition: filter 0.2s; }
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    img { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35)); }
+  }
+}
+
+.signal-footer-brand {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+}
+
 // ─── Ring / orb animations ────────────────────────────────────────────────────
 
 @keyframes orb-float {
@@ -61,30 +154,191 @@
 .signal-panel--score {
   display: flex;
   flex-direction: column;
-  padding: $space-lg;
-  gap: $space-md;
+  height: calc(100dvh - 72px - 2 * #{$space-xl});
+  position: relative;
 
   @media (max-width: $breakpoint-md) {
-    display: none; // replaced by compact score bar on mobile
+    display: none;
   }
 }
 
-.signal-score-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+.signal-phase-wrap {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
 }
 
-.signal-score-label {
+.signal-agent-left,
+.signal-score-inner {
+  grid-row: 1;
+  grid-column: 1;
+  overflow-y: auto;
+  transition: opacity 0.5s ease;
+  padding: $space-xl $space-lg;
+}
+
+.signal-agent-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: $space-lg;
+  padding-top: $space-xl;
+
+  .signal-agent-left-creds {
+    text-align: left;
+    align-self: stretch;
+  }
+
+  &.is-done {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.signal-agent-left-name {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.signal-agent-left-sub {
   font-size: $font-size-sm;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #c4b5fd;
+  color: $color-text-muted;
+}
+
+.signal-agent-updated {
+  font-size: $font-size-sm;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.3);
+  margin: $space-xs 0 0;
+  text-align: left;
+  align-self: stretch;
+
+  &:empty { display: none; }
+}
+
+.signal-agent-creds-intro {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0;
+  align-self: stretch;
+  text-align: left;
+}
+
+.signal-agent-contact {
+  margin-top: auto;
+  padding-top: $space-lg;
+  width: 100%;
+
+  a {
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+.signal-agent-left-rule {
+  width: 100%;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin: 0;
+}
+
+.signal-agent-avatar-wrap {
+  width: 136px;
+  height: 136px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.signal-agent-avatar-left {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba($color-primary, 0.25);
+}
+
+.signal-agent-left-creds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+
+  li {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+    list-style: none;
+    padding-left: $space-md;
+    position: relative;
+
+    &::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+    }
+  }
+
+  .signal-cred-link {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.2);
+    text-underline-offset: 2px;
+
+    &:hover { text-decoration-color: rgba(255, 255, 255, 0.5); }
+  }
+
+}
+
+.signal-score-inner {
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+
+  &.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+
+.signal-score-label {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $color-text;
+  text-align: center;
+}
+
+.signal-confidence-section {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  margin-top: $space-sm;
+  padding-top: $space-sm;
+  border-top: none;
+}
+
+.signal-confidence-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .signal-confidence-label {
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   color: $color-text-muted;
 }
 
@@ -117,7 +371,7 @@
 
   .signal-ring-track {
     fill: none;
-    stroke: $color-border;
+    stroke: rgba(255, 255, 255, 0.08);
     stroke-width: 8;
   }
 
@@ -141,7 +395,7 @@
 // Confidence bar
 .signal-confidence-bar-wrap {
   height: 4px;
-  background: $color-border;
+  background: rgba(255,255,255,0.08);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -171,7 +425,7 @@
 }
 
 .signal-dimension-name {
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   color: $color-text-muted;
 }
 
@@ -182,9 +436,9 @@
 }
 
 .signal-bar-track {
-  height: 6px;
-  background: $color-border;
-  border-radius: 3px;
+  height: 8px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
   overflow: hidden;
 }
 
@@ -192,7 +446,7 @@
   height: 100%;
   width: 0;
   background: #059669;
-  border-radius: 3px;
+  border-radius: 4px;
   transition: width 0.8s ease;
 }
 
@@ -224,20 +478,17 @@
   &[hidden] { display: none; }
 }
 
-.signal-score-footer {
-  margin-top: auto;
-}
 
 .signal-score-footer-text {
-  font-size: 0.75rem;
-  color: $color-text-muted;
-  opacity: 0.6;
+  font-size: $font-size-sm;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.3);
+  padding-top: $space-sm;
 }
 
 // ─── Next Step Panel ───────────────────────────────────────────────────────────
 
 .signal-next-step {
-  border-top: 1px solid $color-border;
   padding-top: $space-md;
   display: flex;
   flex-direction: column;
@@ -408,6 +659,73 @@
   }
 }
 
+// ─── Profile card elements ─────────────────────────────────────────────────────
+
+.signal-profile-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba($color-primary, 0.4);
+}
+
+.signal-profile-name {
+  font-size: $font-size-3xl;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.signal-profile-tagline {
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  line-height: 1.4;
+}
+
+.signal-profile-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+
+  li {
+    font-size: $font-size-sm;
+    color: $color-text-muted;
+
+    &::before {
+      content: '◆  ';
+      color: $color-primary;
+      font-size: 0.6em;
+      vertical-align: middle;
+    }
+  }
+}
+
+.signal-profile-interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+  justify-content: center;
+  max-width: 420px;
+}
+
+.signal-profile-tag {
+  font-size: 0.75rem;
+  color: $color-text-muted;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.signal-profile-hint {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.6);
+  margin: $space-sm 0 0;
+}
+
+
 // Messages container
 .signal-messages {
   flex: 1;
@@ -422,25 +740,40 @@
 
 // Individual message bubbles
 .signal-message {
-  max-width: 85%;
   line-height: 1.55;
   font-size: $font-size-base;
-  white-space: pre-wrap;
   word-break: break-word;
 
   &--user {
     align-self: flex-end;
+    max-width: 72%;
     background: $color-primary;
     color: #fff;
     padding: $space-sm $space-md;
     border-radius: 18px 18px 4px 18px;
+    white-space: pre-wrap;
   }
 
   &--assistant {
     align-self: flex-start;
-    color: $color-text;
-    padding: $space-sm 0;
+    max-width: 72%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $color-border;
+    border-radius: 4px 18px 18px 18px;
+    padding: $space-sm $space-md;
     white-space: normal;
+  }
+
+  &--eval {
+    max-width: 100%;
+    background: transparent;
+    border: 1px solid rgba(196, 181, 253, 0.25);
+    border-radius: 12px;
+    padding: $space-md;
+  }
+
+  .signal-message-content {
+    color: $color-text;
 
     p { margin: 0 0 0.6em; &:last-child { margin-bottom: 0; } }
     ul, ol { margin: 0.4em 0 0.6em 1.2em; padding: 0; }
@@ -504,7 +837,7 @@
   align-items: flex-end;
   gap: $space-sm;
   padding: $space-md;
-  border-top: 1px solid $color-border;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .signal-input {
@@ -562,7 +895,8 @@
   &:hover { opacity: 0.8; }
 }
 
-.signal-logo-img {
+.signal-logo-img,
+.signal-favicon-icon {
   height: 20px;
   width: auto;
   display: block;
@@ -1066,7 +1400,7 @@
 }
 
 // Footer CTA
-.signal-footer-cta {
+.signal-page-footer-cta {
   padding: $space-2xl 0;
   border-top: 1px solid $color-border;
   display: flex;
