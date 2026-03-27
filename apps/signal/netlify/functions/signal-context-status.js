@@ -42,7 +42,10 @@ exports.handler = async (event) => {
           .filter(Boolean).sort().pop() || null,
         skillsProfile: owner.skillsProfile || null,
         wantsProfile: owner.wantsProfile || null,
-        personalityProfile: owner.personalityProfile || null
+        personalityProfile: owner.personalityProfile || null,
+        synthesizedContext: owner.synthesizedContext || null,
+        synthesizedContextGeneratedAt: owner.synthesizedContextGeneratedAt || null,
+        processedChunks: owner.contextStats?.processedChunks || 0
       })
     };
 

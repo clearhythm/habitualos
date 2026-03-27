@@ -122,7 +122,7 @@ async function loadContextStatus() {
 }
 
 function renderContextStats(data) {
-  const { stats, lastUploadAt, skillsProfile, wantsProfile, personalityProfile } = data;
+  const { stats, lastUploadAt, skillsProfile, wantsProfile, personalityProfile, synthesizedContext, synthesizedContextGeneratedAt, processedChunks } = data;
   if (!stats || stats.total === 0) return;
 
   // Stats card
@@ -151,6 +151,27 @@ function renderContextStats(data) {
     // Show gap Q&A cards for weak dimensions
     if ((wantsProfile?.completeness || 0) < 0.3) setHidden('gap-alignment', false);
     if ((personalityProfile?.completeness || 0) < 0.3) setHidden('gap-personality', false);
+  }
+
+  // Synthesis narrative
+  if (synthesizedContext) {
+    const section = document.getElementById('synthesis-section');
+    const meta = document.getElementById('synthesis-meta');
+    const narrative = document.getElementById('synthesis-narrative');
+    if (section && meta && narrative) {
+      let metaText = `Synthesized from ${processedChunks} work sessions`;
+      if (synthesizedContextGeneratedAt) {
+        const date = new Date(synthesizedContextGeneratedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        metaText += ` · Last updated ${date}`;
+      }
+      meta.textContent = metaText;
+      const paragraphs = synthesizedContext.split(/\n\n+/).filter(Boolean);
+      narrative.innerHTML = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+      section.style.display = '';
+    }
+  } else {
+    const empty = document.getElementById('synthesis-empty');
+    if (empty) empty.style.display = '';
   }
 }
 
