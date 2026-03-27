@@ -7,6 +7,8 @@
 
 import { apiUrl } from './api.js';
 
+const BREAKPOINT_MD = 768;
+
 // ─── DOM refs (queried at parse time — modal HTML guaranteed by {% if showDemoModal %}) ──
 
 const personaWrapEl    = document.getElementById('persona-wrap');
@@ -32,11 +34,16 @@ const confidencePctEl  = document.getElementById('confidence-pct');
 const confidenceSectionEl = document.querySelector('.signal-confidence-section');
 const reasonEl         = document.getElementById('signal-reason');
 
-// Compact mobile score bar
+// Compact mobile score bar (legacy — kept for DOM ref only)
 const scorePanelEl    = document.querySelector('.signal-panel--score');
 const scoreBarMobile  = document.getElementById('score-bar-mobile');
 const scoreBarNumEl   = document.getElementById('score-bar-num');
 const scoreBarLabelEl = document.getElementById('score-bar-label');
+
+// Mobile compact header
+const mobileHeaderEl    = document.getElementById('signal-mobile-header');
+const mobileAgentNameEl = document.getElementById('mobile-agent-name');
+const mobileScorePillEl = document.getElementById('mobile-score-pill');
 
 // Recommendation label
 const recommendationEl  = document.getElementById('signal-recommendation');
@@ -67,6 +74,7 @@ let state = {
   ownerConfig: null,
   currentEvalId: null,
   agentAvatarUrl: null,
+  profileCompacted: false,
 };
 
 // Left panel phase refs
@@ -90,6 +98,10 @@ function switchTab(name) {
 
 document.querySelectorAll('.signal-tab').forEach(btn => {
   btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+mobileHeaderEl?.addEventListener('click', () => {
+  scorePanelEl?.classList.toggle('is-expanded');
 });
 
 // ─── Evaluation persistence ────────────────────────────────────────────────────
@@ -183,8 +195,7 @@ function resetScorePanel() {
   reasonEl.textContent = '';
   reasonEl.classList.remove('visible');
   if (overallWrapEl) overallWrapEl.classList.remove('is-visible', 'is-pulsing');
-  if (scoreBarMobile) scoreBarMobile.classList.remove('is-visible');
-  if (scorePanelEl) scorePanelEl.style.display = '';
+  if (mobileScorePillEl) mobileScorePillEl.textContent = '';
   if (recommendationEl) { recommendationEl.textContent = ''; recommendationEl.hidden = true; }
 }
 
@@ -229,12 +240,7 @@ function updateScorePanel(data) {
   reasonEl.textContent = '';
   reasonEl.classList.remove('visible');
 
-  if (window.innerWidth < 768 && scoreBarMobile) {
-    scoreBarMobile.classList.add('is-visible');
-    if (scoreBarNumEl) scoreBarNumEl.textContent = overall;
-    if (scoreBarLabelEl) scoreBarLabelEl.textContent = Math.round(confidence * 100) + '% confidence';
-    if (scorePanelEl) scorePanelEl.style.display = 'none';
-  }
+  if (mobileScorePillEl) mobileScorePillEl.textContent = overall;
 
 }
 
@@ -361,6 +367,7 @@ const AGENTS = {
       state.agentAvatarUrl = config.agentAvatarUrl || '/assets/images/signal-agent.png';
       const agentNameEl = document.getElementById('signal-agent-left-name');
       if (agentNameEl) agentNameEl.textContent = `${name.split(' ')[0]}'s Agent`;
+      if (mobileAgentNameEl) mobileAgentNameEl.textContent = `${name.split(' ')[0]}'s Agent`;
       const agentSubEl = document.getElementById('signal-agent-left-sub');
       if (agentSubEl) agentSubEl.textContent = `Work History for ${name}`;
       const credsEl = document.getElementById('signal-agent-left-creds');
@@ -502,6 +509,7 @@ async function transition(modeName, options = {}) {
   inputEl.style.height = 'auto';
   agentIntroEl?.classList.remove('is-done');
   scoreInnerEl?.classList.remove('is-active');
+  scorePanelEl?.classList.remove('is-compacted', 'is-expanded');
   if (scoreTabEl) { scoreTabEl.classList.remove('is-active'); }
   if (scoreTabBadge) scoreTabBadge.textContent = '';
   document.querySelector('[data-tab="profile"]')?.classList.add('is-active');
@@ -532,6 +540,7 @@ async function transition(modeName, options = {}) {
     ownerConfig: null,
     currentEvalId: null,
     evalContext: options.evalContext || null,
+    profileCompacted: false,
   };
 
   activeAgent = AGENTS[modeName];
@@ -549,6 +558,12 @@ async function sendMessage(text) {
   state.turnCount++;
   state.chatHistory.push({ role: 'user', content: text });
   appendMessage('user', text);
+
+  // Compact profile panel on first message (mobile)
+  if (!state.profileCompacted && window.innerWidth <= BREAKPOINT_MD) {
+    scorePanelEl?.classList.add('is-compacted');
+    state.profileCompacted = true;
+  }
 
   showThinking();
 

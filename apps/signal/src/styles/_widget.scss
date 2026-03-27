@@ -158,7 +158,7 @@
   position: relative;
 
   @media (max-width: $breakpoint-md) {
-    display: none;
+    overflow-y: auto;
   }
 }
 
@@ -576,9 +576,6 @@
   border-radius: 10px;
   order: 0;
 
-  @media (max-width: $breakpoint-md) {
-    display: flex; // always visible on mobile
-  }
 }
 
 .signal-score-bar-num {
@@ -593,6 +590,84 @@
   color: $color-text-muted;
 }
 
+// ─── Mobile compact header ─────────────────────────────────────────────────────
+
+.signal-mobile-header {
+  display: none;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-sm $space-md;
+  cursor: pointer;
+  min-height: 44px;
+  user-select: none;
+}
+
+.signal-mobile-agent-name {
+  flex: 1;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.signal-mobile-score {
+  font-size: $font-size-sm;
+  font-weight: 700;
+  color: #c4b5fd;
+
+  &:empty { display: none; }
+}
+
+.signal-mobile-chevron {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  transition: transform 0.2s;
+}
+
+@media (max-width: $breakpoint-md) {
+  .signal-panel--score.is-compacted {
+    height: auto;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    .signal-panel-tabs,
+    .signal-phase-wrap,
+    .signal-panel-footer {
+      display: none;
+    }
+
+    .signal-mobile-header {
+      display: flex;
+    }
+  }
+
+  .signal-panel--score.is-compacted.is-expanded {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: 75vh;
+    max-height: 75vh;
+    overflow-y: auto;
+    z-index: 2100;
+    border-radius: 12px 12px 0 0;
+    background: $color-bg-muted;
+
+    .signal-panel-tabs {
+      display: flex;
+    }
+
+    .signal-phase-wrap {
+      display: grid;
+    }
+
+    .signal-panel-footer {
+      display: flex;
+    }
+
+    .signal-mobile-chevron {
+      transform: rotate(180deg);
+    }
+  }
+}
+
 // ─── Chat Panel ────────────────────────────────────────────────────────────────
 
 .signal-panel--chat {
@@ -603,7 +678,7 @@
 
   @media (max-width: $breakpoint-md) {
     order: 1;
-    height: calc(100dvh - 72px - 80px); // leave room for compact score bar
+    height: auto;
     max-height: none;
   }
 }
@@ -2615,6 +2690,30 @@
 
   .signal-panel--score {
     border-color: rgba(196, 181, 253, 0.15);
+  }
+
+  @media (max-width: $breakpoint-md) {
+    .signal-widget {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: $space-md;
+      gap: $space-md;
+    }
+
+    .signal-panel--score {
+      display: flex;
+      flex-shrink: 0;
+      height: 42%;
+      overflow-y: auto;
+    }
+
+    .signal-panel--chat {
+      flex: 1;
+      min-height: 0;
+      height: auto;
+      max-height: none;
+    }
   }
 }
 
