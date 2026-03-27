@@ -1618,6 +1618,34 @@
 
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 
+.dash-tabs {
+  display: flex;
+  gap: $space-xs;
+  margin-bottom: $space-xl;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: 0;
+}
+
+.dash-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: $space-sm $space-md;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover { color: $color-text; }
+
+  &.active {
+    color: $color-text;
+    border-bottom-color: $color-primary;
+  }
+}
+
 .dash-wrap {
   max-width: 760px;
   margin: 0 auto;
