@@ -1,6 +1,8 @@
 require('dotenv').config();
+const Anthropic = require('@anthropic-ai/sdk');
 const { getOwnerByUserId, updateOwner } = require('./_services/db-signal-owners.cjs');
 const { getAllProcessedChunks, getContextStats } = require('./_services/db-signal-context.cjs');
+const { decrypt } = require('./_services/crypto.cjs');
 
 /**
  * POST /api/signal-context-synthesize
@@ -8,15 +10,29 @@ const { getAllProcessedChunks, getContextStats } = require('./_services/db-signa
  * Aggregates all processed chunks into three structured profiles on the owner doc:
  *   - skillsProfile: core skills, domains, technologies, project types
  *   - wantsProfile: what the owner is looking for (extracted from "wants" signals in chunks)
- *   - personalityProfile: communication/intellectual style from behavioural signals
+ *   - personalityProfile: weighted strength/edge signals from behavioral observations
  *
- * Also computes a concept co-occurrence graph and dimension completeness scores.
+ * Also computes a concept co-occurrence graph, dimension completeness scores,
+ * and a Claude-generated 3-paragraph narrative (synthesizedContext) stored on the owner doc.
  *
  * Called after signal-context-process finishes all chunks.
  *
  * Body: { userId }
  * Returns: { success, skillsProfile, wantsProfile, personalityProfile, conceptGraph }
  */
+
+function recencyWeight(dateStr) {
+  const ageInDays = (Date.now() - new Date(dateStr).getTime()) / 86400000;
+  return Math.exp(-ageInDays / 180); // half-life ~180 days
+}
+
+function filterByConfidence(scoreMap, sessionCount) {
+  // Only keep signals seen in ≥2 sessions
+  return Object.fromEntries(
+    Object.entries(scoreMap).filter(([signal]) => sessionCount[signal] >= 2)
+  );
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
@@ -45,49 +61,92 @@ exports.handler = async (event) => {
       };
     }
 
-    // ─── Aggregate skills ────────────────────────────────────────────────────────
+    const totalChunks = chunks.length;
 
-    const skillFreq = {};
-    const techFreq = {};
-    const domainFreq = {};
-    const projectFreq = {};
-    let skillsCoverage = 0;
-
-    chunks.forEach(c => {
-      if (c.dimensionCoverage?.skills) skillsCoverage++;
-      (c.skills || []).forEach(s => { skillFreq[s] = (skillFreq[s] || 0) + 1; });
-      (c.technologies || []).forEach(t => { techFreq[t] = (techFreq[t] || 0) + 1; });
-      (c.topics || []).forEach(d => { domainFreq[d] = (domainFreq[d] || 0) + 1; });
-      (c.projects || []).forEach(p => { projectFreq[p] = (projectFreq[p] || 0) + 1; });
-    });
-
-    const topN = (freq, n) => Object.entries(freq)
+    const topN = (scoreMap, n) => Object.entries(scoreMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, n)
       .map(([k]) => k);
 
+    // ─── Aggregate skills ────────────────────────────────────────────────────────
+
+    const skillScore = {};
+    const techScore = {};
+    const domainScore = {};
+    const projectScore = {};
+    const skillSessionCount = {};
+    const techSessionCount = {};
+    const domainSessionCount = {};
+    const projectSessionCount = {};
+    let skillsCoverage = 0;
+
+    for (const chunk of chunks) {
+      if (chunk.dimensionCoverage?.skills) skillsCoverage++;
+      const w = (chunk.evidenceStrength || 3) * recencyWeight(chunk.date || chunk._createdAt);
+      for (const s of (chunk.skills || [])) {
+        skillScore[s] = (skillScore[s] || 0) + w;
+        skillSessionCount[s] = (skillSessionCount[s] || 0) + 1;
+      }
+      for (const t of (chunk.technologies || [])) {
+        techScore[t] = (techScore[t] || 0) + w;
+        techSessionCount[t] = (techSessionCount[t] || 0) + 1;
+      }
+      for (const d of (chunk.topics || [])) {
+        domainScore[d] = (domainScore[d] || 0) + w;
+        domainSessionCount[d] = (domainSessionCount[d] || 0) + 1;
+      }
+      for (const p of (chunk.projects || [])) {
+        projectScore[p] = (projectScore[p] || 0) + w;
+        projectSessionCount[p] = (projectSessionCount[p] || 0) + 1;
+      }
+    }
+
+    const coreSkills = topN(filterByConfidence(skillScore, skillSessionCount), 15);
+    const technologies = topN(filterByConfidence(techScore, techSessionCount), 20);
+    const domains = topN(filterByConfidence(domainScore, domainSessionCount), 10);
+    const projectTypes = topN(filterByConfidence(projectScore, projectSessionCount), 10);
+
+    const skillSignalMeta = {};
+    for (const skill of [...coreSkills, ...technologies]) {
+      skillSignalMeta[skill] = {
+        sessions: skillSessionCount[skill] || 0,
+        confidence: (skillSessionCount[skill] || 0) / totalChunks
+      };
+    }
+
     const skillsProfile = {
-      coreSkills: topN(skillFreq, 15),
-      technologies: topN(techFreq, 20),
-      domains: topN(domainFreq, 10),
-      projectTypes: topN(projectFreq, 10),
-      completeness: Math.min(1, skillsCoverage / chunks.length)
+      coreSkills,
+      technologies,
+      domains,
+      projectTypes,
+      signalMeta: skillSignalMeta,
+      completeness: Math.min(1, skillsCoverage / totalChunks)
     };
 
     // ─── Aggregate wants (alignment) ────────────────────────────────────────────
 
-    const allWants = [];
+    const wantScore = {};
+    const wantSessionCount = {};
     let alignmentCoverage = 0;
 
-    chunks.forEach(c => {
-      if (c.dimensionCoverage?.alignment) alignmentCoverage++;
-      (c.wants || []).forEach(w => allWants.push(w));
-    });
+    for (const chunk of chunks) {
+      if (chunk.dimensionCoverage?.alignment) alignmentCoverage++;
+      const w = (chunk.evidenceStrength || 3) * recencyWeight(chunk.date || chunk._createdAt);
+      for (const want of (chunk.wants || [])) {
+        wantScore[want] = (wantScore[want] || 0) + w;
+        wantSessionCount[want] = (wantSessionCount[want] || 0) + 1;
+      }
+    }
 
-    // Deduplicate and group wants into categories
-    const wantsFreq = {};
-    allWants.forEach(w => { wantsFreq[w] = (wantsFreq[w] || 0) + 1; });
-    const topWants = topN(wantsFreq, 20);
+    const topWants = topN(filterByConfidence(wantScore, wantSessionCount), 20);
+
+    const wantSignalMeta = {};
+    for (const want of topWants) {
+      wantSignalMeta[want] = {
+        sessions: wantSessionCount[want] || 0,
+        confidence: (wantSessionCount[want] || 0) / totalChunks
+      };
+    }
 
     const wantsProfile = {
       workTypes: (owner.wantsProfile?.workTypes || []).length
@@ -99,67 +158,62 @@ exports.handler = async (event) => {
       openTo: owner.wantsProfile?.openTo || [],
       notLookingFor: owner.wantsProfile?.notLookingFor || [],
       rawWants: topWants,
-      completeness: Math.min(1, alignmentCoverage / chunks.length)
+      signalMeta: wantSignalMeta,
+      completeness: Math.min(1, alignmentCoverage / totalChunks)
     };
 
     // ─── Aggregate personality signals ──────────────────────────────────────────
 
-    const strengthFreq = {};
-    const edgeFreq = {};
+    const strengthScore = {};
+    const edgeScore = {};
+    const signalSessionCount = {};
     let personalityCoverage = 0;
 
-    chunks.forEach(c => {
-      if (c.dimensionCoverage?.personality) personalityCoverage++;
-      (c.personalitySignals || []).forEach(s => {
-        if (typeof s === 'string') {
-          strengthFreq[s] = (strengthFreq[s] || 0) + 1;
-        } else if (s && s.signal) {
-          const freq = s.polarity === 'edge' ? edgeFreq : strengthFreq;
-          freq[s.signal] = (freq[s.signal] || 0) + 1;
-        }
-      });
-    });
+    for (const chunk of chunks) {
+      if (chunk.dimensionCoverage?.personality) personalityCoverage++;
+      const w = (chunk.evidenceStrength || 3) * recencyWeight(chunk.date || chunk._createdAt);
+      for (const raw of (chunk.personalitySignals || [])) {
+        const signal = typeof raw === 'string' ? raw : raw.signal;
+        const polarity = typeof raw === 'string' ? 'strength' : (raw.polarity || 'strength');
+        const map = polarity === 'edge' ? edgeScore : strengthScore;
+        map[signal] = (map[signal] || 0) + w;
+        signalSessionCount[signal] = (signalSessionCount[signal] || 0) + 1;
+      }
+    }
 
-    const strengthSignals = topN(strengthFreq, 10);
-    const edgeSignals = topN(edgeFreq, 8);
+    const filteredStrength = filterByConfidence(strengthScore, signalSessionCount);
+    const filteredEdge = filterByConfidence(edgeScore, signalSessionCount);
 
-    // Derive summary descriptors from strength signals only
-    const is = (patterns) => strengthSignals.some(s => patterns.some(p => s.toLowerCase().includes(p)));
-    const communicationStyle = [
-      is(['direct', 'concise', 'terse', 'precise']) ? 'direct' : null,
-      is(['warm', 'collaborative', 'supportive']) ? 'warm' : null,
-      is(['detailed', 'thorough', 'comprehensive']) ? 'thorough' : null,
-      is(['exploratory', 'open-ended', 'curious']) ? 'exploratory' : null
-    ].filter(Boolean).join(', ') || 'varies by context';
+    const strengthSignals = topN(filteredStrength, 10);
+    const edgeSignals = topN(filteredEdge, 6); // empty array until reflection mode ships
 
-    const intellectualStyle = [
-      is(['first-principles', 'fundamental', 'from scratch']) ? 'first-principles thinker' : null,
-      is(['systems', 'architecture', 'structural']) ? 'systems thinker' : null,
-      is(['empirical', 'data', 'evidence']) ? 'empirical' : null,
-      is(['creative', 'novel', 'innovative']) ? 'creative problem-solver' : null
-    ].filter(Boolean).join(', ') || 'pragmatic';
+    const signalMeta = {};
+    for (const sig of [...strengthSignals, ...edgeSignals]) {
+      signalMeta[sig] = {
+        sessions: signalSessionCount[sig] || 0,
+        confidence: (signalSessionCount[sig] || 0) / totalChunks
+      };
+    }
 
     const personalityProfile = {
-      communicationStyle,
-      intellectualStyle,
-      problemApproach: strengthSignals.slice(0, 5).join('; '),
       strengthSignals,
       edgeSignals,
-      completeness: Math.min(1, personalityCoverage / chunks.length)
+      signalMeta,
+      completeness: Math.min(1, personalityCoverage / totalChunks)
     };
 
-    // ─── Concept co-occurrence graph ────────────────────────────────────────────
+    // ─── Concept co-occurrence graph ─────────────────────────────────────────────
 
     const coOccurrence = {};
-    chunks.forEach(c => {
-      const concepts = (c.concepts || []).slice(0, 20);
+    for (const chunk of chunks) {
+      const concepts = (chunk.concepts || []).slice(0, 20);
       concepts.forEach(a => {
         if (!coOccurrence[a]) coOccurrence[a] = {};
         concepts.forEach(b => {
           if (b !== a) coOccurrence[a][b] = (coOccurrence[a][b] || 0) + 1;
         });
       });
-    });
+    }
 
     // Keep top 50 concepts × top 5 neighbors
     const conceptGraph = {};
@@ -174,7 +228,7 @@ exports.handler = async (event) => {
           .map(([k]) => k);
       });
 
-    // ─── Update owner doc ────────────────────────────────────────────────────────
+    // ─── Update owner doc ─────────────────────────────────────────────────────────
 
     const stats = await getContextStats(signalId);
 
@@ -187,6 +241,68 @@ exports.handler = async (event) => {
       'contextStats.bySource': stats.bySource,
       'contextStats.conceptGraph': conceptGraph
     });
+
+    // ─── Narrative generation (Part B) ──────────────────────────────────────────
+
+    const signalFingerprint = [
+      ...strengthSignals.slice(0, 10),
+      ...(coreSkills).slice(0, 10),
+      ...(topWants).slice(0, 10)
+    ].join('|');
+    const newHash = require('crypto').createHash('md5').update(signalFingerprint).digest('hex');
+    const needsNarrative = !owner.synthesizedContextHash || owner.synthesizedContextHash !== newHash;
+
+    if (needsNarrative && strengthSignals.length > 0) {
+      let apiKey = process.env.ANTHROPIC_API_KEY;
+      if (owner.anthropicApiKey) {
+        try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
+      }
+
+      if (apiKey) {
+        const anthropic = new Anthropic({ apiKey });
+        const narrativePrompt = `You are building a behavioral profile for ${owner.displayName} from ${totalChunks} work sessions.
+
+SKILLS (top weighted):
+${coreSkills.slice(0, 10).join(', ')}
+
+TECHNOLOGIES:
+${technologies.slice(0, 10).join(', ')}
+
+PERSONALITY signals (top weighted, by observed frequency):
+${strengthSignals.slice(0, 8).map(s => `• ${s}`).join('\n')}
+
+ALIGNMENT (what they're moving toward):
+${topWants.slice(0, 8).join(', ')}
+
+Write exactly three paragraphs:
+1. Skills & technical depth — what they've demonstrably built and where they're strongest
+2. How they work — behavioral patterns, working style, how they handle friction and decisions
+3. Direction — what they're moving toward professionally
+
+Ground every claim in the signal data above. Do not invent anything not supported by the signals. Write in third person. Approximately 100 words per paragraph.`;
+
+        try {
+          const narrativeResponse = await anthropic.messages.create({
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 600,
+            messages: [{ role: 'user', content: narrativePrompt }]
+          });
+
+          const synthesizedContext = narrativeResponse.content[0]?.text?.trim().substring(0, 1400) || null;
+
+          if (synthesizedContext) {
+            await updateOwner(signalId, {
+              synthesizedContext,
+              synthesizedContextGeneratedAt: new Date().toISOString(),
+              synthesizedContextHash: newHash
+            });
+          }
+        } catch (err) {
+          // Narrative generation failure is non-fatal — log and continue
+          console.error('[signal-context-synthesize] Narrative generation failed:', err.message);
+        }
+      }
+    }
 
     return {
       statusCode: 200,
