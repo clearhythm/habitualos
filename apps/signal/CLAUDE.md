@@ -29,6 +29,8 @@ When touching `signal-ingest.js`, profile synthesis, chat tool definitions, eval
 
 **When building anything that touches the profile or synthesis layer**, ask: does this code capture how someone worked, not just what they built? If personality traces are being lost or ignored, that's a design failure worth flagging.
 
+**The experience layer is the person, not the agent.** The chat interface should feel like talking TO the candidate — first person, voiced by the behavioral record. The agent is an instrument they wield, not a separate voice. The fit score is delivered by the person ("my Signal score for this role is 84 — here's what drove it"), not by a black box. This makes the score more credible, the conversation more direct, and the product genuinely differentiated. A candidate who can say "here's where I'd struggle in this role, and here's the evidence" is rare. Signal makes that possible.
+
 See `docs/design.md` for the full framework.
 
 ## Architecture Reference

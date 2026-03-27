@@ -249,22 +249,23 @@
 }
 
 .signal-agent-avatar-wrap {
-  width: 136px;
-  height: 136px;
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
-  background: transparent;
+  background: rgba($color-primary, 0.12);
+  border: 2px solid rgba($color-primary, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .signal-agent-avatar-left {
-  width: 116px;
-  height: 116px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba($color-primary, 0.25);
+  object-fit: contain;
 }
 
 .signal-agent-left-creds {

@@ -6,15 +6,26 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
 
 <style>
   .waitlist-page {
-    padding: 5rem 1.5rem 0;
+    padding: 0 1.5rem;
     background: linear-gradient(to bottom, #130e28, #0a0d1a);
-    min-height: 80vh;
+    height: calc(100dvh - 72px);
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+  .waitlist-content-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding-bottom: 72px;
+    position: relative;
+    z-index: 1;
   }
   .waitlist-page-inner {
     max-width: 900px;
     margin: 0 auto;
+    width: 100%;
   }
   .waitlist-headline {
     font-size: clamp(2rem, 5vw, 3.25rem);
@@ -45,11 +56,12 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
   }
   .waitlist-bg-img {
     display: block;
-    margin-top: auto;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(-1);
     width: 100%;
     max-width: 900px;
-    align-self: center;
-    transform: scaleX(-1);
     opacity: 0.15;
     pointer-events: none;
     filter: invert(1);
@@ -58,6 +70,7 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
 </style>
 
 <div class="waitlist-page">
+  <div class="waitlist-content-wrap">
   <div class="waitlist-page-inner">
 
     <h1 class="waitlist-headline">You've done the work.<br>Now let it speak.</h1>
@@ -97,12 +110,13 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
 
       <div>
         <blockquote class="signal-pull-quote">
-          <p>&#8220;I built Signal because I needed it. If you use AI tools daily and are actively in the job market, I want to make it available to you too. Let's find out if it helps you land something even better.&#8221;</p>
+          <p>&#8220;I built Signal because I needed it. If you work with AI tools daily and are actively in the job market, I want to make it available to you too. Let's find out how if it helps you land something even better.&#8221;</p>
           <cite class="signal-pull-quote-cite">&mdash; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</cite>
         </blockquote>
       </div>
 
     </div>
+  </div>
   </div>
   <img src="/assets/images/signal_monkey_bg.png" alt="" class="waitlist-bg-img" aria-hidden="true">
 </div>

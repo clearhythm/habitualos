@@ -153,6 +153,52 @@ This is explicitly **not in current scope**. How it surfaces is art, not science
 
 ---
 
+## The Experience Layer — Talking TO the Person
+
+Signal's interface is not a report viewer. It's a conversation with the candidate.
+
+The AI speaks in first person *as* the candidate, voiced by the behavioral record. The agent disappears. What remains is: you can talk to someone who has unusual self-knowledge.
+
+> *"My Signal score for this role is 84. Here's what drove it — and here's where I'd genuinely struggle."*
+
+This reframes the entire product. Most candidates can't answer "where would you struggle in this role?" with any precision. Signal makes that possible because the behavioral evidence is right there, accessible as memory.
+
+**The core use case, stated plainly:** "Go find out if we should talk more." Signal is the pre-conversation — it handles the part that's awkward, repetitive, and inefficient. When a real conversation happens, it's already worth both parties' time.
+
+The fit score stays. But it's delivered by the person, not a black box. This makes it more credible (the candidate is vouching for it, not a screener), more honest (they can explain where they fell short), and more useful (the conversation that follows is about specifics, not impressions).
+
+**The agent as instrument:** The candidate wields their behavioral record like a doctor reading their own labs. They don't say "my diagnostic agent reports..." — they say "my numbers show X, here's what I think it means."
+
+---
+
+## Voice — A Fourth Dimension
+
+The three dimensions (skills, personality, alignment) describe *what* someone is. Voice captures *how they sound* — the tone, register, and stance that makes them recognizable.
+
+Voice matters because the experience layer requires it. A first-person chat that sounds generic defeats the purpose. But voice is also the hardest dimension to extract — especially for users whose sessions are sparse and task-oriented.
+
+**Important constraint:** Not everyone leaves rich voice signal in their AI sessions. People who use AI as a tool ("fix this bug") leave thin data. People who use AI collaboratively (explaining context, debating approaches, self-correcting out loud) leave rich data. Signal works best for the latter — but needs a graceful fallback for the former.
+
+**What's always present, even in sparse sessions:**
+- How problems are framed (context-rich vs. code-dump)
+- Response to pushback (accepts suggestions vs. argues back)
+- Vocabulary register (technical precision, abstraction level, metaphor use)
+- Pacing (slow iteration vs. fast and course-correct)
+- How the AI is addressed (collaborative vs. directive)
+
+**Extraction targets for voice:**
+- Sentence rhythm: terse vs. expansive
+- Default register: formal / casual / technical / conversational
+- Recurring framing patterns or phrases
+- Whether the person explains their reasoning or just states conclusions
+- Degree of expressed uncertainty vs. confidence
+
+**Sparse profile handling:** When voice data is thin, the candidate defaults to neutral/professional. Never invent a voice that isn't evidenced. A flat voice is honest; a fabricated one breaks trust the moment it diverges from reality.
+
+**In the ingest pipeline:** Voice should be captured as a separate field — not folded into personality. It's less about *what they do* and more about *how they sound doing it*. A small number of observations per session, accumulated into a voice profile over time.
+
+---
+
 ## The Longer Arc
 
 Hiring is the current application. The longer arc is helping teams understand the behavioral data they're already generating — every prompt, every session, every correction. Most organizations aren't thinking about this yet. Signal is a prototype for what it looks like when you do.
