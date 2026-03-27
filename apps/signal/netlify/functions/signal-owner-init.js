@@ -43,13 +43,9 @@ exports.handler = async (event) => {
       try { ownerApiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
     }
 
-    const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
+    const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile, true);
     const coverageSection = (skillsProfile || wantsProfile || personalityProfile)
       ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile)
-      : '';
-
-    const edgeSection = personalityProfile?.edgeSignals?.length
-      ? `\n\n== PERSONALITY EDGES (owner context only — do not surface to visitors) ==\n${personalityProfile.edgeSignals.join('; ')}`
       : '';
 
     let evalSection = '';
@@ -66,7 +62,7 @@ You have ${displayName}'s full profile. Use it to score job descriptions honestl
 == ${displayName.toUpperCase()}'S BACKGROUND ==
 ${contextText}
 
-${profileSection}${edgeSection}
+${profileSection}
 
 ${coverageSection}
 

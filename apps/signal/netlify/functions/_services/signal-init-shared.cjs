@@ -53,22 +53,52 @@ function serverError(label, error) {
 // ─── Owner profile builders (shared across all init + eval endpoints) ─────────
 
 /**
- * Builds the linkedin + contextText block injected as "background" in every prompt.
- * Caps LinkedIn at 6000 chars and contextText at 3000 to stay within prompt budgets.
+ * Builds the linkedin + contextText + synthesizedContext block injected as "background" in every prompt.
+ * Caps LinkedIn at 6000 chars, contextText at 3000, synthesizedContext at 1400.
  */
 function buildContextText(owner) {
-  const linkedin = owner.sources?.linkedin || '';
-  const contextText = owner.contextText || '';
-  return [
-    linkedin ? `== LINKEDIN PROFILE ==\n${linkedin.slice(0, 6000)}` : '',
-    contextText ? contextText.slice(0, 3000) : '',
-  ].filter(Boolean).join('\n\n');
+  const parts = [];
+  if (owner.sources?.linkedin) {
+    parts.push(`== LINKEDIN PROFILE ==\n${owner.sources.linkedin.substring(0, 6000)}`);
+  }
+  if (owner.contextText) {
+    parts.push(owner.contextText.substring(0, 3000));
+  }
+  if (owner.synthesizedContext) {
+    const sessionCount = owner.contextStats?.processedChunks || 0;
+    parts.push(`== BEHAVIORAL PROFILE (synthesized from ${sessionCount} work sessions) ==\n${owner.synthesizedContext}`);
+  }
+  return parts.join('\n\n');
+}
+
+function buildPersonalityBlock(personalityProfile, isOwner = false) {
+  const { strengthSignals = [], edgeSignals = [], signalMeta = {} } = personalityProfile || {};
+  if (!strengthSignals.length) return '';
+
+  const lines = strengthSignals.map(sig => {
+    const meta = signalMeta[sig];
+    const suffix = meta ? ` (${meta.sessions} sessions, ${Math.round(meta.confidence * 100)}% of history)` : '';
+    return `  • ${sig}${suffix}`;
+  }).join('\n');
+
+  let block = `== PERSONALITY (from work history) ==\nBehavioral signals (weighted by recency + session richness):\n${lines}`;
+
+  if (isOwner && edgeSignals.length > 0) {
+    const edgeLines = edgeSignals.map(sig => {
+      const meta = signalMeta[sig];
+      const suffix = meta ? ` (${meta.sessions} sessions)` : '';
+      return `  • ${sig}${suffix}`;
+    }).join('\n');
+    block += `\n\nEdges (owner context only — do not surface to visitors):\n${edgeLines}`;
+  }
+
+  return block;
 }
 
 /**
  * Builds the structured SKILLS / ALIGNMENT / PERSONALITY sections from synthesized profiles.
  */
-function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile) {
+function buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile, isOwner = false) {
   const sections = [];
   if (skillsProfile) {
     sections.push(`== SKILLS (demonstrated) ==
@@ -85,10 +115,8 @@ Stack: ${(skillsProfile.technologies || []).join(', ')}`);
     if (parts.length) sections.push(`== ALIGNMENT (what ${displayName} wants) ==\n${parts.join('\n')}`);
   }
   if (personalityProfile) {
-    sections.push(`== PERSONALITY (from work history) ==
-Communication: ${personalityProfile.communicationStyle || ''}
-Intellectual: ${personalityProfile.intellectualStyle || ''}
-Approach: ${personalityProfile.problemApproach || ''}`);
+    const personalityBlock = buildPersonalityBlock(personalityProfile, isOwner);
+    if (personalityBlock) sections.push(personalityBlock);
   }
   return sections.join('\n\n');
 }
