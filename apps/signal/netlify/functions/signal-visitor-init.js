@@ -129,10 +129,13 @@ exports.handler = async (event) => {
       ? { opener: matchedPersona.opener, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` }
       : { opener: `I'm an AI built on ${displayName}'s work history. What brings you here?`, strategy: `Help the visitor understand ${displayName}'s background and honestly assess fit.` };
 
-    // Build system prompt
-    const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, personalityProfile);
-    const coverageSection = (skillsProfile || wantsProfile || personalityProfile)
-      ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile, true)
+    // Build system prompt — strip edge signals, visitor context gets strength signals only
+    const visitorPersonalityProfile = personalityProfile
+      ? { ...personalityProfile, edgeSignals: undefined }
+      : null;
+    const profileSection = buildProfileSection(displayName, skillsProfile, wantsProfile, visitorPersonalityProfile);
+    const coverageSection = (skillsProfile || wantsProfile || visitorPersonalityProfile)
+      ? buildCoverageSection(skillsProfile, wantsProfile, visitorPersonalityProfile, true)
       : '';
 
     const searchToolInstruction = `== WORK HISTORY SEARCH ==

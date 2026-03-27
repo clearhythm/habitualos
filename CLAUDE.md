@@ -71,7 +71,7 @@ At commit time, POST a structured session summary to `https://signal.habitualos.
 The ingest captures three dimensions — skills, personality, alignment. All three matter. Personality traces are the most underbuilt and highest value. Always look for *how* Erik worked, not just *what* was built.
 
 **skills** — what was demonstrated technically
-**personalitySignals** — behavioral observations: how friction was handled, scope decisions, self-correction, aesthetic judgment, directness, tolerance for ambiguity. Be specific and observational, not evaluative.
+**personalitySignals** — behavioral observations tagged with polarity. `strength`: what Erik brings. `edge`: patterns worth examining (friction responses, avoidance, scope issues). Be specific and observational, not evaluative.
 **wants** — only include if alignment signals appeared: stated preferences, what Erik chose when unconstrained, what he pushed back on or toward
 
 ```json
@@ -85,9 +85,9 @@ The ingest captures three dimensions — skills, personality, alignment. All thr
   "skills": ["<skill>"],
   "technologies": ["<tech>"],
   "personalitySignals": [
-    "<specific behavioral observation>",
-    "<e.g. 'self-corrected on tone mid-session and named it explicitly'>",
-    "<e.g. 'cut scope when aesthetics felt wrong rather than shipping anyway'>"
+    { "signal": "cut scope decisively when aesthetics felt wrong rather than shipping anyway", "polarity": "strength" },
+    { "signal": "self-corrected on tone mid-session and named it explicitly", "polarity": "strength" },
+    { "signal": "<edge example: frustration surfaced quickly under repeated execution friction>", "polarity": "edge" }
   ],
   "wants": ["<only if alignment signals present — what Erik is moving toward>"],
   "keyInsight": "<optional: one sharp observation about the session>"

@@ -99,10 +99,21 @@ pageScript: /assets/js/dashboard.js
             <div class="dash-completeness-bar-track"><div class="dash-completeness-bar-fill" id="completeness-alignment" style="width:0%"></div></div>
             <div class="dash-completeness-pct" id="completeness-alignment-pct">—</div>
           </div>
-          <div class="dash-completeness-card">
+          <div class="dash-completeness-card" id="completeness-personality-card">
             <div class="dash-completeness-label">Personality</div>
             <div class="dash-completeness-bar-track"><div class="dash-completeness-bar-fill" id="completeness-personality" style="width:0%"></div></div>
             <div class="dash-completeness-pct" id="completeness-personality-pct">—</div>
+          </div>
+        </div>
+
+        <!-- Reflection mode toggle -->
+        <div class="dash-reflection-mode" style="margin-top:1.25rem;margin-bottom:0.5rem;">
+          <label class="signal-label">Reflection mode</label>
+          <p class="signal-field-hint">Standard captures strengths only. Coach captures both strengths and edges — honest patterns worth examining. Edges are owner-facing only and never shown to visitors.</p>
+          <div class="dash-toggle-row">
+            <button type="button" class="btn btn-toggle" id="reflection-mode-standard" data-mode="standard">Standard</button>
+            <button type="button" class="btn btn-toggle" id="reflection-mode-coach" data-mode="coach">Coach</button>
+            <span class="dash-save-status" id="reflection-mode-status"></span>
           </div>
         </div>
 

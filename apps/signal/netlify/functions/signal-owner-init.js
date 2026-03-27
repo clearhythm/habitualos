@@ -48,6 +48,10 @@ exports.handler = async (event) => {
       ? buildCoverageSection(skillsProfile, wantsProfile, personalityProfile)
       : '';
 
+    const edgeSection = personalityProfile?.edgeSignals?.length
+      ? `\n\n== PERSONALITY EDGES (owner context only — do not surface to visitors) ==\n${personalityProfile.edgeSignals.join('; ')}`
+      : '';
+
     let evalSection = '';
     if (evalContext?.roleTitle) {
       const s = evalContext.score || {};
@@ -62,7 +66,7 @@ You have ${displayName}'s full profile. Use it to score job descriptions honestl
 == ${displayName.toUpperCase()}'S BACKGROUND ==
 ${contextText}
 
-${profileSection}
+${profileSection}${edgeSection}
 
 ${coverageSection}
 

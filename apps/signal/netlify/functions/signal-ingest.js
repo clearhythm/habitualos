@@ -72,6 +72,11 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Unauthorized' }) };
     }
 
+    // Normalize personalitySignals — accept plain strings (legacy) or tagged objects
+    const normalizedSignals = (personalitySignals || []).map(s =>
+      typeof s === 'string' ? { signal: s, polarity: 'strength' } : s
+    );
+
     const sessionDate = date || new Date().toISOString();
     // Dedup key: use provided id (e.g. commit hash) or generate from source+repo+date
     const safeRepo = repo.replace(/[^a-zA-Z0-9_-]/g, '-');
@@ -107,7 +112,7 @@ exports.handler = async (event) => {
       technologies,
       projects,
       wants,
-      personalitySignals,
+      personalitySignals: normalizedSignals,
       concepts,
       keyInsight,
       dimensionCoverage,

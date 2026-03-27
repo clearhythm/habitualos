@@ -21,7 +21,7 @@ const {
  * Returns: { success, processed: N, remaining: M }
  */
 
-const EXTRACTION_PROMPT = (title, date, excerpt) => `Extract structured metadata from this AI conversation excerpt.
+const EXTRACTION_PROMPT = (title, date, excerpt, coachMode = false) => `Extract structured metadata from this AI conversation excerpt.
 
 Title: "${title}"
 Date: ${date}
@@ -53,7 +53,14 @@ Field guidance:
 - summary: 2-4 sentences — what was worked on and what it demonstrates about this person
 - keyInsight: single most notable signal about this person's capabilities or character
 - dimensionCoverage: true if this conversation clearly informs that dimension
-- evidenceStrength: 1=shallow exchange, 2=some depth, 3=substantive work, 4=complex problem solved, 5=deep expertise demonstrated`;
+- evidenceStrength: 1=shallow exchange, 2=some depth, 3=substantive work, 4=complex problem solved, 5=deep expertise demonstrated${coachMode ? `
+
+Coach mode — balanced signal extraction:
+Extract personalitySignals as objects with polarity tags instead of plain strings:
+  { "signal": "...", "polarity": "strength" | "edge" }
+- strength: what this person brings — capabilities, judgment, working style strengths
+- edge: patterns worth examining — friction responses, avoidance, scope issues, blind spots
+Be specific and observational, not evaluative. Both polarities build an honest record.` : ''}`;
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -74,6 +81,7 @@ exports.handler = async (event) => {
     }
 
     const signalId = owner.id;
+    const coachMode = owner.reflectionMode === 'coach';
 
     // Resolve API key: owner's key if set, else Signal's key
     let apiKey = process.env.ANTHROPIC_API_KEY;
@@ -104,7 +112,7 @@ exports.handler = async (event) => {
           max_tokens: 1024,
           messages: [{
             role: 'user',
-            content: EXTRACTION_PROMPT(chunk.title, chunk.date, chunk.excerpt || '')
+            content: EXTRACTION_PROMPT(chunk.title, chunk.date, chunk.excerpt || '', coachMode)
           }]
         });
 
@@ -117,13 +125,18 @@ exports.handler = async (event) => {
 
         // Validate and sanitize
         const toArray = (v) => Array.isArray(v) ? v.map(String).slice(0, 30) : [];
+        const normalizeSignals = (arr) => (Array.isArray(arr) ? arr : []).slice(0, 30).map(s => {
+          if (typeof s === 'string') return { signal: s, polarity: 'strength' };
+          if (s && typeof s.signal === 'string') return { signal: String(s.signal).slice(0, 200), polarity: s.polarity === 'edge' ? 'edge' : 'strength' };
+          return null;
+        }).filter(Boolean);
         const fields = {
           topics: toArray(extracted.topics),
           skills: toArray(extracted.skills),
           technologies: toArray(extracted.technologies),
           projects: toArray(extracted.projects),
           wants: toArray(extracted.wants),
-          personalitySignals: toArray(extracted.personalitySignals),
+          personalitySignals: normalizeSignals(extracted.personalitySignals),
           concepts: toArray(extracted.concepts),
           summary: String(extracted.summary || '').slice(0, 600),
           keyInsight: String(extracted.keyInsight || '').slice(0, 300),
