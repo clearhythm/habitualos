@@ -191,7 +191,8 @@ async function run() {
     const { status, data } = await post('signal-config-get', { signalId: SIGNAL_ID });
     assert.strictEqual(status, 200);
     assert.strictEqual(data.success, true);
-    assert.ok(data.displayName, 'displayName should be present');
+    assert.ok(data.config, 'config object should be present');
+    assert.ok(data.config.displayName, 'config.displayName should be present');
   });
 
   await test('POST with unknown signalId returns 404', async () => {
