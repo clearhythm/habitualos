@@ -77,6 +77,13 @@ exports.handler = async (event) => {
       }));
     }
 
+    if (patch.reflectionMode !== undefined) {
+      if (!['standard', 'coach'].includes(patch.reflectionMode)) {
+        return { statusCode: 400, body: JSON.stringify({ success: false, error: 'reflectionMode must be "standard" or "coach"' }) };
+      }
+      update.reflectionMode = patch.reflectionMode;
+    }
+
     if (patch.anthropicApiKey !== undefined) {
       const key = String(patch.anthropicApiKey).trim();
       if (key && !key.startsWith('sk-ant-')) {

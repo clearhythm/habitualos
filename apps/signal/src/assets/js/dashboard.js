@@ -99,6 +99,10 @@ function renderDashboard(config) {
   if (pp.communicationStyle) setVal('gap-collab-style', pp.communicationStyle);
   if (pp.problemApproach) setVal('gap-problem-approach', pp.problemApproach);
 
+  // Reflection mode toggle
+  const mode = config.reflectionMode || 'standard';
+  updateReflectionToggle(mode);
+
   renderPersonas(personas);
 }
 
@@ -139,6 +143,11 @@ function renderContextStats(data) {
     setCompleteness('alignment', wantsProfile?.completeness || 0);
     setCompleteness('personality', personalityProfile?.completeness || 0);
 
+    // Show edge signals in personality card (owner-only)
+    if (personalityProfile?.edgeSignals?.length) {
+      renderEdgeSignals(personalityProfile.edgeSignals);
+    }
+
     // Show gap Q&A cards for weak dimensions
     if ((wantsProfile?.completeness || 0) < 0.3) setHidden('gap-alignment', false);
     if ((personalityProfile?.completeness || 0) < 0.3) setHidden('gap-personality', false);
@@ -150,6 +159,46 @@ function setCompleteness(dim, value) {
   const bar = document.getElementById(`completeness-${dim}`);
   if (bar) bar.style.width = `${pct}%`;
   setText(`completeness-${dim}-pct`, `${pct}% from history`);
+}
+
+function updateReflectionToggle(mode) {
+  const stdBtn = document.getElementById('reflection-mode-standard');
+  const coachBtn = document.getElementById('reflection-mode-coach');
+  if (!stdBtn || !coachBtn) return;
+  stdBtn.classList.toggle('active', mode === 'standard');
+  coachBtn.classList.toggle('active', mode === 'coach');
+}
+
+['reflection-mode-standard', 'reflection-mode-coach'].forEach(id => {
+  $on(id, 'click', () => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const mode = btn.dataset.mode;
+    updateReflectionToggle(mode);
+    saveField({ reflectionMode: mode }, 'reflection-mode-status');
+  });
+});
+
+function renderEdgeSignals(edgeSignals) {
+  const card = document.getElementById('completeness-personality-card');
+  if (!card || !edgeSignals?.length) return;
+
+  const existing = card.querySelector('.dash-edge-signals');
+  if (existing) existing.remove();
+
+  const wrap = document.createElement('div');
+  wrap.className = 'dash-edge-signals';
+  wrap.innerHTML = `
+    <button type="button" class="dash-edge-toggle" aria-expanded="false">Edges <span class="dash-edge-count">${edgeSignals.length}</span></button>
+    <ul class="dash-edge-list" hidden>${edgeSignals.map(s => `<li>${escHtml(s)}</li>`).join('')}</ul>
+  `;
+  wrap.querySelector('.dash-edge-toggle').addEventListener('click', (e) => {
+    const list = wrap.querySelector('.dash-edge-list');
+    const expanded = e.target.getAttribute('aria-expanded') === 'true';
+    list.hidden = expanded;
+    e.target.setAttribute('aria-expanded', String(!expanded));
+  });
+  card.appendChild(wrap);
 }
 
 // ─── File upload ──────────────────────────────────────────────────────────────

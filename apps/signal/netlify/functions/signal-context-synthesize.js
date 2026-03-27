@@ -104,18 +104,27 @@ exports.handler = async (event) => {
 
     // ─── Aggregate personality signals ──────────────────────────────────────────
 
-    const sigFreq = {};
+    const strengthFreq = {};
+    const edgeFreq = {};
     let personalityCoverage = 0;
 
     chunks.forEach(c => {
       if (c.dimensionCoverage?.personality) personalityCoverage++;
-      (c.personalitySignals || []).forEach(s => { sigFreq[s] = (sigFreq[s] || 0) + 1; });
+      (c.personalitySignals || []).forEach(s => {
+        if (typeof s === 'string') {
+          strengthFreq[s] = (strengthFreq[s] || 0) + 1;
+        } else if (s && s.signal) {
+          const freq = s.polarity === 'edge' ? edgeFreq : strengthFreq;
+          freq[s.signal] = (freq[s.signal] || 0) + 1;
+        }
+      });
     });
 
-    const topSignals = topN(sigFreq, 15);
+    const strengthSignals = topN(strengthFreq, 10);
+    const edgeSignals = topN(edgeFreq, 8);
 
-    // Derive summary descriptors from signals
-    const is = (patterns) => topSignals.some(s => patterns.some(p => s.toLowerCase().includes(p)));
+    // Derive summary descriptors from strength signals only
+    const is = (patterns) => strengthSignals.some(s => patterns.some(p => s.toLowerCase().includes(p)));
     const communicationStyle = [
       is(['direct', 'concise', 'terse', 'precise']) ? 'direct' : null,
       is(['warm', 'collaborative', 'supportive']) ? 'warm' : null,
@@ -133,8 +142,9 @@ exports.handler = async (event) => {
     const personalityProfile = {
       communicationStyle,
       intellectualStyle,
-      problemApproach: topSignals.slice(0, 5).join('; '),
-      rawSignals: topSignals,
+      problemApproach: strengthSignals.slice(0, 5).join('; '),
+      strengthSignals,
+      edgeSignals,
       completeness: Math.min(1, personalityCoverage / chunks.length)
     };
 
