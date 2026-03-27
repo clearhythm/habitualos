@@ -4,48 +4,98 @@ title: "Signal — Join the waitlist"
 description: "Get early access to Signal — a professional fit-scoring agent trained on your actual AI work history."
 ---
 
-<div class="signal-skyline-section signal-skyline-section--dark">
-  <div class="container">
-    <div class="signal-skyline-cta">
-      <h1 class="signal-skyline-headline">You've done the work.<br>Now let it speak.</h1>
-      <p class="signal-skyline-sub">
-        Signal is early. We're building it alongside developers who use AI coding tools daily and are actively in the market, so we can make sure it actually helps make your job search easier. If that's you, we'd love to have you.
-      </p>
+<style>
+  .waitlist-page {
+    padding: 5rem 1.5rem 5rem;
+    background: #0a0d1a;
+    min-height: 80vh;
+    position: relative;
+    overflow: hidden;
+  }
+  .waitlist-page-inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .waitlist-headline {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0 0 2rem;
+    max-width: 600px;
+  }
+  .waitlist-body {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 640px) {
+    .waitlist-body { grid-template-columns: 1fr; }
+  }
+  .waitlist-body .signal-pull-quote {
+    border-left: none;
+    padding: 0;
+    font-size: 1.2rem;
+    margin: 3.5rem 0 0;
+  }
+  .waitlist-bg-img {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 380px;
+    opacity: 0.15;
+    pointer-events: none;
+  }
+</style>
 
-      <div class="signal-qualify-block">
-        <p class="signal-qualify-heading">Our early users are:</p>
-        <ul class="signal-qualify-list">
-          <li>Developers using Claude Code, Cursor, or Codex <em>daily</em></li>
-          <li>Willing to auto-save their session history to grow a profile</li>
-          <li>Actively job seeking or ready to up-level their careers</li>
-        </ul>
-        <p class="signal-qualify-note">&mdash; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</p>
+<div class="waitlist-page">
+  <div class="waitlist-page-inner">
+
+    <h1 class="waitlist-headline">You've done the work.<br>Now let it speak.</h1>
+
+    <div class="waitlist-body">
+
+      <div>
+        <div class="signal-qualify-block">
+          <p class="signal-qualify-heading">Early access is for people who:</p>
+          <ul class="signal-qualify-list">
+            <li>Use Claude Code, Cursor, or Codex <em>near-daily</em></li>
+            <li>Are actively job seeking or ready to make a move</li>
+            <li>Are building real things, not just chatting</li>
+          </ul>
+          <p style="color: rgba(255,255,255,0.6);">If that describes you, I'll reach out directly with your free access code as space opens up.</p>
+          <div id="waitlist-form-wrap">
+            <form id="waitlist-form" class="signal-waitlist-form">
+              <input
+                type="email"
+                id="waitlist-email"
+                class="signal-waitlist-input"
+                placeholder="your@email.com"
+                required
+                autocomplete="email"
+              />
+              <button type="submit" class="btn btn-primary" id="waitlist-submit">Request access</button>
+            </form>
+            <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
+            <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
+              <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="signal-waitlist-demo-link">Not sure yet? <a href="/demo/">See a live demo →</a></p>
       </div>
 
-      <div id="waitlist-form-wrap">
-        <form id="waitlist-form" class="signal-waitlist-form">
-          <input
-            type="email"
-            id="waitlist-email"
-            class="signal-waitlist-input"
-            placeholder="your@email.com"
-            required
-            autocomplete="email"
-          />
-          <button type="submit" class="btn btn-primary" id="waitlist-submit">Request early access</button>
-        </form>
-        <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
+      <div>
+        <blockquote class="signal-pull-quote">
+          <p>&#8220;I built Signal because I needed it. If you use AI tools daily and are actively in the job market, I want to make it available to you too. Let's find out if it helps you land something even better.&#8221;</p>
+          <cite class="signal-pull-quote-cite">&mdash; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</cite>
+        </blockquote>
       </div>
-
-      <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
-        <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
-      </div>
-
-      <p class="signal-waitlist-demo-link">Not sure yet? <a href="/demo/">See a live demo →</a></p>
 
     </div>
   </div>
-  <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-skyline-img" aria-hidden="true">
+  <img src="/assets/images/signal_monkey_bg.png" alt="" class="waitlist-bg-img" aria-hidden="true">
 </div>
 
 <script>
@@ -83,7 +133,7 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
       errorEl.textContent = err.message || 'Something went wrong. Try again.';
       errorEl.style.display = '';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Request early access';
+      submitBtn.textContent = 'Request access';
     }
   });
 })();
