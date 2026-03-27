@@ -1,0 +1,598 @@
+---
+layout: base.njk
+title: "Spock vs. Data — Signal Demo"
+description: "Two legendary officers. Six job openings. See how Signal scores them against real roles."
+bodyClass: "spock-vs-data-page"
+---
+
+<style>
+  .svd-hero {
+    padding: 5rem 1.5rem 3rem;
+    text-align: center;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .svd-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 1rem;
+  }
+  .svd-hero p {
+    font-size: 1.125rem;
+    color: #9ca3af;
+    max-width: 560px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  .svd-profiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .svd-profiles { grid-template-columns: 1fr; }
+  }
+
+  .svd-profile-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .svd-profile-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+  }
+  .svd-profile-card .tagline {
+    font-size: 0.85rem;
+    color: #9ca3af;
+    margin: 0 0 1rem;
+  }
+  .svd-profile-card .bio {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+    line-height: 1.65;
+    margin-bottom: 1.25rem;
+  }
+  .svd-profile-card .bio.loading {
+    height: 4rem;
+    background: #334155;
+    border-radius: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .svd-skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  .svd-skill-tag {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+  }
+  .svd-personality-signals {
+    margin-top: 0.75rem;
+  }
+  .svd-personality-signals .label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+  }
+  .svd-personality-signals ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .svd-personality-signals ul li {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #1e293b;
+    line-height: 1.4;
+  }
+  .svd-personality-signals ul li::before {
+    content: "→ ";
+    color: #4b5563;
+  }
+
+  .svd-chat-btn {
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: center;
+    font-size: 0.875rem;
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .svd-chat-btn:hover {
+    border-color: #7c3aed;
+    color: #c4b5fd;
+  }
+
+  .svd-roles-section {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    padding: 0 1.5rem;
+  }
+  .svd-roles-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .svd-role-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .svd-role-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.6rem 1.25rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .svd-role-btn:hover {
+    border-color: #7c3aed;
+    color: #e2e8f0;
+  }
+  .svd-role-btn.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+  }
+
+  .svd-comparison {
+    max-width: 900px;
+    margin: 0 auto 4rem;
+    padding: 0 1.5rem;
+    display: none;
+  }
+  .svd-comparison.visible {
+    display: block;
+  }
+
+  .svd-comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 640px) {
+    .svd-comparison-grid { grid-template-columns: 1fr; }
+  }
+
+  .svd-scorecard {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .svd-scorecard h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+
+  .svd-scores {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+  .svd-score-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .svd-score-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    width: 72px;
+    flex-shrink: 0;
+  }
+  .svd-score-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: #0f172a;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .svd-score-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+  .svd-score-val {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .svd-recommendation {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+  .rec-strong-candidate { background: #14532d; color: #86efac; }
+  .rec-worth-applying   { background: #713f12; color: #fde68a; }
+  .rec-stretch          { background: #1c1917; color: #a8a29e; }
+  .rec-poor-fit         { background: #450a0a; color: #fca5a5; }
+
+  .svd-summary {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #334155;
+  }
+
+  .svd-section-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  .svd-bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+  }
+  .svd-bullets li {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #0f172a;
+    line-height: 1.4;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .svd-bullets li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #4b5563;
+  }
+  .svd-bullets.gaps li::before {
+    color: #6b7280;
+    content: "—";
+  }
+
+  .svd-evidence {
+    margin-top: 0.25rem;
+  }
+  .svd-evidence-item {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .svd-evidence-item .ep-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+  }
+  .svd-evidence-item .ep-title a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid #334155;
+  }
+  .svd-evidence-item .ep-title a:hover {
+    border-bottom-color: #7c3aed;
+  }
+  .svd-evidence-item .ep-summary {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 0.3rem;
+  }
+  .svd-evidence-item .ep-insight {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-style: italic;
+    line-height: 1.5;
+  }
+  .svd-evidence-item .ep-insight::before {
+    content: '"';
+    color: #4b5563;
+  }
+  .svd-evidence-item .ep-insight::after {
+    content: '"';
+    color: #4b5563;
+  }
+
+  .svd-loading-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+    color: #4b5563;
+    font-size: 0.875rem;
+  }
+
+  .svd-cta {
+    text-align: center;
+    padding: 3rem 1.5rem 5rem;
+    border-top: 1px solid #1e293b;
+  }
+  .svd-cta p {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+    font-size: 0.9375rem;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+  }
+  .skeleton {
+    background: #334155;
+    border-radius: 4px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+</style>
+
+<div class="svd-hero">
+  <h1>Two Legends.<br>Six Job Openings.</h1>
+  <p>Signal builds a behavioral profile from work history, then scores fit against real roles — skills, alignment, and personality. We ran it on Spock and Data.</p>
+</div>
+
+<!-- Profile cards -->
+<div class="svd-profiles" id="profile-grid">
+  <div class="svd-profile-card" id="card-spock">
+    <h2>Spock</h2>
+    <p class="tagline skeleton" style="height:1rem; width:70%; margin-bottom:1rem;">&nbsp;</p>
+    <p class="bio skeleton">&nbsp;</p>
+    <div class="svd-skill-tags" id="skills-spock"></div>
+    <div class="svd-personality-signals" id="personality-spock"></div>
+    <button class="svd-chat-btn btn" onclick="openChat('spock')">Chat with Spock →</button>
+  </div>
+  <div class="svd-profile-card" id="card-data-tng">
+    <h2>Data</h2>
+    <p class="tagline skeleton" style="height:1rem; width:70%; margin-bottom:1rem;">&nbsp;</p>
+    <p class="bio skeleton">&nbsp;</p>
+    <div class="svd-skill-tags" id="skills-data-tng"></div>
+    <div class="svd-personality-signals" id="personality-data-tng"></div>
+    <button class="svd-chat-btn btn" onclick="openChat('data-tng')">Chat with Data →</button>
+  </div>
+</div>
+
+<!-- Role picker -->
+<div class="svd-roles-section">
+  <p class="svd-roles-label">Pick a role to see how they score</p>
+  <div class="svd-role-picker" id="role-picker"></div>
+</div>
+
+<!-- Comparison -->
+<div class="svd-comparison" id="comparison-section">
+  <div class="svd-comparison-grid" id="comparison-grid">
+    <div class="svd-loading-card">Loading...</div>
+    <div class="svd-loading-card">Loading...</div>
+  </div>
+</div>
+
+<div class="svd-cta">
+  <p>Signal builds profiles like these from real AI work sessions — automatically, continuously.</p>
+  <a href="/waitlist/" class="btn btn-primary">Get early access →</a>
+</div>
+
+<script>
+(function() {
+  var demoData = null;
+  var activeRole = null;
+
+  function scoreColor(n) {
+    if (n >= 8) return '#22c55e';
+    if (n >= 6) return '#eab308';
+    return '#ef4444';
+  }
+
+  function recClass(rec) {
+    return 'rec-' + (rec || 'poor-fit').replace(/\s+/g, '-');
+  }
+
+  function recLabel(rec) {
+    var map = {
+      'strong-candidate': 'Strong Candidate',
+      'worth-applying': 'Worth Applying',
+      'stretch': 'Stretch',
+      'poor-fit': 'Poor Fit'
+    };
+    return map[rec] || rec;
+  }
+
+  function ytLink(title) {
+    return 'https://www.youtube.com/results?search_query=' + encodeURIComponent('Star Trek ' + title);
+  }
+
+  function renderProfiles(profiles) {
+    ['spock', 'data-tng'].forEach(function(id) {
+      var p = profiles[id];
+      if (!p) return;
+      var card = document.getElementById('card-' + id);
+      var taglineEl = card.querySelector('.tagline');
+      var bioEl = card.querySelector('.bio');
+      var skillsEl = document.getElementById('skills-' + id);
+      var personalityEl = document.getElementById('personality-' + id);
+
+      taglineEl.textContent = p.tagline || '';
+      taglineEl.classList.remove('skeleton');
+
+      if (p.synthesizedContext) {
+        var paras = p.synthesizedContext.split(/\n\n+/);
+        bioEl.textContent = paras[0] || p.synthesizedContext.slice(0, 220) + '…';
+      } else {
+        bioEl.textContent = p.tagline || '';
+      }
+      bioEl.classList.remove('skeleton');
+
+      var skills = (p.skillsProfile && p.skillsProfile.coreSkills || []).slice(0, 6);
+      skillsEl.innerHTML = skills.map(function(s) {
+        return '<span class="svd-skill-tag">' + s + '</span>';
+      }).join('');
+
+      var signals = (p.personalityProfile && p.personalityProfile.strengthSignals || []).slice(0, 3);
+      if (signals.length) {
+        personalityEl.innerHTML =
+          '<p class="label">How they work</p><ul>' +
+          signals.map(function(s) { return '<li>' + s + '</li>'; }).join('') +
+          '</ul>';
+      }
+    });
+  }
+
+  function renderRolePicker(roles) {
+    var picker = document.getElementById('role-picker');
+    picker.innerHTML = roles.map(function(r) {
+      return '<button class="svd-role-btn" data-role="' + r + '" onclick="selectRole(this, \'' + r.replace(/'/g, "\\'") + '\')">' + r + '</button>';
+    }).join('');
+  }
+
+  function renderScorecard(signalId, evalData, displayName) {
+    if (!evalData) {
+      return '<div class="svd-loading-card">No evaluation data for ' + (displayName || signalId) + '</div>';
+    }
+
+    var score = evalData.score || {};
+    var scores = [
+      { label: 'Skills', key: 'skills' },
+      { label: 'Alignment', key: 'alignment' },
+      { label: 'Overall', key: 'overall' }
+    ];
+
+    var scoreBars = scores.map(function(s) {
+      var val = score[s.key];
+      if (val == null) return '';
+      var pct = (val / 10 * 100).toFixed(0);
+      var color = scoreColor(val);
+      return '<div class="svd-score-row">' +
+        '<span class="svd-score-label">' + s.label + '</span>' +
+        '<div class="svd-score-bar-wrap"><div class="svd-score-bar" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+        '<span class="svd-score-val" style="color:' + color + '">' + val + '</span>' +
+        '</div>';
+    }).join('');
+
+    var recHtml = '<span class="svd-recommendation ' + recClass(evalData.recommendation) + '">' + recLabel(evalData.recommendation) + '</span>';
+
+    var strengthsHtml = (evalData.strengths || []).length
+      ? '<p class="svd-section-label">Strengths</p><ul class="svd-bullets">' +
+        evalData.strengths.slice(0, 3).map(function(s) { return '<li>' + s + '</li>'; }).join('') +
+        '</ul>'
+      : '';
+
+    var gapsHtml = (evalData.gaps || []).length
+      ? '<p class="svd-section-label">Gaps</p><ul class="svd-bullets gaps">' +
+        evalData.gaps.slice(0, 2).map(function(g) {
+          var text = typeof g === 'string' ? g : (g.gap || JSON.stringify(g));
+          return '<li>' + text + '</li>';
+        }).join('') +
+        '</ul>'
+      : '';
+
+    var evidenceHtml = '';
+    var chunks = (evalData.evidenceChunks || []).slice(0, 3);
+    if (chunks.length) {
+      evidenceHtml = '<p class="svd-section-label">Evidence used</p><div class="svd-evidence">' +
+        chunks.map(function(c) {
+          var link = '<a href="' + ytLink(c.title) + '" target="_blank" rel="noopener">' + c.title + '</a>';
+          return '<div class="svd-evidence-item">' +
+            '<div class="ep-title">' + link + '</div>' +
+            (c.summary ? '<div class="ep-summary">' + c.summary.slice(0, 140) + '…</div>' : '') +
+            (c.keyInsight ? '<div class="ep-insight">' + c.keyInsight.slice(0, 120) + '</div>' : '') +
+            '</div>';
+        }).join('') +
+        '</div>';
+    }
+
+    return '<div class="svd-scorecard">' +
+      '<h3>' + (displayName || signalId) + '</h3>' +
+      '<div class="svd-scores">' + scoreBars + '</div>' +
+      recHtml +
+      (evalData.summary ? '<p class="svd-summary">' + evalData.summary + '</p>' : '') +
+      strengthsHtml +
+      gapsHtml +
+      evidenceHtml +
+      '<button class="svd-chat-btn btn" onclick="openChat(\'' + signalId + '\')" style="margin-top:1rem">Chat with ' + (displayName || signalId) + ' →</button>' +
+      '</div>';
+  }
+
+  window.selectRole = function(btn, role) {
+    document.querySelectorAll('.svd-role-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    activeRole = role;
+
+    var section = document.getElementById('comparison-section');
+    var grid = document.getElementById('comparison-grid');
+    section.classList.add('visible');
+    grid.innerHTML = '<div class="svd-loading-card">Scoring…</div><div class="svd-loading-card">Scoring…</div>';
+
+    if (!demoData) return;
+
+    var roleEvals = (demoData.evalsByRole || {})[role] || {};
+    var profiles = demoData.profiles || {};
+
+    grid.innerHTML =
+      renderScorecard('spock', roleEvals['spock'], profiles.spock && profiles.spock.displayName) +
+      renderScorecard('data-tng', roleEvals['data-tng'], profiles['data-tng'] && profiles['data-tng'].displayName);
+
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  window.openChat = function(signalId) {
+    if (typeof window.signalOpen === 'function') {
+      window.signalOpen({ mode: 'visitor', signalId: signalId });
+    } else {
+      alert('Chat widget not loaded yet — try again in a moment.');
+    }
+  };
+
+  function init() {
+    fetch('/api/signal-demo-evals-get', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.success) throw new Error(data.error || 'Failed to load demo data');
+        demoData = data;
+        renderProfiles(data.profiles || {});
+        renderRolePicker(data.roles || []);
+      })
+      .catch(function(err) {
+        console.error('Demo data load failed:', err);
+        document.getElementById('role-picker').innerHTML =
+          '<p style="color:#ef4444;font-size:0.875rem">Could not load demo data. Is the dev server running?</p>';
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

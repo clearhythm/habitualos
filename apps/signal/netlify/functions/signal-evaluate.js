@@ -205,6 +205,7 @@ exports.handler = async (event) => {
         content: opportunityForPrompt.content,
         url: String(opportunity.url || '').slice(0, 500)
       },
+      demo: body.demo === true,
       jdSummary: jdSummary || null,
       score: parsed.score || {},
       confidence: parsed.confidence || 0,
@@ -213,6 +214,14 @@ exports.handler = async (event) => {
       gaps: parsed.gaps || [],
       summary: parsed.summary || '',
       evidenceUsed: parsed.evidenceUsed || [],
+      evidenceChunks: chunks.map(c => ({
+        title: c.title || '',
+        date: c.date || '',
+        summary: c.summary || '',
+        keyInsight: c.keyInsight || '',
+        topics: c.topics || [],
+        skills: c.skills || []
+      })),
       resumeGenerated: false,
       coverLetterGenerated: false,
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
