@@ -482,7 +482,7 @@ bodyClass: "spock-vs-data-page"
       <p class="tagline skeleton" style="height:1rem; width:70%;">&nbsp;</p>
       <p class="bio skeleton">&nbsp;</p>
       <div class="svd-skill-tags" id="skills-spock"></div>
-      <div class="svd-card-cta"><a href="/meet/spock/" class="btn btn-outline">Interview Spock →</a></div>
+      <div class="svd-card-cta"><button class="btn btn-outline" onclick="openChat('spock')">Interview Spock →</button></div>
     </div>
   </div>
   <div class="svd-profile-card" id="card-data-tng">
@@ -492,7 +492,7 @@ bodyClass: "spock-vs-data-page"
       <p class="tagline skeleton" style="height:1rem; width:70%;">&nbsp;</p>
       <p class="bio skeleton">&nbsp;</p>
       <div class="svd-skill-tags" id="skills-data-tng"></div>
-      <div class="svd-card-cta"><a href="/meet/data-tng/" class="btn btn-outline">Interview Data →</a></div>
+      <div class="svd-card-cta"><button class="btn btn-outline" onclick="openChat('data-tng')">Interview Data →</button></div>
     </div>
   </div>
 </div>
@@ -552,7 +552,7 @@ bodyClass: "spock-vs-data-page"
     return '<p class="tagline">' + (p.tagline || '') + '</p>' +
       '<p class="bio">' + bioText + '</p>' +
       '<div class="svd-skill-tags">' + pillsHtml + '</div>' +
-      '<div class="svd-card-cta"><a href="/meet/' + id + '/" class="btn btn-outline">Interview ' + name.split(' ')[0] + ' →</a></div>';
+      '<div class="svd-card-cta"><button class="btn btn-outline" onclick="openChat(\'' + id + '\')">Interview ' + name.split(' ')[0] + ' →</button></div>';
   }
 
   var RING_R = 44;
@@ -609,7 +609,7 @@ bodyClass: "spock-vs-data-page"
       '<div class="svd-scored-top">' + scoreRingHtml(overall) + '<div class="svd-scores" style="flex:1;margin:0">' + scoreBars + '</div></div>' +
       (evalData.summary ? '<p class="svd-summary">' + evalData.summary + '</p>' : '') +
       evidenceHtml +
-      '<div class="svd-card-cta"><a href="/meet/' + id + '/" class="btn btn-outline">Interview ' + name.split(' ')[0] + ' →</a></div>';
+      '<div class="svd-card-cta"><button class="btn btn-outline" onclick="openChat(\'' + id + '\')">Interview ' + name.split(' ')[0] + ' →</button></div>';
   }
 
   function animateBars(bodyEl) {

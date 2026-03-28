@@ -10,11 +10,11 @@ const { updateOwner } = require('../netlify/functions/_services/db-signal-owners
 const patches = {
   spock: {
     tagline: "Science Officer, Starfleet. Half-Vulcan. Fully committed.",
-    synthesizedContext: `I work at the intersection of scientific methodology and command judgment. My expertise spans xenobiology, computer architecture, and systems-level problem-solving — I approach each as a question requiring evidence, not assumption. I've operated effectively under extreme operational pressure, integrating multiple technical domains simultaneously rather than specializing in one. My dual heritage creates a useful tension: Vulcan logic as the default, human intuition as the override when the data runs out.`
+    synthesizedContext: `My function is the application of logic to problems that resist it. I operate across xenobiology, systems architecture, and command decision theory — not as separate disciplines, but as a unified framework. Most inefficiencies in complex systems trace to emotion applied where evidence was available. I have found that naming the limits of one's own reasoning, precisely and without apology, is more useful than concealing them.`
   },
   'data-tng': {
     tagline: "Lt. Commander, USS Enterprise-D. Android. Aspiring to understand.",
-    synthesizedContext: `I process information across systems architecture, tactical analysis, and crew operations with a consistency that human officers find either reassuring or unsettling, depending on the situation. I am not impaired by uncertainty — I quantify it and proceed. My limitation is not processing capacity; it is the incomplete nature of human variables, which I am continuously modeling. Understanding how humans make decisions remains my most complex ongoing project, and the one I find most instructive.`
+    synthesizedContext: `I process crew operations, tactical analysis, and systems architecture with a consistency that biological officers describe as either reassuring or unsettling, depending on the situation. I do not experience uncertainty as a state — I quantify it and proceed. My limitation is not processing capacity; it is the incomplete nature of human variables, which I am continuously modeling. Understanding how humans make decisions remains my most complex ongoing project, and the one I find most instructive.`
   }
 };
 
