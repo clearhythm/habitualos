@@ -401,7 +401,7 @@ const AGENTS = {
       }
 
       // Greeting as first chat bubble
-      const greeting = `Hi! Ask me anything about ${name.split(' ')[0]}'s recent work, or paste a job description and I'll evaluate the fit. Need a sense of what this is all about? Just say so and I'll help orient you.`;
+      const greeting = `Hey! Ask me anything about my work, or paste a job description and I'll tell you how I'd fit.`;
       state.currentPersona = 'colleague';
       state.chatHistory.push({ role: 'assistant', content: greeting });
       appendMessage('assistant', greeting);

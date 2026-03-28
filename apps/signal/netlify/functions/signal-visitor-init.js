@@ -59,9 +59,10 @@ Next step (include in update_fit_score when confidence ≥ 0.65):
 - overall 0-5  → nextStep: "cold"
 
 Fit score tool rules:
-- Call update_fit_score after your first substantive response (initial hypothesis)
-- Call it again when any score changes ≥1 point or confidence changes ≥0.15
-- Only include nextStep when confidence ≥ 0.65 — no minimum turn count required
+- Do NOT call update_fit_score until the visitor has shared something about their role, need, or context — a score requires both sides
+- If the conversation is purely exploratory (visitor asking about you, no role context given), do not score yet
+- Once the visitor has provided role or project context, call update_fit_score and update it whenever any score changes ≥1 point or confidence changes ≥0.15
+- Only include nextStep when confidence ≥ 0.65
 - The "reason" must reference specifics from both sides (not generic praise)
 - Be honest: a 4 is a 4. Mismatches build trust.`;
 }

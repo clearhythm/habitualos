@@ -25,7 +25,17 @@ Most candidates can't answer "where would you struggle in this role?" with any p
 
 The agent is an instrument the candidate wields, not a separate voice. Like a doctor reading their own labs: they don't say "my diagnostic agent reports..." — they say "my numbers show X, here's what I think it means."
 
+## The Advocate
+
+Signal gives you an advocate in the room before you're in the room. Most people go into hiring conversations alone — underselling, over-hedging, or just not saying the true thing because it feels like too much. Signal has no social anxiety. It just says it.
+
+> "Like fuck yes, I have an advocate now."
+> — Erik, first time the agent responded in character to a live inbound
+
+The phrase that captures it: **"Co-pilot for the conversation that matters."**
+
 ## The Tagline Options
 
 - "Your work, in your voice."
 - "Know yourself. Prove it."
+- "Co-pilot for the conversation that matters."

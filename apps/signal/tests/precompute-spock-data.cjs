@@ -64,13 +64,14 @@ Type: ${opportunity.type}
 Title: ${opportunity.title}
 ${opportunity.content}
 
-Evaluate fit across two dimensions (Personality requires behavioral observation and cannot be scored here):
+Evaluate fit across three dimensions:
 - Skills (0-10): How well does the candidate's demonstrated experience match what this opportunity requires?
 - Alignment (0-10): How well does this opportunity match what the candidate has expressed they want?
+- Personality (0-10): Based on the behavioral signals in the profile (communication style, how they handle pressure, decision-making patterns), how well does this person's *way of working* fit what this role demands?
 
 Return ONLY valid JSON with exactly these fields:
 {
-  "score": { "skills": 0, "alignment": 0, "overall": 0 },
+  "score": { "skills": 0, "alignment": 0, "personality": 0, "overall": 0 },
   "confidence": 0.0,
   "recommendation": "strong-candidate",
   "strengths": [],
@@ -80,7 +81,7 @@ Return ONLY valid JSON with exactly these fields:
 }
 
 Field guidance:
-- overall: weighted average (skills × 0.55 + alignment × 0.45), rounded to nearest integer
+- overall: weighted average (skills × 0.4 + alignment × 0.35 + personality × 0.25), rounded to nearest integer
 - confidence: 0.0-1.0, based on how much evidence you had on both sides
 - recommendation: "strong-candidate" (overall ≥ 8), "worth-applying" (6-7), "stretch" (4-5), "poor-fit" (≤ 3)
 - strengths: 2-4 specific statements about genuine overlap (cite evidence by title where possible)
@@ -264,8 +265,8 @@ async function evaluate(client, owner, role) {
   const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
 
   if (parsed.score) {
-    parsed.score.personality = null;
-    parsed.score.overall = Math.round((parsed.score.skills * 0.55) + (parsed.score.alignment * 0.45));
+    const s = parsed.score;
+    s.overall = Math.round((s.skills * 0.4) + (s.alignment * 0.35) + ((s.personality || 0) * 0.25));
   }
 
   const evalId = `eval-demo-${signalId}-${role.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '')}-${Date.now()}`;

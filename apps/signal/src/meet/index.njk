@@ -55,15 +55,6 @@ showDemoModal: true
     gap: 0.5rem;
     margin: 0 0 2rem;
   }
-  .meet-tag {
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 0.3rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(124, 58, 237, 0.15);
-    border: 1px solid rgba(124, 58, 237, 0.4);
-    color: rgba(255,255,255,0.8);
-  }
   .meet-cta-row {
     display: flex;
     gap: 1rem;
@@ -204,7 +195,7 @@ showDemoModal: true
       var tagsEl = document.getElementById('meet-tags');
       config.tags.forEach(function(tag) {
         var pill = document.createElement('span');
-        pill.className = 'meet-tag';
+        pill.className = 'signal-pill';
         pill.textContent = tag;
         tagsEl.appendChild(pill);
       });
@@ -255,17 +246,19 @@ showDemoModal: true
       window.signalOpen({ mode: 'visitor', signalId: signalId });
     });
 
-    // Auto-open
-    var attempts = 0;
-    var autoOpen = setInterval(function() {
-      attempts++;
-      if (typeof window.signalOpen === 'function') {
-        clearInterval(autoOpen);
-        window.signalOpen({ mode: 'visitor', signalId: signalId });
-      } else if (attempts > 40) {
-        clearInterval(autoOpen);
-      }
-    }, 50);
+    // Auto-open only if #interview hash present
+    if (window.location.hash === '#interview') {
+      var attempts = 0;
+      var autoOpen = setInterval(function() {
+        attempts++;
+        if (typeof window.signalOpen === 'function') {
+          clearInterval(autoOpen);
+          window.signalOpen({ mode: 'visitor', signalId: signalId });
+        } else if (attempts > 40) {
+          clearInterval(autoOpen);
+        }
+      }, 50);
+    }
   })
   .catch(function(err) { console.error('[meet] fetch error:', err); });
 })();
