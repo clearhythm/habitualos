@@ -51,19 +51,20 @@ bodyClass: "spock-vs-data-page"
     padding-top: 1.25rem;
   }
   .svd-profile-avatar {
-    width: 72px;
-    height: 72px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(124, 58, 237, 0.5);
-    margin-bottom: 0.75rem;
+    margin: 0 auto 0.75rem;
     display: block;
   }
   .svd-profile-card h2 {
     font-size: clamp(1.75rem, 4vw, 2.25rem);
     font-weight: 700;
     line-height: 1.1;
-    margin: 0 0 0.5rem;
+    margin: 0 0 1.25rem;
+    text-align: center;
   }
   .svd-profile-card .tagline {
     font-size: 0.95rem;
@@ -127,12 +128,18 @@ bodyClass: "spock-vs-data-page"
     flex-direction: column;
     gap: 0.5rem;
   }
+  .svd-scored-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
   .svd-ring-wrap {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0.5rem auto 1rem;
+    flex-shrink: 0;
   }
   .svd-ring {
     transform: rotate(-90deg);
@@ -299,14 +306,14 @@ bodyClass: "spock-vs-data-page"
     display: inline-block;
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 0.25rem 0.6rem;
+    padding: 0.2rem 1rem 0.35rem;
     border-radius: 4px;
-    margin-bottom: 1rem;
   }
-  .rec-strong-candidate { background: #14532d; color: #86efac; }
-  .rec-worth-applying   { background: #713f12; color: #fde68a; }
-  .rec-stretch          { background: #1c1917; color: #a8a29e; }
-  .rec-poor-fit         { background: #450a0a; color: #fca5a5; }
+  .rec-strong-candidate  { background: rgba(22,163,74,0.3); color: #86efac; }
+  .rec-worth-applying    { background: rgba(124,58,237,0.3); color: #c4b5fd; }
+  .rec-stretch           { background: rgba(234,88,12,0.3); color: #fdba74; }
+  .rec-questionable-fit  { background: #1c1917; color: #78716c; }
+  .rec-poor-fit          { background: rgba(185,28,28,0.3); color: #fca5a5; }
 
   .svd-summary {
     font-size: 0.85rem;
@@ -348,6 +355,28 @@ bodyClass: "spock-vs-data-page"
     content: "—";
   }
 
+  .svd-evidence-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .svd-evidence-list li {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .svd-ev-pro  { color: #86efac; font-weight: 700; }
+  .svd-ev-con  { color: #fca5a5; font-weight: 700; }
+  .svd-ev-title {
+    color: #e2e8f0;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+  }
+  .svd-ev-title:hover { border-bottom-color: #7c3aed; }
+
   .svd-evidence {
     margin-top: 0.25rem;
   }
@@ -379,10 +408,11 @@ bodyClass: "spock-vs-data-page"
     margin-bottom: 0.3rem;
   }
   .svd-evidence-item .ep-insight {
-    font-size: 0.75rem;
-    color: #94a3b8;
+    font-size: 0.8rem;
+    color: #cbd5e1;
     font-style: italic;
-    line-height: 1.5;
+    line-height: 1.6;
+    margin-top: 0.25rem;
   }
   .svd-evidence-item .ep-insight::before {
     content: '"';
@@ -492,8 +522,9 @@ bodyClass: "spock-vs-data-page"
     var map = {
       'strong-candidate': 'Strong Candidate',
       'worth-applying': 'Worth Applying',
-      'stretch': 'Stretch',
-      'poor-fit': 'Poor Fit'
+      'stretch': 'Stretch Role',
+      'questionable-fit': 'Questionable Fit',
+      'poor-fit': 'Oh, Hell No'
     };
     return map[rec] || rec;
   }
@@ -531,7 +562,7 @@ bodyClass: "spock-vs-data-page"
     var offset = overall != null ? (RING_C * (1 - overall / 10)).toFixed(2) : RING_C;
     var color = scoreColor(overall);
     return '<div class="svd-ring-wrap">' +
-      '<svg class="svd-ring" viewBox="0 0 100 100" width="100" height="100">' +
+      '<svg class="svd-ring" viewBox="0 0 100 100" width="72" height="72">' +
         '<circle class="svd-ring-track" cx="50" cy="50" r="' + RING_R + '"/>' +
         '<circle class="svd-ring-fill" cx="50" cy="50" r="' + RING_R + '"' +
           ' stroke-dasharray="' + RING_C + '"' +
@@ -539,7 +570,7 @@ bodyClass: "spock-vs-data-page"
           ' stroke-dashoffset="' + RING_C + '"' +
           ' style="stroke:' + color + '"/>' +
       '</svg>' +
-      '<span class="svd-ring-score" style="color:' + color + '">' + (overall != null ? overall : '—') + '</span>' +
+      '<span class="svd-ring-score" style="color:' + color + ';font-size:1.25rem">' + (overall != null ? overall : '—') + '</span>' +
     '</div>';
   }
 
@@ -562,22 +593,22 @@ bodyClass: "spock-vs-data-page"
         '</div>';
     }).join('');
 
-    var strengthsHtml = (evalData.strengths || []).length
-      ? '<p class="svd-section-label">Strengths</p><ul class="svd-bullets">' +
-        evalData.strengths.slice(0, 3).map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>' : '';
-
-    var gapsHtml = (evalData.gaps || []).length
-      ? '<p class="svd-section-label">Gaps</p><ul class="svd-bullets gaps">' +
-        evalData.gaps.slice(0, 2).map(function(g) {
-          return '<li>' + (typeof g === 'string' ? g : (g.gap || '')) + '</li>';
+    var eFor = evalData.evidenceFor || [];
+    var eAgainst = evalData.evidenceAgainst || [];
+    var allEvidence = eFor.map(function(e) { return { item: e, pro: true }; })
+      .concat(eAgainst.map(function(e) { return { item: e, pro: false }; }));
+    var evidenceHtml = allEvidence.length
+      ? '<p class="svd-section-label">Signal Evidence</p><ul class="svd-evidence-list">' +
+        allEvidence.map(function(e) {
+          var icon = e.pro ? '<span class="svd-ev-pro">+</span>' : '<span class="svd-ev-con">−</span>';
+          return '<li>' + icon + ' <a href="' + ytLink(e.item.title) + '" target="_blank" rel="noopener" class="svd-ev-title">' + e.item.title + '</a> — ' + e.item.signal + '</li>';
         }).join('') + '</ul>' : '';
 
     var name = displayName || id;
-    return scoreRingHtml(overall) +
-      '<span class="svd-recommendation ' + recClass(evalData.recommendation) + '">' + recLabel(evalData.recommendation) + '</span>' +
-      '<div class="svd-scores">' + scoreBars + '</div>' +
+    return '<div style="text-align:center;margin-top:0.25rem;margin-bottom:1.25rem"><span class="svd-recommendation ' + recClass(evalData.recommendation) + '">' + recLabel(evalData.recommendation) + '</span></div>' +
+      '<div class="svd-scored-top">' + scoreRingHtml(overall) + '<div class="svd-scores" style="flex:1;margin:0">' + scoreBars + '</div></div>' +
       (evalData.summary ? '<p class="svd-summary">' + evalData.summary + '</p>' : '') +
-      strengthsHtml + gapsHtml +
+      evidenceHtml +
       '<div class="svd-card-cta"><a href="/meet/' + id + '/" class="btn btn-outline">Interview ' + name.split(' ')[0] + ' →</a></div>';
   }
 

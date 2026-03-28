@@ -51,7 +51,7 @@ function buildEvidenceText(chunks) {
 }
 
 const EVAL_PROMPT = ({ profileText, evidenceText, opportunity }) =>
-`You are evaluating a professional's fit for an opportunity. Score honestly — a 4 is a 4.
+`You are evaluating a professional's fit for an opportunity. Use the full scale aggressively. If the candidate's demonstrated skills clearly match what the role requires, that is an 8 or 9 — not a 7. A 7 means "decent but with real gaps." Reserve 5-6 for genuinely mixed cases. Do not penalize for limited evidence volume — score based on the quality of the match, not the quantity of proof.
 
 == CANDIDATE PROFILE ==
 ${profileText}
@@ -74,21 +74,21 @@ Return ONLY valid JSON with exactly these fields:
   "score": { "skills": 0, "alignment": 0, "personality": 0, "overall": 0 },
   "confidence": 0.0,
   "recommendation": "strong-candidate",
-  "strengths": [],
-  "gaps": [],
   "summary": "",
+  "evidenceFor": [],
+  "evidenceAgainst": [],
   "evidenceUsed": []
 }
 
 Field guidance:
 - overall: weighted average (skills × 0.4 + alignment × 0.35 + personality × 0.25), rounded to nearest integer
 - confidence: 0.0-1.0, based on how much evidence you had on both sides
-- recommendation: "strong-candidate" (overall ≥ 8), "worth-applying" (6-7), "stretch" (4-5), "poor-fit" (≤ 3)
-- strengths: 2-4 specific statements about genuine overlap (cite evidence by title where possible)
-- gaps: array of objects — only real gaps, be direct
-  Each: { "dimension": "skills|alignment", "gap": "...", "severity": "low|moderate|high", "closeable": true, "framing": "honest reframe if closeable" }
-  Omit "framing" if closeable is false
+- recommendation: "strong-candidate" (overall ≥ 8), "worth-applying" (overall = 7), "stretch" (overall 5-6), "questionable-fit" (overall 3-4), "poor-fit" (overall ≤ 2)
 - summary: 2-3 direct sentences for the candidate — what they should know before applying
+- evidenceFor: 2-3 items — specific work sessions that support this candidate for this role
+  Each: { "title": "exact session title from evidence", "signal": "one sharp sentence: what this session shows that's relevant here" }
+- evidenceAgainst: 1-2 items — specific work sessions that reveal gaps or risks for this role
+  Each: { "title": "exact session title from evidence", "signal": "one sharp sentence: what this session reveals as a concern" }
 - evidenceUsed: array of "[YYYY-MM-DD] title" strings for chunks that informed scoring`;
 
 // ─── Role definitions ────────────────────────────────────────────────────────
@@ -282,9 +282,9 @@ async function evaluate(client, owner, role) {
     score: parsed.score || {},
     confidence: parsed.confidence || 0,
     recommendation: parsed.recommendation || '',
-    strengths: parsed.strengths || [],
-    gaps: parsed.gaps || [],
     summary: parsed.summary || '',
+    evidenceFor: parsed.evidenceFor || [],
+    evidenceAgainst: parsed.evidenceAgainst || [],
     evidenceUsed: parsed.evidenceUsed || [],
     evidenceChunks: chunks.map(c => ({
       title: c.title || '',

@@ -57,9 +57,9 @@ exports.handler = async (event) => {
         evalId: data._evalId,
         score: data.score || {},
         recommendation: data.recommendation || '',
-        strengths: data.strengths || [],
-        gaps: data.gaps || [],
         summary: data.summary || '',
+        evidenceFor: data.evidenceFor || [],
+        evidenceAgainst: data.evidenceAgainst || [],
         evidenceChunks: (data.evidenceChunks || []).slice(0, 4),
         evidenceUsed: data.evidenceUsed || []
       };
