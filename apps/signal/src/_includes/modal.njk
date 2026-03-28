@@ -16,7 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <div class="signal-modal-overlay" id="signal-modal" aria-modal="true" role="dialog" hidden>
   <div class="signal-modal-header">
-    <span class="signal-modal-title">Signal Fit</span>
+    <span class="signal-modal-title">Signal Interview</span>
     <button class="signal-modal-close" id="signal-modal-close" aria-label="Close">
       <span></span><span></span>
     </button>
@@ -26,7 +26,7 @@
 
         <div class="signal-panel signal-panel--score">
           <div class="signal-mobile-header" id="signal-mobile-header">
-            <span class="signal-mobile-agent-name" id="mobile-agent-name">Erik's Agent</span>
+            <span class="signal-mobile-agent-name" id="mobile-agent-name"></span>
             <span class="signal-mobile-score" id="mobile-score-pill"></span>
             <span class="signal-mobile-chevron">↓</span>
           </div>
@@ -38,9 +38,9 @@
 
             <!-- Profile tab -->
             <div class="signal-agent-left" id="signal-agent-left">
-              <div class="signal-agent-left-name" id="signal-agent-left-name">Erik's Agent</div>
+              <div class="signal-agent-left-name" id="signal-agent-left-name"></div>
               <div class="signal-agent-avatar-wrap">
-                <img class="signal-agent-avatar-left" src="/assets/images/signal-agent_clean.png" alt="" />
+                <img class="signal-agent-avatar-left" id="signal-agent-avatar-left" src="" alt="" style="visibility:hidden" />
               </div>
               <div class="signal-agent-creds-block">
                 <h3 class="signal-work-signal-label">What's this?</h3>

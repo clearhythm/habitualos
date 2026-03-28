@@ -364,16 +364,21 @@ const AGENTS = {
 
       // Populate left panel agent intro
       const name = config.displayName || state.signalId;
-      state.agentAvatarUrl = config.agentAvatarUrl || '/assets/images/signal-agent.png';
+      state.agentAvatarUrl = config.avatarUrl || config.agentAvatarUrl || '/assets/images/signal-agent.png';
       const agentNameEl = document.getElementById('signal-agent-left-name');
       if (agentNameEl) agentNameEl.textContent = `${name.split(' ')[0]}'s Agent`;
       if (mobileAgentNameEl) mobileAgentNameEl.textContent = `${name.split(' ')[0]}'s Agent`;
+      const agentAvatarEl = document.getElementById('signal-agent-avatar-left');
+      if (agentAvatarEl) {
+        agentAvatarEl.src = config.avatarUrl || '/assets/images/signal-agent_clean.png';
+        agentAvatarEl.style.visibility = '';
+      }
       const agentSubEl = document.getElementById('signal-agent-left-sub');
       if (agentSubEl) agentSubEl.textContent = `Work History for ${name}`;
       const credsEl = document.getElementById('signal-agent-left-creds');
       if (credsEl) {
         const items = [];
-        if (total) items.push(`${total} Claude Code sessions`);
+        if (total) items.push(`${total} work sessions`);
         items.push('<a href="https://github.com/clearhythm" target="_blank" rel="noopener" class="signal-cred-link">2 repositories →</a>');
         const lastActive = (statusResult.status === 'fulfilled' && statusResult.value.lastUploadAt)
           ? (() => {
@@ -459,7 +464,7 @@ const AGENTS = {
         });
         const data = await res.json();
         if (modalTitleEl) {
-          modalTitleEl.innerHTML = `Signal Fit <span class="signal-modal-owner-badge">owner</span>`;
+          modalTitleEl.innerHTML = `Signal Interview <span class="signal-modal-owner-badge">owner</span>`;
         }
         if (data.opener) {
           state.chatHistory.push({ role: 'assistant', content: data.opener });
@@ -517,7 +522,7 @@ async function transition(modeName, options = {}) {
   // Reset modal header and score label
   if (modalTitleEl) {
     const badge = modeName === 'owner' ? ' <span class="signal-modal-owner-badge">owner</span>' : '';
-    modalTitleEl.innerHTML = `Signal Fit${badge}`;
+    modalTitleEl.innerHTML = `Signal Interview${badge}`;
   }
   if (scoreLabelEl) scoreLabelEl.textContent = 'Fit Score';
   if (modeName === 'owner') {

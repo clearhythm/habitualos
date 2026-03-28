@@ -3,6 +3,7 @@ layout: base.njk
 title: "Spock vs. Data — Signal Demo"
 description: "Two legendary officers. Six job openings. See how Signal scores them against real roles."
 bodyClass: "spock-vs-data-page"
+showDemoModal: true
 ---
 
 <style>
@@ -544,7 +545,6 @@ bodyClass: "spock-vs-data-page"
         return stripped.length > 80 && !/^\*{1,2}/.test(para.trim());
       });
       bioText = prose ? prose.replace(/\*{1,2}/g, '').trim() : (p.tagline || '');
-      if (bioText.length > 160) bioText = bioText.slice(0, 157) + '…';
     } else {
       bioText = p.tagline || '';
     }
