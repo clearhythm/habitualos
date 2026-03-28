@@ -469,7 +469,7 @@ bodyClass: "spock-vs-data-page"
 
 <hr class="svd-divider">
 <div class="svd-cta">
-  <p>Your actual work history tells a fascinating story.<br/>Signal makes yours more visible.</p>
+  <p>Your work history tells your story. Signal makes it visible.</p>
   <a href="/waitlist/" class="btn btn-primary">Get early access →</a>
 </div>
 
@@ -620,7 +620,11 @@ bodyClass: "spock-vs-data-page"
   }
 
   window.selectRole = function(btn, role) {
+    var isActive = btn.classList.contains('active');
     document.querySelectorAll('.svd-role-btn').forEach(function(b) { b.classList.remove('active'); });
+
+    if (isActive) { clearRole(); return; }
+
     btn.classList.add('active');
     activeRole = role;
     if (!demoData) return;
@@ -645,6 +649,22 @@ bodyClass: "spock-vs-data-page"
       alert('Chat widget not loaded yet — try again in a moment.');
     }
   };
+
+  function clearRole() {
+    if (!activeRole) return;
+    activeRole = null;
+    document.querySelectorAll('.svd-role-btn').forEach(function(b) { b.classList.remove('active'); });
+    if (demoData) {
+      ['spock', 'data-tng'].forEach(function(id) {
+        var p = demoData.profiles[id];
+        if (p) swapCardBody(id, function() { return profileBodyHtml(id, p); });
+      });
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    if (activeRole && !e.target.closest('.svd-role-btn, .svd-profiles')) clearRole();
+  });
 
   function init() {
     fetch('/api/signal-demo-evals-get', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
