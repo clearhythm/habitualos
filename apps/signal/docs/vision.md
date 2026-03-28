@@ -39,3 +39,25 @@ The phrase that captures it: **"Co-pilot for the conversation that matters."**
 - "Your work, in your voice."
 - "Know yourself. Prove it."
 - "Co-pilot for the conversation that matters."
+
+## Signal as the Central Data Layer
+
+Signal isn't a feature of HabitualOS — it's the primitive everything else reads from.
+
+The behavioral record builds passively as you work. You don't maintain a profile. The work is the profile. Everything downstream queries that record differently depending on context:
+
+- **Habitual** (productivity): reads the record to understand how you work, surfaces patterns, coaches you toward what you're actually trying to become
+- **Signal** (networking): reads the record to represent you to others — recruiters, founders, collaborators — in your voice, with evidence
+- **Publishing/research layer** (not yet built): reads the record to surface what you've actually learned, built, and know — turns work history into thought leadership
+
+Same source of truth. Three different lenses.
+
+This changes the HabitualOS value proposition fundamentally. It's not a suite of productivity tools. It's a personal work intelligence layer — one that gets smarter every time you work, and that different applications query for different purposes. The more you use any part of it, the more valuable every other part becomes.
+
+The unlock: most productivity tools are siloed by product. This architecture means your coach, your advocate, and your publisher are all reading the same record. They don't contradict each other. They compound.
+
+## The End State
+
+Agent to agent. Your agent knows your behavioral record cold. Their agent knows exactly what the role needs. The conversation happens in seconds and surfaces the three things worth actually talking about. The humans show up already knowing if it's worth their time.
+
+The current widget is the human-facing proof of concept. The behavioral record is being built now. The agents are next.
