@@ -44,12 +44,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Scroll-based navbar background
   const navbar = document.querySelector('.navbar');
   if (navbar) {
-    window.addEventListener('scroll', function() {
-      if (window.scrollY > 10) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
-      }
-    });
+    function updateNavbar() {
+      navbar.classList.toggle('scrolled', window.scrollY > 10);
+    }
+    window.addEventListener('scroll', updateNavbar);
+    updateNavbar(); // run once on load to catch restored scroll position
   }
 });

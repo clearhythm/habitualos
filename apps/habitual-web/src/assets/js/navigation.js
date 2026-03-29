@@ -8,14 +8,13 @@
 // ------------------------------------------------------
 
 // Scroll handler: Add background to navbar after scrolling
-window.addEventListener('scroll', function() {
+function updateNavbar() {
   const navbar = document.querySelector('.navbar');
-  if (window.scrollY > 50) {
-    navbar.classList.add('active');
-  } else {
-    navbar.classList.remove('active');
-  }
-});
+  navbar.classList.toggle('active', window.scrollY > 50);
+}
+
+window.addEventListener('scroll', updateNavbar);
+updateNavbar(); // run once on load to catch restored scroll position
 
 // Menu toggle and auto-close
 document.addEventListener('DOMContentLoaded', function() {

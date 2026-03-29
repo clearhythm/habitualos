@@ -1,11 +1,10 @@
-window.addEventListener('scroll', function() {
+function updateNavbar() {
   const navbar = document.querySelector('.navbar');
-  if (window.scrollY > 50) {
-    navbar.classList.add('active');
-  } else {
-    navbar.classList.remove('active');
-  }
-});
+  navbar.classList.toggle('active', window.scrollY > 50);
+}
+
+window.addEventListener('scroll', updateNavbar);
+updateNavbar(); // run once on load to catch restored scroll position
 
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.btn').forEach(btn => {
