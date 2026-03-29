@@ -1,7 +1,7 @@
 /**
- * Firestore service for signal-context-chunks collection.
+ * Firestore service for signal-session-chunks collection.
  *
- * signal-context-chunks/{signalId}-{conversationId}:
+ * signal-session-chunks/{signalId}-{conversationId}:
  *   signalId          — owner's signal ID
  *   conversationId    — UUID from export (dedup key)
  *   source            — "claude" | "chatgpt"
@@ -26,7 +26,7 @@
 require('dotenv').config();
 const { db, admin } = require('@habitualos/db-core');
 
-const COLLECTION = 'signal-context-chunks';
+const COLLECTION = 'signal-session-chunks';
 
 /**
  * Check which conversationIds already exist for a signalId.

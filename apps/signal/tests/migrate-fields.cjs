@@ -72,7 +72,7 @@ async function run() {
       userId:   '_userId',
     });
 
-    await migrateCollection('signal-context-chunks', {
+    await migrateCollection('signal-session-chunks', {
       signalId:       '_signalId',
       conversationId: '_conversationId',
     });

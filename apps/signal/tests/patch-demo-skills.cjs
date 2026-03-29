@@ -56,31 +56,31 @@ const PATCHES = [
   // ── Data: add software engineering signal to 3+ chunks ────────────────────
   // Brothers, Starship Mine, First Contact are the best technical episodes
   {
-    docId: 'data-tng-brothers',
+    docId: 'data-brothers',
     skills: ['distributed systems design', 'software architecture', 'autonomous systems engineering'],
     wants: ['solve complex computational systems problems', 'apply technical systems mastery to novel challenges'],
     concepts: ['distributed', 'software', 'architecture', 'autonomous', 'engineering', 'systems design']
   },
   {
-    docId: 'data-tng-starship-mine',
+    docId: 'data-starship-mine',
     skills: ['distributed systems design', 'software architecture', 'real-time systems optimization'],
     wants: ['solve complex computational systems problems', 'apply technical systems mastery to novel challenges'],
     concepts: ['distributed', 'software', 'architecture', 'real-time', 'optimization', 'systems design']
   },
   {
-    docId: 'data-tng-first-contact-film',
+    docId: 'data-first-contact-film',
     skills: ['distributed systems design', 'real-time systems optimization', 'engineering leadership'],
     wants: ['apply technical systems mastery to novel challenges'],
     concepts: ['distributed', 'real-time', 'optimization', 'engineering', 'leadership', 'systems']
   },
   {
-    docId: 'data-tng-the-naked-now',
+    docId: 'data-the-naked-now',
     skills: ['real-time systems optimization', 'engineering leadership'],
     concepts: ['real-time', 'optimization', 'engineering', 'systems']
   },
   // Data CTO: add engineering leadership to 2 chunks (already added above in First Contact + Naked Now)
   {
-    docId: 'data-tng-datas-day',
+    docId: 'data-datas-day',
     skills: ['engineering leadership'],
     wants: ['solve complex computational systems problems'],
     concepts: ['engineering', 'leadership', 'systems']
@@ -93,7 +93,7 @@ async function run() {
   console.log('\nPatch: demo character skills\n');
 
   for (const patch of PATCHES) {
-    const ref = db.collection('signal-context-chunks').doc(patch.docId);
+    const ref = db.collection('signal-session-chunks').doc(patch.docId);
     const update = {};
 
     if (patch.skills?.length)   update.skills    = arrayUnion(...patch.skills);
