@@ -1,55 +1,54 @@
 ---
 layout: base.njk
-title: "Signal — Early Access Community"
-description: "Signal is being built in the open. Early access is for professionals who use AI tools near-daily and have real work history worth surfacing. Raise your hand if that's you."
+title: "Signal — Early Access"
+description: "When Signal is ready, this is where people will find you. Signal profiles surface your real work history for the people who need to find you."
+permalink: /early-access/
 css: /styles/early-access.css
 ---
 <div class="ea-page">
   <div class="ea-content-wrap">
 
     <h1 class="ea-headline">Get Early Access</h1>
-    <p class="ea-subhead">We're building Signal in the open. Sign the guestbook and be one of the first Signal members when we're ready to support you. You're also close enough to shape what it becomes.</p>
+    <p class="ea-subhead">Signal scans your <em>actual work history</em>, so early access is for anyone who uses AI tools <em>daily or near daily</em>. If that's you, choose a handle, leave a note, and we'll get back to you.</p>
 
     <div class="ea-tabs">
-      <button class="ea-tab is-active" data-tab="sign">Sign the Guestbook</button>
-      <button class="ea-tab" data-tab="signals">Recent Signals <span id="ea-count" class="ea-tab-count"></span></button>
+      <button class="ea-tab is-active" data-tab="sign">Start Your Signal</button>
+      <button class="ea-tab" data-tab="signals">Recently Joined <span id="ea-count" class="ea-tab-count"></span></button>
     </div>
 
     <div id="ea-tab-sign">
       <div class="ea-top-grid">
         <div>
-          <h2 id="ea-form-title" style="font-size: 1.75rem; font-weight: 700; margin: 0 0 1rem;">Sign the Guestbook</h2>
+          <h2 id="ea-form-title" style="font-size: 1.75rem; font-weight: 700; margin: 0 0 1rem;">Your Signal URL</h2>
           <div id="ea-form-wrap">
             <div id="ea-step-1" class="ea-step">
               <div class="ea-form">
-                <textarea
-                  class="ea-textarea"
-                  id="ea-message"
-                  placeholder="Why are you interested? (or just say hi — anything goes)"
-                ></textarea>
+                <input class="ea-input" id="ea-slug" type="text" placeholder="your-handle" autocomplete="off" autocapitalize="none" spellcheck="false">
+                <p class="ea-slug-hint" id="ea-slug-hint"></p>
+                <input class="ea-input" id="ea-email-1" type="email" placeholder="Email">
                 <div class="ea-submit-row">
                   <button type="button" class="btn btn-primary" id="ea-next">Next →</button>
-                  <span class="ea-hint">Nothing here is required.</span>
+                  <span class="ea-hint">We'll email you when it's ready.</span>
                 </div>
               </div>
             </div>
             <div id="ea-step-2" class="ea-step" style="display:none">
               <form class="ea-form" id="ea-form" autocomplete="off">
-                <div class="ea-form-row">
-                  <input class="ea-input" id="ea-name" type="text" placeholder="Name or handle (optional)">
+                <div class="ea-form-row" style="grid-template-columns: 3fr 7fr">
+                  <input class="ea-input" id="ea-name" type="text" placeholder="Name">
                   <input class="ea-input" id="ea-link" type="text" placeholder="LinkedIn or website (optional)">
                 </div>
-                <input class="ea-input" id="ea-email" type="email" placeholder="Email — only if you want to hear back (optional)">
+                <textarea class="ea-textarea" id="ea-message" placeholder="Why are you interested? (or just say hi — optional)" style="min-height:80px"></textarea>
                 <div class="ea-submit-row">
-                  <button type="submit" class="btn btn-primary" id="ea-submit">Save Entry →</button>
-                  <button type="button" class="ea-edit-cancel" id="ea-back">← back</button>
+                  <button type="submit" class="btn btn-primary" id="ea-submit">Submit →</button>
+                  <button type="button" class="ea-edit-cancel" id="ea-back">Go back</button>
                 </div>
               </form>
             </div>
             <p class="ea-error" id="ea-error"></p>
           </div>
           <div class="ea-success" id="ea-success">
-            <p class="ea-success-body">You're on the list. We'll reach out when your Signal profile is ready.</p>
+            <p class="ea-success-body">Thanks for signing up for Early Access. You're on the list. Check your inbox for an email from us.</p>
             <div class="ea-success-actions">
               <button class="btn btn-outline" id="ea-success-edit-btn">Edit your entry</button>
               <button class="ea-delete-link" id="ea-success-delete-btn">Delete entry</button>
@@ -58,7 +57,7 @@ css: /styles/early-access.css
         </div>
 
         <blockquote class="ea-quote">
-          <p>&#8220;Signal reads your actual work history — the more you build with AI tools, the stronger it gets. I built this because I needed it. If Claude Code, Cursor, or Codex is your daily driver, I want to get this in your hands.&#8221;</p>
+          <p>&#8220;I built Signal because I was done polishing a version of myself instead of doing the work I love. Great work should speak for itself. Let&#8217;s build a better way to get recognized.&#8221;</p>
           <cite>&#8212; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</cite>
         </blockquote>
       </div>
@@ -76,7 +75,7 @@ css: /styles/early-access.css
 </div>
 
 {% from "modal.njk" import confirm %}
-{{ confirm("Delete your entry?", confirmLabel="Delete") }}
+{{ confirm("Delete your entry? This removes you from the list and releases your claimed URL.", confirmLabel="Delete") }}
 
 <script>
 (function() {
@@ -106,9 +105,9 @@ css: /styles/early-access.css
   function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function renderItem(item) {
-    var displayName = item.name || '✋';
+    var displayName = item.name || item.claimedSlug || '✋';
     var logoImg = '<img src="/assets/favicon-32x32.png" alt="" style="width:18px;height:18px;flex-shrink:0;display:block">';
-    var href = item.link || null;
+    var href = item.claimedSlug ? '/meet/' + encodeURIComponent(item.claimedSlug) : (item.link || null);
     var nameHtml = href
       ? '<a href="' + escAttr(href) + '" target="_blank" rel="noopener" class="ea-item-link" style="display:inline-flex;align-items:center;gap:0.5rem">' + logoImg + '<span>' + escHtml(displayName) + ' →</span></a>'
       : '<span class="ea-item-name" style="display:inline-flex;align-items:center;gap:0.5rem">' + logoImg + '<span>' + escHtml(displayName) + '</span></span>';
@@ -122,55 +121,6 @@ css: /styles/early-access.css
       '</div>';
   }
 
-  window.startEdit = function(id) {
-    var mySub = getMySub();
-    if (!mySub || mySub.id !== id) return;
-    var itemEl = document.getElementById('ea-item-' + id);
-    if (!itemEl) return;
-    itemEl.innerHTML =
-      '<form class="ea-edit-form" onsubmit="saveEdit(event, ' + JSON.stringify(id) + ')">' +
-        '<textarea class="ea-textarea" id="ea-edit-message" style="min-height:80px">' + escHtml(mySub.message) + '</textarea>' +
-        '<div class="ea-edit-row">' +
-          '<input class="ea-input" id="ea-edit-name" type="text" placeholder="Name or handle" value="' + escAttr(mySub.name) + '">' +
-          '<input class="ea-input" id="ea-edit-link" type="text" placeholder="LinkedIn or website" value="' + escAttr(mySub.link) + '">' +
-        '</div>' +
-        '<div class="ea-edit-actions">' +
-          '<button type="submit" class="btn btn-primary" style="font-size:0.875rem;padding:0.5rem 1rem">Save</button>' +
-          '<button type="button" class="ea-edit-cancel" onclick="cancelEdit()">cancel</button>' +
-        '</div>' +
-      '</form>';
-  };
-
-  window.cancelEdit = function() { loadList(); };
-
-  window.saveEdit = function(e, id) {
-    e.preventDefault();
-    var name = document.getElementById('ea-edit-name').value.trim();
-    var message = document.getElementById('ea-edit-message').value.trim();
-    var link = document.getElementById('ea-edit-link').value.trim();
-    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
-    var saveBtn = e.target.querySelector('[type=submit]');
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving…';
-    fetch('/api/early-access-edit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, name: name, message: message, link: link })
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.success) {
-          setMySub(Object.assign({}, getMySub(), { name: name, message: message, link: link }));
-          loadList();
-        } else { throw new Error(data.error || 'Something went wrong.'); }
-      })
-      .catch(function(err) {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save';
-        alert(err.message);
-      });
-  };
-
   function loadList() {
     fetch('/api/early-access-list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       .then(function(r) { return r.json(); })
@@ -179,6 +129,7 @@ css: /styles/early-access.css
         var countEl = document.getElementById('ea-count');
         if (!data.success || !data.items.length) {
           if (listEl) listEl.innerHTML = '<p class="ea-empty">No one yet. Be the first.</p>';
+          if (countEl) countEl.textContent = '';
           return;
         }
         if (countEl) countEl.textContent = '· ' + data.items.length;
@@ -190,6 +141,13 @@ css: /styles/early-access.css
       });
   }
 
+  function validateSlug(slug) {
+    if (!slug) return 'Choose a handle.';
+    if (slug.length > 30) return 'Max 30 characters.';
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) return 'Lowercase letters, numbers, and hyphens only. No leading or trailing hyphens.';
+    return null;
+  }
+
   var form = document.getElementById('ea-form');
   var submitBtn = document.getElementById('ea-submit');
   var nextBtn = document.getElementById('ea-next');
@@ -199,6 +157,9 @@ css: /styles/early-access.css
   var successEl = document.getElementById('ea-success');
   var step1 = document.getElementById('ea-step-1');
   var step2 = document.getElementById('ea-step-2');
+  var slugInput = document.getElementById('ea-slug');
+  var slugHint = document.getElementById('ea-slug-hint');
+  var emailInput1 = document.getElementById('ea-email-1');
   var formTitle = document.getElementById('ea-form-title');
   var isEditing = false;
 
@@ -208,13 +169,14 @@ css: /styles/early-access.css
       step1.style.display = n === 1 ? '' : 'none';
       step2.style.display = n === 2 ? '' : 'none';
       errorEl.style.display = 'none';
-      if (formTitle) formTitle.textContent = 'Sign the Guestbook';
+      if (formTitle) formTitle.textContent = n === 1 ? 'Your Signal URL' : 'Sign the Guestbook';
       setTimeout(function() { (n === 1 ? step1 : step2).style.opacity = '1'; }, 20);
     }, 150);
   }
 
   step1.style.transition = 'opacity 0.15s';
   step2.style.transition = 'opacity 0.15s';
+  if (formTitle) formTitle.textContent = 'Your Signal URL';
 
   var tabSign = document.getElementById('ea-tab-sign');
   var tabSignals = document.getElementById('ea-tab-signals');
@@ -231,25 +193,61 @@ css: /styles/early-access.css
   function setSubmittedState() {
     formWrap.style.display = 'none';
     successEl.style.display = 'block';
-    if (formTitle) formTitle.textContent = 'You\'re In ✋';
+    if (formTitle) formTitle.textContent = 'You\'re In 🙌';
   }
 
   if (getMySub()) setSubmittedState();
 
-  document.getElementById('ea-message').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); showStep(2); }
+  slugInput.addEventListener('input', function() {
+    var val = slugInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+/, '');
+    if (val !== slugInput.value) slugInput.value = val;
+    if (!val) {
+      slugHint.textContent = '';
+      slugHint.className = 'ea-slug-hint';
+    } else {
+      slugHint.textContent = 'signal.habitualos.com/meet/' + val;
+      slugHint.className = 'ea-slug-hint is-pending';
+    }
   });
 
-  nextBtn.addEventListener('click', function() { showStep(2); });
-  backBtn.addEventListener('click', function() {
-    if (isEditing) {
-      formWrap.style.display = 'none';
-      successEl.style.display = 'block';
-      if (formTitle) formTitle.textContent = 'You\'re In ✋';
-      isEditing = false;
-      backBtn.textContent = '← back';
+  slugInput.addEventListener('blur', function() {
+    var val = slugInput.value.trim().toLowerCase();
+    if (!val) { slugHint.textContent = ''; slugHint.className = 'ea-slug-hint'; return; }
+    var err = validateSlug(val);
+    if (err) { slugHint.textContent = err; slugHint.className = 'ea-slug-hint is-error'; return; }
+    fetch('/api/claim-check-slug', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug: val })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (slugInput.value.trim().toLowerCase() !== val) return; // stale
+        if (data.available) {
+          slugHint.textContent = '✓ signal.habitualos.com/meet/' + val;
+          slugHint.className = 'ea-slug-hint is-ok';
+        } else {
+          slugHint.textContent = '✗ That handle is taken. Try another.';
+          slugHint.className = 'ea-slug-hint is-error';
+        }
+      })
+      .catch(function() {}); // fail silently, submit will catch it
+  });
+
+  var nextBlockedByEmail = false;
+
+  emailInput1.addEventListener('blur', function() {
+    var val = emailInput1.value.trim();
+    if (!val) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      errorEl.textContent = 'That email doesn\'t look right.';
+      errorEl.style.display = 'block';
     } else {
-      showStep(1);
+      errorEl.style.display = 'none';
+      if (nextBlockedByEmail) {
+        nextBlockedByEmail = false;
+        nextBtn.click();
+      }
     }
   });
 
@@ -258,16 +256,24 @@ css: /styles/early-access.css
     successEditBtn.addEventListener('click', function() {
       var mySub = getMySub();
       if (!mySub) return;
+      submitting = false;
+      submitBtn.disabled = false;
       successEl.style.display = 'none';
       formWrap.style.display = '';
       isEditing = true;
+      slugInput.value = mySub.slug || '';
+      if (mySub.slug) {
+        slugHint.textContent = '✓ signal.habitualos.com/meet/' + mySub.slug;
+        slugHint.className = 'ea-slug-hint is-ok';
+      }
+      emailInput1.value = mySub.email || '';
       document.getElementById('ea-message').value = mySub.message || '';
       document.getElementById('ea-name').value = mySub.name || '';
       document.getElementById('ea-link').value = mySub.link || '';
-      document.getElementById('ea-email').value = mySub.email || '';
       step1.style.display = 'none';
       step2.style.display = '';
       step2.style.opacity = '1';
+      submitBtn.textContent = 'Save →';
       if (formTitle) formTitle.textContent = 'Sign the Guestbook';
       errorEl.style.display = 'none';
       if (backBtn) backBtn.textContent = 'Cancel';
@@ -296,10 +302,15 @@ css: /styles/early-access.css
             step1.style.display = '';
             step1.style.opacity = '1';
             step2.style.display = 'none';
-            if (formTitle) formTitle.textContent = 'Sign the Guestbook';
-            document.getElementById('ea-message').value = '';
+            if (formTitle) formTitle.textContent = 'Your Signal URL';
+            slugInput.value = '';
+            slugHint.textContent = '';
+            slugHint.className = 'ea-slug-hint';
+            if (emailInput1) emailInput1.value = '';
             loadList();
-          } else { throw new Error(data.error || 'Something went wrong.'); }
+          } else {
+            throw new Error(data.error || 'Something went wrong.');
+          }
         })
         .catch(function(err) {
           successDeleteBtn.disabled = false;
@@ -309,17 +320,64 @@ css: /styles/early-access.css
     });
   }
 
+  nextBtn.addEventListener('click', function() {
+    var slug = slugInput.value.trim().toLowerCase();
+    var email = emailInput1.value.trim();
+    var slugErr = validateSlug(slug);
+    if (slugErr) {
+      slugHint.textContent = slugErr;
+      slugHint.className = 'ea-slug-hint is-error';
+      slugInput.focus();
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      nextBlockedByEmail = true;
+      errorEl.textContent = 'Email is required so we can notify you when your Signal is ready.';
+      errorEl.style.display = 'block';
+      emailInput1.focus();
+      return;
+    }
+    nextBlockedByEmail = false;
+    submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
+    showStep(2);
+  });
+
+  backBtn.addEventListener('click', function() {
+    if (isEditing) {
+      formWrap.style.display = 'none';
+      successEl.style.display = 'block';
+      if (formTitle) formTitle.textContent = 'You\'re In 🙌';
+      isEditing = false;
+      backBtn.textContent = 'Go back';
+      var mySub = getMySub();
+    } else {
+      showStep(1);
+    }
+  });
+
+  var submitting = false;
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+    if (submitting) return;
     var name = document.getElementById('ea-name').value.trim();
     var message = document.getElementById('ea-message').value.trim();
-    var email = document.getElementById('ea-email').value.trim();
     var link = document.getElementById('ea-link').value.trim();
     if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
 
+    if (!name) {
+      errorEl.textContent = 'Name is required.';
+      errorEl.style.display = 'block';
+      document.getElementById('ea-name').focus();
+      return;
+    }
+
     var existing = getMySub();
+    var slug = existing ? existing.slug : slugInput.value.trim().toLowerCase();
+    var email = existing ? existing.email : emailInput1.value.trim();
+
+    submitting = true;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Saving…';
+    submitBtn.textContent = existing && existing.id ? 'Saving…' : 'Submitting…';
     errorEl.style.display = 'none';
 
     var url, body;
@@ -328,7 +386,7 @@ css: /styles/early-access.css
       body = JSON.stringify({ id: existing.id, name: name, message: message, link: link });
     } else {
       url = '/api/early-access-submit';
-      body = JSON.stringify({ name: name, message: message, email: email, link: link });
+      body = JSON.stringify({ slug: slug, email: email, name: name, message: message, link: link });
     }
 
     fetch(url, {
@@ -340,18 +398,21 @@ css: /styles/early-access.css
       .then(function(data) {
         if (data.success) {
           var id = existing ? existing.id : data.id;
-          setMySub({ id: id, name: name, message: message, email: email, link: link });
+          setMySub({ id: id, slug: slug, email: email, name: name, message: message, link: link });
           isEditing = false;
-          backBtn.textContent = '← back';
+          backBtn.textContent = 'Go back';
           setSubmittedState();
           loadList();
-        } else { throw new Error(data.error || 'Something went wrong.'); }
+        } else {
+          throw new Error(data.error || 'Something went wrong.');
+        }
       })
       .catch(function(err) {
+        submitting = false;
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Save Entry →';
+        submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
       });
   });
 
