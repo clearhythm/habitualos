@@ -339,9 +339,10 @@
     font-style: normal;
 
     a {
-      color: rgba(255,255,255,0.45);
-      text-decoration: underline;
-      text-decoration-color: rgba(255,255,255,0.2);
+      color: #fff;
+      text-decoration: none;
+
+      &:hover { text-decoration: underline; }
     }
   }
 }
