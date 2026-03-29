@@ -15,9 +15,10 @@
   'use strict';
 
   const script = document.currentScript;
-  const SIGNAL_ID = (script && script.getAttribute('data-signal-id')) || 'erik-burns';
+  const SIGNAL_ID = (script && script.getAttribute('data-signal-id')) || 'erik';
   const BASE_URL = script ? new URL(script.src).origin : 'https://signal.habitualos.com';
-  const TESTING_MODE = script && script.getAttribute('data-signal-mode') === 'testing';
+  const mode = script && script.getAttribute('data-signal-mode');
+  const TESTING_MODE = mode === 'testing' || mode === 'coming-soon';
 
   const VISITOR_KEY = 'signal_visitor_id';
   const OWNER_SESSION_KEY = `signal_owner_${SIGNAL_ID}`;
@@ -754,10 +755,14 @@
 
   function injectComingSoon() {
     if (document.getElementById('signal-coming-soon')) return;
+    var email = ownerConfig && ownerConfig.contactLinks && ownerConfig.contactLinks.email;
+    var ctaHtml = email
+      ? '<a href="mailto:' + email + '" style="display:inline-block;background:#7c3aed;color:#fff;padding:0.65rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:500;">Say Hello</a>'
+      : '';
     var el = document.createElement('div');
     el.id = 'signal-coming-soon';
     el.style.cssText = 'display:none;position:fixed;inset:0;z-index:1000000;background:rgba(10,8,25,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;';
-    el.innerHTML = '<div style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:2.5rem;max-width:420px;width:90%;text-align:center;position:relative;"><button id="signal-coming-soon-close" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button><div style="font-size:2.5rem;margin-bottom:1rem;">📡</div><h3 style="color:#e2e8f0;font-size:1.25rem;margin-bottom:0.75rem;">Signal is coming soon.</h3><p style="color:rgba(255,255,255,0.6);font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">I\'m training the agent on my actual work history. In the meantime, reach me directly — I respond to real humans.</p><a href="mailto:erik@erikburns.com" style="display:inline-block;background:#7c3aed;color:#fff;padding:0.65rem 1.5rem;border-radius:6px;text-decoration:none;font-weight:500;">Say Hello</a></div>';
+    el.innerHTML = '<div style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:2.5rem;max-width:420px;width:90%;text-align:center;position:relative;"><button id="signal-coming-soon-close" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button><div style="font-size:2.5rem;margin-bottom:1rem;">📡</div><h3 style="color:#e2e8f0;font-size:1.25rem;margin-bottom:0.75rem;">Signal is coming soon.</h3><p style="color:rgba(255,255,255,0.6);font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem;">I\'m training the agent on my actual work history. In the meantime, reach me directly — I respond to real humans.</p>' + ctaHtml + '</div>';
     document.body.appendChild(el);
     document.getElementById('signal-coming-soon-close').addEventListener('click', function () { el.style.display = 'none'; });
     el.addEventListener('click', function (e) { if (e.target === el) el.style.display = 'none'; });
@@ -776,10 +781,20 @@
     window.Signal = { open: open, close: close, toggle: toggle };
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', TESTING_MODE ? function () {} : init);
+  function domReady(fn) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', fn);
+    } else {
+      fn();
+    }
+  }
+
+  if (TESTING_MODE) {
+    domReady(function () {
+      loadConfig().then(function (cfg) { ownerConfig = cfg; });
+    });
   } else {
-    init();
+    domReady(init);
   }
 
 })();

@@ -83,6 +83,7 @@ function renderDashboard(config) {
     : 'No key saved yet. Without it, your widget uses the shared Signal key (rate limited).');
 
   // Contact links
+  setVal('link-email', contactLinks.email || '');
   setVal('link-calendar', contactLinks.calendar || '');
   setVal('link-linkedin', contactLinks.linkedin || '');
   setVal('link-substack', contactLinks.substack || '');
@@ -452,6 +453,7 @@ $on('gap-personality-save-btn', 'click', async () => {
 $on('links-save-btn', 'click', () => {
   saveField({
     contactLinks: {
+      email: document.getElementById('link-email').value.trim(),
       calendar: document.getElementById('link-calendar').value.trim(),
       linkedin: document.getElementById('link-linkedin').value.trim(),
       substack: document.getElementById('link-substack').value.trim(),
