@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { getOwnerByUserId, getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
-const { getContextStats } = require('./_services/db-signal-context.cjs');
 
 /**
  * POST /api/signal-context-status
@@ -30,7 +29,13 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ success: false, error: 'Signal not found' }) };
     }
 
-    const stats = await getContextStats(owner.id);
+    const cs = owner.contextStats || {};
+    const stats = {
+      total: cs.totalChunks || 0,
+      processed: cs.processedChunks || 0,
+      pending: 0,
+      bySource: cs.bySource || {}
+    };
 
     return {
       statusCode: 200,
@@ -38,14 +43,13 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true,
         stats,
-        lastUploadAt: [owner.contextStats?.lastUploadAt, owner.contextStats?.lastIngestAt]
-          .filter(Boolean).sort().pop() || null,
+        lastUploadAt: [cs.lastUploadAt, cs.lastIngestAt].filter(Boolean).sort().pop() || null,
         skillsProfile: owner.skillsProfile || null,
         wantsProfile: owner.wantsProfile || null,
         personalityProfile: owner.personalityProfile || null,
         synthesizedContext: owner.synthesizedContext || null,
         synthesizedContextGeneratedAt: owner.synthesizedContextGeneratedAt || null,
-        processedChunks: owner.contextStats?.processedChunks || 0
+        processedChunks: cs.processedChunks || 0
       })
     };
 
