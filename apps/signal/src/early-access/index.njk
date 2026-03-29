@@ -172,6 +172,46 @@ description: "Signal is an AI-native professional profile — your work history,
     font-size: 0.875rem;
     color: rgba(255,255,255,0.25);
   }
+  .ea-item-edit-btn {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-decoration-color: rgba(255,255,255,0.15);
+    margin-left: auto;
+  }
+  .ea-item-edit-btn:hover { color: rgba(255,255,255,0.6); }
+  .ea-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .ea-edit-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  @media (max-width: 480px) {
+    .ea-edit-row { grid-template-columns: 1fr; }
+  }
+  .ea-edit-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .ea-edit-cancel {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .ea-edit-cancel:hover { color: rgba(255,255,255,0.6); }
 
   .ea-bg-img {
     display: block;
@@ -228,6 +268,15 @@ description: "Signal is an AI-native professional profile — your work history,
 
 <script>
 (function() {
+  var MY_SUB_KEY = 'ea-submission';
+
+  function getMySub() {
+    try { return JSON.parse(localStorage.getItem(MY_SUB_KEY)) || null; } catch(e) { return null; }
+  }
+  function setMySub(data) {
+    localStorage.setItem(MY_SUB_KEY, JSON.stringify(data));
+  }
+
   function timeAgo(ts) {
     if (!ts) return '';
     var d = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
@@ -238,22 +287,79 @@ description: "Signal is an AI-native professional profile — your work history,
     return Math.floor(diff / 86400) + 'd ago';
   }
 
-  function renderItem(item) {
+  function escAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
+  function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function renderItem(item, isMine) {
     var name = item.name || '✋';
     var nameHtml = item.link
-      ? '<a href="' + item.link + '" target="_blank" rel="noopener" class="ea-item-link">' + name + ' →</a>'
-      : '<span class="ea-item-name">' + name + '</span>';
+      ? '<a href="' + item.link + '" target="_blank" rel="noopener" class="ea-item-link">' + escHtml(name) + ' →</a>'
+      : '<span class="ea-item-name">' + escHtml(name) + '</span>';
     var messageHtml = item.message
-      ? '<p class="ea-item-message">' + item.message + '</p>'
+      ? '<p class="ea-item-message">' + escHtml(item.message) + '</p>'
       : '';
     var replyHtml = item.reply
-      ? '<p class="ea-item-reply">' + item.reply + '</p><p class="ea-item-reply-attr">— Signal</p>'
+      ? '<p class="ea-item-reply">' + escHtml(item.reply) + '</p><p class="ea-item-reply-attr">— Signal</p>'
       : '';
-    return '<div class="ea-item">' +
-      '<div class="ea-item-meta">' + nameHtml + '<span class="ea-item-time">' + timeAgo(item.createdAt) + '</span></div>' +
+    var editBtn = isMine
+      ? '<button class="ea-item-edit-btn" onclick="startEdit(' + JSON.stringify(item._id) + ')">edit</button>'
+      : '';
+    return '<div class="ea-item" id="ea-item-' + item._id + '">' +
+      '<div class="ea-item-meta">' + nameHtml + editBtn + '<span class="ea-item-time">' + timeAgo(item.createdAt) + '</span></div>' +
       messageHtml + replyHtml +
       '</div>';
   }
+
+  window.startEdit = function(id) {
+    var mySub = getMySub();
+    if (!mySub || mySub.id !== id) return;
+    var itemEl = document.getElementById('ea-item-' + id);
+    if (!itemEl) return;
+    itemEl.innerHTML =
+      '<form class="ea-edit-form" onsubmit="saveEdit(event, ' + JSON.stringify(id) + ')">' +
+        '<textarea class="ea-textarea" id="ea-edit-message" style="min-height:80px">' + escHtml(mySub.message) + '</textarea>' +
+        '<div class="ea-edit-row">' +
+          '<input class="ea-input" id="ea-edit-name" type="text" placeholder="Name or handle" value="' + escAttr(mySub.name) + '">' +
+          '<input class="ea-input" id="ea-edit-link" type="url" placeholder="LinkedIn or website" value="' + escAttr(mySub.link) + '">' +
+        '</div>' +
+        '<div class="ea-edit-actions">' +
+          '<button type="submit" class="btn btn-primary" style="font-size:0.875rem;padding:0.5rem 1rem">Save</button>' +
+          '<button type="button" class="ea-edit-cancel" onclick="cancelEdit()">cancel</button>' +
+        '</div>' +
+      '</form>';
+  };
+
+  window.cancelEdit = function() { loadList(); };
+
+  window.saveEdit = function(e, id) {
+    e.preventDefault();
+    var name = document.getElementById('ea-edit-name').value.trim();
+    var message = document.getElementById('ea-edit-message').value.trim();
+    var link = document.getElementById('ea-edit-link').value.trim();
+    var saveBtn = e.target.querySelector('[type=submit]');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    fetch('/api/early-access-edit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, name: name, message: message, link: link })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          setMySub({ id: id, name: name, message: message, link: link });
+          loadList();
+        } else {
+          throw new Error(data.error || 'Something went wrong.');
+        }
+      })
+      .catch(function(err) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+        alert(err.message);
+      });
+  };
 
   function loadList() {
     fetch('/api/early-access-list', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
@@ -264,7 +370,10 @@ description: "Signal is an AI-native professional profile — your work history,
           listEl.innerHTML = '<p class="ea-empty">No hands raised yet. Be the first.</p>';
           return;
         }
-        listEl.innerHTML = data.items.map(renderItem).join('');
+        var mySub = getMySub();
+        listEl.innerHTML = data.items.map(function(item) {
+          return renderItem(item, mySub && mySub.id === item._id);
+        }).join('');
       })
       .catch(function() {
         document.getElementById('ea-list').innerHTML = '<p class="ea-empty">Couldn\'t load responses right now.</p>';
@@ -276,6 +385,12 @@ description: "Signal is an AI-native professional profile — your work history,
   var errorEl = document.getElementById('ea-error');
   var formWrap = document.getElementById('ea-form-wrap');
   var successEl = document.getElementById('ea-success');
+
+  // Restore submitted state on load
+  if (getMySub()) {
+    formWrap.style.display = 'none';
+    successEl.style.display = '';
+  }
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
@@ -296,6 +411,7 @@ description: "Signal is an AI-native professional profile — your work history,
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) {
+          setMySub({ id: data.id, name: name, message: message, link: link });
           formWrap.style.display = 'none';
           successEl.style.display = '';
           loadList();

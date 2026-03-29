@@ -27,4 +27,12 @@ async function listInterest() {
   });
 }
 
-module.exports = { submitInterest, listInterest };
+async function editInterest({ id, name, message, link }) {
+  await db.collection(COLLECTION).doc(id).update({
+    name: name || '',
+    message: message || '',
+    link: link || '',
+  });
+}
+
+module.exports = { submitInterest, listInterest, editInterest };
