@@ -2,10 +2,19 @@ const { db, admin } = require('@habitualos/db-core');
 
 const COLLECTION = 'signal-early-access';
 
-async function submitInterest({ name, message, email, link }) {
+async function checkSlugAvailable(slug) {
+  const [claimedSnap, ownerSnap] = await Promise.all([
+    db.collection(COLLECTION).where('claimedSlug', '==', slug).limit(1).get(),
+    db.collection('signal-owners').doc(slug).get()
+  ]);
+  return claimedSnap.empty && !ownerSnap.exists;
+}
+
+async function submitInterest({ slug, name, message, email, link }) {
   const ref = db.collection(COLLECTION).doc();
   await ref.set({
     _id: ref.id,
+    claimedSlug: slug || '',
     name: name || '',
     message: message || '',
     email: email || '',       // private — never returned to client
@@ -35,4 +44,8 @@ async function editInterest({ id, name, message, link }) {
   });
 }
 
-module.exports = { submitInterest, listInterest, editInterest };
+async function deleteInterest({ id }) {
+  await db.collection(COLLECTION).doc(id).delete();
+}
+
+module.exports = { submitInterest, listInterest, editInterest, deleteInterest, checkSlugAvailable };

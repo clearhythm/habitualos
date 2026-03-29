@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { submitInterest } = require('./_services/db-early-access.cjs');
+const { deleteInterest } = require('./_services/db-early-access.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,26 +12,21 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
 
   try {
-    const { name, message, email, link } = JSON.parse(event.body || '{}');
-
-    if (!name && !message && !email) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Tell us something — even just your name.' }) };
+    const { id } = JSON.parse(event.body || '{}');
+    if (!id) {
+      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Missing id.' }) };
     }
 
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'That email doesn\'t look right.' }) };
-    }
-
-    const id = await submitInterest({ name, message, email, link });
+    await deleteInterest({ id });
 
     return {
       statusCode: 200,
       headers: { ...CORS, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, id })
+      body: JSON.stringify({ success: true })
     };
 
   } catch (err) {
-    console.error('[early-access-submit] ERROR:', err);
+    console.error('[early-access-delete] ERROR:', err);
     return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Something went wrong.' }) };
   }
 };

@@ -13,6 +13,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles/main.css">
+  {% if css %}<link rel="stylesheet" href="{{ css }}">{% endif %}
   <script>
     // userId must be available before any module scripts run
     window.__userId = localStorage.getItem('userId') || (function() {
@@ -77,7 +78,7 @@
   <footer class="site-footer">
     <div class="container">
       <a href="/early-access/" class="footer-logo-link"><img src="/assets/favicon-32x32.png" alt="" class="footer-logo"></a>
-      <p>An <a href="https://erikburns.com">Erik Burns</a> app © 2026 all rights reserved<br/>
+      <p>An <a href="https://erikburns.com">Erik</a> &amp; <a href="https://claude.ai">Claude</a> app © 2026 all rights reserved<br/>
       Signal was built with <a href="https://habitualos.com">HabitualOS</a></p>
     </div>
   </footer>
