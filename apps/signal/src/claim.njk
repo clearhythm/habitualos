@@ -34,23 +34,21 @@ css: /styles/early-access.css
             </div>
             <div id="ea-step-2" class="ea-step" style="display:none">
               <form class="ea-form" id="ea-form" autocomplete="off">
-                <div class="ea-form-row">
+                <div class="ea-form-row" style="grid-template-columns: 3fr 7fr">
                   <input class="ea-input" id="ea-name" type="text" placeholder="Name">
                   <input class="ea-input" id="ea-link" type="text" placeholder="LinkedIn or website (optional)">
                 </div>
                 <textarea class="ea-textarea" id="ea-message" placeholder="Why are you interested? (or just say hi — optional)" style="min-height:80px"></textarea>
                 <div class="ea-submit-row">
-                  <button type="submit" class="btn btn-primary" id="ea-submit">Claim Your Spot →</button>
-                  <button type="button" class="ea-edit-cancel" id="ea-back">← back</button>
+                  <button type="submit" class="btn btn-primary" id="ea-submit">Submit →</button>
+                  <button type="button" class="ea-edit-cancel" id="ea-back">Go back</button>
                 </div>
-                <p class="ea-hint">Name is required. Everything else is optional.</p>
               </form>
             </div>
             <p class="ea-error" id="ea-error"></p>
           </div>
           <div class="ea-success" id="ea-success">
-            <p class="ea-success-body" id="ea-success-url-line"></p>
-            <p class="ea-success-body">You're on the list. We'll reach out when your Signal profile is ready.</p>
+            <p class="ea-success-body">Thanks for signing up for Early Access. You're on the list. Check your inbox for an email from us.</p>
             <div class="ea-success-actions">
               <button class="btn btn-outline" id="ea-success-edit-btn">Edit your entry</button>
               <button class="ea-delete-link" id="ea-success-delete-btn">Delete entry</button>
@@ -131,6 +129,7 @@ css: /styles/early-access.css
         var countEl = document.getElementById('ea-count');
         if (!data.success || !data.items.length) {
           if (listEl) listEl.innerHTML = '<p class="ea-empty">No one yet. Be the first.</p>';
+          if (countEl) countEl.textContent = '';
           return;
         }
         if (countEl) countEl.textContent = '· ' + data.items.length;
@@ -191,21 +190,10 @@ css: /styles/early-access.css
     });
   });
 
-  function setSubmittedState(slug) {
-    var mySub = getMySub();
-    var s = slug || (mySub && mySub.slug) || '';
+  function setSubmittedState() {
     formWrap.style.display = 'none';
     successEl.style.display = 'block';
-    if (formTitle) formTitle.textContent = 'You\'re In ✋';
-    var urlLine = document.getElementById('ea-success-url-line');
-    if (urlLine) {
-      if (s) {
-        urlLine.innerHTML = 'Your Signal URL: <strong style="color:#a78bfa">signal.habitualos.com/meet/' + escHtml(s) + '</strong>';
-        urlLine.style.display = '';
-      } else {
-        urlLine.style.display = 'none';
-      }
-    }
+    if (formTitle) formTitle.textContent = 'You\'re In 🙌';
   }
 
   if (getMySub()) setSubmittedState();
@@ -268,16 +256,25 @@ css: /styles/early-access.css
     successEditBtn.addEventListener('click', function() {
       var mySub = getMySub();
       if (!mySub) return;
+      submitting = false;
+      submitBtn.disabled = false;
       successEl.style.display = 'none';
       formWrap.style.display = '';
       isEditing = true;
+      slugInput.value = mySub.slug || '';
+      if (mySub.slug) {
+        slugHint.textContent = '✓ signal.habitualos.com/meet/' + mySub.slug;
+        slugHint.className = 'ea-slug-hint is-ok';
+      }
+      emailInput1.value = mySub.email || '';
       document.getElementById('ea-message').value = mySub.message || '';
       document.getElementById('ea-name').value = mySub.name || '';
       document.getElementById('ea-link').value = mySub.link || '';
       step1.style.display = 'none';
       step2.style.display = '';
       step2.style.opacity = '1';
-      if (formTitle) formTitle.textContent = 'A bit more (optional)';
+      submitBtn.textContent = 'Save →';
+      if (formTitle) formTitle.textContent = 'Sign the Guestbook';
       errorEl.style.display = 'none';
       if (backBtn) backBtn.textContent = 'Cancel';
     });
@@ -341,6 +338,7 @@ css: /styles/early-access.css
       return;
     }
     nextBlockedByEmail = false;
+    submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
     showStep(2);
   });
 
@@ -348,21 +346,19 @@ css: /styles/early-access.css
     if (isEditing) {
       formWrap.style.display = 'none';
       successEl.style.display = 'block';
-      if (formTitle) formTitle.textContent = 'You\'re In ✋';
+      if (formTitle) formTitle.textContent = 'You\'re In 🙌';
       isEditing = false;
-      backBtn.textContent = '← back';
+      backBtn.textContent = 'Go back';
       var mySub = getMySub();
-      var urlLine = document.getElementById('ea-success-url-line');
-      if (urlLine && mySub && mySub.slug) {
-        urlLine.innerHTML = 'Your Signal URL: <strong style="color:#a78bfa">signal.habitualos.com/meet/' + escHtml(mySub.slug) + '</strong>';
-      }
     } else {
       showStep(1);
     }
   });
 
+  var submitting = false;
   form.addEventListener('submit', function(e) {
     e.preventDefault();
+    if (submitting) return;
     var name = document.getElementById('ea-name').value.trim();
     var message = document.getElementById('ea-message').value.trim();
     var link = document.getElementById('ea-link').value.trim();
@@ -379,8 +375,9 @@ css: /styles/early-access.css
     var slug = existing ? existing.slug : slugInput.value.trim().toLowerCase();
     var email = existing ? existing.email : emailInput1.value.trim();
 
+    submitting = true;
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Claiming…';
+    submitBtn.textContent = existing && existing.id ? 'Saving…' : 'Submitting…';
     errorEl.style.display = 'none';
 
     var url, body;
@@ -403,18 +400,19 @@ css: /styles/early-access.css
           var id = existing ? existing.id : data.id;
           setMySub({ id: id, slug: slug, email: email, name: name, message: message, link: link });
           isEditing = false;
-          backBtn.textContent = '← back';
-          setSubmittedState(slug);
+          backBtn.textContent = 'Go back';
+          setSubmittedState();
           loadList();
         } else {
           throw new Error(data.error || 'Something went wrong.');
         }
       })
       .catch(function(err) {
+        submitting = false;
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Claim Your Spot →';
+        submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
       });
   });
 
