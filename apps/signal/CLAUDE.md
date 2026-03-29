@@ -41,6 +41,16 @@ See `docs/architecture.md` for the full reference: all 9 Firestore collections, 
 
 See root `CLAUDE.md` for shared patterns (auth, data layer, endpoint structure).
 
+## Deploying to Production
+
+This site uses **deploy lock** — Netlify auto-publishing is disabled. To deploy:
+
+```
+npm run ship   # unlocks, promotes latest build to production, re-locks
+```
+
+When Erik says "ship it", run `npm run ship`. Do not push and assume it will deploy.
+
 ## Local Dev
 
 ```
