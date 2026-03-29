@@ -1,34 +1,30 @@
 #!/bin/bash
-# Deploy to Netlify prod and re-lock deploys after
+# Promote the latest Netlify CI build to production and re-lock.
+# Does NOT deploy local _site — uses the build Netlify already ran on git push.
 set -e
 
 SITE_ID="877381f6-7e53-45ea-8e50-50f1394d3107"
 
-echo "Unlocking production..."
-SITE_JSON=$(netlify api getSite --data "{\"site_id\":\"$SITE_ID\"}" 2>/dev/null)
-CURRENT_DEPLOY_ID=$(node -e "
-  try { process.stdout.write(JSON.parse(process.argv[1]).published_deploy.id || ''); } catch(e) {}
-" "$SITE_JSON")
+echo "Fetching latest CI build..."
+DEPLOYS_JSON=$(netlify api listSiteDeploys --data "{\"site_id\":\"$SITE_ID\",\"per_page\":\"10\"}" 2>/dev/null)
 
-if [ -n "$CURRENT_DEPLOY_ID" ]; then
-  netlify api unlockDeploy --data "{\"deploy_id\":\"$CURRENT_DEPLOY_ID\"}" > /dev/null 2>&1 || true
+LATEST_DEPLOY_ID=$(node -e "
+  try {
+    const deploys = JSON.parse(process.argv[1]);
+    const latest = deploys.find(d => d.state === 'ready');
+    process.stdout.write(latest ? latest.id : '');
+  } catch(e) {}
+" "$DEPLOYS_JSON")
+
+if [ -z "$LATEST_DEPLOY_ID" ]; then
+  echo "Error: no ready CI build found. Push your changes and wait for the Netlify build to finish."
+  exit 1
 fi
 
-echo "Deploying to production..."
-DEPLOY_JSON=$(mktemp)
-netlify deploy --prod --json 2>/dev/null > "$DEPLOY_JSON"
-cat "$DEPLOY_JSON"
+echo "Promoting deploy $LATEST_DEPLOY_ID to production..."
+netlify api updateSite --data "{\"site_id\":\"$SITE_ID\",\"body\":{\"published_deploy_id\":\"$LATEST_DEPLOY_ID\"}}" > /dev/null 2>&1
 
-DEPLOY_ID=$(node -e "
-  const d = require('fs').readFileSync('$DEPLOY_JSON', 'utf8');
-  try { process.stdout.write(JSON.parse(d).deploy_id || ''); } catch(e) {}
-")
-rm -f "$DEPLOY_JSON"
+echo "Re-locking deploy $LATEST_DEPLOY_ID..."
+netlify api lockDeploy --data "{\"deploy_id\":\"$LATEST_DEPLOY_ID\"}" > /dev/null 2>&1
 
-if [ -n "$DEPLOY_ID" ]; then
-  echo "Re-locking deploy $DEPLOY_ID..."
-  netlify api lockDeploy --data "{\"deploy_id\":\"$DEPLOY_ID\"}" > /dev/null 2>&1
-  echo "Deploy locked."
-else
-  echo "Warning: could not extract deploy ID to re-lock. Lock manually in Netlify dashboard."
-fi
+echo "Shipped: https://signal.habitualos.com"
