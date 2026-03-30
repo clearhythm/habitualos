@@ -1,9 +1,13 @@
 # Signal Launch Roadmap
 _Captured 2026-03-29. Ordered by priority._
 
-## 1. Email service
+## DONE 1. Email service
 Configure DKIM/SPF on habitualos.com, wire up Resend to send from `Signal <erik@habitualos.com>`.
-Start now so DNS propagates. Needed: confirmation email + welcome email on early-access claim.
+Start now so DNS propagates.
+
+## 1b. Email service
+Generate Resend key and add here to app to send emails `Erik <erik@habitualos.com>` and also `Signal <signal@habitualos.com>`.
+Needed: confirmation email + welcome email on early-access claim. These will have subject line starting with "Signal: " to make it clear what it's from, though it will come from Erik. Configure and test the emails with Claude.
 
 ## DONE 2. Personality signal balance
 Ingest is only storing positive personality observations. Coach mode was requested on Erik's
@@ -50,3 +54,20 @@ Final polish before publish.
 ## 8. Article series
 (a) Invite to claim Signal profile
 (b) Spock vs Data heads-up series and other A vs B comparisons
+
+---
+
+## POST LAUNCH
+
+### P1. Embedding-based evidence retrieval (Voyage AI)
+Current `searchChunks()` uses keyword overlap to find relevant chunks for a JD eval.
+This works at <50 chunks but misses semantically related evidence that doesn't share exact keywords
+(e.g. "real-time systems" won't match a chunk tagged "SSE streaming").
+
+Replace with embedding-based retrieval:
+- At ingest: embed chunk summary via Voyage AI → store vector on chunk doc
+- At eval: embed JD → cosine similarity against stored vectors → return top 8
+- Migrate existing chunks retroactively (one-time script)
+
+Trigger: when evidence quality starts feeling off, or at ~200 chunks, whichever comes first.
+Anthropic's recommended embeddings partner: Voyage AI (voyageai.com).

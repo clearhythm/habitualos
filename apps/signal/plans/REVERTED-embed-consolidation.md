@@ -1,5 +1,10 @@
 # TICKET: Consolidate embed.js + signal-modal.js into one widget
 
+## REASON FOR REVERTING
+This ticked caused a massive refactor of the embedded widget into IIFE that pulled out JS and CSS into string literals and that removed all modularity from our codebase for this most central widget feature. It caused 2 different autonomous Claude agent browser cycles to eat up full 5-hour token allotments (without finishing) and almost entirely the full allotment when run locally. The results from this was we discovered that we needed to add a build pipeline to our project so that we could keep our codebase modular but also allow us to output a scope and hostable widget on any site.
+
+I am GLADLY closing this ticket out as it caused an impressive amount of headache for myself and Claude. Claude was gracious about it though (although, to be fair, Claude authored this ticket. In our post-mortem, I will still hold myself accountable lol).
+
 ## Problem
 Two widget implementations exist and have diverged:
 - `embed.js` — old design, self-contained, used on external sites (erikburns.com)
