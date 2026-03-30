@@ -7,10 +7,10 @@ const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
  *
  * Public endpoint — no auth required.
  * Returns all demo evaluations (demo: true) grouped by role title,
- * plus public profile data for both demo characters (spock, data-tng).
+ * plus public profile data for both demo characters (spock, data).
  */
 
-const DEMO_SIGNAL_IDS = ['spock', 'data-tng'];
+const DEMO_SIGNAL_IDS = ['spock', 'data'];
 
 function buildProfile(owner) {
   if (!owner) return null;
@@ -42,7 +42,7 @@ exports.handler = async (event) => {
     const [evalsSnap, spockOwner, dataOwner] = await Promise.all([
       db.collection('signal-evaluations').where('demo', '==', true).get(),
       getOwnerBySignalId('spock'),
-      getOwnerBySignalId('data-tng')
+      getOwnerBySignalId('data')
     ]);
 
     const evalsByRole = {};
@@ -86,7 +86,7 @@ exports.handler = async (event) => {
         success: true,
         profiles: {
           spock: buildProfile(spockOwner),
-          'data-tng': buildProfile(dataOwner)
+          'data': buildProfile(dataOwner)
         },
         evalsByRole,
         roles

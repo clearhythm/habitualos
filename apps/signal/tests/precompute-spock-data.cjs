@@ -234,7 +234,7 @@ Culture signals:
   }
 ];
 
-const CHARACTERS = ['spock', 'data-tng'];
+const CHARACTERS = ['spock', 'data'];
 
 // ─── Evaluate one character against one role ──────────────────────────────────
 

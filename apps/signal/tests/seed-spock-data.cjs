@@ -1,5 +1,5 @@
 /**
- * Seed demo data: Spock (spock) and Data (data-tng).
+ * Seed demo data: Spock (spock) and Data (data).
  *
  * Usage:
  *   node tests/seed-spock-data.cjs [--dry-run] [base_url]
@@ -33,7 +33,7 @@ const OWNERS = [
     }
   },
   {
-    signalId: 'data-tng',
+    signalId: 'data',
     data: {
       _userId: 'u-1000000000-data',
       displayName: 'Data',
@@ -499,7 +499,7 @@ async function run() {
   // 2. Write episode chunks
   const allChunks = [
     ...SPOCK_CHUNKS.map(c => ({ signalId: 'spock', ...c })),
-    ...DATA_CHUNKS.map(c => ({ signalId: 'data-tng', ...c }))
+    ...DATA_CHUNKS.map(c => ({ signalId: 'data', ...c }))
   ];
 
   for (const { signalId, conversationId, ...fields } of allChunks) {

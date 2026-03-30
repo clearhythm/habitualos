@@ -5,13 +5,21 @@ _Captured 2026-03-29. Ordered by priority._
 Configure DKIM/SPF on habitualos.com, wire up Resend to send from `Signal <erik@habitualos.com>`.
 Start now so DNS propagates. Needed: confirmation email + welcome email on early-access claim.
 
-## 2. Personality signal balance
+## DONE 2. Personality signal balance
 Ingest is only storing positive personality observations. Coach mode was requested on Erik's
 profile but isn't working. Signals should be balanced — both `strength` and `edge` polarity.
 
+## 3a. Consolidate embed.js + signal-modal.js (TICKET-embed-consolidation.md)
+embed.js is an old widget that has diverged from the Signal Interview UI in signal-modal.js.
+Rewrite embed.js to inject the Signal Interview HTML/CSS/logic, making it the one widget
+used everywhere — on signal.habitualos.com and any external embed. Delete signal-modal.js after.
+
 ## 3. Widget: Signal Evidence
 Surface session evidence in the widget like the Spock/Data demo does. Currently missing
-from the live widget experience.
+from the live widget experience. Evidence cards need both `strength` and `edge` signals
+to be credible — a profile with only positives reads like a resume. The edge signals are
+what make it feel like a behavioral record rather than self-promotion. Requires balanced
+ingest data to populate properly (now enforced in CLAUDE.md).
 
 ## 4. Widget: streaming chat
 Migrate widget chat to streaming responses. Currently not streaming.
