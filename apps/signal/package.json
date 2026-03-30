@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "netlify dev",
+    "build:widget": "node scripts/build-widget.js",
+    "build:widget:watch": "node scripts/build-widget.js --watch",
+    "start": "npm run build:widget && netlify dev",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve --port=8080",
-    "build": "eleventy",
+    "build": "npm run build:widget && eleventy",
     "ship": "bash scripts/ship.sh"
   },
   "dependencies": {
@@ -19,6 +21,8 @@
     "resend": "^4.0.0"
   },
   "devDependencies": {
+    "esbuild": "^0.27.4",
+    "esbuild-sass-plugin": "^3.7.0",
     "sass": "^1.69.5"
   }
 }

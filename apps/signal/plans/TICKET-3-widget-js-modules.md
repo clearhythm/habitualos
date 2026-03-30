@@ -252,6 +252,22 @@ Remove the `// TODO: remove after TICKET-widget-js-modules ships` rules (the `si
 
 ---
 
+## Local dev: watch mode
+
+During development you'll want the widget to rebuild on every save. Update `start` in `package.json` to run the watcher and netlify dev in parallel:
+
+```bash
+npm install --save-dev concurrently
+```
+
+```json
+"start": "concurrently \"node scripts/build-widget.js --watch\" \"netlify dev\""
+```
+
+This replaces the one-shot `npm run build:widget && netlify dev` added in Ticket 1. Same artifact, same code path — just continuous rebuild so the browser always has the latest bundle.
+
+---
+
 ## Testing
 
 Run existing tests after implementation:
