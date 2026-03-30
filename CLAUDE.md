@@ -72,6 +72,8 @@ The ingest captures three dimensions — skills, personality, alignment. All thr
 
 **skills** — what was demonstrated technically
 **personalitySignals** — behavioral observations tagged with polarity. `strength`: what Erik brings. `edge`: patterns worth examining (friction responses, avoidance, scope issues). Be specific and observational, not evaluative.
+
+Every session must include at least one `edge` signal. There is always something — a hesitation, a scope creep, a correction, a repeated pattern, a place where friction surfaced. The point is not to judge but to gather raw material for coach mode. If it feels debatable, include it anyway — that's the point.
 **wants** — only include if alignment signals appeared: stated preferences, what Erik chose when unconstrained, what he pushed back on or toward
 
 ```json
