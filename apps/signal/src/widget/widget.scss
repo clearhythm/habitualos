@@ -1,0 +1,1058 @@
+// widget.scss
+// Widget modal CSS for the Signal embed bundle.
+// Scoped under #signal-embed-overlay — no class name collisions on host sites.
+// Imported by src/widget/index.js and compiled/injected by esbuild-sass-plugin.
+//
+// Class names are clean (no se- prefix). Container ID provides isolation.
+// These styles match the signal-modal.js two-panel experience (Profile + Score tabs).
+
+// ─── Variables ────────────────────────────────────────────────────────────────
+
+$surface:    #0f172a;
+$surface-2:  #1e293b;
+$bg-overlay: linear-gradient(to bottom, #130e28, #0a0d1a);
+$border:     rgba(255, 255, 255, 0.06);
+$border-sm:  rgba(255, 255, 255, 0.08);
+$accent:     #c4b5fd;
+$accent-bg:  rgba(196, 181, 253, 0.15);
+$primary:    #7c3aed;
+$green:      #059669;
+$ring-fill:  #9d6ef5;
+$text:       #f9fafb;
+$muted:      #9ca3af;
+
+$bp-md: 768px;
+
+$xs:  0.25rem;
+$sm:  0.5rem;
+$md:  1rem;
+$lg:  1.5rem;
+$xl:  2rem;
+$xxl: 3rem;
+
+$font: 'Poppins', system-ui, -apple-system, sans-serif;
+$font-sm:   0.875rem;
+$font-base: 1rem;
+$font-lg:   1.125rem;
+$font-xl:   1.25rem;
+$font-xxl:  1.5rem;
+$font-xxxl: 2rem;
+
+// ─── Keyframes ────────────────────────────────────────────────────────────────
+
+@keyframes se-orb-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes se-orb-enter {
+  0%   { transform: scale(0.75); opacity: 0; }
+  70%  { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes se-orb-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@keyframes se-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-6px); opacity: 1; }
+}
+
+// ─── Root overlay ─────────────────────────────────────────────────────────────
+
+#signal-embed-overlay {
+  position: fixed;
+  inset: 0;
+  background: $bg-overlay;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  font-family: $font;
+  font-size: $font-base;
+  line-height: 1.5;
+  color: $text;
+  box-sizing: border-box;
+
+  *, *::before, *::after { box-sizing: inherit; }
+
+  &[hidden] { display: none; }
+
+  // ─── Header ───────────────────────────────────────────────────────────────
+
+  .header {
+    position: relative;
+    width: 100%;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 $lg;
+    border-bottom: 1px solid $border-sm;
+    flex-shrink: 0;
+  }
+
+  .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: $font-xxl;
+    font-weight: 600;
+    color: $text;
+    display: flex;
+    align-items: center;
+    gap: $sm;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .owner-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $primary;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 4px;
+    padding: 1px 6px;
+    pointer-events: auto;
+  }
+
+  .close {
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    padding: 10px;
+    flex-shrink: 0;
+
+    span {
+      display: block;
+      width: 24px;
+      height: 3px;
+      background: $text;
+      position: absolute;
+      border-radius: 2px;
+      transition: background 0.15s;
+      top: 50%;
+      left: 50%;
+      margin-left: -12px;
+      margin-top: -1px;
+
+      &:first-child { transform: rotate(45deg); }
+      &:last-child  { transform: rotate(-45deg); }
+    }
+
+    &:hover span { background: rgba(255, 255, 255, 0.6); }
+  }
+
+  // ─── Body (holds the two-panel widget grid) ───────────────────────────────
+
+  .body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  // ─── Two-column widget grid ───────────────────────────────────────────────
+
+  .widget {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    padding: $xl;
+    gap: $xl;
+
+    @media (max-width: $bp-md) {
+      grid-template-columns: 1fr;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: $md;
+      gap: $md;
+    }
+  }
+
+  // ─── Panel base ───────────────────────────────────────────────────────────
+
+  .panel {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $border-sm;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  // ─── Mobile compact score bar ─────────────────────────────────────────────
+
+  .score-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $accent-bg;
+    border-radius: 10px;
+    order: 0;
+
+    .score-bar-num {
+      font-size: 22px;
+      font-weight: 700;
+      color: $accent;
+      line-height: 1;
+    }
+
+    .score-bar-label {
+      font-size: 12px;
+      color: $muted;
+    }
+  }
+
+  // ─── Left panel (score / profile) ─────────────────────────────────────────
+
+  .left {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 72px - 2 * #{$xl});
+    position: relative;
+    border-color: $accent-bg;
+
+    @media (max-width: $bp-md) {
+      overflow-y: auto;
+      flex-shrink: 0;
+      height: 42%;
+    }
+  }
+
+  // Mobile collapsed header (tappable)
+  .mobile-header {
+    display: none;
+    align-items: center;
+    gap: $sm;
+    padding: $sm $md;
+    cursor: pointer;
+    min-height: 44px;
+    user-select: none;
+
+    .mobile-agent-name {
+      flex: 1;
+      font-size: $font-sm;
+      font-weight: 600;
+      color: $text;
+    }
+
+    .mobile-score {
+      font-size: $font-sm;
+      font-weight: 700;
+      color: $accent;
+      &:empty { display: none; }
+    }
+
+    .mobile-chevron {
+      font-size: $font-sm;
+      color: $muted;
+      transition: transform 0.2s;
+    }
+  }
+
+  // Tabs
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid $border;
+    flex-shrink: 0;
+  }
+
+  .tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: $md;
+    font-size: $font-base;
+    font-family: $font;
+    color: $muted;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $xs;
+    transition: color 0.2s;
+
+    &.is-active {
+      color: $text;
+      border-bottom: 2px solid $primary;
+      margin-bottom: -1px;
+    }
+
+    .tab-badge {
+      background: $primary;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 8px;
+      min-width: 18px;
+      text-align: center;
+      &:empty { display: none; }
+    }
+  }
+
+  // Phase wrap — profile and score stacked in same grid cell
+  .phase-wrap {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  // ─── Profile tab ──────────────────────────────────────────────────────────
+
+  .profile {
+    grid-row: 1;
+    grid-column: 1;
+    overflow-y: auto;
+    transition: opacity 0.5s ease;
+    padding: $xl $lg;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: $lg;
+
+    &.is-done {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .agent-name {
+      font-size: $font-xl;
+      font-weight: 700;
+      color: $text;
+    }
+
+    .agent-sub {
+      font-size: $font-sm;
+      color: $muted;
+    }
+
+    .avatar-wrap {
+      width: 116px;
+      height: 116px;
+      border-radius: 50%;
+      background: rgba(124, 58, 237, 0.12);
+      border: 2px solid rgba(124, 58, 237, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+
+      img {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        object-fit: contain;
+      }
+    }
+
+    .creds-block {
+      align-self: stretch;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: $sm;
+
+      h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: $text;
+        margin: 0;
+        padding: 0;
+        line-height: 1.3;
+      }
+    }
+
+    .creds-intro {
+      font-size: $font-sm;
+      color: $muted;
+      margin: 0;
+      align-self: stretch;
+      text-align: left;
+    }
+
+    .creds-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: $xs;
+
+      li {
+        font-size: $font-sm;
+        color: $muted;
+        list-style: none;
+        padding-left: $md;
+        position: relative;
+
+        &::before {
+          content: '•';
+          position: absolute;
+          left: 0;
+        }
+      }
+
+      a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: rgba(255, 255, 255, 0.2);
+        text-underline-offset: 2px;
+
+        &:hover { text-decoration-color: rgba(255, 255, 255, 0.5); }
+      }
+    }
+
+    .updated {
+      font-size: $font-sm;
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.3);
+      margin: $xs 0 0;
+      text-align: left;
+      align-self: stretch;
+      &:empty { display: none; }
+    }
+
+    .contact {
+      margin-top: auto;
+      padding-top: $lg;
+      width: 100%;
+
+      a {
+        display: block;
+        text-align: center;
+        width: 100%;
+      }
+    }
+
+    .rule {
+      width: 100%;
+      border: none;
+      border-top: 1px solid $border;
+      margin: 0;
+    }
+  }
+
+  // ─── Score tab ────────────────────────────────────────────────────────────
+
+  .score {
+    grid-row: 1;
+    grid-column: 1;
+    overflow-y: auto;
+    transition: opacity 0.5s ease;
+    padding: $xl $lg;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: $md;
+
+    &.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .score-label {
+      font-size: $font-xl;
+      font-weight: 700;
+      color: $text;
+      text-align: center;
+    }
+  }
+
+  // ─── Ring / orb ───────────────────────────────────────────────────────────
+
+  .ring-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: $sm 0;
+
+    &.is-visible {
+      animation: se-orb-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+
+      .ring { animation: se-orb-float 3.5s ease-in-out infinite; animation-delay: 0.6s; }
+    }
+
+    &.is-pulsing { animation: se-orb-pulse 0.5s ease-out; }
+
+    .ring {
+      width: 120px;
+      height: 120px;
+      transform: rotate(-90deg);
+
+      .ring-track {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.08);
+        stroke-width: 8;
+      }
+
+      .ring-fill {
+        fill: none;
+        stroke: $ring-fill;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+
+    .ring-score {
+      position: absolute;
+      font-size: $font-xxxl;
+      font-weight: 700;
+      color: $accent;
+      line-height: 1;
+    }
+  }
+
+  // ─── Dimension bars ───────────────────────────────────────────────────────
+
+  .dims {
+    display: flex;
+    flex-direction: column;
+    gap: $md;
+    margin-top: $sm;
+
+    .dim-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: $xs;
+
+      .dim-name { font-size: $font-base; color: $muted; }
+      .dim-value { font-size: $font-sm; font-weight: 600; color: $text; }
+    }
+
+    .bar-track {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+
+      .bar-fill {
+        height: 100%;
+        width: 0;
+        background: $green;
+        border-radius: 4px;
+        transition: width 0.8s ease;
+      }
+    }
+
+    // Stagger bar entries
+    .bar-fill--skills      { transition-delay: 0.1s; }
+    .bar-fill--alignment   { transition-delay: 0.3s; }
+    .bar-fill--personality { transition-delay: 0.5s; }
+  }
+
+  // Confidence
+  .confidence {
+    display: flex;
+    flex-direction: column;
+    gap: $xs;
+    margin-top: $sm;
+    padding-top: $sm;
+
+    &[hidden] { display: none; }
+
+    .confidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .confidence-label { font-size: $font-base; color: $muted; }
+
+    .confidence-bar-wrap {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      overflow: hidden;
+
+      .confidence-bar {
+        height: 100%;
+        width: 0;
+        background: $ring-fill;
+        border-radius: 2px;
+        transition: width 0.5s ease;
+      }
+    }
+  }
+
+  // Reasoning text
+  .reason {
+    font-size: $font-sm;
+    color: $muted;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    min-height: 0;
+
+    &.visible { opacity: 1; }
+  }
+
+  .recommendation {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: $text;
+    margin: $sm 0 0;
+    &[hidden] { display: none; }
+  }
+
+  .score-footer-text {
+    font-size: $font-sm;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.3);
+    padding-top: $sm;
+  }
+
+  // ─── Left footer (Signal branding) ────────────────────────────────────────
+
+  .left-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: $sm;
+    padding: 10px $lg;
+    border-top: 1px solid $border;
+    background: rgba(255, 255, 255, 0.02);
+
+    a {
+      font-size: $font-sm;
+      color: rgba(255, 255, 255, 0.45);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 0;
+      transition: color 0.2s;
+
+      img { width: 16px; height: 16px; transition: filter 0.2s; }
+
+      strong { color: rgba(255, 255, 255, 0.8); font-weight: 700; }
+
+      &:hover {
+        color: rgba(255, 255, 255, 0.75);
+        text-decoration: none;
+        img { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.35)); }
+      }
+    }
+  }
+
+  // ─── Chat panel (right) ───────────────────────────────────────────────────
+
+  .chat {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 72px - 2 * #{$xl});
+    max-height: 800px;
+
+    @media (max-width: $bp-md) {
+      order: 1;
+      flex: 1;
+      height: auto;
+      max-height: none;
+      min-height: 0;
+    }
+  }
+
+  // Persona selector
+  .persona-wrap {
+    padding: $xl;
+    display: flex;
+    flex-direction: column;
+    gap: $md;
+
+    .persona-prompt {
+      color: $muted;
+      font-size: $font-base;
+      margin: 0;
+    }
+
+    .persona-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $sm;
+    }
+
+    .persona-btn {
+      padding: $sm $lg;
+      border-radius: 24px;
+      background: transparent;
+      border: 1px solid $border-sm;
+      color: $text;
+      font-size: $font-sm;
+      font-weight: 500;
+      font-family: $font;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+
+      &:hover {
+        background: rgba(124, 58, 237, 0.12);
+        border-color: $primary;
+      }
+
+      &:active { background: rgba(124, 58, 237, 0.2); }
+    }
+  }
+
+  // ─── Messages ─────────────────────────────────────────────────────────────
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: $lg;
+    display: flex;
+    flex-direction: column;
+    gap: $md;
+    scroll-behavior: smooth;
+  }
+
+  .msg {
+    line-height: 1.55;
+    font-size: $font-base;
+    word-break: break-word;
+
+    &--user {
+      align-self: flex-end;
+      max-width: 72%;
+      background: $primary;
+      color: #fff;
+      padding: $sm $md;
+      border-radius: 18px 18px 4px 18px;
+      white-space: pre-wrap;
+    }
+
+    &--assistant {
+      align-self: flex-start;
+      max-width: 72%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid $border;
+      border-radius: 4px 18px 18px 18px;
+      padding: $sm $md;
+      white-space: normal;
+
+      .msg-content {
+        color: $text;
+
+        p { margin: 0 0 0.6em; &:last-child { margin-bottom: 0; } }
+        ul, ol { margin: 0.4em 0 0.6em 1.2em; padding: 0; }
+        li { margin-bottom: 0.2em; }
+        strong { color: $text; }
+        h1, h2, h3 { font-size: $font-base; font-weight: 600; margin: 0.6em 0 0.3em; }
+        hr { border: none; border-top: 1px solid $border; margin: 0.6em 0; }
+      }
+    }
+
+    &--system {
+      align-self: center;
+      font-size: $font-sm;
+      color: $muted;
+      font-style: italic;
+    }
+
+    &--eval {
+      max-width: 100%;
+      background: transparent;
+      border: 1px solid rgba(196, 181, 253, 0.25);
+      border-radius: 12px;
+      padding: $md;
+
+      .eval-output {
+        display: flex;
+        flex-direction: column;
+        gap: $sm;
+
+        h3 { font-size: $font-sm; font-weight: 600; color: $text; margin: 0.4em 0 0.1em; }
+        p  { font-size: $font-sm; color: $muted; line-height: 1.6; margin: 0; }
+
+        .eval-role {
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: $muted;
+          margin: 0;
+        }
+
+        .eval-summary { color: $text !important; }
+
+        .eval-section {
+          display: flex;
+          flex-direction: column;
+          gap: $xs;
+
+          h4 {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.35);
+            margin: 0;
+          }
+        }
+
+        .eval-items {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          li {
+            font-size: $font-sm;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            padding-left: 1em;
+            position: relative;
+
+            &::before {
+              content: '✓';
+              position: absolute;
+              left: 0;
+              color: $green;
+              font-size: 0.75em;
+              top: 0.15em;
+            }
+          }
+
+          &--gaps li::before {
+            content: '·';
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 1.2em;
+            top: -0.05em;
+          }
+        }
+      }
+    }
+  }
+
+  // ─── Thinking indicator ───────────────────────────────────────────────────
+
+  .thinking {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+    padding: $sm $md;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $border;
+    border-radius: 4px 18px 18px 18px;
+
+    span {
+      width: 7px;
+      height: 7px;
+      background: $muted;
+      border-radius: 50%;
+      animation: se-bounce 1.2s infinite ease-in-out;
+
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
+    }
+  }
+
+  // ─── Input wrap ───────────────────────────────────────────────────────────
+
+  .input-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: $sm;
+    padding: $md;
+    border-top: 1px solid $border;
+
+    @media (max-width: $bp-md) {
+      position: sticky;
+      bottom: 0;
+      background: $surface;
+      z-index: 1;
+    }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: 1px solid $border-sm;
+      border-radius: 8px;
+      padding: $sm $md;
+      color: $text;
+      font-size: $font-base;
+      font-family: $font;
+      line-height: 1.5;
+      resize: none;
+      max-height: 160px;
+      overflow-y: auto;
+      transition: border-color 0.15s;
+
+      &::placeholder { color: $muted; }
+      &:focus { outline: none; border-color: $primary; }
+      &:disabled { opacity: 0.4; cursor: not-allowed; }
+    }
+
+    button[type="submit"] {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: $primary;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+
+      &:hover { opacity: 0.85; }
+      &:disabled { opacity: 0.35; cursor: not-allowed; }
+    }
+  }
+
+  // ─── Chat footer ──────────────────────────────────────────────────────────
+
+  .chat-footer {
+    display: flex;
+    align-items: center;
+    gap: $sm;
+    padding: $sm $md;
+    border-top: 1px solid $border;
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+      text-decoration: none;
+      &:hover { opacity: 0.8; }
+
+      img { height: 20px; width: auto; display: block; }
+    }
+
+    .brand-sub { font-size: 0.72rem; color: $muted; line-height: 1.3; }
+  }
+
+  // ─── Next step panel ──────────────────────────────────────────────────────
+
+  .nextstep {
+    padding-top: $md;
+    display: flex;
+    flex-direction: column;
+    gap: $sm;
+
+    .nextstep-heading {
+      font-size: $font-sm;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: $muted;
+    }
+
+    .nextstep-label {
+      font-size: $font-base;
+      font-weight: 600;
+      color: $text;
+      line-height: 1.3;
+    }
+
+    .nextstep-actions {
+      display: flex;
+      flex-direction: column;
+      gap: $xs;
+    }
+
+    button, a {
+      width: 100%;
+      text-align: center;
+      font-size: $font-sm;
+    }
+  }
+
+  // ─── Lead capture ─────────────────────────────────────────────────────────
+
+  .lead {
+    display: flex;
+    flex-direction: column;
+    gap: $xs;
+    margin-top: $xs;
+    padding-top: $sm;
+    border-top: 1px solid $border;
+
+    input {
+      width: 100%;
+      background: $surface;
+      border: 1px solid $border-sm;
+      border-radius: 6px;
+      padding: $xs $sm;
+      color: $text;
+      font-size: $font-sm;
+      font-family: $font;
+
+      &::placeholder { color: $muted; }
+      &:focus { outline: none; border-color: $primary; }
+    }
+
+    button {
+      width: 100%;
+      text-align: center;
+      font-size: $font-sm;
+    }
+
+    .lead-hint  { font-size: 0.75rem; color: $muted; margin: 0; }
+    .lead-sent  { font-size: $font-sm; color: $muted; margin: 0; }
+  }
+
+  // ─── Mobile: compacted left panel ─────────────────────────────────────────
+
+  @media (max-width: $bp-md) {
+    .left.is-compacted {
+      height: auto;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      .tabs,
+      .phase-wrap,
+      .left-footer { display: none; }
+
+      .mobile-header { display: flex; }
+    }
+
+    .left.is-compacted.is-expanded {
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 75vh;
+      max-height: 75vh;
+      overflow-y: auto;
+      z-index: 2100;
+      border-radius: 12px 12px 0 0;
+      background: $surface-2;
+
+      .tabs      { display: flex; }
+      .phase-wrap { display: grid; }
+      .left-footer { display: flex; }
+
+      .mobile-chevron { transform: rotate(180deg); }
+    }
+  }
+}
