@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { editInterest } = require('./_services/db-early-access.cjs');
+const { editInterest, getInterestById } = require('./_services/db-early-access.cjs');
+const { sendEarlyAccessWelcome } = require('./_services/email.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,13 +13,24 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
 
   try {
-    const { id, name, message, link } = JSON.parse(event.body || '{}');
+    const { id, name, message, link, email, resendConfirmation } = JSON.parse(event.body || '{}');
 
     if (!id) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Missing id.' }) };
     }
 
-    await editInterest({ id, name, message, link });
+    await editInterest({ id, name, message, link, email });
+
+    if (resendConfirmation) {
+      const doc = await getInterestById(id);
+      if (doc && doc.confirmToken) {
+        const toEmail = email || doc.email;
+        if (toEmail) {
+          sendEarlyAccessWelcome({ to: toEmail, name: doc.name, slug: doc.claimedSlug, confirmToken: doc.confirmToken })
+            .catch(err => console.error('[early-access-edit] email error:', err.message));
+        }
+      }
+    }
 
     return {
       statusCode: 200,

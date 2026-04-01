@@ -8,15 +8,15 @@ css: /styles/early-access.css
 <div class="ea-page">
   <div class="ea-content-wrap">
 
-    <h1 class="ea-headline">Get Early Access</h1>
-    <p class="ea-subhead">Signal builds a profile from your <em>actual work history</em>, so it's ideal for anyone who uses AI tools <em>daily or near daily</em>. If that's you, choose a handle, leave a note, and we'll get back to you.</p>
+    <h1 class="ea-headline">Start Your Signal</h1>
+    <p class="ea-subhead">Signal builds a profile from your <em>actual work history</em>. It's for people who use AI seriously, daily, for real work. Claim your handle to get in, or <a href="/waitlist/" class="ea-waitlist-link">join the waitlist</a> if you're not quite there yet.</p>
 
     <div class="ea-tabs">
-      <button class="ea-tab is-active" data-tab="sign">Start Your Signal</button>
-      <button class="ea-tab" data-tab="signals">Recently Joined <span id="ea-count" class="ea-tab-count"></span></button>
+      <button class="ea-tab is-active" data-tab="signals">Recently Joined</button>
+      <button class="ea-tab" id="ea-tab-sign-btn" data-tab="sign">Start Your Signal</button>
     </div>
 
-    <div id="ea-tab-sign">
+    <div id="ea-tab-sign" style="display:none">
       <div class="ea-top-grid">
         <div>
           <h2 id="ea-form-title" style="font-size: 1.75rem; font-weight: 700; margin: 0 0 1rem;">Your Signal URL</h2>
@@ -38,7 +38,7 @@ css: /styles/early-access.css
                   <input class="ea-input" id="ea-name" type="text" placeholder="Name">
                   <input class="ea-input" id="ea-link" type="text" placeholder="LinkedIn or website (optional)">
                 </div>
-                <textarea class="ea-textarea" id="ea-message" placeholder="Why are you interested? (or just say hi — optional)" style="min-height:80px"></textarea>
+                <textarea class="ea-textarea" id="ea-message" placeholder="What are you working on &mdash; and what brings you here? (optional)" style="min-height:140px"></textarea>
                 <div class="ea-submit-row">
                   <button type="submit" class="btn btn-primary" id="ea-submit">Submit →</button>
                   <button type="button" class="ea-edit-cancel" id="ea-back">Go back</button>
@@ -47,11 +47,18 @@ css: /styles/early-access.css
             </div>
             <p class="ea-error" id="ea-error"></p>
           </div>
-          <div class="ea-success" id="ea-success">
-            <p class="ea-success-body">Thanks for signing up for Early Access. You're on the list. Check your inbox for an email from us.</p>
-            <div class="ea-success-actions">
-              <button class="btn btn-outline" id="ea-success-edit-btn">Edit your entry</button>
-              <button class="ea-delete-link" id="ea-success-delete-btn">Delete entry</button>
+          <div id="ea-step-3" class="ea-step ea-step-confirm" style="display:none">
+            <div id="ea-step-3-pending">
+              <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0 0 0.5rem;">We sent an email from Signal to <strong id="ea-confirm-email" style="color:rgba(255,255,255,0.85);"></strong>. Please check it to confirm your early access spot. Check your spam folder if you don't see it.</p>
+              <p style="color:rgba(255,255,255,0.4);font-size:0.875rem;margin:0 0 2rem;">Once confirmed, you're in.</p>
+              <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <button type="button" class="btn btn-primary" id="ea-see-guestbook">See Guestbook →</button>
+                <button type="button" class="ea-edit-email-btn" id="ea-edit-email">edit email</button>
+              </div>
+            </div>
+            <div id="ea-step-3-confirmed" style="display:none">
+              <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0 0 2rem;">Welcome to Signal early access. Your spot is reserved. We'll be in touch again once we're ready to help get you set up.</p>
+              <button type="button" class="btn btn-primary" id="ea-see-guestbook-2">See Guestbook →</button>
             </div>
           </div>
         </div>
@@ -61,10 +68,9 @@ css: /styles/early-access.css
           <cite>&#8212; <a href="https://erikburns.com" target="_blank" rel="noopener">Erik Burns</a>, creator of Signal</cite>
         </blockquote>
       </div>
-
     </div>
 
-    <div id="ea-tab-signals" style="display:none">
+    <div id="ea-tab-signals">
       <div class="ea-list" id="ea-list">
         <p class="ea-loading">Loading…</p>
       </div>
@@ -104,10 +110,10 @@ css: /styles/early-access.css
   function escAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
   function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-  function renderItem(item) {
+  function renderItem(item, isOwn) {
     var displayName = item.name || item.claimedSlug || '✋';
     var logoImg = '<img src="/assets/favicon-32x32.png" alt="" style="width:18px;height:18px;flex-shrink:0;display:block">';
-    var href = item.claimedSlug ? '/meet/' + encodeURIComponent(item.claimedSlug) : (item.link || null);
+    var href = item.link || null;
     var nameHtml = href
       ? '<a href="' + escAttr(href) + '" target="_blank" rel="noopener" class="ea-item-link" style="display:inline-flex;align-items:center;gap:0.5rem">' + logoImg + '<span>' + escHtml(displayName) + ' →</span></a>'
       : '<span class="ea-item-name" style="display:inline-flex;align-items:center;gap:0.5rem">' + logoImg + '<span>' + escHtml(displayName) + '</span></span>';
@@ -115,10 +121,23 @@ css: /styles/early-access.css
     var replyHtml = item.reply
       ? '<p class="ea-item-reply">' + escHtml(item.reply) + '</p><p class="ea-item-reply-attr">— Signal</p>'
       : '';
-    return '<div class="ea-item" id="ea-item-' + item._id + '">' +
+    var ownControls = isOwn
+      ? '<div class="ea-item-own-controls"><button class="ea-item-edit-btn" data-id="' + escAttr(item._id) + '">Edit</button><button class="ea-item-delete-btn" data-id="' + escAttr(item._id) + '">Delete</button></div>'
+      : '';
+    return '<div class="ea-item' + (isOwn ? ' ea-item--own' : '') + '" id="ea-item-' + item._id + '">' +
       '<div class="ea-item-meta">' + nameHtml + '<span class="ea-item-time">' + timeAgo(item.createdAt) + '</span></div>' +
-      messageHtml + replyHtml +
+      messageHtml + replyHtml + ownControls +
       '</div>';
+  }
+
+  function bindListControls() {
+    var mySub = getMySub();
+    document.querySelectorAll('.ea-item-edit-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { startEdit(mySub); });
+    });
+    document.querySelectorAll('.ea-item-delete-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { doDelete(mySub); });
+    });
   }
 
   function loadList() {
@@ -126,14 +145,19 @@ css: /styles/early-access.css
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var listEl = document.getElementById('ea-list');
-        var countEl = document.getElementById('ea-count');
+        var mySub = getMySub();
+        var myId = mySub ? mySub.id : null;
+        var promoHtml = mySub ? '' : renderPromoCard();
         if (!data.success || !data.items.length) {
-          if (listEl) listEl.innerHTML = '<p class="ea-empty">No one yet. Be the first.</p>';
-          if (countEl) countEl.textContent = '';
+          if (listEl) listEl.innerHTML = promoHtml;
+          bindPromoCard();
           return;
         }
-        if (countEl) countEl.textContent = '· ' + data.items.length;
-        if (listEl) listEl.innerHTML = data.items.map(renderItem).join('');
+        if (listEl) listEl.innerHTML = promoHtml + data.items.map(function(item) {
+          return renderItem(item, item._id === myId);
+        }).join('');
+        bindPromoCard();
+        bindListControls();
       })
       .catch(function() {
         var listEl = document.getElementById('ea-list');
@@ -148,56 +172,187 @@ css: /styles/early-access.css
     return null;
   }
 
-  var form = document.getElementById('ea-form');
-  var submitBtn = document.getElementById('ea-submit');
-  var nextBtn = document.getElementById('ea-next');
-  var backBtn = document.getElementById('ea-back');
-  var errorEl = document.getElementById('ea-error');
-  var formWrap = document.getElementById('ea-form-wrap');
-  var successEl = document.getElementById('ea-success');
-  var step1 = document.getElementById('ea-step-1');
-  var step2 = document.getElementById('ea-step-2');
-  var slugInput = document.getElementById('ea-slug');
-  var slugHint = document.getElementById('ea-slug-hint');
-  var emailInput1 = document.getElementById('ea-email-1');
-  var formTitle = document.getElementById('ea-form-title');
-  var isEditing = false;
+  // ─── DOM refs ─────────────────────────────────────────────────────────────────
+
+  var form       = document.getElementById('ea-form');
+  var submitBtn  = document.getElementById('ea-submit');
+  var nextBtn    = document.getElementById('ea-next');
+  var backBtn    = document.getElementById('ea-back');
+  var errorEl    = document.getElementById('ea-error');
+  var step1      = document.getElementById('ea-step-1');
+  var step2      = document.getElementById('ea-step-2');
+  var step3      = document.getElementById('ea-step-3');
+  var slugInput  = document.getElementById('ea-slug');
+  var slugHint   = document.getElementById('ea-slug-hint');
+  var emailInput = document.getElementById('ea-email-1');
+  var formTitle  = document.getElementById('ea-form-title');
+  var tabSign    = document.getElementById('ea-tab-sign');
+  var tabSignals = document.getElementById('ea-tab-signals');
+  var signTabBtn = document.getElementById('ea-tab-sign-btn');
+
+  // ─── Step display ─────────────────────────────────────────────────────────────
+
+  step1.style.transition = 'opacity 0.15s';
+  step2.style.transition = 'opacity 0.15s';
 
   function showStep(n) {
     step1.style.opacity = '0';
     setTimeout(function() {
       step1.style.display = n === 1 ? '' : 'none';
       step2.style.display = n === 2 ? '' : 'none';
+      step3.style.display = n === 3 ? '' : 'none';
       errorEl.style.display = 'none';
-      if (formTitle) formTitle.textContent = n === 1 ? 'Your Signal URL' : 'Sign the Guestbook';
-      setTimeout(function() { (n === 1 ? step1 : step2).style.opacity = '1'; }, 20);
+      if (formTitle && n !== 3) {
+        formTitle.textContent = n === 1 ? 'Your Signal URL' : 'Sign the Guestbook';
+      }
+      if (n === 3) updateStep3State();
+      setTimeout(function() { (n === 1 ? step1 : n === 2 ? step2 : step3).style.opacity = '1'; }, 20);
     }, 150);
   }
 
-  step1.style.transition = 'opacity 0.15s';
-  step2.style.transition = 'opacity 0.15s';
-  if (formTitle) formTitle.textContent = 'Your Signal URL';
+  function updateStep3State() {
+    var mySub = getMySub();
+    var pending = document.getElementById('ea-step-3-pending');
+    var confirmed = document.getElementById('ea-step-3-confirmed');
+    if (!pending || !confirmed) return;
+    if (mySub && mySub.confirmed) {
+      pending.style.display = 'none';
+      confirmed.style.display = '';
+      if (formTitle) formTitle.textContent = "You're confirmed!";
+    } else {
+      pending.style.display = '';
+      confirmed.style.display = 'none';
+      if (formTitle) formTitle.textContent = 'Check your inbox.';
+      var emailEl = document.getElementById('ea-confirm-email');
+      if (emailEl && mySub && mySub.email) emailEl.textContent = mySub.email;
+    }
+  }
 
-  var tabSign = document.getElementById('ea-tab-sign');
-  var tabSignals = document.getElementById('ea-tab-signals');
+  // ─── Tab switching ────────────────────────────────────────────────────────────
+
+  function updateSignTabLabel() {
+    if (signTabBtn) signTabBtn.textContent = getMySub() ? 'Your Signal' : 'Start Your Signal';
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.ea-tab').forEach(function(b) {
+      b.classList.toggle('is-active', b.dataset.tab === name);
+    });
+    tabSign.style.display = name === 'sign' ? '' : 'none';
+    tabSignals.style.display = name === 'signals' ? '' : 'none';
+    if (name === 'signals') loadList();
+  }
+
   document.querySelectorAll('.ea-tab').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('.ea-tab').forEach(function(b) { b.classList.remove('is-active'); });
-      btn.classList.add('is-active');
-      var t = btn.dataset.tab;
-      tabSign.style.display = t === 'sign' ? '' : 'none';
-      tabSignals.style.display = t === 'signals' ? '' : 'none';
-      if (t === 'signals') loadList();
+      if (btn.dataset.tab === 'sign') {
+        var mySub = getMySub();
+        step1.style.display = 'none';
+        step2.style.display = 'none';
+        step3.style.display = 'none';
+        switchTab('sign');
+        showStep(mySub ? 3 : 1);
+      } else {
+        switchTab('signals');
+      }
     });
   });
 
-  function setSubmittedState() {
-    formWrap.style.display = 'none';
-    successEl.style.display = 'block';
-    if (formTitle) formTitle.textContent = 'You\'re In 🙌';
+  // ─── Promo card ───────────────────────────────────────────────────────────────
+
+  var PROMO_CARD_ID = 'ea-promo-card';
+
+  function renderPromoCard() {
+    return '<div class="ea-item ea-item--promo" id="' + PROMO_CARD_ID + '">' +
+      '<p class="ea-item-message" style="color:rgba(255,255,255,0.8);margin:0 0 1rem;">Ready to let your work speak for itself? Start your Signal below.</p>' +
+      '<button class="btn btn-primary ea-promo-btn">Start Your Signal →</button>' +
+      '</div>';
   }
 
-  if (getMySub()) setSubmittedState();
+  function bindPromoCard() {
+    var card = document.getElementById(PROMO_CARD_ID);
+    if (card) {
+      card.querySelector('.ea-promo-btn').addEventListener('click', function() {
+        switchTab('sign');
+        showStep(1);
+      });
+    }
+  }
+
+  // ─── Step 3 actions ───────────────────────────────────────────────────────────
+
+  function bindSeeGuestbook(id) {
+    var btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', function() { switchTab('signals'); });
+  }
+  bindSeeGuestbook('ea-see-guestbook');
+  bindSeeGuestbook('ea-see-guestbook-2');
+
+  var editEmailBtn = document.getElementById('ea-edit-email');
+  if (editEmailBtn) {
+    editEmailBtn.addEventListener('click', function() {
+      submitting = false;
+      submitBtn.disabled = false;
+      editEmailFlow = true;
+      showStep(1);
+      setTimeout(function() { emailInput.focus(); }, 200);
+    });
+  }
+
+  // ─── Edit / delete from card ──────────────────────────────────────────────────
+
+  function startEdit(mySub) {
+    if (!mySub) return;
+    submitting = false;
+    submitBtn.disabled = false;
+    slugInput.value = mySub.slug || '';
+    if (mySub.slug) {
+      slugHint.textContent = '✓ signal.habitualos.com/meet/' + mySub.slug;
+      slugHint.className = 'ea-slug-hint is-ok';
+    }
+    emailInput.value = mySub.email || '';
+    document.getElementById('ea-message').value = mySub.message || '';
+    document.getElementById('ea-name').value = mySub.name || '';
+    document.getElementById('ea-link').value = mySub.link || '';
+    submitBtn.textContent = 'Save →';
+    if (formTitle) formTitle.textContent = 'Edit Your Entry';
+    if (backBtn) backBtn.textContent = 'Cancel';
+    errorEl.style.display = 'none';
+    step1.style.display = 'none';
+    step2.style.display = '';
+    step2.style.opacity = '1';
+    step3.style.display = 'none';
+    switchTab('sign');
+  }
+
+  function doDelete(mySub) {
+    if (!mySub || !mySub.id) return;
+    window.modal('Delete your entry? This removes you from the list and releases your handle.', { confirmLabel: 'Delete' }).then(function(confirmed) {
+      if (!confirmed) return;
+      fetch('/api/early-access-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: mySub.id })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            clearMySub();
+            slugInput.value = '';
+            slugHint.textContent = '';
+            slugHint.className = 'ea-slug-hint';
+            emailInput.value = '';
+            updateSignTabLabel();
+            loadList();
+          } else {
+            throw new Error(data.error || 'Something went wrong.');
+          }
+        })
+        .catch(function(err) { alert(err.message); });
+    });
+  }
+
+  // ─── Slug input ───────────────────────────────────────────────────────────────
 
   slugInput.addEventListener('input', function() {
     var val = slugInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/^-+/, '');
@@ -223,7 +378,7 @@ css: /styles/early-access.css
     })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (slugInput.value.trim().toLowerCase() !== val) return; // stale
+        if (slugInput.value.trim().toLowerCase() !== val) return;
         if (data.available) {
           slugHint.textContent = '✓ signal.habitualos.com/meet/' + val;
           slugHint.className = 'ea-slug-hint is-ok';
@@ -232,13 +387,15 @@ css: /styles/early-access.css
           slugHint.className = 'ea-slug-hint is-error';
         }
       })
-      .catch(function() {}); // fail silently, submit will catch it
+      .catch(function() {});
   });
+
+  // ─── Email blur validation ────────────────────────────────────────────────────
 
   var nextBlockedByEmail = false;
 
-  emailInput1.addEventListener('blur', function() {
-    var val = emailInput1.value.trim();
+  emailInput.addEventListener('blur', function() {
+    var val = emailInput.value.trim();
     if (!val) return;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
       errorEl.textContent = 'That email doesn\'t look right.';
@@ -252,78 +409,11 @@ css: /styles/early-access.css
     }
   });
 
-  var successEditBtn = document.getElementById('ea-success-edit-btn');
-  if (successEditBtn) {
-    successEditBtn.addEventListener('click', function() {
-      var mySub = getMySub();
-      if (!mySub) return;
-      submitting = false;
-      submitBtn.disabled = false;
-      successEl.style.display = 'none';
-      formWrap.style.display = '';
-      isEditing = true;
-      slugInput.value = mySub.slug || '';
-      if (mySub.slug) {
-        slugHint.textContent = '✓ signal.habitualos.com/meet/' + mySub.slug;
-        slugHint.className = 'ea-slug-hint is-ok';
-      }
-      emailInput1.value = mySub.email || '';
-      document.getElementById('ea-message').value = mySub.message || '';
-      document.getElementById('ea-name').value = mySub.name || '';
-      document.getElementById('ea-link').value = mySub.link || '';
-      step1.style.display = 'none';
-      step2.style.display = '';
-      step2.style.opacity = '1';
-      submitBtn.textContent = 'Save →';
-      if (formTitle) formTitle.textContent = 'Sign the Guestbook';
-      errorEl.style.display = 'none';
-      if (backBtn) backBtn.textContent = 'Cancel';
-    });
-  }
-
-  var successDeleteBtn = document.getElementById('ea-success-delete-btn');
-  if (successDeleteBtn) {
-    successDeleteBtn.addEventListener('click', async function() {
-      var mySub = getMySub();
-      if (!mySub || !mySub.id) return;
-      if (!await window.modal('Delete your entry?', { confirmLabel: 'Delete' })) return;
-      successDeleteBtn.disabled = true;
-      successDeleteBtn.textContent = 'Deleting…';
-      fetch('/api/early-access-delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: mySub.id })
-      })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.success) {
-            clearMySub();
-            successEl.style.display = 'none';
-            formWrap.style.display = '';
-            step1.style.display = '';
-            step1.style.opacity = '1';
-            step2.style.display = 'none';
-            if (formTitle) formTitle.textContent = 'Your Signal URL';
-            slugInput.value = '';
-            slugHint.textContent = '';
-            slugHint.className = 'ea-slug-hint';
-            if (emailInput1) emailInput1.value = '';
-            loadList();
-          } else {
-            throw new Error(data.error || 'Something went wrong.');
-          }
-        })
-        .catch(function(err) {
-          successDeleteBtn.disabled = false;
-          successDeleteBtn.textContent = 'Delete entry';
-          alert(err.message);
-        });
-    });
-  }
+  // ─── Next / back ──────────────────────────────────────────────────────────────
 
   nextBtn.addEventListener('click', function() {
     var slug = slugInput.value.trim().toLowerCase();
-    var email = emailInput1.value.trim();
+    var email = emailInput.value.trim();
     var slugErr = validateSlug(slug);
     if (slugErr) {
       slugHint.textContent = slugErr;
@@ -335,28 +425,29 @@ css: /styles/early-access.css
       nextBlockedByEmail = true;
       errorEl.textContent = 'Email is required so we can notify you when your Signal is ready.';
       errorEl.style.display = 'block';
-      emailInput1.focus();
+      emailInput.focus();
       return;
     }
     nextBlockedByEmail = false;
-    submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
+    submitBtn.textContent = 'Submit →';
     showStep(2);
   });
 
   backBtn.addEventListener('click', function() {
-    if (isEditing) {
-      formWrap.style.display = 'none';
-      successEl.style.display = 'block';
-      if (formTitle) formTitle.textContent = 'You\'re In 🙌';
-      isEditing = false;
-      backBtn.textContent = 'Go back';
-      var mySub = getMySub();
+    var mySub = getMySub();
+    submitBtn.textContent = 'Submit →';
+    if (backBtn) backBtn.textContent = 'Go back';
+    if (mySub && mySub.id) {
+      showStep(3);
     } else {
       showStep(1);
     }
   });
 
+  // ─── Form submit ──────────────────────────────────────────────────────────────
+
   var submitting = false;
+  var editEmailFlow = false;
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     if (submitting) return;
@@ -373,36 +464,36 @@ css: /styles/early-access.css
     }
 
     var existing = getMySub();
+    var isEditingEntry = !!(existing && existing.id);
+    var email = (editEmailFlow && isEditingEntry) ? emailInput.value.trim() : (existing ? existing.email : emailInput.value.trim());
     var slug = existing ? existing.slug : slugInput.value.trim().toLowerCase();
-    var email = existing ? existing.email : emailInput1.value.trim();
 
     submitting = true;
     submitBtn.disabled = true;
-    submitBtn.textContent = existing && existing.id ? 'Saving…' : 'Submitting…';
+    submitBtn.textContent = isEditingEntry ? 'Saving…' : 'Submitting…';
     errorEl.style.display = 'none';
 
     var url, body;
-    if (existing && existing.id) {
+    if (isEditingEntry) {
       url = '/api/early-access-edit';
-      body = JSON.stringify({ id: existing.id, name: name, message: message, link: link });
+      body = JSON.stringify({ id: existing.id, name: name, message: message, link: link, email: editEmailFlow ? email : undefined, resendConfirmation: editEmailFlow });
     } else {
       url = '/api/early-access-submit';
       body = JSON.stringify({ slug: slug, email: email, name: name, message: message, link: link });
     }
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    })
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.success) {
           var id = existing ? existing.id : data.id;
-          setMySub({ id: id, slug: slug, email: email, name: name, message: message, link: link });
-          isEditing = false;
-          backBtn.textContent = 'Go back';
-          setSubmittedState();
+          var confirmed = editEmailFlow ? false : (existing ? existing.confirmed : false);
+          setMySub({ id: id, slug: slug, email: email, name: name, message: message, link: link, confirmed: confirmed });
+          editEmailFlow = false;
+          if (backBtn) backBtn.textContent = 'Go back';
+          updateSignTabLabel();
+          switchTab('sign');
+          showStep(3);
           loadList();
         } else {
           throw new Error(data.error || 'Something went wrong.');
@@ -413,10 +504,54 @@ css: /styles/early-access.css
         errorEl.textContent = err.message;
         errorEl.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.textContent = isEditing ? 'Save →' : 'Submit →';
+        submitBtn.textContent = isEditingEntry ? 'Save →' : 'Submit →';
       });
   });
 
-  loadList();
+  // ─── Token confirmation on page load ─────────────────────────────────────────
+
+  var params = new URLSearchParams(window.location.search);
+  var confirmToken = params.get('token');
+  if (confirmToken) {
+    fetch('/api/early-access-confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: confirmToken })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var mySub = getMySub();
+          if (mySub) setMySub(Object.assign({}, mySub, { confirmed: true }));
+          switchTab('sign');
+          showStep(3);
+          // Clean token from URL without reload
+          window.history.replaceState({}, '', '/early-access/');
+        }
+      })
+      .catch(function() {});
+  }
+
+  // ─── Init ─────────────────────────────────────────────────────────────────────
+
+  updateSignTabLabel();
+
+  var mySub = getMySub();
+  if (mySub) {
+    slugInput.value = mySub.slug || '';
+    emailInput.value = mySub.email || '';
+    if (mySub.slug) {
+      slugHint.textContent = '✓ signal.habitualos.com/meet/' + mySub.slug;
+      slugHint.className = 'ea-slug-hint is-ok';
+    }
+    document.getElementById('ea-name').value = mySub.name || '';
+    document.getElementById('ea-message').value = mySub.message || '';
+    document.getElementById('ea-link').value = mySub.link || '';
+    switchTab('sign');
+    showStep(3);
+  } else {
+    loadList();
+  }
+
 })();
 </script>

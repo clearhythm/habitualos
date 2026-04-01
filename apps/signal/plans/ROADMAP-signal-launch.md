@@ -5,7 +5,7 @@ _Captured 2026-03-29. Ordered by priority._
 Configure DKIM/SPF on habitualos.com, wire up Resend to send from `Signal <erik@habitualos.com>`.
 Start now so DNS propagates.
 
-## 1b. Email service
+## DONE 1b. Email service
 Generate Resend key and add here to app to send emails `Erik <erik@habitualos.com>` and also `Signal <signal@habitualos.com>`.
 Needed: confirmation email + welcome email on early-access claim. These will have subject line starting with "Signal: " to make it clear what it's from, though it will come from Erik. Configure and test the emails with Claude.
 
@@ -13,7 +13,7 @@ Needed: confirmation email + welcome email on early-access claim. These will hav
 Ingest is only storing positive personality observations. Coach mode was requested on Erik's
 profile but isn't working. Signals should be balanced — both `strength` and `edge` polarity.
 
-## 3a. Consolidate embed.js + signal-modal.js (TICKET-embed-consolidation.md)
+## DONE 3a. Consolidate embed.js + signal-modal.js (TICKET-embed-consolidation.md)
 embed.js is an old widget that has diverged from the Signal Interview UI in signal-modal.js.
 Rewrite embed.js to inject the Signal Interview HTML/CSS/logic, making it the one widget
 used everywhere — on signal.habitualos.com and any external embed. Delete signal-modal.js after.

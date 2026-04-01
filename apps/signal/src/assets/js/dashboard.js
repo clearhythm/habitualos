@@ -67,7 +67,7 @@ function renderDashboard(config) {
   const previewLink = document.getElementById('dash-preview-link');
   if (previewLink) previewLink.href = `/widget/?id=${signalId}`;
 
-  const snippet = `<script src="https://signal.habitualos.com/assets/js/signal-embed.js" data-signal-id="${signalId}"><\/script>`;
+  const snippet = `<script src="https://signal.habitualos.com/assets/js/signal-widget.js" data-signal-id="${signalId}"><\/script>`;
   setText('embed-code', snippet);
 
   setVal('context-text', contextText);

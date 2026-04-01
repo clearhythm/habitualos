@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { submitInterest } = require('./_services/db-early-access.cjs');
+const { submitInterest, checkSlugAvailable } = require('./_services/db-early-access.cjs');
+const { sendEarlyAccessWelcome } = require('./_services/email.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
 
   try {
-    const { name, message, email, link } = JSON.parse(event.body || '{}');
+    const { slug, name, message, email, link } = JSON.parse(event.body || '{}');
 
     if (!name && !message && !email) {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Tell us something — even just your name.' }) };
@@ -22,7 +23,20 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'That email doesn\'t look right.' }) };
     }
 
-    const id = await submitInterest({ name, message, email, link });
+    if (slug) {
+      const available = await checkSlugAvailable(slug);
+      if (!available) {
+        return { statusCode: 409, headers: CORS, body: JSON.stringify({ success: false, error: 'That handle is already taken.' }) };
+      }
+    }
+
+    const { id, confirmToken } = await submitInterest({ slug, name, message, email, link });
+
+    if (email) {
+      sendEarlyAccessWelcome({ to: email, name, slug, confirmToken }).catch(err =>
+        console.error('[early-access-submit] email error:', err.message)
+      );
+    }
 
     return {
       statusCode: 200,

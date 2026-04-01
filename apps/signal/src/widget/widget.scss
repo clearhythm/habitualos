@@ -80,6 +80,7 @@ $font-xxxl: 2rem;
   *, *::before, *::after { box-sizing: inherit; }
 
   &[hidden] { display: none; }
+  [hidden]  { display: none !important; }
 
   // ─── Header ───────────────────────────────────────────────────────────────
 
@@ -230,81 +231,62 @@ $font-xxxl: 2rem;
     border-color: $accent-bg;
 
     @media (max-width: $bp-md) {
-      overflow-y: auto;
-      flex-shrink: 0;
-      height: 42%;
+      display: none;
     }
   }
 
-  // Mobile collapsed header (tappable)
-  .mobile-header {
+  // Mobile profile header — shown at top of chat on small screens
+  .mobile-profile-header {
     display: none;
     align-items: center;
     gap: $sm;
     padding: $sm $md;
-    cursor: pointer;
-    min-height: 44px;
-    user-select: none;
+    border-bottom: 1px solid $border;
+    flex-shrink: 0;
+
+    .mobile-avatar-wrap img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .mobile-profile-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
 
     .mobile-agent-name {
-      flex: 1;
       font-size: $font-sm;
       font-weight: 600;
       color: $text;
+
+      &:empty {
+        height: 0.75rem;
+        width: 120px;
+        border-radius: 4px;
+        @extend .skel;
+      }
     }
 
-    .mobile-score {
-      font-size: $font-sm;
-      font-weight: 700;
-      color: $accent;
-      &:empty { display: none; }
-    }
-
-    .mobile-chevron {
-      font-size: $font-sm;
+    .mobile-agent-sub {
+      font-size: 0.7rem;
       color: $muted;
-      transition: transform 0.2s;
-    }
-  }
 
-  // Tabs
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid $border;
-    flex-shrink: 0;
-  }
-
-  .tab {
-    flex: 1;
-    background: none;
-    border: none;
-    padding: $md;
-    font-size: $font-base;
-    font-family: $font;
-    color: $muted;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: $xs;
-    transition: color 0.2s;
-
-    &.is-active {
-      color: $text;
-      border-bottom: 2px solid $primary;
-      margin-bottom: -1px;
+      &:empty {
+        height: 0.6rem;
+        width: 80px;
+        border-radius: 4px;
+        @extend .skel;
+      }
     }
 
-    .tab-badge {
-      background: $primary;
-      color: #fff;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 8px;
-      min-width: 18px;
-      text-align: center;
-      &:empty { display: none; }
+    .mobile-avatar-wrap img[style*="visibility:hidden"],
+    .mobile-avatar-wrap img:not([src]) {
+      background: $border;
+      border-radius: 50%;
+      animation: skel-pulse 1.6s ease-in-out infinite;
     }
   }
 
@@ -315,6 +297,31 @@ $font-xxxl: 2rem;
     display: grid;
     grid-template-rows: 1fr;
     grid-template-columns: 1fr;
+  }
+
+  // ─── Skeleton loader ──────────────────────────────────────────────────────
+
+  @keyframes skel-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%       { opacity: 0.6; }
+  }
+
+  .skel {
+    background: $border;
+    border-radius: 4px;
+    animation: skel-pulse 1.6s ease-in-out infinite;
+  }
+
+  .profile-skeleton {
+    padding: $md;
+    display: flex;
+    flex-direction: column;
+    gap: $sm;
+
+    .skel-name   { height: 1rem;  width: 60%; border-radius: 4px; }
+    .skel-sub    { height: 0.75rem; width: 80%; margin-bottom: $sm; }
+    .skel-avatar { height: 80px; width: 80px; border-radius: 50%; align-self: center; margin: $sm 0; }
+    .skel-line   { height: 0.75rem; }
   }
 
   // ─── Profile tab ──────────────────────────────────────────────────────────
@@ -1023,36 +1030,14 @@ $font-xxxl: 2rem;
     .lead-sent  { font-size: $font-sm; color: $muted; margin: 0; }
   }
 
-  // ─── Mobile: compacted left panel ─────────────────────────────────────────
+  // ─── Mobile: show profile header in chat panel ────────────────────────────
 
   @media (max-width: $bp-md) {
-    .left.is-compacted {
-      height: auto;
-      overflow: hidden;
-      flex-shrink: 0;
+    .mobile-profile-header { display: flex; }
 
-      .tabs,
-      .phase-wrap,
-      .left-footer { display: none; }
-
-      .mobile-header { display: flex; }
-    }
-
-    .left.is-compacted.is-expanded {
-      position: fixed;
-      inset: auto 0 0 0;
-      height: 75vh;
-      max-height: 75vh;
-      overflow-y: auto;
-      z-index: 2100;
-      border-radius: 12px 12px 0 0;
-      background: $surface-2;
-
-      .tabs      { display: flex; }
-      .phase-wrap { display: grid; }
-      .left-footer { display: flex; }
-
-      .mobile-chevron { transform: rotate(180deg); }
+    .panel.chat {
+      flex: 1;
+      min-height: 0;
     }
   }
 }

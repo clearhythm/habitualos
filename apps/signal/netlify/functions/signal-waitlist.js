@@ -1,5 +1,7 @@
 require('dotenv').config();
 const { db, admin } = require('@habitualos/db-core');
+const crypto = require('crypto');
+const { sendWaitlistConfirm } = require('./_services/email.cjs');
 
 /**
  * POST /api/signal-waitlist
@@ -14,19 +16,26 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { email, context = '' } = JSON.parse(event.body);
+    const { email, referrer = '' } = JSON.parse(event.body);
 
     if (!email || !email.includes('@')) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Valid email required' }) };
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const confirmToken = crypto.randomBytes(24).toString('hex');
     const ref = db.collection('signal-waitlist').doc(normalizedEmail);
     await ref.set({
       _email: normalizedEmail,
-      context: String(context).slice(0, 500),
+      referrer: String(referrer).slice(0, 500),
+      confirmed: false,
+      confirmToken,
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+
+    sendWaitlistConfirm({ to: normalizedEmail, confirmToken }).catch(err =>
+      console.error('[signal-waitlist] email error:', err.message)
+    );
 
     return {
       statusCode: 200,

@@ -12,10 +12,13 @@ bodyClass: hero-light
       <div class="signal-hero-copy">
         <h1 class="signal-hero-headline">Replace the silence with&hellip; <em>discovery.</em></h1>
         <p class="signal-hero-sub">
-          Applying for a job often feels like shouting into the void. Signal builds your profile from your <em>actual work history</em>, so you can discover your hidden strengths and let the right opportunities <em>discover you</em>.
+          Applying for a job often feels like shouting into the void. Signal is forming a way to turn your <em>actual work steam</em> into something visible and sharable, so better connections can start to emerge.
         </p>
+        {# <p class="signal-hero-sub">
+          Applying for a job often feels like shouting into the void. Signal builds your profile from your <em>actual work history</em>, so you can discover your hidden strengths and let the right opportunities <em>discover you</em>.
+        </p> #}
         <div class="signal-cta-row">
-          <a href="/early-access/" class="btn btn-primary">Get early access →</a>
+          <a href="/early-access/" class="btn btn-primary">Start your signal →</a>
           <a href="#what" class="btn btn-outline">How it works</a>
         </div>
       </div>
@@ -155,34 +158,34 @@ bodyClass: hero-light
 
   <section class="signal-section" id="what">
     <div class="container">
-      <h2 class="signal-section-title">What Signal Does</h2>
-      <p class="signal-section-intro">Signal helps in two distinct ways: giving you an honest read on where you fit, and making sure the right people can find you.</p>
+      <h2 class="signal-section-title">Signal, Taking Shape</h2>
+      <p class="signal-section-intro">Signal is taking shape in two ways: understanding where your work, style, and personality fit, and making it easier for the right connections to find you.</p>
 
       <div class="signal-modes-grid">
-        <div class="signal-mode-item" onclick="window.location.href='/early-access/'" role="link" tabindex="0">
+        <div class="signal-mode-item" onclick="if(window.signalOpen)signalOpen({mode:'visitor',signalId:'erik'})" role="button" tabindex="0">
           <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg></div>
           <h3>Score Job Listings</h3>
-          <p class="signal-mode-subtitle">Know where your skills actually fit</p>
-          <p>Signal scores any job description you paste into it based on what you've actually built, not what your resume says. Skills, Alignment, Personality. An honest read in minutes.</p>
+          <p class="signal-mode-subtitle">Get an honest read on where you fit</p>
+          <p>Paste in a job description and Signal reads it against what you've actually built, not just what's written on a resume. Skills, alignment, personality. An honest read in minutes.</p>
           <ul class="signal-mode-steps">
             <li class="signal-mode-step">Build your profile from real work session history</li>
-            <li class="signal-mode-step">Get an honest fit score against any JD in seconds</li>
-            <li class="signal-mode-step">Understand exactly why you're a match (or not)</li>
+            <li class="signal-mode-step">See how a role lines up, and why</li>
+            <li class="signal-mode-step">Spot gaps and where to improve</li>
           </ul>
-          <a href="/early-access/" class="btn btn-outline">Get early access →</a>
+          <button type="button" class="btn btn-outline" onclick="event.stopPropagation();if(window.signalOpen)signalOpen({mode:'visitor',signalId:'erik'})">Try the Demo →</button>
         </div>
 
-        <div class="signal-mode-item" onclick="window.location.href='/early-access/'" role="link" tabindex="0">
+        <div class="signal-mode-item" onclick="if(window.signalOpen)signalOpen({mode:'visitor',signalId:'erik'})" role="button" tabindex="0">
           <div class="signal-mode-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304-.002a3.75 3.75 0 010 5.304m-7.425 2.122a6.75 6.75 0 010-9.546m9.546.001a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg></div>
           <h3>Market Your Skills</h3>
           <p class="signal-mode-subtitle">Let your work speak for itself</p>
-          <p>Share your Signal with recruiters or hiring leads. They have a real conversation with your work history and walk away with a live fit score. No resume ping-pong.</p>
+          <p>Share your Signal widget with recruiters or hiring leads. It opens up a more direct way to explore your work history, and where it fits. Visitors can:</p>
           <ul class="signal-mode-steps">
-            <li class="signal-mode-step">Visitors pick their role and what they're hiring for</li>
-            <li class="signal-mode-step">Signal surfaces relevant evidence from your sessions</li>
-            <li class="signal-mode-step">Both sides know where things stand in minutes</li>
+            <li class="signal-mode-step">Ask your Signal agent about your work</li>
+            <li class="signal-mode-step">See relevant work surfaced from your history</li>
+            <li class="signal-mode-step">Connect directly with you when it makes sense</li>
           </ul>
-          <a href="/early-access/" class="btn btn-outline">Get early access →</a>
+          <button type="button" class="btn btn-outline" onclick="event.stopPropagation();if(window.signalOpen)signalOpen({mode:'visitor',signalId:'erik'})">Try the Demo →</button>
         </div>
       </div>
 
@@ -197,8 +200,8 @@ bodyClass: hero-light
   <section class="signal-section signal-section--light" id="fit-score">
     <div class="container">
       <h2 class="signal-section-title">What's Your Fit?</h2>
-      <p class="signal-section-intro">Signal can instantly score any work opportunity you provide. It generates 0-10 scores for skills, alignment, and personality fit, as well as a joint "Fit Score". Your fit score suggests how strong this opportunity is for you, and what to do next.</p>
-
+      <p class="signal-section-intro">Signal reads any work opportunity you provide and generates a set of 0–10 scores across skills, alignment, and personality, along with an overall Fit Score.
+        It gives a quick sense of how strongly something lines up, and where it may not.</p>
       <div class="signal-score-table">
         <div class="signal-score-row signal-score-row--header">
           <span>Score</span>
@@ -249,42 +252,43 @@ bodyClass: hero-light
   <section class="signal-section" id="how">
     <div class="container">
       <h2 class="signal-section-title">How Signal Works</h2>
-      <p class="signal-section-intro">Early access is currently for developers using AI coding tools (Claude Code, Cursor, Codex). Not a developer but interested? <a href="/waitlist/">Join the waitlist</a> and we'll reach out when your workflow is supported.</p>
+      <p class="signal-section-intro">Signal is early and experimental. Early access is opening up for people actively using AI in their daily work. If that’s you, jump in and try it out.
+        If not, you can still <a href="/waitlist/">join the waitlist</a> and follow along as Signal takes shape.</p>
 
       <div class="signal-how-steps">
 
         <div class="signal-how-step">
           <div class="signal-how-step-num">1</div>
           <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Connect Your History</h3>
+            <p>Connect a source of your real work (like GitHub or your AI session history), and Signal builds your profile directly from it. No forms, no resume upload. Your work speaks for itself.</p>
+          </div>
+          {# <div class="signal-how-step-body">
             <h3 class="signal-how-step-title">Connect Your GitHub</h3>
             <p>Connect your GitHub repo and Signal builds your profile directly from your commit history. No forms, no resume upload. Your work speaks for itself.</p>
-          </div>
+          </div> #}
         </div>
-
-        <div class="signal-how-step">
-          <div class="signal-how-step-num">2</div>
-          <div class="signal-how-step-body">
-            <h3 class="signal-how-step-title">Add Coding Hooks</h3>
-            <p>Add a hook to your Claude Code, Cursor, or Codex setup and Signal logs your sessions automatically every time you commit. Capture the tools you used and problems you solved. The more you work, the stronger your signal gets.</p>
-          </div>
-        </div>
-
         <div class="signal-how-step">
           <div class="signal-how-step-num">3</div>
           <div class="signal-how-step-body">
-            <h3 class="signal-how-step-title">Your Profile Adapts</h3>
-            <p>Signal learns what you're looking for as you use it. Score a listing, react to a result, or have a conversation, and it builds a clearer picture of what you want. You can also set or edit your preferences directly.</p>
+            <h3 class="signal-how-step-title">Refine Your Profile</h3>
+            <p>Signal builds a clearer picture of what you’re looking for as you use it. Score a job listing or have a conversation with your Signal agent. Each interaction adds signal. You can also set or edit your preferences directly.</p>
           </div>
         </div>
-
         <div class="signal-how-step">
           <div class="signal-how-step-num">4</div>
           <div class="signal-how-step-body">
             <h3 class="signal-how-step-title">Share Your Signal</h3>
-            <p>Share a link or drop the Signal widget on your portfolio or GitHub profile with one line of code. Visitors have a real conversation with your work history and walk away with a live fit score. No resume ping-pong.</p>
+            <p>Share a link to your profile, or drop the Signal widget on your portfolio or GitHub profile with one line of code. Visitors can explore your work history and see how it lines up. No resume ping-pong.</p>
           </div>
         </div>
-
+        <div class="signal-how-step">
+          <div class="signal-how-step-num">2</div>
+          <div class="signal-how-step-body">
+            <h3 class="signal-how-step-title">Add Hooks (Power Mode)</h3>
+            <p>Add a hook to your Claude Code, Cursor, or Codex setup and Signal logs your sessions automatically every time you commit. Capture the tools you used and problems you solved, instantly. The first time I tried it, I cried.</p>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -294,8 +298,8 @@ bodyClass: hero-light
     <div class="container">
       <div class="signal-skyline-cta">
         <h2 class="signal-skyline-headline">You've done the work.<br>Now let it speak.</h2>
-        <p class="signal-skyline-sub">Early access is for professionals who use AI tools (Claude Code, Cursor, Codex) near-daily and who are building something real. If you have rich work history worth scanning, Signal is ready to put it to work for you.</p>
-        <a href="/early-access/" class="btn btn-primary">Get early access →</a>
+        <p class="signal-skyline-sub">Early access is for people using AI tools daily and building real things. If you have a body of work worth sharing, Signal is ready to help you surface it.</p>
+        <a href="/early-access/" class="btn btn-primary">Start your signal →</a>
       </div>
     </div>
     <img src="/assets/images/signal_monkey_bg.png" alt="" class="signal-skyline-img" aria-hidden="true">

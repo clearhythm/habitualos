@@ -20,7 +20,7 @@
 const assert = require('assert');
 
 const BASE = process.argv[2] || 'http://localhost:8888';
-const SIGNAL_ID = process.env.SIGNAL_SIGNAL_ID || 'erik-burns';
+const SIGNAL_ID = process.env.SIGNAL_SIGNAL_ID || 'erik';
 const USER_ID   = process.env.SIGNAL_USER_ID   || null; // set this to your userId from localStorage
 
 // ─── Test runner ──────────────────────────────────────────────────────────────
@@ -81,21 +81,25 @@ async function run() {
   // ── signal-ingest ──────────────────────────────────────────────────────────
   console.log('\nsignal-ingest');
 
-  await test('POST valid ingest returns success', async () => {
-    const { status, data } = await post('signal-ingest', {
-      userId: USER_ID || 'u-test-000',
-      signalId: SIGNAL_ID,
-      source: 'claude-code',
-      repo: 'habitualos/signal',
-      summary: 'API test session — verifying field migration and endpoint health.',
-      topics: ['testing', 'api'],
-      skills: ['Node.js', 'Firestore'],
-      technologies: ['Netlify Functions'],
+  if (!USER_ID) {
+    console.log('  (skipped — set SIGNAL_USER_ID env var to test owner ingest)');
+  } else {
+    await test('POST valid ingest returns success', async () => {
+      const { status, data } = await post('signal-ingest', {
+        userId: USER_ID,
+        signalId: SIGNAL_ID,
+        source: 'claude-code',
+        repo: 'habitualos/signal',
+        summary: 'API test session — verifying field migration and endpoint health.',
+        topics: ['testing', 'api'],
+        skills: ['Node.js', 'Firestore'],
+        technologies: ['Netlify Functions'],
+      });
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(data.docId, 'docId should be returned');
     });
-    assert.strictEqual(status, 200);
-    assert.strictEqual(data.success, true);
-    assert.ok(data.docId, 'docId should be returned');
-  });
+  }
 
   await test('POST missing signalId returns 400', async () => {
     const { status, data } = await post('signal-ingest', {

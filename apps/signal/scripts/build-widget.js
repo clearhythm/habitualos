@@ -6,7 +6,7 @@ const options = {
   bundle: true,
   format: 'iife',
   globalName: 'Signal',
-  outfile: 'src/assets/js/embed.js',
+  outfile: 'src/assets/js/signal-widget.js',
   minify: process.env.NODE_ENV === 'production',
   banner: { js: '/* Generated — edit src/widget/index.js instead */' },
   plugins: [sassPlugin({ type: 'style' })],

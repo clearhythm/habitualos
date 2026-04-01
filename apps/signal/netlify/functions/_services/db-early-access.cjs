@@ -1,4 +1,5 @@
 const { db, admin } = require('@habitualos/db-core');
+const crypto = require('crypto');
 
 const COLLECTION = 'signal-early-access';
 
@@ -12,6 +13,7 @@ async function checkSlugAvailable(slug) {
 
 async function submitInterest({ slug, name, message, email, link }) {
   const ref = db.collection(COLLECTION).doc();
+  const confirmToken = crypto.randomBytes(24).toString('hex');
   await ref.set({
     _id: ref.id,
     claimedSlug: slug || '',
@@ -20,9 +22,19 @@ async function submitInterest({ slug, name, message, email, link }) {
     email: email || '',       // private — never returned to client
     link: link || '',
     reply: '',
+    confirmed: false,
+    confirmToken,
     createdAt: admin.firestore.FieldValue.serverTimestamp()
   });
-  return ref.id;
+  return { id: ref.id, confirmToken };
+}
+
+async function confirmByToken(token, collection) {
+  const col = collection || COLLECTION;
+  const snap = await db.collection(col).where('confirmToken', '==', token).limit(1).get();
+  if (snap.empty) return false;
+  await snap.docs[0].ref.update({ confirmed: true });
+  return true;
 }
 
 async function listInterest() {
@@ -36,16 +48,23 @@ async function listInterest() {
   });
 }
 
-async function editInterest({ id, name, message, link }) {
-  await db.collection(COLLECTION).doc(id).update({
+async function editInterest({ id, name, message, link, email }) {
+  const patch = {
     name: name || '',
     message: message || '',
     link: link || '',
-  });
+  };
+  if (email) patch.email = email;
+  await db.collection(COLLECTION).doc(id).update(patch);
 }
 
 async function deleteInterest({ id }) {
   await db.collection(COLLECTION).doc(id).delete();
 }
 
-module.exports = { submitInterest, listInterest, editInterest, deleteInterest, checkSlugAvailable };
+async function getInterestById(id) {
+  const doc = await db.collection(COLLECTION).doc(id).get();
+  return doc.exists ? doc.data() : null;
+}
+
+module.exports = { submitInterest, listInterest, editInterest, deleteInterest, checkSlugAvailable, confirmByToken, getInterestById };

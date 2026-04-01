@@ -1,0 +1,41 @@
+---
+layout: base.njk
+title: "Signal — You're Confirmed"
+description: "You're confirmed for Signal early access."
+permalink: /early-access/confirm/
+---
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:3rem 1.5rem;text-align:center;">
+  <div style="max-width:420px;">
+    <p id="confirm-status" style="font-size:1.125rem;color:#f9fafb;line-height:1.6;">Confirming your spot...</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get('token');
+  var el = document.getElementById('confirm-status');
+
+  if (!token) {
+    el.innerHTML = 'No token found. <a href="/early-access/" style="color:#6366f1;">Go back to early access.</a>';
+    return;
+  }
+
+  fetch('/api/early-access-confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: token })
+  })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        el.innerHTML = "You're confirmed. Welcome to Signal.<br><br><a href='/early-access/' style='color:#6366f1;'>See who else is in →</a>";
+      } else {
+        el.innerHTML = data.error || 'Something went wrong.';
+      }
+    })
+    .catch(function() {
+      el.textContent = 'Something went wrong. Try again or reply to the email.';
+    });
+})();
+</script>

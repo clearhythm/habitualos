@@ -79,14 +79,14 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
 
       <div>
         <div class="signal-qualify-block">
-          <p class="signal-qualify-heading">Early access is for people who:</p>
-          <ul class="signal-qualify-list">
-            <li>Use Claude Code, Cursor, or Codex <em>near-daily</em></li>
-            <li>Are actively job seeking or ready to make a move</li>
-            <li>Are building real things, not just brainstorming</li>
-          </ul>
-          <p style="color: rgba(255,255,255,0.6);">If that describes you, I'll reach out directly with your free access code as space opens up.</p>
-          <div id="waitlist-form-wrap">
+          <div id="waitlist-default">
+            <p class="signal-qualify-heading">Signal is expanding to support:</p>
+            <ul class="signal-qualify-list">
+              <li>Designers, writers, and researchers using AI tools</li>
+              <li>Active job seekers ready to make a move</li>
+              <li>People still moving towards daily use</li>
+            </ul>
+            <p style="color: rgba(255,255,255,0.6); margin: 0 0 1rem;">If this is you, please leave your email so I can reach out personally when Signal is ready to support you.</p>
             <form id="waitlist-form" class="signal-waitlist-form">
               <input
                 type="email"
@@ -96,12 +96,19 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
                 required
                 autocomplete="email"
               />
-              <button type="submit" class="btn btn-primary" id="waitlist-submit">Request access</button>
+              <button type="submit" class="btn btn-primary" id="waitlist-submit">Join waitlist</button>
             </form>
             <p id="waitlist-error" class="signal-waitlist-error" style="display:none"></p>
-            <div id="waitlist-success" class="signal-waitlist-success" style="display:none">
-              <p class="signal-waitlist-success-msg">You're on the list. You'll hear from Erik directly when your slot is ready.</p>
-            </div>
+          </div>
+
+          <div id="waitlist-success" style="display:none">
+            <h2 style="font-size:1.75rem;font-weight:700;line-height:1.15;margin:0 0 1rem;">Check your email.</h2>
+            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">We sent an email from Signal to <strong id="waitlist-confirm-email" style="color:rgba(255,255,255,0.85);"></strong>. Please check it to confirm your spot on the waitlist. Check your spam folder if you don't see it.</p>
+          </div>
+
+          <div id="waitlist-confirmed" style="display:none">
+            <h2 style="font-size:1.75rem;font-weight:700;line-height:1.15;margin:0 0 1rem;">Email confirmed.</h2>
+            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">You're on the list. I'll reach out personally when Signal is ready to support you.</p>
           </div>
         </div>
 
@@ -127,8 +134,27 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
   var emailEl = document.getElementById('waitlist-email');
   var submitBtn = document.getElementById('waitlist-submit');
   var errorEl = document.getElementById('waitlist-error');
-  var formWrap = document.getElementById('waitlist-form-wrap');
   var successEl = document.getElementById('waitlist-success');
+  var confirmedEl = document.getElementById('waitlist-confirmed');
+
+  // Handle confirm token from email link
+  var token = new URLSearchParams(window.location.search).get('token');
+  if (token) {
+    document.getElementById('waitlist-default').style.display = 'none';
+
+    fetch('/api/early-access-confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: token, type: 'waitlist' })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) confirmedEl.style.display = '';
+        else successEl.style.display = ''; // fallback — already confirmed
+      })
+      .catch(function() { successEl.style.display = ''; })
+      .finally(function() { window.history.replaceState({}, '', '/waitlist/'); });
+  }
 
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -143,11 +169,12 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
       var res = await fetch('/api/signal-waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, context: 'article-launch' })
+        body: JSON.stringify({ email: email, referrer: 'catch-all' })
       });
       var data = await res.json();
       if (data.success) {
-        formWrap.style.display = 'none';
+        document.getElementById('waitlist-default').style.display = 'none';
+        document.getElementById('waitlist-confirm-email').textContent = email;
         successEl.style.display = '';
       } else {
         throw new Error(data.error || 'Something went wrong');

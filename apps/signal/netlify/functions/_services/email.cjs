@@ -4,6 +4,7 @@
  */
 
 const { Resend } = require('resend');
+const { SITE_BASE_URL } = require('./env-config.cjs');
 
 let client = null;
 
@@ -30,10 +31,10 @@ async function sendVerificationCode({ to, code }) {
     html: `
       <div style="background:#0f172a;padding:2.5rem 1.5rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
         <div style="max-width:440px;margin:0 auto;">
-          <p style="color:#6366f1;font-size:1rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 1.5rem;">Signal</p>
+          <p style="color:#7c3aed;font-size:1rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 1.5rem;">Signal</p>
           <div style="background:#1e293b;border-radius:12px;padding:2rem;">
             <p style="color:#f9fafb;font-size:1rem;margin:0 0 1rem;">Your verification code:</p>
-            <p style="color:#6366f1;font-size:2.5rem;font-weight:700;letter-spacing:0.2em;margin:0 0 1.5rem;font-family:monospace;">${code}</p>
+            <p style="color:#7c3aed;font-size:2.5rem;font-weight:700;letter-spacing:0.2em;margin:0 0 1.5rem;font-family:monospace;">${code}</p>
             <p style="color:#9ca3af;font-size:0.875rem;margin:0;">Expires in 15 minutes. If you didn't request this, ignore this email.</p>
           </div>
         </div>
@@ -60,14 +61,14 @@ async function sendWelcome({ to, signalId, displayName }) {
     html: `
       <div style="background:#0f172a;padding:2.5rem 1.5rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
         <div style="max-width:440px;margin:0 auto;">
-          <p style="color:#6366f1;font-size:1rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 1.5rem;">Signal</p>
+          <p style="color:#7c3aed;font-size:1rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin:0 0 1.5rem;">Signal</p>
           <div style="background:#1e293b;border-radius:12px;padding:2rem;">
             <p style="color:#f9fafb;font-size:1.125rem;font-weight:600;margin:0 0 0.75rem;">Welcome, ${displayName}.</p>
             <p style="color:#9ca3af;font-size:0.9rem;margin:0 0 1.5rem;">Your Signal is ready. Share it with anyone you want to screen for fit.</p>
             <p style="color:#9ca3af;font-size:0.875rem;margin:0 0 0.25rem;">Your widget link:</p>
-            <a href="${widgetUrl}" style="color:#6366f1;font-size:0.875rem;word-break:break-all;">${widgetUrl}</a>
+            <a href="${widgetUrl}" style="color:#7c3aed;font-size:0.875rem;word-break:break-all;">${widgetUrl}</a>
             <div style="margin-top:1.5rem;">
-              <a href="${dashUrl}" style="display:inline-block;padding:0.65rem 1.5rem;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.9rem;">Go to dashboard</a>
+              <a href="${dashUrl}" style="display:inline-block;padding:0.65rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.9rem;">Go to dashboard</a>
             </div>
           </div>
         </div>
@@ -79,4 +80,109 @@ async function sendWelcome({ to, signalId, displayName }) {
   return data;
 }
 
-module.exports = { sendVerificationCode, sendWelcome };
+const LIGHT_WRAPPER = (content) => `
+  <div style="background:#f0f7ff;padding:2.5rem 1.5rem;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <div style="max-width:480px;margin:0 auto;">
+      <p style="color:#7c3aed;font-size:1.25rem;font-weight:800;letter-spacing:-0.01em;margin:0 0 2rem;">Signal</p>
+      <div style="background:#ffffff;border-radius:12px;padding:2rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        ${content}
+      </div>
+      <p style="color:#94a3b8;font-size:0.75rem;margin:1.5rem 0 0;text-align:center;"><a href="https://signal.habitualos.com" style="color:#94a3b8;text-decoration:none;"><img src="https://signal.habitualos.com/assets/favicon-32x32.png" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:5px;opacity:0.5;">Signal · Real work, not résumés</a></p>
+    </div>
+  </div>
+`;
+
+/**
+ * Send a waitlist confirmation email (double opt-in).
+ */
+async function sendWaitlistConfirm({ to, confirmToken }) {
+  const confirmUrl = `${SITE_BASE_URL}/waitlist/?token=${confirmToken}`;
+  const FOOTER = `
+    <p style="color:#94a3b8;font-size:0.75rem;margin:2rem 0 0;border-top:1px solid #e2e8f0;padding-top:1rem;">
+      Signal · 114 Cress Road, Santa Cruz, CA 95060, USA<br>
+      To unsubscribe, reply to this email and let me know.
+    </p>
+  `;
+  const { data, error } = await getClient().emails.send({
+    from: 'Signal <erik@habitualos.com>',
+    replyTo: 'erik@habitualos.com',
+    to,
+    subject: "Confirm your spot on the Signal Waitlist",
+    text: `Hey,\n\nThanks for joining the Signal Waitlist!\n\nConfirm your spot here:\n${confirmUrl}\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're interested in trying Signal, please confirm your spot on the waitlist, and I'll reach out again when we're ready to support you.\n\nIf you have any questions or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
+    html: LIGHT_WRAPPER(`
+      <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">Hey,</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for joining the Signal Waitlist!</p>
+      <a href="${confirmUrl}" style="display:inline-block;margin:0 0 1.25rem;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.925rem;">Confirm Your Spot</a>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're interested in trying Signal, please confirm your spot on the waitlist, and I'll reach out again when we're ready to support you.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions or want to say hello, just hit reply.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
+      ${FOOTER}
+    `)
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
+}
+
+/**
+ * Send a waitlist welcome email (light theme, personal). Sent after confirmation.
+ */
+async function sendWaitlistWelcome({ to }) {
+  const { data, error } = await getClient().emails.send({
+    from: 'Signal <erik@habitualos.com>',
+    replyTo: 'erik@habitualos.com',
+    to,
+    subject: "You're on the Signal Waitlist",
+    text: `Hey Signaler,\n\nThanks for joining the Signal Waitlist!\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. I'm also excited to help make your life easier. I'll reach out to you again again when Signal is ready to support a wider variety of users.\n\nIf you have any questions, ideas, or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
+    html: LIGHT_WRAPPER(`
+      <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">Hey Signaler,</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">Thanks for joining the Signal Waitlist!</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. I'm also excited to help make your life easier. I'll reach out to you again when Signal is ready to support a wider variety of users.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions, ideas, or want to say hello, just hit reply.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
+      <p style="color:#94a3b8;font-size:0.75rem;margin:2rem 0 0;border-top:1px solid #e2e8f0;padding-top:1rem;">
+        Signal · 114 Cress Road, Santa Cruz, CA 95060, USA<br>
+        To unsubscribe, reply to this email and let me know.
+      </p>
+    `)
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
+}
+
+/**
+ * Send an early-access confirmation email (light theme, personal).
+ */
+async function sendEarlyAccessWelcome({ to, name, slug, confirmToken }) {
+  const firstName = (name || '').split(' ')[0] || null;
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,';
+  const confirmUrl = `${SITE_BASE_URL}/early-access/?token=${confirmToken}`;
+  const FOOTER = `
+    <p style="color:#94a3b8;font-size:0.75rem;margin:2rem 0 0;border-top:1px solid #e2e8f0;padding-top:1rem;">
+      Signal · 114 Cress Road, Santa Cruz, CA 95060, USA<br>
+      To unsubscribe, reply to this email and let me know.
+    </p>
+  `;
+  const { data, error } = await getClient().emails.send({
+    from: 'Signal <erik@habitualos.com>',
+    replyTo: 'erik@habitualos.com',
+    to,
+    subject: "Confirm your spot on Signal",
+    text: `${greeting}\n\nThanks for signing up for Signal Early Access!${slug ? `\nYour handle: ${slug}` : ''}\n\nConfirm your spot here:\n${confirmUrl}\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're actively using AI tools in your workflow, I'd love to know what you're making, and how Signal can help make your life easier.\n\nIf you have any questions, ideas, or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
+    html: LIGHT_WRAPPER(`
+      <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">${greeting}</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for signing up for Early Access!${slug ? `<br>Your handle: <span style="color:#7c3aed;font-weight:600;">${slug}</span>` : ''}</p>
+      <a href="${confirmUrl}" style="display:inline-block;margin:0 0 1.25rem;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.925rem;">Confirm Your Spot</a>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're actively using AI tools in your workflow, I'd love to know what you're making, and how Signal can help make your life easier.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions, ideas, or want to say hello, just hit reply.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
+      ${FOOTER}
+    `)
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
+}
+
+module.exports = { sendVerificationCode, sendWelcome, sendWaitlistWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome };
