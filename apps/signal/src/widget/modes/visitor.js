@@ -43,7 +43,6 @@ export async function init(state, els, baseUrl) {
   const firstName = name.split(' ')[0];
 
   if (els.agentName) els.agentName.textContent = `${firstName}'s Agent`;
-  if (els.agentSub) els.agentSub.textContent = `Work History for ${name}`;
 
   const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
   if (els.avatarImg) {
@@ -53,7 +52,6 @@ export async function init(state, els, baseUrl) {
 
   // Mobile profile header
   if (els.mobileAgentName) els.mobileAgentName.textContent = `${firstName}'s Agent`;
-  if (els.mobileAgentSub) els.mobileAgentSub.textContent = `Work History for ${name}`;
   if (els.mobileAvatarImg) {
     els.mobileAvatarImg.src = avatarSrc;
     els.mobileAvatarImg.style.visibility = '';
@@ -66,7 +64,8 @@ export async function init(state, els, baseUrl) {
 
   if (els.credsList) {
     const items = [];
-    if (total) items.push(`${total} work sessions`);
+    if (total) items.push(`${total} Claude Code sessions`);
+    items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">2 repositories</a>`);
     const lastActive =
       statusVal?.lastUploadAt
         ? (() => {

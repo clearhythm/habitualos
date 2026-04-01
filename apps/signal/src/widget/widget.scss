@@ -331,33 +331,47 @@ $font-xxxl: 2rem;
     grid-column: 1;
     overflow-y: auto;
     transition: opacity 0.5s ease;
-    padding: $xl $lg;
+    padding: $sm $md;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    text-align: center;
-    gap: $lg;
+    gap: 0;
 
     &.is-done {
       opacity: 0;
       pointer-events: none;
     }
+  }
+
+  .profile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $sm;
+    width: 100%;
+    flex: 1;
+    padding-top: $lg;
 
     .agent-name {
-      font-size: $font-xl;
+      font-size: $font-lg;
       font-weight: 700;
       color: $text;
+      align-self: center;
     }
 
     .agent-sub {
       font-size: $font-sm;
       color: $muted;
+      align-self: center;
+      &:empty { display: none; }
     }
 
     .avatar-wrap {
-      width: 116px;
-      height: 116px;
+      width: 90px;
+      height: 90px;
+      margin: $xs 0;
+      align-self: center;
       border-radius: 50%;
       background: rgba(124, 58, 237, 0.12);
       border: 2px solid rgba(124, 58, 237, 0.7);
@@ -380,7 +394,8 @@ $font-xxxl: 2rem;
       text-align: left;
       display: flex;
       flex-direction: column;
-      gap: $sm;
+      gap: $xs;
+      margin-top: $md;
 
       h3 {
         font-size: 1.1rem;
@@ -445,7 +460,7 @@ $font-xxxl: 2rem;
 
     .contact {
       margin-top: auto;
-      padding-top: $lg;
+      padding-top: $sm;
       width: 100%;
 
       a {
@@ -677,13 +692,11 @@ $font-xxxl: 2rem;
     display: flex;
     flex-direction: column;
     height: calc(100dvh - 72px - 2 * #{$xl});
-    max-height: 800px;
 
     @media (max-width: $bp-md) {
       order: 1;
       flex: 1;
       height: auto;
-      max-height: none;
       min-height: 0;
     }
   }

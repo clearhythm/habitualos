@@ -366,30 +366,45 @@ var Signal = (() => {
   grid-column: 1;
   overflow-y: auto;
   transition: opacity 0.5s ease;
-  padding: 2rem 1.5rem;
+  padding: 0.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  text-align: center;
-  gap: 1.5rem;
+  gap: 0;
 }
 #signal-embed-overlay .profile.is-done {
   opacity: 0;
   pointer-events: none;
 }
-#signal-embed-overlay .profile .agent-name {
-  font-size: 1.25rem;
+#signal-embed-overlay .profile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  flex: 1;
+  padding-top: 1.5rem;
+}
+#signal-embed-overlay .profile-content .agent-name {
+  font-size: 1.125rem;
   font-weight: 700;
   color: #f9fafb;
+  align-self: center;
 }
-#signal-embed-overlay .profile .agent-sub {
+#signal-embed-overlay .profile-content .agent-sub {
   font-size: 0.875rem;
   color: #9ca3af;
+  align-self: center;
 }
-#signal-embed-overlay .profile .avatar-wrap {
-  width: 116px;
-  height: 116px;
+#signal-embed-overlay .profile-content .agent-sub:empty {
+  display: none;
+}
+#signal-embed-overlay .profile-content .avatar-wrap {
+  width: 90px;
+  height: 90px;
+  margin: 0.25rem 0;
+  align-self: center;
   border-radius: 50%;
   background: rgba(124, 58, 237, 0.12);
   border: 2px solid rgba(124, 58, 237, 0.7);
@@ -399,20 +414,21 @@ var Signal = (() => {
   flex-shrink: 0;
   overflow: hidden;
 }
-#signal-embed-overlay .profile .avatar-wrap img {
+#signal-embed-overlay .profile-content .avatar-wrap img {
   width: 90px;
   height: 90px;
   border-radius: 50%;
   object-fit: contain;
 }
-#signal-embed-overlay .profile .creds-block {
+#signal-embed-overlay .profile-content .creds-block {
   align-self: stretch;
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  margin-top: 1rem;
 }
-#signal-embed-overlay .profile .creds-block h3 {
+#signal-embed-overlay .profile-content .creds-block h3 {
   font-size: 1.1rem;
   font-weight: 700;
   color: #f9fafb;
@@ -420,14 +436,14 @@ var Signal = (() => {
   padding: 0;
   line-height: 1.3;
 }
-#signal-embed-overlay .profile .creds-intro {
+#signal-embed-overlay .profile-content .creds-intro {
   font-size: 0.875rem;
   color: #9ca3af;
   margin: 0;
   align-self: stretch;
   text-align: left;
 }
-#signal-embed-overlay .profile .creds-list {
+#signal-embed-overlay .profile-content .creds-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -436,28 +452,28 @@ var Signal = (() => {
   flex-direction: column;
   gap: 0.25rem;
 }
-#signal-embed-overlay .profile .creds-list li {
+#signal-embed-overlay .profile-content .creds-list li {
   font-size: 0.875rem;
   color: #9ca3af;
   list-style: none;
   padding-left: 1rem;
   position: relative;
 }
-#signal-embed-overlay .profile .creds-list li::before {
+#signal-embed-overlay .profile-content .creds-list li::before {
   content: "\u2022";
   position: absolute;
   left: 0;
 }
-#signal-embed-overlay .profile .creds-list a {
+#signal-embed-overlay .profile-content .creds-list a {
   color: inherit;
   text-decoration: underline;
   text-decoration-color: rgba(255, 255, 255, 0.2);
   text-underline-offset: 2px;
 }
-#signal-embed-overlay .profile .creds-list a:hover {
+#signal-embed-overlay .profile-content .creds-list a:hover {
   text-decoration-color: rgba(255, 255, 255, 0.5);
 }
-#signal-embed-overlay .profile .updated {
+#signal-embed-overlay .profile-content .updated {
   font-size: 0.875rem;
   font-style: italic;
   color: rgba(255, 255, 255, 0.3);
@@ -465,20 +481,20 @@ var Signal = (() => {
   text-align: left;
   align-self: stretch;
 }
-#signal-embed-overlay .profile .updated:empty {
+#signal-embed-overlay .profile-content .updated:empty {
   display: none;
 }
-#signal-embed-overlay .profile .contact {
+#signal-embed-overlay .profile-content .contact {
   margin-top: auto;
-  padding-top: 1.5rem;
+  padding-top: 0.5rem;
   width: 100%;
 }
-#signal-embed-overlay .profile .contact a {
+#signal-embed-overlay .profile-content .contact a {
   display: block;
   text-align: center;
   width: 100%;
 }
-#signal-embed-overlay .profile .rule {
+#signal-embed-overlay .profile-content .rule {
   width: 100%;
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -689,14 +705,12 @@ var Signal = (() => {
   display: flex;
   flex-direction: column;
   height: calc(100dvh - 72px - 2 * 2rem);
-  max-height: 800px;
 }
 @media (max-width: 768px) {
   #signal-embed-overlay .chat {
     order: 1;
     flex: 1;
     height: auto;
-    max-height: none;
     min-height: 0;
   }
 }
@@ -1426,14 +1440,12 @@ var Signal = (() => {
     const name = config.displayName || state2.signalId || "Signal";
     const firstName = name.split(" ")[0];
     if (els2.agentName) els2.agentName.textContent = `${firstName}'s Agent`;
-    if (els2.agentSub) els2.agentSub.textContent = `Work History for ${name}`;
     const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
     if (els2.avatarImg) {
       els2.avatarImg.src = avatarSrc;
       els2.avatarImg.style.visibility = "";
     }
     if (els2.mobileAgentName) els2.mobileAgentName.textContent = `${firstName}'s Agent`;
-    if (els2.mobileAgentSub) els2.mobileAgentSub.textContent = `Work History for ${name}`;
     if (els2.mobileAvatarImg) {
       els2.mobileAvatarImg.src = avatarSrc;
       els2.mobileAvatarImg.style.visibility = "";
@@ -1443,7 +1455,8 @@ var Signal = (() => {
     }
     if (els2.credsList) {
       const items = [];
-      if (total) items.push(`${total} work sessions`);
+      if (total) items.push(`${total} Claude Code sessions`);
+      items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">2 repositories</a>`);
       const lastActive = statusVal?.lastUploadAt ? (() => {
         const d = new Date(statusVal.lastUploadAt);
         const days = Math.round((Date.now() - d.getTime()) / 864e5);
