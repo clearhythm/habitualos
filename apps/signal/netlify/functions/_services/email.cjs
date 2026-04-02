@@ -125,32 +125,6 @@ async function sendWaitlistConfirm({ to, confirmToken }) {
 }
 
 /**
- * Send a waitlist welcome email (light theme, personal). Sent after confirmation.
- */
-async function sendWaitlistWelcome({ to }) {
-  const { data, error } = await getClient().emails.send({
-    from: 'Signal <erik@habitualos.com>',
-    replyTo: 'erik@habitualos.com',
-    to,
-    subject: "You're on the Signal Waitlist",
-    text: `Hey Signaler,\n\nThanks for joining the Signal Waitlist!\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. I'm also excited to help make your life easier. I'll reach out to you again again when Signal is ready to support a wider variety of users.\n\nIf you have any questions, ideas, or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
-    html: LIGHT_WRAPPER(`
-      <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">Hey Signaler,</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">Thanks for joining the Signal Waitlist!</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. I'm also excited to help make your life easier. I'll reach out to you again when Signal is ready to support a wider variety of users.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions, ideas, or want to say hello, just hit reply.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
-      <p style="color:#94a3b8;font-size:0.75rem;margin:2rem 0 0;border-top:1px solid #e2e8f0;padding-top:1rem;">
-        Signal · 114 Cress Road, Santa Cruz, CA 95060, USA<br>
-        To unsubscribe, reply to this email and let me know.
-      </p>
-    `)
-  });
-
-  if (error) throw new Error(`Resend error: ${error.message}`);
-  return data;
-}
-
 /**
  * Send an early-access confirmation email (light theme, personal).
  */
@@ -186,4 +160,4 @@ async function sendEarlyAccessWelcome({ to, name, slug, confirmToken }) {
   return data;
 }
 
-module.exports = { sendVerificationCode, sendWelcome, sendWaitlistWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome };
+module.exports = { sendVerificationCode, sendWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome };

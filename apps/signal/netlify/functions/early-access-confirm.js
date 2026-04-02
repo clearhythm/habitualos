@@ -1,6 +1,5 @@
 require('dotenv').config();
 const { confirmByToken } = require('./_services/db-early-access.cjs');
-const { sendWaitlistWelcome } = require('./_services/email.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -26,12 +25,6 @@ exports.handler = async (event) => {
 
     const confirmed = await confirmByToken(token, collection);
     if (!confirmed) return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Invalid or already used token.' }) };
-
-    if (type === 'waitlist' && confirmed.email) {
-      sendWaitlistWelcome({ to: confirmed.email }).catch(err =>
-        console.error('[early-access-confirm] waitlist welcome email error:', err.message)
-      );
-    }
 
     return {
       statusCode: 200,
