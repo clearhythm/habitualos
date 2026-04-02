@@ -1,5 +1,5 @@
 /* Generated — edit src/widget/index.js instead */
-var Signal = (() => {
+(() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __esm = (fn, res) => function __init() {

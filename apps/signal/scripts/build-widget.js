@@ -5,7 +5,6 @@ const options = {
   entryPoints: ['src/widget/index.js'],
   bundle: true,
   format: 'iife',
-  globalName: 'Signal',
   outfile: 'src/assets/js/signal-widget.js',
   minify: process.env.NODE_ENV === 'production',
   banner: { js: '/* Generated — edit src/widget/index.js instead */' },
