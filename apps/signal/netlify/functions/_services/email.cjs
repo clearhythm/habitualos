@@ -107,15 +107,15 @@ async function sendWaitlistConfirm({ to, confirmToken }) {
     from: 'Signal <erik@habitualos.com>',
     replyTo: 'erik@habitualos.com',
     to,
-    subject: "Confirm your spot on the Signal Waitlist",
-    text: `Hey,\n\nThanks for joining the Signal Waitlist!\n\nConfirm your spot here:\n${confirmUrl}\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're interested in trying Signal, please confirm your spot on the waitlist, and I'll reach out again when we're ready to support you.\n\nIf you have any questions or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
+    subject: "Confirm your place on the Signal Waitlist",
+    text: `Hey,\n\nThanks for joining the Signal Waitlist.\n\nConfirm your spot here:\n${confirmUrl}\n\nIf we haven’t met, I’m Erik. I started Signal because I think real work should be visible, not flattened into a resume.\n\nFeel free to reply if you want to say hello.\n\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
     html: LIGHT_WRAPPER(`
       <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">Hey,</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for joining the Signal Waitlist!</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for joining the Signal Waitlist.</p>
       <a href="${confirmUrl}" style="display:inline-block;margin:0 0 1.25rem;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.925rem;">Confirm Your Spot</a>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're interested in trying Signal, please confirm your spot on the waitlist, and I'll reach out again when we're ready to support you.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions or want to say hello, just hit reply.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If we haven’t met, I’m Erik. I started Signal because I think real work should be visible, not flattened into a resume.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">Feel free to reply if you want to say hello.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Erik</p>
       ${FOOTER}
     `)
   });
@@ -168,15 +168,16 @@ async function sendEarlyAccessWelcome({ to, name, slug, confirmToken }) {
     from: 'Signal <erik@habitualos.com>',
     replyTo: 'erik@habitualos.com',
     to,
-    subject: "Confirm your spot on Signal",
-    text: `${greeting}\n\nThanks for signing up for Signal Early Access!${slug ? `\nYour handle: ${slug}` : ''}\n\nConfirm your spot here:\n${confirmUrl}\n\nIf I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're actively using AI tools in your workflow, I'd love to know what you're making, and how Signal can help make your life easier.\n\nIf you have any questions, ideas, or want to say hello, just hit reply.\n\nWelcome,\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
+    subject: "Confirm your Signal",
+    text: `${greeting}\n\nThanks for leaving a Signal.${slug ? `\nYour handle: ${slug}` : ''}\n\nConfirm here:\n${confirmUrl}\n\nIf we haven't met, I'm Erik. I started Signal because I think real work should be visible, not flattened into a resume.\n\nIf you're actively using AI in your workflow, I'd be curious to know what you're building.\n\nYou can just reply here.\n\nErik\n\n---\nSignal · 114 Cress Road, Santa Cruz, CA 95060, USA\nTo unsubscribe, reply to this email.`,
     html: LIGHT_WRAPPER(`
       <p style="color:#1e293b;font-size:0.925rem;margin:0 0 1.25rem;">${greeting}</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for signing up for Early Access!${slug ? `<br>Your handle: <span style="color:#7c3aed;font-weight:600;">${slug}</span>` : ''}</p>
-      <a href="${confirmUrl}" style="display:inline-block;margin:0 0 1.25rem;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.925rem;">Confirm Your Spot</a>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If I haven't met you before, I'm Erik. I started Signal because I believe great work should speak for itself. If you're actively using AI tools in your workflow, I'd love to know what you're making, and how Signal can help make your life easier.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">If you have any questions, ideas, or want to say hello, just hit reply.</p>
-      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Welcome,<br>Erik</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.25rem;">Thanks for leaving a Signal.${slug ? `<br>Your handle: <span style="color:#7c3aed;font-weight:600;">${slug}</span>` : ''}</p>
+      <a href="${confirmUrl}" style="display:inline-block;margin:0 0 1.25rem;padding:0.7rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.925rem;">Confirm Your Signal</a>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If we haven't met, I'm Erik. I started Signal because I think real work should be visible, not flattened into a resume.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1rem;">If you're actively using AI in your workflow, I’d be curious what you’re building.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0 0 1.5rem;">You can just reply here.</p>
+      <p style="color:#475569;font-size:0.925rem;line-height:1.6;margin:0.75rem 0 0;">Erik</p>
       ${FOOTER}
     `)
   });
