@@ -18,7 +18,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
 
   try {
-    const { token, type = 'early-access', email } = JSON.parse(event.body || '{}');
+    const { token, type = 'early-access' } = JSON.parse(event.body || '{}');
     if (!token) return { statusCode: 400, headers: CORS, body: JSON.stringify({ success: false, error: 'Token required.' }) };
 
     const collection = COLLECTION_MAP[type];
@@ -27,8 +27,8 @@ exports.handler = async (event) => {
     const confirmed = await confirmByToken(token, collection);
     if (!confirmed) return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Invalid or already used token.' }) };
 
-    if (type === 'waitlist' && email) {
-      sendWaitlistWelcome({ to: email }).catch(err =>
+    if (type === 'waitlist' && confirmed.email) {
+      sendWaitlistWelcome({ to: confirmed.email }).catch(err =>
         console.error('[early-access-confirm] waitlist welcome email error:', err.message)
       );
     }

@@ -33,8 +33,10 @@ async function confirmByToken(token, collection) {
   const col = collection || COLLECTION;
   const snap = await db.collection(col).where('confirmToken', '==', token).limit(1).get();
   if (snap.empty) return false;
+  const data = snap.docs[0].data();
   await snap.docs[0].ref.update({ confirmed: true });
-  return true;
+  // Return email — waitlist uses _email, early-access uses email
+  return { email: data._email || data.email || null };
 }
 
 async function listInterest() {
