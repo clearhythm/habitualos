@@ -1517,7 +1517,8 @@
     const name = config.displayName || state2.signalId || "Signal";
     const firstName = name.split(" ")[0];
     if (els2.agentName) els2.agentName.textContent = `${firstName}'s Signal`;
-    const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
+    const rawAvatar = config.avatarUrl || config.agentAvatarUrl || null;
+    const avatarSrc = rawAvatar ? rawAvatar.startsWith("http") ? rawAvatar : `${baseUrl}${rawAvatar}` : `${baseUrl}/assets/images/signal-agent_clean.png`;
     if (els2.avatarImg) {
       els2.avatarImg.src = avatarSrc;
       els2.avatarImg.style.visibility = "";
@@ -1917,6 +1918,12 @@
     else close();
   }
   function init4() {
+    if (!document.querySelector('link[href*="Poppins"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap";
+      document.head.appendChild(link);
+    }
     injectHTML(state.baseUrl);
     els = bindEls();
     loadMarked();

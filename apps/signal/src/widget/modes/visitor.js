@@ -51,7 +51,10 @@ export async function init(state, els, baseUrl) {
 
   if (els.agentName) els.agentName.textContent = `${firstName}'s Signal`;
 
-  const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
+  const rawAvatar = config.avatarUrl || config.agentAvatarUrl || null;
+  const avatarSrc = rawAvatar
+    ? (rawAvatar.startsWith('http') ? rawAvatar : `${baseUrl}${rawAvatar}`)
+    : `${baseUrl}/assets/images/signal-agent_clean.png`;
   if (els.avatarImg) {
     els.avatarImg.src = avatarSrc;
     els.avatarImg.style.visibility = '';

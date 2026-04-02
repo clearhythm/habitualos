@@ -8,9 +8,16 @@ const { getOwnerByUserId, getOwnerBySignalId } = require('./_services/db-signal-
  * Body: { userId } OR { signalId }
  * Returns: { success, stats, profiles }
  */
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: CORS, body: JSON.stringify({ success: false, error: 'Method not allowed' }) };
   }
 
   try {
@@ -39,7 +46,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         success: true,
         stats,
@@ -55,6 +62,6 @@ exports.handler = async (event) => {
 
   } catch (error) {
     console.error('[signal-context-status] ERROR:', error);
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'Internal server error' }) };
   }
 };
