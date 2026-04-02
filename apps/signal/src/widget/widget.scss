@@ -331,7 +331,7 @@ $font-xxxl: 2rem;
     grid-column: 1;
     overflow-y: auto;
     transition: opacity 0.5s ease;
-    padding: $sm $md;
+    padding: 0 $lg $md;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -351,10 +351,10 @@ $font-xxxl: 2rem;
     gap: $sm;
     width: 100%;
     flex: 1;
-    padding-top: $lg;
+    padding-top: $xl;
 
     .agent-name {
-      font-size: $font-lg;
+      font-size: 1.5rem;
       font-weight: 700;
       color: $text;
       align-self: center;
@@ -368,13 +368,14 @@ $font-xxxl: 2rem;
     }
 
     .avatar-wrap {
-      width: 90px;
-      height: 90px;
+      width: 110px;
+      height: 110px;
       margin: $xs 0;
       align-self: center;
       border-radius: 50%;
       background: rgba(124, 58, 237, 0.12);
-      border: 2px solid rgba(124, 58, 237, 0.7);
+      border: 3px solid $primary;
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25), 0 0 16px 4px rgba(124, 58, 237, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -382,8 +383,8 @@ $font-xxxl: 2rem;
       overflow: hidden;
 
       img {
-        width: 90px;
-        height: 90px;
+        width: 110px;
+        height: 110px;
         border-radius: 50%;
         object-fit: contain;
       }
@@ -746,7 +747,7 @@ $font-xxxl: 2rem;
   .messages {
     flex: 1;
     overflow-y: auto;
-    padding: $lg;
+    padding: $xl $lg $lg;
     display: flex;
     flex-direction: column;
     gap: $md;
@@ -896,6 +897,57 @@ $font-xxxl: 2rem;
     }
   }
 
+  // ─── Chat intro (pre-conversation state) ──────────────────────────────────
+
+  .chat-intro {
+    display: flex;
+    flex-direction: column;
+    gap: $sm;
+    padding: 0 0 $md;
+  }
+
+  .chat-intro-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0;
+  }
+
+  .chat-intro-sub {
+    font-size: $font-base;
+    color: $muted;
+    margin: 0;
+  }
+
+  // ─── Starter chips ────────────────────────────────────────────────────────
+
+  .starter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $xs;
+    margin-top: $xs;
+  }
+
+  .starter-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid $border-sm;
+    border-radius: 16px;
+    color: $muted;
+    font-size: $font-base;
+    font-family: $font;
+    padding: 5px $sm;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    text-align: left;
+    line-height: 1.4;
+
+    &:hover {
+      background: rgba(124, 58, 237, 0.12);
+      border-color: rgba(124, 58, 237, 0.4);
+      color: $text;
+    }
+  }
+
   // ─── Input wrap ───────────────────────────────────────────────────────────
 
   .input-wrap {
@@ -908,7 +960,7 @@ $font-xxxl: 2rem;
     @media (max-width: $bp-md) {
       position: sticky;
       bottom: 0;
-      background: $surface;
+      background: rgba(255, 255, 255, 0.04);
       z-index: 1;
     }
 

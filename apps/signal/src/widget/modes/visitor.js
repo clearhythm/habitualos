@@ -2,7 +2,14 @@
 
 import { getVisitorId } from '../core/storage.js';
 import { appendMessage } from '../core/messages.js';
-import { saveChat } from '../core/history.js';
+
+const STARTER_QUESTIONS = [
+  'What kind of work have you been doing lately?',
+  'How do you handle ambiguity?',
+  'What would you be like to work with?',
+  'What\'s your strongest technical area?',
+  'Paste a job description and I\'ll score the fit.',
+];
 
 const FALLBACK_CONFIG = (signalId) => ({
   signalId,
@@ -42,7 +49,7 @@ export async function init(state, els, baseUrl) {
   const name = config.displayName || state.signalId || 'Signal';
   const firstName = name.split(' ')[0];
 
-  if (els.agentName) els.agentName.textContent = `${firstName}'s Agent`;
+  if (els.agentName) els.agentName.textContent = `${firstName}'s Signal`;
 
   const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
   if (els.avatarImg) {
@@ -51,21 +58,20 @@ export async function init(state, els, baseUrl) {
   }
 
   // Mobile profile header
-  if (els.mobileAgentName) els.mobileAgentName.textContent = `${firstName}'s Agent`;
+  if (els.mobileAgentName) els.mobileAgentName.textContent = `${firstName}'s Signal`;
   if (els.mobileAvatarImg) {
     els.mobileAvatarImg.src = avatarSrc;
     els.mobileAvatarImg.style.visibility = '';
   }
 
   if (els.credsIntro) {
-    els.credsIntro.textContent =
-      'My agent is designed to help you assess my fit for any project, collaboration, or role. It\'s trained on my living work history across:';
+    els.credsIntro.textContent = `I trained an agent on my work, style, and personality, so you can have a realistic conversation with me. I made this to help you assess my fit for any project or job listing. It can read from my:`;
   }
 
   if (els.credsList) {
     const items = [];
     if (total) items.push(`${total} Claude Code sessions`);
-    items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">2 repositories</a>`);
+    items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">3 repositories</a>`);
     const lastActive =
       statusVal?.lastUploadAt
         ? (() => {
@@ -93,15 +99,35 @@ export async function init(state, els, baseUrl) {
   if (els.profileContent) els.profileContent.hidden = false;
   if (els.mobileProfileHeader) els.mobileProfileHeader.classList.add('is-loaded');
 
-  // Greeting
-  const greeting = `Hey! Ask me anything about my work, or paste a job description and I'll tell you how I'd fit.`;
   state.currentPersona = 'colleague';
-  state.chatHistory.push({ role: 'assistant', content: greeting });
-  appendMessage(els, 'assistant', greeting);
+  // Seed greeting into history for API context (not rendered — intro UI replaces it)
+  state.chatHistory.push({ role: 'assistant', content: 'Hey! Ask me anything about my work, or paste a job description and I\'ll tell you how I\'d fit.' });
 
   els.input.disabled = false;
   els.sendBtn.disabled = false;
-  els.input.placeholder = 'Paste a JD or ask anything…';
+  els.input.placeholder = 'Ask me anything…';
+
+  // Pre-chat intro with starter chips
+  if (els.messages) {
+    const introEl = document.createElement('div');
+    introEl.className = 'chat-intro';
+    introEl.innerHTML = `
+      <p class="chat-intro-heading">🎙️ Interview Me</p>
+      <p class="chat-intro-sub">Here are some questions to get you started.</p>
+      <div class="starter-chips">${STARTER_QUESTIONS.map(
+        (q) => `<button type="button" class="starter-chip">${q}</button>`
+      ).join('')}</div>
+    `;
+    els.messages.appendChild(introEl);
+
+    introEl.addEventListener('click', (e) => {
+      const chip = e.target.closest('.starter-chip');
+      if (!chip) return;
+      els.input.value = chip.textContent;
+      els.input.dispatchEvent(new Event('input'));
+      els.form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+  }
 }
 
 export function buildPayload(state, text) {
@@ -115,6 +141,3 @@ export function buildPayload(state, text) {
   };
 }
 
-export async function persist(state, baseUrl) {
-  await saveChat(state, baseUrl);
-}

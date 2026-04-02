@@ -366,7 +366,7 @@ var Signal = (() => {
   grid-column: 1;
   overflow-y: auto;
   transition: opacity 0.5s ease;
-  padding: 0.5rem 1rem;
+  padding: 0 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -384,10 +384,10 @@ var Signal = (() => {
   gap: 0.5rem;
   width: 100%;
   flex: 1;
-  padding-top: 1.5rem;
+  padding-top: 2rem;
 }
 #signal-embed-overlay .profile-content .agent-name {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #f9fafb;
   align-self: center;
@@ -401,13 +401,14 @@ var Signal = (() => {
   display: none;
 }
 #signal-embed-overlay .profile-content .avatar-wrap {
-  width: 90px;
-  height: 90px;
+  width: 110px;
+  height: 110px;
   margin: 0.25rem 0;
   align-self: center;
   border-radius: 50%;
   background: rgba(124, 58, 237, 0.12);
-  border: 2px solid rgba(124, 58, 237, 0.7);
+  border: 3px solid #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25), 0 0 16px 4px rgba(124, 58, 237, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -415,8 +416,8 @@ var Signal = (() => {
   overflow: hidden;
 }
 #signal-embed-overlay .profile-content .avatar-wrap img {
-  width: 90px;
-  height: 90px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
   object-fit: contain;
 }
@@ -752,7 +753,7 @@ var Signal = (() => {
 #signal-embed-overlay .messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 2rem 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -915,6 +916,47 @@ var Signal = (() => {
 #signal-embed-overlay .thinking span:nth-child(3) {
   animation-delay: 0.4s;
 }
+#signal-embed-overlay .chat-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0 1rem;
+}
+#signal-embed-overlay .chat-intro-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0;
+}
+#signal-embed-overlay .chat-intro-sub {
+  font-size: 1rem;
+  color: #9ca3af;
+  margin: 0;
+}
+#signal-embed-overlay .starter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+#signal-embed-overlay .starter-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  color: #9ca3af;
+  font-size: 1rem;
+  font-family: "Poppins", system-ui, -apple-system, sans-serif;
+  padding: 5px 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-align: left;
+  line-height: 1.4;
+}
+#signal-embed-overlay .starter-chip:hover {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.4);
+  color: #f9fafb;
+}
 #signal-embed-overlay .input-wrap {
   display: flex;
   align-items: flex-end;
@@ -926,7 +968,7 @@ var Signal = (() => {
   #signal-embed-overlay .input-wrap {
     position: sticky;
     bottom: 0;
-    background: #0f172a;
+    background: rgba(255, 255, 255, 0.04);
     z-index: 1;
   }
 }
@@ -1342,12 +1384,61 @@ var Signal = (() => {
     });
   }
 
+  // src/widget/core/history.js
+  var LS_PREFIX = "signal_chat_";
+  function lsKey(state2) {
+    return `${LS_PREFIX}${state2.userId}_${state2.signalId}`;
+  }
+  function saveChatLS(state2) {
+    if (!state2.userId || !state2.chatHistory.length) return;
+    try {
+      localStorage.setItem(lsKey(state2), JSON.stringify({
+        chatId: state2.chatId || null,
+        messages: state2.chatHistory,
+        savedAt: Date.now()
+      }));
+    } catch (_) {
+    }
+  }
+  async function persistChat(state2, baseUrl) {
+    if (!state2.userId || !state2.chatHistory.length) return;
+    try {
+      const body = JSON.stringify({
+        userId: state2.userId,
+        signalId: state2.signalId,
+        chatId: state2.chatId || null,
+        messages: state2.chatHistory
+      });
+      const res = await fetch(`${baseUrl}/api/signal-chat-save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+      });
+      const data = await res.json();
+      if (data.chatId) state2.chatId = data.chatId;
+    } catch (err) {
+      console.warn("[signal/history] persistChat failed (non-fatal):", err);
+    }
+  }
+  function beaconChat(state2, baseUrl) {
+    if (!state2.userId || !state2.chatHistory.length) return;
+    try {
+      const body = JSON.stringify({
+        userId: state2.userId,
+        signalId: state2.signalId,
+        chatId: state2.chatId || null,
+        messages: state2.chatHistory
+      });
+      navigator.sendBeacon(`${baseUrl}/api/signal-chat-save`, new Blob([body], { type: "application/json" }));
+    } catch (_) {
+    }
+  }
+
   // src/widget/modes/visitor.js
   var visitor_exports = {};
   __export(visitor_exports, {
     buildPayload: () => buildPayload,
-    init: () => init,
-    persist: () => persist
+    init: () => init
   });
 
   // src/widget/core/storage.js
@@ -1391,27 +1482,13 @@ var Signal = (() => {
 
   // src/widget/modes/visitor.js
   init_messages();
-
-  // src/widget/core/history.js
-  async function saveChat(state2, baseUrl) {
-    if (!state2.userId || !state2.chatHistory.length) return;
-    try {
-      const mode = state2.chatId ? "append" : "create";
-      const body = { userId: state2.userId, messages: state2.chatHistory, mode };
-      if (state2.chatId) body.chatId = state2.chatId;
-      const res = await fetch(`${baseUrl}/api/signal-chat-save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data.chatId && !state2.chatId) state2.chatId = data.chatId;
-    } catch (err) {
-      console.warn("[signal/history] saveChat failed (non-fatal):", err);
-    }
-  }
-
-  // src/widget/modes/visitor.js
+  var STARTER_QUESTIONS = [
+    "What kind of work have you been doing lately?",
+    "How do you handle ambiguity?",
+    "What would you be like to work with?",
+    "What's your strongest technical area?",
+    "Paste a job description and I'll score the fit."
+  ];
   var FALLBACK_CONFIG = (signalId) => ({
     signalId,
     displayName: "",
@@ -1439,24 +1516,24 @@ var Signal = (() => {
     const total = statusVal?.success ? statusVal.stats?.total : null;
     const name = config.displayName || state2.signalId || "Signal";
     const firstName = name.split(" ")[0];
-    if (els2.agentName) els2.agentName.textContent = `${firstName}'s Agent`;
+    if (els2.agentName) els2.agentName.textContent = `${firstName}'s Signal`;
     const avatarSrc = config.avatarUrl || config.agentAvatarUrl || `${baseUrl}/assets/images/signal-agent_clean.png`;
     if (els2.avatarImg) {
       els2.avatarImg.src = avatarSrc;
       els2.avatarImg.style.visibility = "";
     }
-    if (els2.mobileAgentName) els2.mobileAgentName.textContent = `${firstName}'s Agent`;
+    if (els2.mobileAgentName) els2.mobileAgentName.textContent = `${firstName}'s Signal`;
     if (els2.mobileAvatarImg) {
       els2.mobileAvatarImg.src = avatarSrc;
       els2.mobileAvatarImg.style.visibility = "";
     }
     if (els2.credsIntro) {
-      els2.credsIntro.textContent = "My agent is designed to help you assess my fit for any project, collaboration, or role. It's trained on my living work history across:";
+      els2.credsIntro.textContent = `I trained an agent on my work, style, and personality, so you can have a realistic conversation with me. I made this to help you assess my fit for any project or job listing. It can read from my:`;
     }
     if (els2.credsList) {
       const items = [];
       if (total) items.push(`${total} Claude Code sessions`);
-      items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">2 repositories</a>`);
+      items.push(`<a href="https://github.com/clearhythm" target="_blank" rel="noopener">3 repositories</a>`);
       const lastActive = statusVal?.lastUploadAt ? (() => {
         const d = new Date(statusVal.lastUploadAt);
         const days = Math.round((Date.now() - d.getTime()) / 864e5);
@@ -1477,13 +1554,30 @@ var Signal = (() => {
     if (els2.profileSkeleton) els2.profileSkeleton.hidden = true;
     if (els2.profileContent) els2.profileContent.hidden = false;
     if (els2.mobileProfileHeader) els2.mobileProfileHeader.classList.add("is-loaded");
-    const greeting = `Hey! Ask me anything about my work, or paste a job description and I'll tell you how I'd fit.`;
     state2.currentPersona = "colleague";
-    state2.chatHistory.push({ role: "assistant", content: greeting });
-    appendMessage(els2, "assistant", greeting);
+    state2.chatHistory.push({ role: "assistant", content: "Hey! Ask me anything about my work, or paste a job description and I'll tell you how I'd fit." });
     els2.input.disabled = false;
     els2.sendBtn.disabled = false;
-    els2.input.placeholder = "Paste a JD or ask anything\u2026";
+    els2.input.placeholder = "Ask me anything\u2026";
+    if (els2.messages) {
+      const introEl = document.createElement("div");
+      introEl.className = "chat-intro";
+      introEl.innerHTML = `
+      <p class="chat-intro-heading">\u{1F399}\uFE0F Interview Me</p>
+      <p class="chat-intro-sub">Here are some questions to get you started.</p>
+      <div class="starter-chips">${STARTER_QUESTIONS.map(
+        (q) => `<button type="button" class="starter-chip">${q}</button>`
+      ).join("")}</div>
+    `;
+      els2.messages.appendChild(introEl);
+      introEl.addEventListener("click", (e) => {
+        const chip = e.target.closest(".starter-chip");
+        if (!chip) return;
+        els2.input.value = chip.textContent;
+        els2.input.dispatchEvent(new Event("input"));
+        els2.form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      });
+    }
   }
   function buildPayload(state2, text) {
     return {
@@ -1494,9 +1588,6 @@ var Signal = (() => {
       message: text,
       chatHistory: state2.chatHistory.slice(0, -1)
     };
-  }
-  async function persist(state2, baseUrl) {
-    await saveChat(state2, baseUrl);
   }
 
   // src/widget/modes/owner.js
@@ -1788,7 +1879,8 @@ var Signal = (() => {
           console.error("[signal] Stream error:", msg);
         }
       });
-      if (activeMode.persist) await activeMode.persist(state, state.baseUrl);
+      saveChatLS(state);
+      if (state.turnCount % 3 === 0) await persistChat(state, state.baseUrl);
     } catch (err) {
       removeThinking();
       if (assistantContentEl) assistantContentEl.closest(".msg")?.remove();
@@ -1807,6 +1899,7 @@ var Signal = (() => {
   function launch(options = {}) {
     if (!els) return;
     els.root.removeAttribute("hidden");
+    document.body.style.overflow = "hidden";
     if (options.fullPage) els.root.classList.add("is-fullpage");
     const modeName = options.mode || (state.signalId ? "visitor" : "onboard");
     transition(modeName, options);
@@ -1815,6 +1908,8 @@ var Signal = (() => {
     if (!els) return;
     els.root.setAttribute("hidden", "");
     els.root.classList.remove("is-fullpage");
+    document.body.style.overflow = "";
+    if (state.chatHistory.length) persistChat(state, state.baseUrl);
   }
   function toggle(options = {}) {
     if (!els) return;
@@ -1826,6 +1921,14 @@ var Signal = (() => {
     els = bindEls();
     loadMarked();
     els.closeBtn.addEventListener("click", close);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden" && state.chatHistory.length) {
+        beaconChat(state, state.baseUrl);
+      }
+    });
+    window.addEventListener("beforeunload", () => {
+      if (state.chatHistory.length) beaconChat(state, state.baseUrl);
+    });
     els.input.addEventListener("input", () => {
       els.input.style.height = "auto";
       els.input.style.height = Math.min(els.input.scrollHeight, 160) + "px";

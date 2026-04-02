@@ -6,6 +6,7 @@ import { appendMessage, showThinking, removeThinking, loadMarked, renderMarkdown
 import { resetScorePanel, updateScore } from './core/score.js';
 import { readStream } from './core/stream.js';
 import { createEvalRecord, upsertEvalScores } from './core/eval.js';
+import { saveChatLS, persistChat, beaconChat } from './core/history.js';
 
 import * as visitorMode  from './modes/visitor.js';
 import * as ownerMode    from './modes/owner.js';
@@ -182,8 +183,9 @@ export async function sendMessage(text) {
       },
     });
 
-    // Persist after stream completes
-    if (activeMode.persist) await activeMode.persist(state, state.baseUrl);
+    // Persist: localStorage every turn, DB every 3 turns
+    saveChatLS(state);
+    if (state.turnCount % 3 === 0) await persistChat(state, state.baseUrl);
 
   } catch (err) {
     removeThinking();
@@ -207,6 +209,7 @@ export async function sendMessage(text) {
 export function launch(options = {}) {
   if (!els) return;
   els.root.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
   if (options.fullPage) els.root.classList.add('is-fullpage');
 
   const modeName = options.mode || (state.signalId ? 'visitor' : 'onboard');
@@ -217,6 +220,8 @@ export function close() {
   if (!els) return;
   els.root.setAttribute('hidden', '');
   els.root.classList.remove('is-fullpage');
+  document.body.style.overflow = '';
+  if (state.chatHistory.length) persistChat(state, state.baseUrl);
 }
 
 export function toggle(options = {}) {
@@ -234,6 +239,16 @@ export function init() {
 
   // Close button
   els.closeBtn.addEventListener('click', close);
+
+  // Best-effort save on page unload / tab hide
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && state.chatHistory.length) {
+      beaconChat(state, state.baseUrl);
+    }
+  });
+  window.addEventListener('beforeunload', () => {
+    if (state.chatHistory.length) beaconChat(state, state.baseUrl);
+  });
 
   // Textarea auto-resize
   els.input.addEventListener('input', () => {

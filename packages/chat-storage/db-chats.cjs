@@ -92,30 +92,19 @@ function createChatService({ collection, idPrefix }) {
   }
 
   /**
-   * Append messages to existing chat
+   * Upsert a chat — creates if new, overwrites messages if existing.
    * @param {string} id - Chat ID
-   * @param {Array} newMessages - New messages to append
+   * @param {Object} data - Full chat data including messages array
    * @returns {Promise<Object>} Result with id
    */
-  async function appendToChat(id, newMessages) {
+  async function upsertChat(id, data) {
     const { db, FieldValue } = require('@habitualos/db-core');
-    const chatRef = db.collection(collection).doc(id);
-
-    const chatDoc = await chatRef.get();
-    if (!chatDoc.exists) {
-      throw new Error(`Chat ${id} not found in ${collection}`);
-    }
-
-    const currentData = chatDoc.data();
-    const updateData = {
-      messages: [...(currentData.messages || []), ...newMessages],
-      savedAt: new Date().toISOString(),
-      _updatedAt: FieldValue.serverTimestamp()
-    };
-
-    await chatRef.update(updateData);
-
-    return { id };
+    const formattedId = id?.startsWith(idPrefix + '-') ? id : `${idPrefix}-${id}`;
+    await db.collection(collection).doc(formattedId).set({
+      ...data,
+      _updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: false });
+    return { id: formattedId };
   }
 
   return {
@@ -124,7 +113,7 @@ function createChatService({ collection, idPrefix }) {
     getChat,
     createChat,
     getChatCount,
-    appendToChat
+    upsertChat,
   };
 }
 
