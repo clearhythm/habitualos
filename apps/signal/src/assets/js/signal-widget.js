@@ -1402,6 +1402,8 @@
   }
   async function persistChat(state2, baseUrl) {
     if (!state2.userId || !state2.chatHistory.length) return;
+    if (state2._persisting) return;
+    state2._persisting = true;
     try {
       const body = JSON.stringify({
         userId: state2.userId,
@@ -1418,6 +1420,8 @@
       if (data.chatId) state2.chatId = data.chatId;
     } catch (err) {
       console.warn("[signal/history] persistChat failed (non-fatal):", err);
+    } finally {
+      state2._persisting = false;
     }
   }
   function beaconChat(state2, baseUrl) {
@@ -1928,11 +1932,6 @@
     els = bindEls();
     loadMarked();
     els.closeBtn.addEventListener("click", close);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden" && state.chatHistory.length) {
-        beaconChat(state, state.baseUrl);
-      }
-    });
     window.addEventListener("beforeunload", () => {
       if (state.chatHistory.length) beaconChat(state, state.baseUrl);
     });

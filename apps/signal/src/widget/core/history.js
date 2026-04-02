@@ -27,6 +27,8 @@ export function clearChatLS(state) {
 
 export async function persistChat(state, baseUrl) {
   if (!state.userId || !state.chatHistory.length) return;
+  if (state._persisting) return; // prevent concurrent saves creating duplicate docs
+  state._persisting = true;
   try {
     const body = JSON.stringify({
       userId: state.userId,
@@ -43,6 +45,8 @@ export async function persistChat(state, baseUrl) {
     if (data.chatId) state.chatId = data.chatId;
   } catch (err) {
     console.warn('[signal/history] persistChat failed (non-fatal):', err);
+  } finally {
+    state._persisting = false;
   }
 }
 

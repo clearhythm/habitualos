@@ -248,12 +248,7 @@ export function init() {
   // Close button
   els.closeBtn.addEventListener('click', close);
 
-  // Best-effort save on page unload / tab hide
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && state.chatHistory.length) {
-      beaconChat(state, state.baseUrl);
-    }
-  });
+  // Best-effort save on page unload (tab close / navigate away)
   window.addEventListener('beforeunload', () => {
     if (state.chatHistory.length) beaconChat(state, state.baseUrl);
   });
