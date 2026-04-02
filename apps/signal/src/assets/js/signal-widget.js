@@ -1906,6 +1906,7 @@
     els.root.removeAttribute("hidden");
     document.body.style.overflow = "hidden";
     if (options.fullPage) els.root.classList.add("is-fullpage");
+    if (options.redirectOnClose) state.redirectOnClose = options.redirectOnClose;
     const modeName = options.mode || (state.signalId ? "visitor" : "onboard");
     transition(modeName, options);
   }
@@ -1915,6 +1916,7 @@
     els.root.classList.remove("is-fullpage");
     document.body.style.overflow = "";
     if (state.chatHistory.length) persistChat(state, state.baseUrl);
+    if (state.redirectOnClose) window.location.href = state.redirectOnClose;
   }
   function toggle(options = {}) {
     if (!els) return;

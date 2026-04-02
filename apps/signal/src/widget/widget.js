@@ -212,6 +212,7 @@ export function launch(options = {}) {
   document.body.style.overflow = 'hidden';
   if (options.fullPage) els.root.classList.add('is-fullpage');
 
+  if (options.redirectOnClose) state.redirectOnClose = options.redirectOnClose;
   const modeName = options.mode || (state.signalId ? 'visitor' : 'onboard');
   transition(modeName, options);
 }
@@ -222,6 +223,7 @@ export function close() {
   els.root.classList.remove('is-fullpage');
   document.body.style.overflow = '';
   if (state.chatHistory.length) persistChat(state, state.baseUrl);
+  if (state.redirectOnClose) window.location.href = state.redirectOnClose;
 }
 
 export function toggle(options = {}) {
