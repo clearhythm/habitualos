@@ -14,6 +14,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  node_version = "20"
 
 [[edge_functions]]
   path = "/api/signal-chat-stream"
