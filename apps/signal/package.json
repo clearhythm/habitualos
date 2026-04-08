@@ -18,7 +18,7 @@
     "@habitualos/chat-storage": "workspace:*",
     "@habitualos/db-core": "workspace:*",
     "marked": "^15.0.12",
-    "resend": "^4.0.0"
+    "resend": "^6.10.0"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
