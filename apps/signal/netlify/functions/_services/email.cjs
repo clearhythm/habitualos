@@ -160,4 +160,57 @@ async function sendEarlyAccessWelcome({ to, name, slug, confirmToken }) {
   return data;
 }
 
-module.exports = { sendVerificationCode, sendWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome };
+/**
+ * Notify owner of high-fit job alerts (overall score ≥ 8).
+ * @param {{ to: string, signalId: string, jobs: Array }} params
+ */
+async function sendJobAlert({ to, signalId, jobs }) {
+  const count = jobs.length;
+  const subject = `Signal: ${count} high-fit job${count > 1 ? 's' : ''} flagged`;
+
+  const recLabels = {
+    'strong-candidate': 'Strong Candidate',
+    'worth-applying': 'Worth Applying',
+    'stretch': 'Stretch Role',
+    'poor-fit': 'Poor Fit',
+  };
+
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const jobsHtml = jobs.map(j => {
+    const overall = j.score?.overall ?? '—';
+    const rec = recLabels[j.recommendation] || '';
+    return `
+      <div style="border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin-bottom:0.75rem;">
+        <p style="color:#1e293b;font-size:0.925rem;font-weight:600;margin:0 0 0.25rem;">${esc(j.title)}${j.company ? ` — ${esc(j.company)}` : ''}</p>
+        <p style="color:#7c3aed;font-size:0.875rem;font-weight:700;margin:0 0 0.5rem;">Score: ${overall}/10${rec ? ` · ${rec}` : ''}</p>
+        ${j.summary ? `<p style="color:#475569;font-size:0.875rem;line-height:1.5;margin:0 0 0.5rem;">${esc(j.summary)}</p>` : ''}
+        ${j.url ? `<a href="${esc(j.url)}" style="color:#7c3aed;font-size:0.8rem;">View on LinkedIn →</a>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  const jobsText = jobs.map(j => {
+    const overall = j.score?.overall ?? '—';
+    return `${j.title}${j.company ? ` — ${j.company}` : ''}\nScore: ${overall}/10${j.recommendation ? ` (${j.recommendation})` : ''}\n${j.summary || ''}\n${j.url || ''}`;
+  }).join('\n\n---\n\n');
+
+  const dashUrl = 'https://signal.habitualos.com/dashboard/';
+
+  const { data, error } = await getClient().emails.send({
+    from: FROM,
+    to,
+    subject,
+    text: `${count} high-fit job${count > 1 ? 's' : ''} flagged for ${signalId}:\n\n${jobsText}\n\nSee all alerts: ${dashUrl}`,
+    html: LIGHT_WRAPPER(`
+      <p style="color:#1e293b;font-size:0.925rem;font-weight:600;margin:0 0 1rem;">${count} high-fit job${count > 1 ? 's' : ''} flagged</p>
+      ${jobsHtml}
+      <a href="${dashUrl}" style="display:inline-block;margin-top:0.5rem;padding:0.65rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.875rem;">View in Dashboard →</a>
+    `)
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
+}
+
+module.exports = { sendVerificationCode, sendWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome, sendJobAlert };

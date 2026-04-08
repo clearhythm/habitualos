@@ -33,9 +33,12 @@ exports.handler = async (event) => {
     const { id, confirmToken } = await submitInterest({ slug, name, message, email, link });
 
     if (email) {
-      sendEarlyAccessWelcome({ to: email, name, slug, confirmToken }).catch(err =>
-        console.error('[early-access-submit] email error:', err.message)
-      );
+      try {
+        await sendEarlyAccessWelcome({ to: email, name, slug, confirmToken });
+      } catch (err) {
+        console.error('[early-access-submit] email error:', err.message);
+        // Non-fatal — record was saved, email can be retried manually
+      }
     }
 
     return {

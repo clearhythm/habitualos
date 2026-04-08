@@ -41,10 +41,11 @@ let detectedSource = null;
     loading.hidden = true;
     main.hidden = false;
 
-    // Load context stats, leads, and evaluation history in parallel
+    // Load context stats, leads, evaluation history, and job alerts in parallel
     loadContextStatus();
     loadLeads();
     loadEvaluationHistory();
+    loadJobAlerts(ownerConfig.signalId);
   } catch {
     showUnauth();
   }
@@ -1005,6 +1006,80 @@ function renderEvalHistory(evaluations) {
   });
 
   wrap.hidden = false;
+}
+
+// ─── Job Alerts ───────────────────────────────────────────────────────────────
+
+async function loadJobAlerts(signalId) {
+  // Update inbound address display
+  const addrEl = document.getElementById('job-alerts-address');
+  if (addrEl && signalId) addrEl.textContent = `jobs+${signalId}@signal.habitualos.com`;
+
+  try {
+    const res = await fetch(apiUrl('/api/signal-job-alerts-get'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.__userId })
+    });
+    const data = await res.json();
+    if (!data.success) return;
+    renderJobAlerts(data.alerts || []);
+  } catch {}
+}
+
+function renderJobAlerts(alerts) {
+  const list = document.getElementById('job-alerts-list');
+  const empty = document.getElementById('job-alerts-empty');
+  if (!list) return;
+
+  if (alerts.length === 0) {
+    if (empty) empty.hidden = false;
+    return;
+  }
+  if (empty) empty.hidden = true;
+
+  const recLabels = {
+    'strong-candidate': 'Strong Candidate',
+    'worth-applying': 'Worth Applying',
+    'stretch': 'Stretch Role',
+    'poor-fit': 'Poor Fit',
+  };
+
+  alerts.forEach(alert => {
+    const dateStr = alert.emailDate
+      ? new Date(alert.emailDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      : '';
+    const jobs = alert.jobs || [];
+
+    const card = document.createElement('div');
+    card.className = 'job-alert-card';
+
+    const jobsHtml = jobs.map(job => {
+      const overall = job.score?.overall ?? '—';
+      const scoreClass = (job.score?.overall ?? 0) >= 8 ? 'score-high' : (job.score?.overall ?? 0) >= 5 ? 'score-mid' : 'score-low';
+      const rec = recLabels[job.recommendation] || '';
+      return `
+        <div class="job-alert-row">
+          <div class="job-alert-score ${scoreClass}">${overall}</div>
+          <div class="job-alert-info">
+            <div class="job-alert-title">${escHtml(job.title)}${job.company ? ` <span class="job-alert-company">· ${escHtml(job.company)}</span>` : ''}</div>
+            ${rec ? `<div class="job-alert-rec">${escHtml(rec)}</div>` : ''}
+            ${job.summary ? `<div class="job-alert-summary">${escHtml(job.summary)}</div>` : ''}
+          </div>
+          ${job.url ? `<a href="${escHtml(job.url)}" target="_blank" rel="noopener" class="job-alert-link">View →</a>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="job-alert-header">
+        <span class="job-alert-subject">${escHtml(alert.emailSubject || 'LinkedIn Job Alert')}</span>
+        <span class="job-alert-meta">${dateStr}${alert.highScoreCount > 0 ? ` · <strong>${alert.highScoreCount} high-fit</strong>` : ''}</span>
+      </div>
+      <div class="job-alert-jobs">${jobsHtml}</div>
+    `;
+    list.appendChild(card);
+  });
 }
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
