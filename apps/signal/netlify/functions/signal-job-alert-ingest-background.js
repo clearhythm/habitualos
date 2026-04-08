@@ -28,7 +28,7 @@ function extractJobsFromEmail(html, text) {
 
   if (html) {
     // LinkedIn job alert links: href containing /jobs/view/ or linkedin.com/jobs/
-    const jobBlockPattern = /href="(https:\/\/[^"]*linkedin\.com\/jobs\/view\/[^"]*)"[^>]*>([^<]+)<\/a>/gi;
+    const jobBlockPattern = /href="(https:\/\/[^"]*linkedin\.com\/(?:comm\/)?jobs\/view\/[^"]*)"[^>]*>([^<]+)<\/a>/gi;
     const companyPattern = /<td[^>]*>\s*([A-Za-z][^<\n]{2,60})\s*<\/td>/g;
 
     // Extract all job URLs + titles from anchor tags
@@ -67,7 +67,7 @@ function extractJobsFromEmail(html, text) {
 
   // Fallback: extract from plain text body
   if (jobs.length === 0 && text) {
-    const urlPattern = /https:\/\/[^\s]*linkedin\.com\/jobs\/view\/[^\s)>"]*/g;
+    const urlPattern = /https:\/\/[^\s]*linkedin\.com\/(?:comm\/)?jobs\/view\/[^\s)>"]*/g;
     let match;
     const seen = new Set();
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -140,6 +140,8 @@ exports.handler = async (event) => {
       const { data: emailBody } = await resendClient.emails.receiving.get(email_id);
       html = emailBody?.html || '';
       text = emailBody?.text || '';
+      console.log('[signal-job-alert-ingest] body lengths — html:', html.length, 'text:', text.length);
+      console.log('[signal-job-alert-ingest] text preview:', text.slice(0, 500));
     } catch (err) {
       console.warn('[signal-job-alert-ingest] Failed to fetch email body:', err.message);
     }
