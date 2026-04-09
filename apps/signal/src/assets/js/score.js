@@ -1,5 +1,7 @@
 // ─── Score page JS (/score/) ───────────────────────────────────────────────────
 
+import { apiUrl } from './api.js';
+
 const GUEST_ID_KEY = 'signal_guest_id';
 const GUEST_EVALS_KEY = 'signal_guest_evals';
 const GUEST_EVAL_LIMIT = 3;
@@ -219,7 +221,7 @@ async function handleSubmit() {
   const guestId = getGuestId();
 
   try {
-    const res = await fetch('/api/signal-guest-score', {
+    const res = await fetch(apiUrl('/api/signal-guest-score'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guestId, resumeText, jdText, jdTitle: jdTitle || undefined }),
