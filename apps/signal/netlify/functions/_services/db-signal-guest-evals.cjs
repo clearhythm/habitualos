@@ -42,4 +42,14 @@ async function migrateGuestEval(guestId, userId) {
   await batch.commit();
 }
 
-module.exports = { createGuestEval, getGuestEvalsByGuestId, migrateGuestEval };
+async function getGuestEvalById(gevalId) {
+  const doc = await db.collection(COLLECTION).doc(gevalId).get();
+  if (!doc.exists) return null;
+  return doc.data();
+}
+
+async function updateGuestEval(gevalId, data) {
+  await db.collection(COLLECTION).doc(gevalId).set(data, { merge: true });
+}
+
+module.exports = { createGuestEval, getGuestEvalsByGuestId, migrateGuestEval, getGuestEvalById, updateGuestEval };

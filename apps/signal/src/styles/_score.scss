@@ -424,3 +424,276 @@
   margin: 0 0 1.5rem;
   line-height: 1.6;
 }
+
+// ─── Coach CTA button ─────────────────────────────────────────────────────────
+
+.score-coach-btn {
+  display: block;
+  width: 100%;
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 1.25rem;
+  transition: background 0.15s;
+  text-align: center;
+
+  &:hover { background: $color-primary-dark; }
+}
+
+// ─── Coach chat (state 4) ─────────────────────────────────────────────────────
+
+.score-coach {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: $color-bg;
+}
+
+.score-coach-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid $color-border;
+  flex-shrink: 0;
+}
+
+.score-coach-back {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.15s;
+
+  &:hover { color: rgba(255,255,255,0.85); }
+}
+
+.score-coach-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.score-coach-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.score-coach-input-wrap {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid $color-border;
+  background: $color-bg;
+  flex-shrink: 0;
+}
+
+.score-coach-textarea {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  color: $color-text;
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 0.65rem 0.9rem;
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+  max-height: 120px;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { border-color: rgba(124,58,237,0.6); }
+}
+
+.score-coach-send {
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background 0.15s;
+
+  &:hover { background: $color-primary-dark; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ─── Chat message bubbles ─────────────────────────────────────────────────────
+
+.msg {
+  max-width: 80%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msg--user {
+  align-self: flex-end;
+  background: $color-primary;
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+
+.msg--assistant {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.07);
+  color: $color-text;
+  border-bottom-left-radius: 3px;
+  border: 1px solid $color-border;
+}
+
+// ─── Building (state 5) ───────────────────────────────────────────────────────
+
+.score-building {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+}
+
+.score-building-inner {
+  text-align: center;
+  padding: 2rem;
+}
+
+.score-building-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(124,58,237,0.2);
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1.25rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.score-building-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 0.4rem;
+}
+
+.score-building-sub {
+  font-size: 0.875rem;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+// ─── Improved result (state 6) ────────────────────────────────────────────────
+
+.score-delta-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.score-delta-before {
+  font-size: 3rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+}
+
+.score-delta-arrow {
+  font-size: 2rem;
+  color: $color-text-muted;
+}
+
+.score-delta-after {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #86efac;
+}
+
+.score-rewrite-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.score-rewrite-note {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  font-style: italic;
+  margin: 0 0 1rem;
+}
+
+.score-rewrite-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 600px) { grid-template-columns: 1fr; }
+}
+
+.score-rewrite-col {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.score-rewrite-col--after {
+  background: rgba(134,239,172,0.05);
+  border-color: rgba(134,239,172,0.2);
+}
+
+.score-rewrite-col-label {
+  font-size: 0.7rem;
+  color: $color-text-muted;
+  margin: 0 0 0.5rem;
+}
+
+.score-rewrite-col--after .score-rewrite-col-label {
+  color: #86efac;
+}
+
+.score-rewrite-col-text {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.score-no-improve-msg {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.25);
+  border-radius: 10px;
+  color: #fbbf24;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}

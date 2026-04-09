@@ -231,7 +231,9 @@ export function createChatStreamHandler(
       signalId,
       persona,
       currentEvalId,
-    } = body as RequestBody & { signalId?: string; persona?: string; currentEvalId?: string };
+      // Guest coach-specific
+      gevalId,
+    } = body as RequestBody & { signalId?: string; persona?: string; currentEvalId?: string; gevalId?: string };
 
     // Get chat type configuration
     const config = chatTypeConfigs[chatType];
@@ -245,8 +247,8 @@ export function createChatStreamHandler(
       );
     }
 
-    // Validate inputs — accept owner IDs (u-) and visitor IDs (v-) from embed
-    if (!userId || (!userId.startsWith("u-") && !userId.startsWith("v-"))) {
+    // Validate inputs — accept owner IDs (u-), visitor IDs (v-), and guest IDs (g-) from embed
+    if (!userId || (!userId.startsWith("u-") && !userId.startsWith("v-") && !userId.startsWith("g-"))) {
       return new Response(JSON.stringify({ error: "Valid userId is required" }), {
         status: 400,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
@@ -278,6 +280,8 @@ export function createChatStreamHandler(
       initBody = { userId, agentId, actionContext, reviewContext };
     } else if (chatType === "signal" || chatType === "signal-visitor" || chatType === "signal-owner" || chatType === "signal-onboard") {
       initBody = { userId, signalId, persona };
+    } else if (chatType === "signal-guest-coach") {
+      initBody = { userId, gevalId, guestId: userId };
     } else {
       // For other chat types (fox-ea, obi-wai, rely, etc.)
       initBody = { userId, timezone, userName };
@@ -313,11 +317,23 @@ export function createChatStreamHandler(
 
     const encoder = new TextEncoder();
 
+    // Detect if systemMessages are conversation-seed messages (role/content pairs) vs system prompt blocks (type/text).
+    // Conversation seeds (signal-guest-coach) are prepended to the messages array; system prompt blocks are passed as system.
+    const isConversationSeed = Array.isArray(systemMessages) &&
+      systemMessages.length > 0 &&
+      typeof (systemMessages[0] as Record<string, unknown>).role === "string";
+
+    const effectiveSystem: unknown = isConversationSeed ? undefined : systemMessages;
+    const seedMessages: ChatMessage[] = isConversationSeed ? (systemMessages as ChatMessage[]) : [];
+
     // Build conversation messages
-    let messages: ChatMessage[] = chatHistory.map((msg) => ({
-      role: msg.role === "assistant" ? "assistant" : "user",
-      content: msg.content,
-    }));
+    let messages: ChatMessage[] = [
+      ...seedMessages,
+      ...chatHistory.map((msg) => ({
+        role: msg.role === "assistant" ? "assistant" : "user" as "assistant" | "user",
+        content: msg.content,
+      })),
+    ];
 
     // Add current user message
     messages.push({ role: "user", content: message });
@@ -344,7 +360,7 @@ export function createChatStreamHandler(
           const eventStream = streamAnthropicMessages(apiKey, {
             model: "claude-sonnet-4-6",
             max_tokens: 2048,
-            system: systemMessages,
+            system: effectiveSystem,
             messages: messages,
             tools: tools && tools.length > 0 ? tools : undefined,
           });
@@ -425,6 +441,10 @@ export function createChatStreamHandler(
               if (chatType === "signal" || chatType === "signal-owner" || chatType === "signal-visitor" || chatType === "signal-onboard") {
                 toolBody.signalId = signalId;
                 if (currentEvalId) toolBody.currentEvalId = currentEvalId;
+              }
+              if (chatType === "signal-guest-coach") {
+                toolBody.gevalId = gevalId;
+                toolBody.guestId = userId;
               }
 
               // Execute tool via Node.js function

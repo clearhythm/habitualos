@@ -21,6 +21,11 @@ export default createChatStreamHandler({
     toolExecuteEndpoint: "/api/signal-tool-execute",
     signalPatterns: [],
   },
+  "signal-guest-coach": {
+    initEndpoint: "/api/signal-guest-coach-init",
+    toolExecuteEndpoint: "/api/signal-guest-coach-execute",
+    signalPatterns: [],
+  },
 });
 
 export const config = {
