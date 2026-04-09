@@ -25,7 +25,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, email, displayName, signalId } = JSON.parse(event.body);
+    const { userId, email, displayName, signalId, guestId } = JSON.parse(event.body);
 
     // Validate
     if (!userId || !userId.startsWith('u-')) {
@@ -57,6 +57,7 @@ exports.handler = async (event) => {
       _userId: userId,
       displayName: displayName.trim(),
       status: 'pending',
+      pendingGuestId: (guestId && guestId.startsWith('g-')) ? guestId : null,
       personas: [
         { key: 'recruiter', label: 'Recruiter', opener: "What role are you hiring for? I'll be direct about where I'd be a strong fit and where I wouldn't." },
         { key: 'colleague', label: 'Colleague', opener: "What are you working on? I'd love to find where our work might connect." },
@@ -72,6 +73,7 @@ exports.handler = async (event) => {
       code,
       _userId: userId,
       _signalId: signalId,
+      pendingGuestId: (guestId && guestId.startsWith('g-')) ? guestId : null,
       expiresAt: new Date(Date.now() + CODE_TTL_MS).toISOString(),
       _createdAt: admin.firestore.FieldValue.serverTimestamp()
     });

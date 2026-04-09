@@ -22,6 +22,8 @@ const backBtn      = document.getElementById('back-btn');
 let pendingEmail = '';
 let pendingDisplayName = '';
 
+const guestId = new URLSearchParams(window.location.search).get('guestId') || '';
+
 // ─── Slug auto-fill from name ─────────────────────────────────────────────────
 
 nameInput.addEventListener('input', () => {
@@ -55,7 +57,7 @@ registerForm.addEventListener('submit', async (e) => {
     const res = await fetch(apiUrl('/api/signal-register'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: window.__userId, email, displayName, signalId })
+      body: JSON.stringify({ userId: window.__userId, email, displayName, signalId, guestId: guestId || undefined })
     });
     const data = await res.json();
 

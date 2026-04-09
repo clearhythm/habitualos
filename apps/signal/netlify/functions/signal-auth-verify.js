@@ -2,6 +2,7 @@ require('dotenv').config();
 const { db } = require('@habitualos/db-core');
 const { updateOwner, getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { sendWelcome } = require('./_services/email.cjs');
+const { migrateGuestEval } = require('./_services/db-signal-guest-evals.cjs');
 
 /**
  * POST /api/signal-auth-verify
@@ -32,7 +33,7 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'No verification code found for this email' }) };
     }
 
-    const { code: storedCode, expiresAt, _userId: userId } = codeSnap.data();
+    const { code: storedCode, expiresAt, _userId: userId, pendingGuestId } = codeSnap.data();
 
     if (String(code).trim() !== String(storedCode)) {
       return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Incorrect code' }) };
@@ -56,6 +57,11 @@ exports.handler = async (event) => {
       sendWelcome({ to: normalizedEmail, signalId, displayName }).catch(err => {
         console.warn('[signal-auth-verify] Welcome email failed (non-fatal):', err.message);
       });
+      if (pendingGuestId) {
+        migrateGuestEval(pendingGuestId, userId).catch(err =>
+          console.warn('[signal-auth-verify] Guest eval migration failed (non-fatal):', err.message)
+        );
+      }
     }
 
     // Clean up code doc

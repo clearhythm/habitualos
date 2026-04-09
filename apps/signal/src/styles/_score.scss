@@ -1,0 +1,426 @@
+// ─── Score page (/score/) ──────────────────────────────────────────────────────
+
+.score-page {
+  padding: 0 1.5rem;
+  min-height: calc(100dvh - 72px);
+  display: flex;
+  flex-direction: column;
+}
+
+.score-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 3rem 0 5rem;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.score-heading {
+  font-size: clamp(1.6rem, 4vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+.score-subhead {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.5);
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+// ─── Past evals list ──────────────────────────────────────────────────────────
+
+.score-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.score-history-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.825rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover,
+  &.is-active {
+    background: rgba(124,58,237,0.15);
+    border-color: rgba(124,58,237,0.4);
+    color: #c4b5fd;
+  }
+}
+
+// ─── Input form ───────────────────────────────────────────────────────────────
+
+.score-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.score-field-label {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 0.35rem;
+}
+
+.score-input,
+.score-textarea {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: $color-text;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+
+  &::placeholder { color: rgba(255,255,255,0.25); }
+  &:focus { border-color: rgba(124,58,237,0.6); }
+}
+
+.score-textarea {
+  resize: vertical;
+  line-height: 1.6;
+  min-height: 160px;
+}
+
+.score-textarea--resume {
+  min-height: 200px;
+}
+
+.score-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.score-submit-btn {
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+
+  &:hover { background: $color-primary-dark; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ─── Progress / loading ───────────────────────────────────────────────────────
+
+.score-progress {
+  display: none;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.4);
+  padding: 0.5rem 0;
+}
+
+.score-error {
+  font-size: 0.875rem;
+  color: #fca5a5;
+  display: none;
+  margin-top: 0.5rem;
+}
+
+// ─── Result card ──────────────────────────────────────────────────────────────
+
+.score-result {
+  margin-top: 2.5rem;
+
+  &.hidden { display: none; }
+}
+
+.score-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+.score-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.score-role-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  margin: 0 0 0.25rem;
+}
+
+.score-rec-pill {
+  display: inline-block;
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 99px;
+
+  &--strong    { background: rgba(134,239,172,0.15); color: #86efac; border: 1px solid rgba(134,239,172,0.3); }
+  &--worth     { background: rgba(147,197,253,0.12); color: #93c5fd; border: 1px solid rgba(147,197,253,0.25); }
+  &--stretch   { background: rgba(253,186,116,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+  &--poor      { background: rgba(252,165,165,0.12); color: #fca5a5; border: 1px solid rgba(252,165,165,0.25); }
+}
+
+.score-overall-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: rgba(124,58,237,0.15);
+  border: 2px solid rgba(124,58,237,0.4);
+  flex-shrink: 0;
+}
+
+.score-overall-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  line-height: 1;
+}
+
+.score-overall-label {
+  font-size: 0.65rem;
+  color: rgba(196,181,253,0.6);
+  margin-top: 0.15rem;
+}
+
+.score-dims {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+.score-dim {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.score-dim-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 0.35rem;
+}
+
+.score-dim-bar-wrap {
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+}
+
+.score-dim-bar {
+  height: 100%;
+  background: $color-primary;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.score-dim-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.score-section {
+  margin-bottom: 1.25rem;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.score-section-title {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  margin: 0 0 0.5rem;
+}
+
+.score-summary {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.score-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.score-list-item {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+  padding-left: 1.1rem;
+  position: relative;
+
+  &::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    color: rgba(255,255,255,0.3);
+  }
+}
+
+.score-gap-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+
+  &--high   { border-left: 3px solid rgba(252,165,165,0.6); }
+  &--moderate { border-left: 3px solid rgba(251,191,36,0.5); }
+  &--low    { border-left: 3px solid rgba(148,163,184,0.4); }
+}
+
+.score-gap-text {
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
+
+.score-gap-framing {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.score-gap-severity {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  margin-bottom: 0.35rem;
+
+  &--high     { background: rgba(252,165,165,0.1); color: #fca5a5; }
+  &--moderate { background: rgba(251,191,36,0.1); color: #fbbf24; }
+  &--low      { background: rgba(148,163,184,0.1); color: #94a3b8; }
+}
+
+.score-personality {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+  font-style: italic;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  border-left: 3px solid rgba(124,58,237,0.4);
+}
+
+// ─── Score another / upsell ───────────────────────────────────────────────────
+
+.score-again-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 1rem;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.8);
+  }
+}
+
+.score-upsell {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 12px;
+}
+
+.score-upsell-heading {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #e2e8f0;
+}
+
+.score-upsell-body {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 1rem;
+  line-height: 1.6;
+}
+
+.score-upsell-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+
+  &:hover { background: $color-primary-dark; color: #fff; }
+}
+
+// ─── Limit state ──────────────────────────────────────────────────────────────
+
+.score-limit {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.score-limit-heading {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.score-limit-body {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}

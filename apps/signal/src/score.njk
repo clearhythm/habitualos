@@ -1,0 +1,68 @@
+---
+layout: base.njk
+title: "Signal — Score Your Fit"
+description: "Paste your resume and a job description. Get an honest skills and alignment score in seconds."
+pageScript: /assets/js/score.js
+---
+
+<div class="score-page">
+  <div class="score-wrap">
+
+    <!-- Past evals history strip -->
+    <div id="score-history" class="score-history" hidden></div>
+
+    <!-- State 1 & 2: Input form -->
+    <div id="score-form">
+      <h1 class="score-heading">Score your fit</h1>
+      <p class="score-subhead">Paste your resume and a job description. Get an honest read on skills and alignment — no account needed.</p>
+
+      <div class="score-inputs">
+        <div>
+          <label class="score-field-label" for="score-jd-title">Role title <span style="opacity:0.4">(optional)</span></label>
+          <input class="score-input" type="text" id="score-jd-title" placeholder="e.g. Senior Product Designer at Acme Co." />
+        </div>
+
+        <div>
+          <label class="score-field-label" for="score-resume">Your resume</label>
+          <textarea class="score-textarea score-textarea--resume" id="score-resume"
+            placeholder="Paste your resume text here..."></textarea>
+        </div>
+
+        <div>
+          <label class="score-field-label" for="score-jd">Job description</label>
+          <textarea class="score-textarea" id="score-jd"
+            placeholder="Paste the full job description here..."></textarea>
+        </div>
+
+        <div class="score-actions">
+          <button class="score-submit-btn" id="score-submit-btn" type="button">Score my fit</button>
+          <p class="score-progress" id="score-progress">Analyzing…</p>
+          <p class="score-error" id="score-error"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Limit state (shown when 3 free evals used) -->
+    <div id="score-limit" class="score-limit" hidden>
+      <h2 class="score-limit-heading">You've used your 3 free scores</h2>
+      <p class="score-limit-body">Create a free Signal account to score unlimited roles and build your full profile — including a shareable fit widget for recruiters.</p>
+      <a class="score-upsell-cta" id="score-limit-cta" href="/register/">Create your Signal →</a>
+    </div>
+
+    <!-- State 3: Score result -->
+    <div id="score-result" class="score-result hidden">
+
+      <div class="score-card" id="score-card"></div>
+
+      <button class="score-again-btn" id="score-again-btn" type="button" hidden>Score another role</button>
+
+      <div class="score-upsell" id="score-upsell">
+        <h3 class="score-upsell-heading">Build your full Signal profile</h3>
+        <p class="score-upsell-body">Your Signal profile connects your actual work history — Claude Code sessions, GitHub commits, decisions — to a shareable fit widget recruiters can talk to.</p>
+        <a class="score-upsell-cta" id="score-upsell-cta" href="/register/">Create your Signal →</a>
+      </div>
+
+    </div>
+
+  </div>
+</div>
