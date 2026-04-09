@@ -49,6 +49,27 @@
 # Redirects
 # =============================================================================
 
+# Auth routes — must come before the /api/* catch-all
+[[redirects]]
+  from = "/signin/verify"
+  to = "/signin/verify/"
+  status = 301
+
+[[redirects]]
+  from = "/api/auth/magic-link"
+  to = "/.netlify/functions/auth-magic-link-send"
+  status = 200
+
+[[redirects]]
+  from = "/api/auth/verify"
+  to = "/.netlify/functions/auth-magic-link-consume"
+  status = 200
+
+[[redirects]]
+  from = "/api/migrations"
+  to = "/.netlify/functions/auth-migrations"
+  status = 200
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

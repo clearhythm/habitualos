@@ -1,0 +1,9 @@
+{
+  "name": "@habitualos/email-service",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.cjs",
+  "dependencies": {
+    "resend": "^4.0.0"
+  }
+}

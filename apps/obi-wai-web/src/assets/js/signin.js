@@ -1,18 +1,15 @@
 /**
- * Sign-in page controller.
+ * Sign-in page controller — magic link flow.
  *
- * Flow: user enters email → lookup via /api/users → signIn() → redirect.
- * No password required — simple email-based auth for personal projects.
+ * Flow: user enters email → POST /api/auth/magic-link → show "check your email" state.
+ * Actual sign-in happens on the /signin/verify/ page when they click the link.
  */
-import { signIn, isSignedIn, getFriendlyName } from "/assets/js/auth/auth.js";
-import { getRemoteUserByEmail } from "/assets/js/auth/auth-remote.js";
+import { isSignedIn, getFriendlyName, getLocalUser } from "/assets/js/auth/auth.js";
 import { readIntendedPath, clearIntendedPath } from "/assets/js/auth/auth-intent.js";
 
 function sanitizePath(path) {
   if (!path || typeof path !== "string") return "/";
-  // Only allow relative paths starting with /
   if (!path.startsWith("/")) return "/";
-  // Block protocol-relative URLs
   if (path.startsWith("//")) return "/";
   return path;
 }
@@ -23,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorMsg = document.getElementById("errorMsg");
   const formEl = document.getElementById("signin-form");
   const alreadyEl = document.getElementById("already-signed-in");
+  const emailSentEl = document.getElementById("email-sent");
+  const sentToEmailEl = document.getElementById("sentToEmail");
 
   const nextPath = sanitizePath(readIntendedPath());
 
@@ -59,31 +58,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Basic email validation
     if (!email.includes("@") || !email.includes(".")) {
       errorMsg.textContent = "Please enter a valid email.";
       errorMsg.style.display = "";
       return;
     }
 
-    signInBtn.textContent = "Checking...";
+    signInBtn.textContent = "Sending...";
     signInBtn.disabled = true;
 
+    // Capture current guest ID so the server can preserve anonymous data
+    const guestId = getLocalUser()?._userId || null;
+
     try {
-      const user = await getRemoteUserByEmail(email);
-      if (!user) throw new Error("not found");
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, guestId })
+      });
 
-      // Sign in (persist to localStorage), don't reload yet
-      signIn(user, false);
+      if (!res.ok) throw new Error("send failed");
 
-      // Redirect to intended path
-      const dest = sanitizePath(readIntendedPath());
-      clearIntendedPath();
-      location.replace(dest);
+      // Show success state
+      formEl.style.display = "none";
+      sentToEmailEl.textContent = email;
+      emailSentEl.style.display = "";
     } catch {
-      errorMsg.textContent = "Sorry, we couldn't find that account.";
+      errorMsg.textContent = "Something went wrong. Please try again.";
       errorMsg.style.display = "";
-      signInBtn.textContent = "Sign in";
+      signInBtn.textContent = "Send sign-in link";
       signInBtn.disabled = false;
     }
   });

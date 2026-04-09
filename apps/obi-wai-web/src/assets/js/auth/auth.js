@@ -26,6 +26,7 @@ export function signIn(user, refresh = true, redirectUrl = null) {
     _userId: getUserId(user),
     _email: getEmail(user),
     _createdAt: getCreatedAt(user),
+    _signedIn: true,
     profile: {
       firstName: getFirstName(user),
       lastName: getLastName(user)
@@ -51,7 +52,8 @@ export function signOut(refresh = true, redirectUrl = null) {
 }
 
 export function isSignedIn() {
-  return !!getUserId();
+  const user = getLocalUser();
+  return user?._signedIn === true;
 }
 
 // -----------------------------

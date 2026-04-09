@@ -1,0 +1,40 @@
+---
+title: Signing In - Daily Practice
+layout: base.njk
+permalink: /signin/verify/
+pageScript: /assets/js/signin-verify.js
+---
+
+<div style="max-width: 420px; margin: 6rem auto; padding: 2rem; text-align: center;">
+
+  <!-- loading -->
+  <div id="state-loading" style="display: none;">
+    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🔐</div>
+    <h2>Signing you in…</h2>
+    <p style="color: #666;">Just a moment.</p>
+  </div>
+
+  <!-- success -->
+  <div id="state-success" style="display: none;">
+    <div style="font-size: 2.5rem; margin-bottom: 1rem;">✅</div>
+    <h2>You're in!</h2>
+    <p style="color: #666;">Redirecting…</p>
+  </div>
+
+  <!-- expired -->
+  <div id="state-expired" style="display: none;">
+    <div style="font-size: 2.5rem; margin-bottom: 1rem;">⏰</div>
+    <h2>Link expired</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">This sign-in link has expired. Links are only valid for 15 minutes.</p>
+    <a href="/signin/" class="btn btn-primary">Request a new link</a>
+  </div>
+
+  <!-- invalid -->
+  <div id="state-invalid" style="display: none;">
+    <div style="font-size: 2.5rem; margin-bottom: 1rem;">❌</div>
+    <h2>Invalid link</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">This sign-in link is invalid or has already been used.</p>
+    <a href="/signin/" class="btn btn-primary">Back to sign in</a>
+  </div>
+
+</div>

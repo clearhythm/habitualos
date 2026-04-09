@@ -18,7 +18,7 @@ pageScript: /assets/js/signin.js
   <!-- STATE 1: Sign in form -->
   <div id="signin-form" style="display: none;">
     <h2>Sign in</h2>
-    <p style="color: #666; margin-bottom: 2rem;">Enter your email to access your account.</p>
+    <p style="color: #666; margin-bottom: 2rem;">Enter your email and we'll send you a sign-in link.</p>
 
     <input id="emailInput" type="email" placeholder="Your email..."
            style="width: 100%; padding: 0.75rem; font-size: 1rem; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box;">
@@ -27,8 +27,16 @@ pageScript: /assets/js/signin.js
 
     <button id="signInBtn" class="btn btn-primary"
             style="margin-top: 1.5rem; width: 100%;">
-      Sign in
+      Send sign-in link
     </button>
+  </div>
+
+  <!-- STATE 2: Check your email -->
+  <div id="email-sent" style="display: none;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📬</div>
+    <h2>Check your email</h2>
+    <p style="color: #666;">We sent a sign-in link to <strong id="sentToEmail"></strong>.</p>
+    <p style="color: #888; font-size: 0.9rem; margin-top: 1rem;">Link expires in 15 minutes. Check your spam folder if you don't see it.</p>
   </div>
 
 </div>
