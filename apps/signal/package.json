@@ -17,6 +17,7 @@
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/chat-storage": "workspace:*",
     "@habitualos/db-core": "workspace:*",
+    "@habitualos/web-search": "workspace:*",
     "marked": "^15.0.12",
     "resend": "^6.10.0"
   },

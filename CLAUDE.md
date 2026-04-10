@@ -79,7 +79,7 @@ Every session must include at least one `edge` signal. There is always something
 ```json
 {
   "userId": "u-mgpqwa49",
-  "signalId": "erik-burns",
+  "signalId": "erik",
   "source": "claude-code",
   "repo": "<repo name>",
   "summary": "<rich session summary — what problem, what was built, key decisions>",
