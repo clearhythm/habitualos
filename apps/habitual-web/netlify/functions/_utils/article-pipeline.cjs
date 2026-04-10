@@ -25,38 +25,13 @@ const { createAction } = require('../_services/db-actions.cjs');
 const { generateActionId } = require('./data-utils.cjs');
 const { getProfile } = require('../_services/db-preference-profile.cjs');
 
+const { tavilySearch: _tavilySearch } = require('@habitualos/web-search');
+
 const anthropic = new Anthropic();
 
-// -----------------------------------------------------------------------------
-// Tavily Search (raw content enabled)
-// -----------------------------------------------------------------------------
-
 async function tavilySearch(query) {
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) {
-    throw new Error('TAVILY_API_KEY not configured');
-  }
-
   console.log(`[article-discovery] Searching: "${query}"`);
-
-  const response = await fetch('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: apiKey,
-      query,
-      max_results: 8,
-      include_raw_content: true
-    })
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Tavily API error: ${response.status} - ${text}`);
-  }
-
-  const data = await response.json();
-  return data.results || [];
+  return _tavilySearch(query, { maxResults: 8, includeRawContent: true });
 }
 
 // -----------------------------------------------------------------------------

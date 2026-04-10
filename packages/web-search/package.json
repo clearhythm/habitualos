@@ -1,0 +1,7 @@
+{
+  "name": "@habitualos/web-search",
+  "version": "1.0.0",
+  "main": "index.cjs",
+  "license": "UNLICENSED",
+  "private": true
+}
