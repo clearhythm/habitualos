@@ -15,6 +15,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions."signal-network-discover-background"]
+  timeout = 900
+
 [[edge_functions]]
   path = "/api/signal-chat-stream"
   function = "chat-stream"
