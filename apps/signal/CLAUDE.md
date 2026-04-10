@@ -73,6 +73,8 @@ node tests/api.test.js https://signal.habitualos.com  # run against prod
 
 **Firestore migration** (one-time, run after field renames):
 ```
-node tests/migrate-fields.cjs --dry-run   # preview changes
-node tests/migrate-fields.cjs             # apply
+node scripts/migrations/migrate-fields.cjs --dry-run   # preview changes
+node scripts/migrations/migrate-fields.cjs             # apply
 ```
+
+**Other one-off scripts** (seeds, patches, precompute) live in `scripts/`.
