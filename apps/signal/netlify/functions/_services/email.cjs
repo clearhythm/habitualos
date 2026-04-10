@@ -213,4 +213,72 @@ async function sendJobAlert({ to, signalId, jobs }) {
   return data;
 }
 
-module.exports = { sendVerificationCode, sendWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome, sendJobAlert };
+/**
+ * Send a network outreach email on behalf of a Signal owner.
+ * CAN-SPAM compliant: physical address + unsubscribe link in footer.
+ *
+ * @param {{ to: string, owner: object, contact: object, unsubscribeUrl: string }} params
+ */
+async function sendNetworkOutreach({ to, owner, contact, unsubscribeUrl }) {
+  const ownerName = owner.displayName || owner.signalId;
+  const signalUrl = `https://signal.habitualos.com/widget/?id=${owner.signalId}`;
+  const score = contact.score || {};
+  const sharedGrounds = (score.sharedGrounds || []).join(', ') || 'similar professional background';
+
+  const esc = (s) => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const textBody = [
+    `${ownerName}'s Signal profile matched you.`,
+    '',
+    `Domain overlap: ${score.domain ?? '—'}/10`,
+    `Trajectory alignment: ${score.trajectory ?? '—'}/10`,
+    '',
+    `What overlaps: ${sharedGrounds}`,
+    '',
+    score.summary || '',
+    '',
+    `See ${ownerName}'s Signal: ${signalUrl}`,
+    '',
+    '---',
+    `This is an automated introduction from Signal. ${ownerName} hasn't written this message — Signal found you based on profile overlap and sent this on their behalf.`,
+    '',
+    `Unsubscribe: ${unsubscribeUrl}`,
+    'Signal · 114 Cress Road, Santa Cruz, CA 95060, USA',
+  ].filter(l => l !== null).join('\n');
+
+  const { data, error } = await getClient().emails.send({
+    from: FROM,
+    to,
+    subject: `You came up in ${ownerName}'s Signal`,
+    text: textBody,
+    html: LIGHT_WRAPPER(`
+      <p style="color:#1e293b;font-size:0.925rem;font-weight:600;margin:0 0 1rem;">${esc(ownerName)}'s Signal profile matched you.</p>
+
+      <div style="display:flex;gap:1rem;margin-bottom:1.25rem;">
+        <div style="flex:1;background:#f8fafc;border-radius:8px;padding:0.75rem;text-align:center;">
+          <p style="color:#7c3aed;font-size:1.25rem;font-weight:700;margin:0;">${score.domain ?? '—'}<span style="color:#94a3b8;font-size:0.75rem;">/10</span></p>
+          <p style="color:#64748b;font-size:0.75rem;margin:0.25rem 0 0;">Domain overlap</p>
+        </div>
+        <div style="flex:1;background:#f8fafc;border-radius:8px;padding:0.75rem;text-align:center;">
+          <p style="color:#7c3aed;font-size:1.25rem;font-weight:700;margin:0;">${score.trajectory ?? '—'}<span style="color:#94a3b8;font-size:0.75rem;">/10</span></p>
+          <p style="color:#64748b;font-size:0.75rem;margin:0.25rem 0 0;">Trajectory</p>
+        </div>
+      </div>
+
+      ${sharedGrounds ? `<p style="color:#475569;font-size:0.875rem;margin:0 0 0.75rem;"><strong>What overlaps:</strong> ${esc(sharedGrounds)}</p>` : ''}
+      ${score.summary ? `<p style="color:#475569;font-size:0.875rem;line-height:1.6;margin:0 0 1.25rem;">${esc(score.summary)}</p>` : ''}
+
+      <a href="${esc(signalUrl)}" style="display:inline-block;padding:0.65rem 1.5rem;background:#7c3aed;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:0.875rem;">See ${esc(ownerName)}'s Signal →</a>
+
+      <p style="color:#94a3b8;font-size:0.75rem;margin:1.5rem 0 0;border-top:1px solid #e2e8f0;padding-top:1rem;line-height:1.6;">
+        This is an automated introduction from Signal. ${esc(ownerName)} hasn't written this message — Signal found you based on profile overlap and sent this on their behalf.<br><br>
+        <a href="${esc(unsubscribeUrl)}" style="color:#94a3b8;">Unsubscribe</a> · Signal · 114 Cress Road, Santa Cruz, CA 95060, USA
+      </p>
+    `),
+  });
+
+  if (error) throw new Error(`Resend error: ${error.message}`);
+  return data;
+}
+
+module.exports = { sendVerificationCode, sendWelcome, sendWaitlistConfirm, sendEarlyAccessWelcome, sendJobAlert, sendNetworkOutreach };
