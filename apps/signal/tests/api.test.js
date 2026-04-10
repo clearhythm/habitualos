@@ -17,6 +17,7 @@
  * Keep this file up to date when adding or changing endpoints or field names.
  */
 
+require('dotenv').config();
 const assert = require('assert');
 
 const BASE = process.argv[2] || 'http://localhost:8888';
