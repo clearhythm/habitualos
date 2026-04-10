@@ -1,0 +1,237 @@
+// ─── Network page ─────────────────────────────────────────────────────────────
+
+.network-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.network-loading {
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+.network-header {
+  margin-bottom: 2rem;
+}
+
+.network-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 0.25rem;
+}
+
+.network-desc {
+  font-size: 0.9rem;
+}
+
+// ─── Sections ─────────────────────────────────────────────────────────────────
+
+.network-sections {
+  display: grid;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+
+  @media (min-width: 700px) {
+    grid-template-columns: 1fr 1fr;
+
+    // URL scraper spans full width
+    .network-section:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.network-section {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.network-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 0.25rem;
+}
+
+.network-section-desc {
+  font-size: 0.8rem;
+  color: $color-text-muted;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.network-textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: $color-bg;
+  color: $color-text;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  resize: vertical;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
+.network-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: $color-bg;
+  color: $color-text;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+}
+
+.network-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.network-status {
+  font-size: 0.8rem;
+
+  &--muted   { color: $color-text-muted; }
+  &--success { color: #86efac; }
+  &--error   { color: #fca5a5; }
+}
+
+// ─── Contacts table ───────────────────────────────────────────────────────────
+
+.network-contacts-section {
+  margin-top: 1rem;
+}
+
+.network-contacts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.network-filter-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.network-filter-tab {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: 20px;
+  cursor: pointer;
+  color: $color-text-muted;
+  transition: all 0.15s;
+
+  &.active,
+  &:hover {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: #fff;
+  }
+}
+
+.network-table-wrap {
+  overflow-x: auto;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+}
+
+.network-contacts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    padding: 0.6rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    border-bottom: 1px solid $color-border;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.65rem 0.875rem;
+    border-bottom: 1px solid $color-border;
+    vertical-align: middle;
+
+    &:last-child { border-right: none; }
+  }
+
+  tr:last-child td { border-bottom: none; }
+}
+
+.network-score-col {
+  text-align: center;
+  width: 56px;
+}
+
+.network-score-cell {
+  display: inline-block;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.network-score-overall {
+  color: $color-primary;
+  font-size: 1rem;
+}
+
+.network-person-cell {
+  min-width: 180px;
+}
+
+.network-person-name {
+  display: block;
+  font-weight: 500;
+  color: $color-text;
+}
+
+.network-person-meta {
+  display: block;
+  font-size: 0.775rem;
+  color: $color-text-muted;
+  margin-top: 0.1rem;
+}
+
+.network-source-cell {
+  font-size: 0.775rem;
+  color: $color-text-muted;
+}
+
+.network-status-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  &--pending      { background: $color-border; color: $color-text-muted; }
+  &--sent         { background: rgba(134, 239, 172, 0.15); color: #86efac; }
+  &--failed       { background: rgba(252, 165, 165, 0.1); color: #fca5a5; }
+  &--skipped      { background: $color-border; color: $color-text-muted; }
+  &--unsubscribed { background: $color-border; color: $color-text-muted; opacity: 0.6; }
+}
