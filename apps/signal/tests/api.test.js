@@ -291,20 +291,8 @@ async function run() {
     console.log('  (skipped — set SIGNAL_USER_ID env var to test discovery)');
   }
 
-  await test('POST missing queries returns 400', async () => {
-    const { status, data } = await post('signal-network-discover-background', { userId: 'u-unknown-00000' });
-    assert.strictEqual(status, 400);
-    assert.strictEqual(data.success, false);
-  });
-
-  await test('POST unknown userId returns 403', async () => {
-    const { status, data } = await post('signal-network-discover-background', {
-      userId: 'u-unknown-00000',
-      queries: ['test'],
-    });
-    assert.strictEqual(status, 403);
-    assert.strictEqual(data.success, false);
-  });
+  // Note: Netlify CLI intercepts background function responses — validation errors
+  // (400/403) are swallowed and return empty 202 locally. Can't assert on them here.
 
   // ── signal-network-discover-status ────────────────────────────────────────
   console.log('\nsignal-network-discover-status');
