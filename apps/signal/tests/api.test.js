@@ -205,6 +205,177 @@ async function run() {
     assert.strictEqual(data.success, false);
   });
 
+  // ── signal-contacts-get ────────────────────────────────────────────────────
+  console.log('\nsignal-contacts-get');
+
+  if (USER_ID) {
+    await test('POST with valid userId returns contacts array', async () => {
+      const { status, data } = await post('signal-contacts-get', { userId: USER_ID });
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(Array.isArray(data.contacts), 'contacts should be an array');
+    });
+  } else {
+    console.log('  (skipped — set SIGNAL_USER_ID env var to test owner endpoints)');
+  }
+
+  await test('POST unknown userId returns 403', async () => {
+    const { status, data } = await post('signal-contacts-get', { userId: 'u-unknown-00000' });
+    assert.strictEqual(status, 403);
+    assert.strictEqual(data.success, false);
+  });
+
+  await test('POST missing userId returns 400', async () => {
+    const { status, data } = await post('signal-contacts-get', {});
+    assert.strictEqual(status, 400);
+    assert.strictEqual(data.success, false);
+  });
+
+  // ── signal-profile-scrape ──────────────────────────────────────────────────
+  // Note: real scrape makes AI + Tavily calls — only runs when USER_ID is set
+  console.log('\nsignal-profile-scrape');
+
+  if (USER_ID) {
+    await test('POST valid url returns contact with score', async () => {
+      const { status, data } = await post('signal-profile-scrape', {
+        userId: USER_ID,
+        url: 'https://www.linkedin.com/in/adammgrant/',
+      });
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(data.contact || data.notAPerson, 'should return contact or notAPerson flag');
+      if (data.contact) {
+        assert.ok(data.score, 'score should be present');
+        assert.ok(typeof data.score.overall === 'number', 'score.overall should be a number');
+      }
+    });
+  } else {
+    console.log('  (skipped — set SIGNAL_USER_ID env var to run scrape)');
+  }
+
+  await test('POST missing url returns 400', async () => {
+    const { status, data } = await post('signal-profile-scrape', { userId: 'u-unknown-00000' });
+    assert.strictEqual(status, 400);
+    assert.strictEqual(data.success, false);
+  });
+
+  await test('POST unknown userId returns 403', async () => {
+    const { status, data } = await post('signal-profile-scrape', {
+      userId: 'u-unknown-00000',
+      url: 'https://example.com',
+    });
+    assert.strictEqual(status, 403);
+    assert.strictEqual(data.success, false);
+  });
+
+  // ── signal-network-discover-background ────────────────────────────────────
+  // Note: fires a background job — only polls status, does not wait for completion
+  console.log('\nsignal-network-discover-background');
+
+  let discoverJobId = null;
+
+  if (USER_ID) {
+    await test('POST valid queries returns 202 with jobId', async () => {
+      const res = await fetch(`${BASE}/api/signal-network-discover-background`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, queries: ['AI founder San Francisco'] }),
+      });
+      const data = await res.json();
+      assert.strictEqual(res.status, 202);
+      assert.strictEqual(data.success, true);
+      assert.ok(data.jobId, 'jobId should be returned');
+      discoverJobId = data.jobId;
+    });
+  } else {
+    console.log('  (skipped — set SIGNAL_USER_ID env var to test discovery)');
+  }
+
+  await test('POST missing queries returns 400', async () => {
+    const { status, data } = await post('signal-network-discover-background', { userId: 'u-unknown-00000' });
+    assert.strictEqual(status, 400);
+    assert.strictEqual(data.success, false);
+  });
+
+  await test('POST unknown userId returns 403', async () => {
+    const { status, data } = await post('signal-network-discover-background', {
+      userId: 'u-unknown-00000',
+      queries: ['test'],
+    });
+    assert.strictEqual(status, 403);
+    assert.strictEqual(data.success, false);
+  });
+
+  // ── signal-network-discover-status ────────────────────────────────────────
+  console.log('\nsignal-network-discover-status');
+
+  if (USER_ID && discoverJobId) {
+    await test('POST with valid jobId returns job status', async () => {
+      const { status, data } = await post('signal-network-discover-status', {
+        userId: USER_ID,
+        jobId: discoverJobId,
+      });
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(data.job, 'job object should be present');
+      assert.ok(['running', 'done', 'error'].includes(data.job.status), 'job.status should be valid');
+    });
+  } else {
+    console.log('  (skipped — requires USER_ID and a discover job)');
+  }
+
+  await test('POST unknown jobId returns 404', async () => {
+    const userId = USER_ID || 'u-unknown-00000';
+    const { status, data } = await post('signal-network-discover-status', {
+      userId,
+      jobId: 'job-does-not-exist',
+    });
+    // 404 if owner found but job missing, 403 if owner not found
+    assert.ok([403, 404].includes(status), `expected 403 or 404, got ${status}`);
+    assert.strictEqual(data.success, false);
+  });
+
+  await test('POST missing jobId returns 400', async () => {
+    const { status, data } = await post('signal-network-discover-status', { userId: 'u-unknown-00000' });
+    assert.strictEqual(status, 400);
+    assert.strictEqual(data.success, false);
+  });
+
+  // ── signal-network-csv-import ──────────────────────────────────────────────
+  // Note: real import makes AI + Tavily calls — only runs when USER_ID is set
+  console.log('\nsignal-network-csv-import');
+
+  if (USER_ID) {
+    await test('POST minimal valid CSV returns scored contacts', async () => {
+      const csvText = [
+        'First Name,Last Name,Company,Position,Email Address',
+        'Adam,Grant,Wharton,Professor,',
+      ].join('\n');
+      const { status, data } = await post('signal-network-csv-import', { userId: USER_ID, csvText });
+      assert.strictEqual(status, 200);
+      assert.strictEqual(data.success, true);
+      assert.ok(typeof data.total === 'number', 'total should be a number');
+      assert.ok(Array.isArray(data.topMatches), 'topMatches should be an array');
+    });
+  } else {
+    console.log('  (skipped — set SIGNAL_USER_ID env var to run CSV import)');
+  }
+
+  await test('POST missing csvText returns 400', async () => {
+    const { status, data } = await post('signal-network-csv-import', { userId: 'u-unknown-00000' });
+    assert.strictEqual(status, 400);
+    assert.strictEqual(data.success, false);
+  });
+
+  await test('POST unknown userId returns 403', async () => {
+    const { status, data } = await post('signal-network-csv-import', {
+      userId: 'u-unknown-00000',
+      csvText: 'First Name,Last Name\nAdam,Grant',
+    });
+    assert.strictEqual(status, 403);
+    assert.strictEqual(data.success, false);
+  });
+
   // ─── Summary ────────────────────────────────────────────────────────────────
   const passed = results.filter(r => r.pass).length;
   const failed = results.filter(r => !r.pass).length;
