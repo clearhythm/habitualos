@@ -5,6 +5,7 @@ const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { upsertContactByLinkedIn } = require('./_services/db-signal-contacts.cjs');
 const { scorePersonAgainstOwner } = require('./_services/signal-score-person.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
+const { extractProfile } = require('./_services/signal-extract-profile.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -56,26 +57,6 @@ function parseRow(line) {
   return fields;
 }
 
-const EXTRACT_PROMPT = (rawText) => `Extract a person profile from this web content.
-
-If this is NOT a person's profile page (news article, company homepage, job listing), return exactly:
-{"notAPerson":true}
-
-Otherwise return ONLY valid JSON — no explanation, no markdown:
-{
-  "name": "",
-  "title": "",
-  "company": "",
-  "linkedinUrl": null,
-  "personalSiteUrl": null,
-  "skills": [],
-  "domains": [],
-  "trajectory": "one sentence on where this person is headed professionally",
-  "summary": "2-3 sentences on who this person is"
-}
-
-Web content:
-${rawText.slice(0, 6000)}`;
 
 // MVP cap: keep well under Netlify's 26s function timeout
 const CAP = 20;
@@ -130,14 +111,7 @@ exports.handler = async (event) => {
         const rawText = results.map(r => [r.title, r.content].filter(Boolean).join('\n')).join('\n\n').slice(0, 8000);
 
         // Extract profile with Haiku
-        const msg = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 512,
-          messages: [{ role: 'user', content: EXTRACT_PROMPT(rawText) }],
-        });
-        const raw = msg.content[0]?.text || '{}';
-        const match = raw.match(/\{[\s\S]*\}/);
-        const profile = JSON.parse(match ? match[0] : raw);
+        const profile = await extractProfile(rawText, anthropic);
 
         if (profile.notAPerson) continue;
 

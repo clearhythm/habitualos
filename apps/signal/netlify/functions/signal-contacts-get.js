@@ -25,7 +25,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Owner not found or inactive' }) };
     }
 
-    const contacts = await getContactsByOwnerId(owner.signalId, { limit: 200, status });
+    const contacts = await getContactsByOwnerId(owner.id, { limit: 200, status });
 
     return {
       statusCode: 200,

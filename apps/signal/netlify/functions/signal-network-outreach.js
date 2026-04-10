@@ -66,7 +66,7 @@ exports.handler = async (event) => {
     if (!contact) {
       return { statusCode: 404, headers: CORS, body: JSON.stringify({ success: false, error: 'Contact not found' }) };
     }
-    if (contact._ownerId !== owner.signalId) {
+    if (contact._ownerId !== owner.id) {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Forbidden' }) };
     }
 

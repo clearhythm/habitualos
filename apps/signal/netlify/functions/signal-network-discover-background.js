@@ -5,7 +5,8 @@ const { tavilySearch } = require('@habitualos/web-search');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { upsertContactByLinkedIn } = require('./_services/db-signal-contacts.cjs');
 const { scorePersonAgainstOwner } = require('./_services/signal-score-person.cjs');
-const { decryptApiKey } = require('./_services/crypto.cjs');
+const { decrypt } = require('./_services/crypto.cjs');
+const { extractProfile } = require('./_services/signal-extract-profile.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -15,37 +16,6 @@ const CORS = {
 
 const JOB_COLLECTION = 'signal-discover-jobs';
 
-const EXTRACT_PROMPT = (rawText) => `Extract a person profile from this web content.
-
-If this is NOT a person's profile page (news article, company homepage, job listing, product page), return exactly:
-{"notAPerson":true}
-
-Otherwise return ONLY valid JSON:
-{
-  "name": "",
-  "title": "",
-  "company": "",
-  "linkedinUrl": null,
-  "personalSiteUrl": null,
-  "skills": [],
-  "domains": [],
-  "trajectory": "one sentence on where this person is headed professionally",
-  "summary": "2-3 sentences on who this person is"
-}
-
-Web content:
-${rawText.slice(0, 6000)}`;
-
-async function extractProfile(rawText, anthropic) {
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    messages: [{ role: 'user', content: EXTRACT_PROMPT(rawText) }],
-  });
-  const raw = msg.content[0]?.text || '{}';
-  const match = raw.match(/\{[\s\S]*\}/);
-  return JSON.parse(match ? match[0] : raw);
-}
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
@@ -68,7 +38,7 @@ exports.handler = async (event) => {
   const now = admin.firestore.FieldValue.serverTimestamp();
   await db.collection(JOB_COLLECTION).doc(jobId).set({
     _jobId: jobId,
-    _ownerId: owner.signalId,
+    _ownerId: owner.id,
     status: 'running',
     queries,
     results: [],
@@ -87,7 +57,18 @@ exports.handler = async (event) => {
   // ── Async work begins after response ──────────────────────────────────────────
   (async () => {
     try {
-      const apiKey = decryptApiKey(owner.anthropicApiKey);
+      let apiKey = process.env.ANTHROPIC_API_KEY;
+      if (owner.anthropicApiKey) {
+        try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
+      }
+      if (!apiKey) {
+        await db.collection(JOB_COLLECTION).doc(jobId).update({
+          status: 'error',
+          error: 'No Anthropic API key configured',
+          _updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return;
+      }
       const anthropic = new Anthropic({ apiKey });
 
       // Gather all search results
@@ -139,7 +120,7 @@ exports.handler = async (event) => {
           const score = await scorePersonAgainstOwner({ owner, contactProfile: profile, anthropicClient: anthropic });
           if (score.overall < 6) continue; // filter noise
 
-          const contactId = await upsertContactByLinkedIn(owner.signalId, profile.linkedinUrl, {
+          const contactId = await upsertContactByLinkedIn(owner.id, profile.linkedinUrl, {
             ...profile,
             rawText,
             source: 'discovery',

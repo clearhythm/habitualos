@@ -33,7 +33,7 @@ exports.handler = async (event) => {
     }
 
     const job = doc.data();
-    if (job._ownerId !== owner.signalId) {
+    if (job._ownerId !== owner.id) {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Forbidden' }) };
     }
 

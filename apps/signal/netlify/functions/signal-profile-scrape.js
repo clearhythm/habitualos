@@ -5,33 +5,13 @@ const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { upsertContactByLinkedIn } = require('./_services/db-signal-contacts.cjs');
 const { scorePersonAgainstOwner } = require('./_services/signal-score-person.cjs');
 const { decrypt } = require('./_services/crypto.cjs');
+const { extractProfile } = require('./_services/signal-extract-profile.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
-
-const EXTRACT_PROMPT = (rawText) => `Extract a person profile from this web content.
-
-If this is NOT a person's profile page (e.g. news article, company homepage, job listing, product page), return exactly:
-{"notAPerson":true}
-
-Otherwise return ONLY valid JSON — no explanation, no markdown:
-{
-  "name": "",
-  "title": "",
-  "company": "",
-  "linkedinUrl": null,
-  "personalSiteUrl": null,
-  "skills": [],
-  "domains": [],
-  "trajectory": "one sentence describing where this person is headed professionally",
-  "summary": "2-3 sentences on who this person is and what they do"
-}
-
-Web content:
-${rawText.slice(0, 6000)}`;
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
@@ -67,15 +47,7 @@ exports.handler = async (event) => {
     rawText = rawText.slice(0, 8000);
 
     // Step 2: Haiku extraction
-    const extractMsg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      messages: [{ role: 'user', content: EXTRACT_PROMPT(rawText) }],
-    });
-
-    const extractRaw = extractMsg.content[0]?.text || '{}';
-    const extractMatch = extractRaw.match(/\{[\s\S]*\}/);
-    const profile = JSON.parse(extractMatch ? extractMatch[0] : extractRaw);
+    const profile = await extractProfile(rawText, anthropic);
 
     if (profile.notAPerson) {
       return {
