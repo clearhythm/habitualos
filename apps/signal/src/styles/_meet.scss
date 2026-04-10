@@ -1,0 +1,143 @@
+// ─── Meet page (/meet/:signalId/) ─────────────────────────────────────────────
+
+.meet-page {
+  padding: 0 1.5rem;
+  background: linear-gradient(to bottom, #130e28, #0a0d1a);
+  height: calc(100dvh - 72px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.meet-content-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-bottom: 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.meet-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.meet-body {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 3rem;
+  align-items: start;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.meet-name {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.meet-tagline {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 1.25rem;
+}
+
+.meet-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 2rem;
+}
+
+.meet-cta-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.meet-stats-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: calc(116px + 1.25rem + 3.5rem);
+}
+
+.meet-stats-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  line-height: 1.3;
+}
+
+.meet-stats-intro {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  line-height: 1.6;
+  margin: 0 0 0.75rem;
+}
+
+.meet-stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  li {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    padding-left: 1rem;
+    position: relative;
+
+    &::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #9ca3af;
+    }
+  }
+}
+
+.meet-stats-cred-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.2);
+  text-underline-offset: 2px;
+
+  &:hover {
+    text-decoration-color: rgba(255,255,255,0.5);
+  }
+}
+
+.meet-stats-updated {
+  font-size: 0.875rem;
+  font-style: italic;
+  color: rgba(255,255,255,0.3);
+  margin: 0;
+}
+
+.meet-monkey {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(-1);
+  width: 100%;
+  max-width: 900px;
+  opacity: 0.15;
+  pointer-events: none;
+  filter: invert(1);
+  mix-blend-mode: screen;
+}

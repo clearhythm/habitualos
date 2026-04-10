@@ -2,7 +2,7 @@ require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { db, admin } = require('@habitualos/db-core');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 const { searchChunks } = require('./_services/db-signal-context.cjs');
 
 const STOPWORDS = new Set([
@@ -106,10 +106,7 @@ exports.handler = async (event) => {
     const { skillsProfile, wantsProfile } = owner;
     const displayName = owner.displayName || 'Candidate';
 
-    let apiKey = process.env.ANTHROPIC_API_KEY;
-    if (owner.anthropicApiKey) {
-      try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-    }
+    const apiKey = resolveApiKey(owner);
     if (!apiKey) {
       return { statusCode: 500, body: JSON.stringify({ success: false, error: 'No Anthropic API key configured' }) };
     }

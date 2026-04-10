@@ -4,7 +4,7 @@ const { tavilySearch } = require('@habitualos/web-search');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { upsertContactByLinkedIn } = require('./_services/db-signal-contacts.cjs');
 const { scorePersonAgainstOwner } = require('./_services/signal-score-person.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 const { extractProfile } = require('./_services/signal-extract-profile.cjs');
 
 const CORS = {
@@ -78,10 +78,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Owner not found or inactive' }) };
     }
 
-    let apiKey = process.env.ANTHROPIC_API_KEY;
-    if (owner.anthropicApiKey) {
-      try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-    }
+    const apiKey = resolveApiKey(owner);
     if (!apiKey) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'No Anthropic API key configured' }) };
     }

@@ -1,0 +1,72 @@
+// ─── Waitlist page ────────────────────────────────────────────────────────────
+
+.waitlist-page {
+  padding: 0 1.5rem;
+  background: linear-gradient(to bottom, #130e28, #0a0d1a);
+  height: calc(100dvh - 72px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.waitlist-content-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-bottom: 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.waitlist-page-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.waitlist-headline {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 2rem;
+  max-width: 600px;
+}
+
+.waitlist-body {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 3rem;
+  align-items: start;
+
+  .signal-pull-quote {
+    border-left: none;
+    padding: 0;
+    font-size: 1.2rem;
+    margin: 3.5rem 0 0;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+
+    .signal-pull-quote {
+      border-left: 3px solid #7c3aed;
+      padding-left: 1.25rem;
+      margin-top: 1rem;
+    }
+  }
+}
+
+.waitlist-bg-img {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(-1);
+  width: 100%;
+  max-width: 900px;
+  opacity: 0.15;
+  pointer-events: none;
+  filter: invert(1);
+  mix-blend-mode: screen;
+}

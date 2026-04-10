@@ -2,72 +2,8 @@
 layout: base.njk
 title: "Signal — Join the waitlist"
 description: "Get early access to Signal — a professional fit-scoring agent trained on your actual AI work history."
+pageScript: /assets/js/waitlist.js
 ---
-
-<style>
-  .waitlist-page {
-    padding: 0 1.5rem;
-    background: linear-gradient(to bottom, #130e28, #0a0d1a);
-    height: calc(100dvh - 72px);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
-  .waitlist-content-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    padding-bottom: 72px;
-    position: relative;
-    z-index: 1;
-  }
-  .waitlist-page-inner {
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
-  .waitlist-headline {
-    font-size: clamp(2rem, 5vw, 3.25rem);
-    font-weight: 600;
-    line-height: 1.15;
-    margin: 0 0 2rem;
-    max-width: 600px;
-  }
-  .waitlist-body {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 3rem;
-    align-items: start;
-  }
-  .waitlist-body .signal-pull-quote {
-    border-left: none;
-    padding: 0;
-    font-size: 1.2rem;
-    margin: 3.5rem 0 0;
-  }
-  @media (max-width: 640px) {
-    .waitlist-body { grid-template-columns: 1fr; }
-    .waitlist-body .signal-pull-quote {
-      border-left: 3px solid #7c3aed;
-      padding-left: 1.25rem;
-      margin-top: 1rem;
-    }
-  }
-  .waitlist-bg-img {
-    display: block;
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%) scaleX(-1);
-    width: 100%;
-    max-width: 900px;
-    opacity: 0.15;
-    pointer-events: none;
-    filter: invert(1);
-    mix-blend-mode: screen;
-  }
-</style>
 
 <div class="waitlist-page">
   <div class="waitlist-content-wrap">
@@ -103,12 +39,12 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
 
           <div id="waitlist-success" style="display:none">
             <h2 style="font-size:1.75rem;font-weight:700;line-height:1.15;margin:0 0 1rem;">Check your inbox.</h2>
-            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">We sent a message to <strong id="waitlist-confirm-email" style="color:rgba(255,255,255,0.85);"></strong>. Please check your email to confirm your waitlist spot. If it’s not there, check spam.</p>
+            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">We sent a message to <strong id="waitlist-confirm-email" style="color:rgba(255,255,255,0.85);"></strong>. Please check your email to confirm your waitlist spot. If it's not there, check spam.</p>
           </div>
 
           <div id="waitlist-confirmed" style="display:none">
             <h2 style="font-size:1.75rem;font-weight:700;line-height:1.15;margin:0 0 1rem;">Email confirmed.</h2>
-            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">You’re on the list. Thanks for being here early.</p>
+            <p style="color:rgba(255,255,255,0.6);font-size:1rem;line-height:1.6;margin:0;">You're on the list. Thanks for being here early.</p>
           </div>
         </div>
 
@@ -127,64 +63,3 @@ description: "Get early access to Signal — a professional fit-scoring agent tr
   </div>
   <img src="/assets/images/signal_monkey_bg.png" alt="" class="waitlist-bg-img" aria-hidden="true">
 </div>
-
-<script>
-(function() {
-  var form = document.getElementById('waitlist-form');
-  var emailEl = document.getElementById('waitlist-email');
-  var submitBtn = document.getElementById('waitlist-submit');
-  var errorEl = document.getElementById('waitlist-error');
-  var successEl = document.getElementById('waitlist-success');
-  var confirmedEl = document.getElementById('waitlist-confirmed');
-
-  // Handle confirm token from email link
-  var token = new URLSearchParams(window.location.search).get('token');
-  if (token) {
-    document.getElementById('waitlist-default').style.display = 'none';
-
-    fetch('/api/early-access-confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token, type: 'waitlist' })
-    })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.success) confirmedEl.style.display = '';
-        else successEl.style.display = ''; // fallback — already confirmed
-      })
-      .catch(function() { successEl.style.display = ''; })
-      .finally(function() { window.history.replaceState({}, '', '/waitlist/'); });
-  }
-
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var email = emailEl.value.trim();
-    if (!email) return;
-
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending…';
-    errorEl.style.display = 'none';
-
-    try {
-      var res = await fetch('/api/signal-waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, referrer: 'catch-all' })
-      });
-      var data = await res.json();
-      if (data.success) {
-        document.getElementById('waitlist-default').style.display = 'none';
-        document.getElementById('waitlist-confirm-email').textContent = email;
-        successEl.style.display = '';
-      } else {
-        throw new Error(data.error || 'Something went wrong');
-      }
-    } catch(err) {
-      errorEl.textContent = err.message || 'Something went wrong. Try again.';
-      errorEl.style.display = '';
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Request access';
-    }
-  });
-})();
-</script>

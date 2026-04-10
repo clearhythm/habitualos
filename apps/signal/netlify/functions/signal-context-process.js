@@ -1,7 +1,7 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { getOwnerByUserId, getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 const {
   getPendingChunks,
   countPendingChunks,
@@ -84,10 +84,7 @@ exports.handler = async (event) => {
     const coachMode = owner.reflectionMode === 'coach';
 
     // Resolve API key: owner's key if set, else Signal's key
-    let apiKey = process.env.ANTHROPIC_API_KEY;
-    if (owner.anthropicApiKey) {
-      try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-    }
+    const apiKey = resolveApiKey(owner);
     if (!apiKey) {
       return { statusCode: 500, body: JSON.stringify({ success: false, error: 'No Anthropic API key configured' }) };
     }

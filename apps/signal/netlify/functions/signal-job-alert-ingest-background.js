@@ -2,7 +2,7 @@ require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { Resend } = require('resend');
 const { getOwnerBySignalId } = require('./_services/db-signal-owners.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 const { scoreOpportunity } = require('./_services/signal-score-opportunity.cjs');
 const { saveJobAlert } = require('./_services/db-signal-job-alerts.cjs');
 const { sendJobAlert } = require('./_services/email.cjs');
@@ -148,10 +148,7 @@ exports.handler = async (event) => {
   }
 
   // Get API key
-  let apiKey = process.env.ANTHROPIC_API_KEY;
-  if (owner.anthropicApiKey) {
-    try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-  }
+  const apiKey = resolveApiKey(owner);
   if (!apiKey) {
     console.error('[signal-job-alert-ingest] No Anthropic API key for:', signalId);
     return { statusCode: 200, body: JSON.stringify({ success: false, reason: 'no-api-key' }) };

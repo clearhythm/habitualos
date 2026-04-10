@@ -5,7 +5,7 @@ const { tavilySearch } = require('@habitualos/web-search');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
 const { upsertContactByLinkedIn } = require('./_services/db-signal-contacts.cjs');
 const { scorePersonAgainstOwner } = require('./_services/signal-score-person.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 const { extractProfile } = require('./_services/signal-extract-profile.cjs');
 
 const CORS = {
@@ -57,10 +57,7 @@ exports.handler = async (event) => {
   // ── Async work begins after response ──────────────────────────────────────────
   (async () => {
     try {
-      let apiKey = process.env.ANTHROPIC_API_KEY;
-      if (owner.anthropicApiKey) {
-        try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-      }
+      const apiKey = resolveApiKey(owner);
       if (!apiKey) {
         await db.collection(JOB_COLLECTION).doc(jobId).update({
           status: 'error',

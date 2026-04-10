@@ -1,7 +1,7 @@
 require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,10 +58,7 @@ exports.handler = async (event) => {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ success: false, error: 'Owner not found or inactive' }) };
     }
 
-    let apiKey = process.env.ANTHROPIC_API_KEY;
-    if (owner.anthropicApiKey) {
-      try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-    }
+    const apiKey = resolveApiKey(owner);
     if (!apiKey) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ success: false, error: 'No API key configured' }) };
     }

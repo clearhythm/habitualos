@@ -2,7 +2,7 @@ require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { getOwnerByUserId, updateOwner } = require('./_services/db-signal-owners.cjs');
 const { getAllProcessedChunks, getContextStats } = require('./_services/db-signal-context.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 
 /**
  * POST /api/signal-context-synthesize
@@ -253,10 +253,7 @@ exports.handler = async (event) => {
     const needsNarrative = !owner.synthesizedContextHash || owner.synthesizedContextHash !== newHash;
 
     if (needsNarrative && strengthSignals.length > 0) {
-      let apiKey = process.env.ANTHROPIC_API_KEY;
-      if (owner.anthropicApiKey) {
-        try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-      }
+      const apiKey = resolveApiKey(owner);
 
       if (apiKey) {
         const anthropic = new Anthropic({ apiKey });

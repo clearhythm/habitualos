@@ -2,7 +2,7 @@ require('dotenv').config();
 const Anthropic = require('@anthropic-ai/sdk');
 const { db, admin } = require('@habitualos/db-core');
 const { getOwnerByUserId } = require('./_services/db-signal-owners.cjs');
-const { decrypt } = require('./_services/crypto.cjs');
+const { resolveApiKey } = require('./_services/crypto.cjs');
 
 const RESCORE_PROMPT = ({ displayName, originalScore, opportunity, strengths, gaps, resumeText }) => `You are re-evaluating the full fit assessment for ${displayName} after they tailored their resume for a specific opportunity.
 
@@ -100,10 +100,7 @@ exports.handler = async (event) => {
     }
     const resume = resumeSnap.data();
 
-    let apiKey = process.env.ANTHROPIC_API_KEY;
-    if (owner.anthropicApiKey) {
-      try { apiKey = decrypt(owner.anthropicApiKey); } catch (_) {}
-    }
+    const apiKey = resolveApiKey(owner);
     if (!apiKey) {
       return { statusCode: 500, body: JSON.stringify({ success: false, error: 'No Anthropic API key configured' }) };
     }

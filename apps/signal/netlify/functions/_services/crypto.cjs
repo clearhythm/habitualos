@@ -43,4 +43,19 @@ function decrypt(encoded) {
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString('utf8');
 }
 
-module.exports = { encrypt, decrypt };
+/**
+ * Resolve the Anthropic API key for an owner.
+ * Uses the owner's personal encrypted key if present, falls back to
+ * the ANTHROPIC_API_KEY env var. Returns null if neither is available.
+ *
+ * @param {object} owner - Owner record from db-signal-owners
+ * @returns {string|null}
+ */
+function resolveApiKey(owner) {
+  if (owner.anthropicApiKey) {
+    try { return decrypt(owner.anthropicApiKey); } catch (_) {}
+  }
+  return process.env.ANTHROPIC_API_KEY || null;
+}
+
+module.exports = { encrypt, decrypt, resolveApiKey };
