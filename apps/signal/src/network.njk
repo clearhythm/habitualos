@@ -1,0 +1,105 @@
+---
+layout: base.njk
+title: "Signal — Network"
+pageTitle: Network
+description: "Discover and connect with people who match your Signal profile."
+pageScript: /assets/js/network.js
+---
+
+<div class="network-wrap">
+
+  <!-- Auth guard -->
+  <div id="network-loading" class="network-loading">
+    <p class="text-muted">Loading…</p>
+  </div>
+
+  <!-- Main (shown after auth) -->
+  <div id="network-main" hidden>
+
+    <div class="network-header">
+      <h1 class="network-title">Network</h1>
+      <p class="network-desc text-muted">Find people who match your Signal profile.</p>
+    </div>
+
+    <div class="network-sections">
+
+      <!-- Discovery -->
+      <section class="network-section">
+        <h2 class="network-section-title">Discover people</h2>
+        <p class="network-section-desc">Enter one search query per line. Signal will find matching profiles and score them.</p>
+        <form id="network-discover-form">
+          <textarea class="network-textarea" id="network-discover-queries" rows="4"
+            placeholder="product designers building AI tools NYC&#10;ML engineers open to consulting&#10;founders interested in behavioral science"></textarea>
+          <div class="network-form-actions">
+            <button type="submit" class="btn btn-primary" id="network-discover-btn">Find people →</button>
+            <span class="network-status" id="network-discover-status"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- CSV Import -->
+      <section class="network-section">
+        <h2 class="network-section-title">Import LinkedIn connections</h2>
+        <p class="network-section-desc">Export your LinkedIn connections (Settings → Data Privacy → Connections) and paste the CSV here.</p>
+        <form id="network-csv-form">
+          <textarea class="network-textarea" id="network-csv-text" rows="4"
+            placeholder="First Name,Last Name,Email Address,Company,Position,Connected On&#10;Jane,Smith,,Acme Corp,Head of Product,01 Jan 2024&#10;…"></textarea>
+          <div class="network-form-actions">
+            <button type="submit" class="btn btn-primary" id="network-csv-btn">Import →</button>
+            <span class="network-status" id="network-csv-status"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- URL Scraper -->
+      <section class="network-section">
+        <h2 class="network-section-title">Add a person by URL</h2>
+        <p class="network-section-desc">Paste a LinkedIn profile, personal site, or Substack URL.</p>
+        <form id="network-scrape-form">
+          <input class="network-input" id="network-scrape-url" type="url"
+            placeholder="https://linkedin.com/in/..." />
+          <div class="network-form-actions">
+            <button type="submit" class="btn btn-primary" id="network-scrape-btn">Add person →</button>
+            <span class="network-status" id="network-scrape-status"></span>
+          </div>
+        </form>
+      </section>
+
+    </div>
+
+    <!-- Contacts Table -->
+    <section class="network-contacts-section" id="network-contacts-section">
+      <div class="network-contacts-header">
+        <h2 class="network-section-title">Your network</h2>
+        <div class="network-filter-tabs" id="network-filter-tabs">
+          <button class="network-filter-tab active" data-filter="all">All</button>
+          <button class="network-filter-tab" data-filter="high">High match (8+)</button>
+          <button class="network-filter-tab" data-filter="pending">Pending outreach</button>
+          <button class="network-filter-tab" data-filter="sent">Sent</button>
+        </div>
+      </div>
+
+      <div id="network-contacts-empty" hidden>
+        <p class="text-muted">No contacts yet. Run a discovery or import your LinkedIn connections above.</p>
+      </div>
+
+      <div class="network-table-wrap" id="network-table-wrap" hidden>
+        <table class="network-contacts-table">
+          <thead>
+            <tr>
+              <th>Person</th>
+              <th class="network-score-col">Domain</th>
+              <th class="network-score-col">Traj</th>
+              <th class="network-score-col">Style</th>
+              <th class="network-score-col">Overall</th>
+              <th>Status</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="network-contacts-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
