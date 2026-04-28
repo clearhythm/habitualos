@@ -1,0 +1,209 @@
+---
+layout: base.njk
+title: Wake Lock Test — Dreamscape
+pageScript: /assets/js/pages/wakelock-test.js
+---
+
+<style>
+  .test-card {
+    background: var(--color-surface, #1e1b4b);
+    border: 1px solid var(--color-border, #2d2a5e);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .status-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted, #6b7280);
+  }
+
+  .status-badge {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.25rem 0;
+  }
+
+  .status-ok    { color: #4ade80; }
+  .status-warn  { color: #fbbf24; }
+  .status-error { color: #f87171; }
+  .status-idle  { color: var(--color-text-muted, #6b7280); }
+
+  .timer {
+    font-size: 3rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #6b5ce7;
+    text-align: center;
+    padding: 1rem 0;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .btn-primary {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    background: #6b5ce7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    color: var(--color-text-muted, #6b7280);
+    border: 1px solid var(--color-border, #2d2a5e);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-secondary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: steps;
+  }
+
+  .steps li {
+    counter-increment: steps;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--color-text-muted, #9ca3af);
+    border-bottom: 1px solid var(--color-border, #1e1b4b);
+  }
+
+  .steps li:last-child { border-bottom: none; }
+
+  .steps li::before {
+    content: counter(steps);
+    min-width: 1.5rem;
+    height: 1.5rem;
+    background: #6b5ce7;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .event-log {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #9ca3af);
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .note {
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #6b7280);
+    padding: 0.75rem 1rem;
+    background: rgba(251, 191, 36, 0.08);
+    border-left: 3px solid #fbbf24;
+    border-radius: 0 6px 6px 0;
+    margin-top: 1rem;
+  }
+
+  h2 { font-size: 1rem; margin: 0 0 1rem; color: var(--color-text-muted, #9ca3af); font-weight: 500; }
+</style>
+
+<h1>Wake Lock Test</h1>
+<p style="color: var(--color-text-muted, #6b7280); margin-top: 0.5rem; margin-bottom: 1.5rem;">
+  Validates that audio survives screen lock. Plays a 432 Hz sine tone via Web Audio API with Wake Lock active.
+  <strong style="color: #fff;">Run this on your phone.</strong>
+</p>
+
+<div class="test-card">
+  <div class="timer" id="timer">00:00</div>
+
+  <div class="status-grid">
+    <div class="status-item">
+      <span class="status-label">AudioContext</span>
+      <span class="status-badge status-idle" id="ctx-status">Idle</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Wake Lock</span>
+      <span class="status-badge status-idle" id="wakelock-status">Idle</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Audio</span>
+      <span class="status-badge status-idle" id="audio-status">Idle</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Resume Count</span>
+      <span class="status-badge status-idle" id="resume-count">—</span>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" id="start-btn">Start Test</button>
+    <button class="btn-secondary" id="stop-btn" disabled>Stop</button>
+  </div>
+</div>
+
+<div class="test-card">
+  <h2>Test Steps</h2>
+  <ol class="steps">
+    <li>Tap <strong style="color:#fff">Start Test</strong> — you'll hear a low tone through your speaker</li>
+    <li>Watch the timer count up and all three statuses show green</li>
+    <li>Lock your screen (press power button)</li>
+    <li>Wait 10–30 seconds — listen for the tone continuing</li>
+    <li>Unlock your screen and check the timer &amp; event log</li>
+  </ol>
+
+  <div class="note">
+    <strong>iOS note:</strong> Wake Lock API is not supported on Safari. The AudioContext resume fallback handles visibility changes but cannot prevent suspension while the screen is locked. If audio cuts out on iOS, a silent HTML audio track workaround will be needed.
+  </div>
+</div>
+
+<div class="test-card">
+  <h2>Event Log</h2>
+  <div class="event-log" id="event-log"></div>
+</div>
