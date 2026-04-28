@@ -25,6 +25,31 @@ importers:
         specifier: ^17.0.0
         version: 17.38.1(@types/node@25.2.1)(picomatch@4.0.3)
 
+  apps/dreamscape:
+    dependencies:
+      '@11ty/eleventy':
+        specifier: ^2.0.1
+        version: 2.0.1
+      '@anthropic-ai/sdk':
+        specifier: ^0.71.2
+        version: 0.71.2
+      '@habitualos/auth-server':
+        specifier: workspace:*
+        version: link:../../packages/auth-server
+      '@habitualos/db-core':
+        specifier: workspace:*
+        version: link:../../packages/db-core
+      '@habitualos/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/frontend-utils
+    devDependencies:
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
+      sass:
+        specifier: ^1.69.5
+        version: 1.98.0
+
   apps/habitual-web:
     dependencies:
       '@11ty/eleventy':
@@ -8765,7 +8790,7 @@ snapshots:
     dependencies:
       esbuild: 0.27.4
       resolve: 1.22.11
-      sass: 1.97.3
+      sass: 1.98.0
       sass-embedded: 1.98.0
 
   esbuild@0.19.11:
@@ -11650,7 +11675,6 @@ snapshots:
       source-map-js: 1.2.1
     optionalDependencies:
       '@parcel/watcher': 2.5.6
-    optional: true
 
   scheduler@0.27.0: {}
 
