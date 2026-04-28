@@ -33,6 +33,16 @@ pageScript: /assets/js/pages/wakelock-test.js
     color: var(--color-text-muted, #6b7280);
   }
 
+  .track-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-surface, #1e1b4b);
+    border: 1px solid #6b5ce7;
+    border-radius: 6px;
+    color: #a78bfa;
+    font-size: 0.875rem;
+  }
+
   .file-btn {
     display: inline-block;
     padding: 0.5rem 0.875rem;
@@ -158,10 +168,8 @@ pageScript: /assets/js/pages/wakelock-test.js
   <div class="track-row">
     <div class="track-block">
       <span class="track-title">Music</span>
-      <label class="file-btn" for="music-input">Choose file</label>
-      <input type="file" id="music-input" accept="audio/*" style="display:none">
-      <span class="file-name" id="music-label">No file loaded</span>
-      <span class="status-badge status-idle" id="music-track-status">Idle</span>
+      <select id="music-select" class="track-select"></select>
+      <span class="status-badge status-idle" id="music-track-status">Loading…</span>
       <div class="vol-row">
         <input type="range" id="music-vol" min="0" max="1" step="0.05" value="0.5">
         <span id="music-vol-label">50%</span>
@@ -204,7 +212,7 @@ pageScript: /assets/js/pages/wakelock-test.js
   </div>
 
   <div class="note">
-    Load at least one file to enable Start. You can test with just music, just voice, or both.
+    Music loads automatically from bundled assets. Load a voice file from your device to test both layers together.
   </div>
 </div>
 

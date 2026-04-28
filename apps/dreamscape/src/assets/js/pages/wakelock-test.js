@@ -1,3 +1,8 @@
+// Curated music tracks bundled as static assets
+const MUSIC_TRACKS = [
+  { label: 'Ambient — Paulyudin', url: '/assets/music/ambient-paulyudin.mp3' },
+];
+
 let audioCtx = null;
 let musicSource = null;
 let voiceSource = null;
@@ -33,43 +38,65 @@ function log(msg) {
   el.prepend(line);
 }
 
-async function decodeFile(file) {
-  const tempCtx = new AudioContext();
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = await tempCtx.decodeAudioData(arrayBuffer);
-  await tempCtx.close();
-  return buffer;
-}
+// Populate music selector
+const musicSelect = document.getElementById('music-select');
+MUSIC_TRACKS.forEach((track, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = track.label;
+  musicSelect.appendChild(opt);
+});
 
-async function loadTrack(inputId, labelId, statusId, bufferSetter, name) {
-  const file = document.getElementById(inputId).files[0];
-  if (!file) return;
-  const label = document.getElementById(labelId);
-  label.textContent = `Loading…`;
-  setStatus(statusId, 'Decoding…', 'warn');
+async function loadMusicTrack(index) {
+  const track = MUSIC_TRACKS[index];
+  if (!track) return;
+  setStatus('music-track-status', 'Loading…', 'warn');
   try {
-    const buffer = await decodeFile(file);
-    bufferSetter(buffer);
-    label.textContent = file.name;
-    setStatus(statusId, `Ready — ${Math.round(buffer.duration)}s`, 'ok');
-    log(`${name} loaded: "${file.name}" (${Math.round(buffer.duration)}s)`);
+    const res = await fetch(track.url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const arrayBuffer = await res.arrayBuffer();
+    const tempCtx = new AudioContext();
+    musicBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    await tempCtx.close();
+    setStatus('music-track-status', `Ready — ${Math.round(musicBuffer.duration)}s`, 'ok');
+    log(`Music loaded: "${track.label}" (${Math.round(musicBuffer.duration)}s)`);
     updateStartButton();
   } catch (err) {
-    label.textContent = 'Failed';
-    setStatus(statusId, 'Decode error', 'error');
-    log(`${name} decode failed: ${err.message}`);
+    setStatus('music-track-status', 'Load failed', 'error');
+    log(`Music load failed: ${err.message}`);
   }
 }
 
-function updateStartButton() {
-  document.getElementById('start-btn').disabled = !musicBuffer && !voiceBuffer;
-}
+// Auto-load first track on page load
+loadMusicTrack(0);
 
-document.getElementById('music-input').addEventListener('change', () =>
-  loadTrack('music-input', 'music-label', 'music-track-status', (b) => { musicBuffer = b; }, 'Music'));
+musicSelect.addEventListener('change', () => {
+  musicBuffer = null;
+  setStatus('music-track-status', 'Idle', 'idle');
+  loadMusicTrack(parseInt(musicSelect.value));
+});
 
-document.getElementById('voice-input').addEventListener('change', () =>
-  loadTrack('voice-input', 'voice-label', 'voice-track-status', (b) => { voiceBuffer = b; }, 'Voice'));
+// Voice: local file picker
+document.getElementById('voice-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('voice-label').textContent = 'Decoding…';
+  setStatus('voice-track-status', 'Decoding…', 'warn');
+  try {
+    const tempCtx = new AudioContext();
+    const arrayBuffer = await file.arrayBuffer();
+    voiceBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+    await tempCtx.close();
+    document.getElementById('voice-label').textContent = file.name;
+    setStatus('voice-track-status', `Ready — ${Math.round(voiceBuffer.duration)}s`, 'ok');
+    log(`Voice loaded: "${file.name}" (${Math.round(voiceBuffer.duration)}s)`);
+    updateStartButton();
+  } catch (err) {
+    document.getElementById('voice-label').textContent = 'Decode failed';
+    setStatus('voice-track-status', 'Error', 'error');
+    log(`Voice decode failed: ${err.message}`);
+  }
+});
 
 document.getElementById('music-vol').addEventListener('input', (e) => {
   if (musicGain) musicGain.gain.value = parseFloat(e.target.value);
@@ -80,6 +107,10 @@ document.getElementById('voice-vol').addEventListener('input', (e) => {
   if (voiceGain) voiceGain.gain.value = parseFloat(e.target.value);
   document.getElementById('voice-vol-label').textContent = Math.round(e.target.value * 100) + '%';
 });
+
+function updateStartButton() {
+  document.getElementById('start-btn').disabled = !musicBuffer && !voiceBuffer;
+}
 
 async function requestWakeLock() {
   if (!('wakeLock' in navigator)) {
