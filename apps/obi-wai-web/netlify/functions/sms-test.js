@@ -68,7 +68,7 @@ Respond in 2–3 sentences. Your voice: direct, observational, no cheerleading, 
 async function handleInbound(phone, message) {
   const user = await getUserByPhone(phone);
   if (!user) {
-    const siteUrl = process.env.URL || 'https://obi-wai.netlify.app';
+    const siteUrl = process.env.URL || 'https://practice.habitualos.com';
     return `I don't recognize this number. Register at: ${siteUrl}/profile/`;
   }
 

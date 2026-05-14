@@ -117,7 +117,7 @@ exports.handler = async (event) => {
   // Look up user by phone
   const user = await getUserByPhone(from);
   if (!user) {
-    const siteUrl = process.env.URL || 'https://obi-wai.netlify.app';
+    const siteUrl = process.env.URL || 'https://practice.habitualos.com';
     return twiml(`I don't recognize this number. Register at: ${siteUrl}/profile/`);
   }
 
