@@ -20,20 +20,28 @@ Depends on: Community Feed Tickets 1–3 (linked users, reactions, feed UI).
 ## Avatar System
 
 ### Images
-- 20–30 pre-sourced flower images stored in `src/assets/images/flowers/`
-- Naming: `flower-01.png` through `flower-N.png` (or `.webp` if available)
+- 49 SVG flower images in `src/assets/images/flowers/`
+- Named by flower: `dahlia.svg`, `sakura.svg`, `lotus.svg`, etc.
+- Full list: acanthaceae, adenium, brassicarceae, bromeliaceae, cespasuchil, cinquefoil, daffodil, dahlia, daisy, dapplerose, flax, gardenia, gerbera, gesneriad, hibiscus, holly, jasmine, jonquil, lightsunflower, lilacrose, lotus, melastome, myosotis, narcissus, oleander, orchid, pansy, parsley, peaflower, pear, periwinkle, pinkcherry, pinkcosmos, pinkrose, pointsettia, poker, poppy, protea, redcherry, redrose, rose, sabi, sakura, spiralmela, spurge, sunflower, violet, wallflower, zinnia
 - Manifest: `src/assets/js/utils/flowers.js` — exports an array of flower IDs
 
 ```js
 // flowers.js
 export const FLOWERS = [
-  'flower-01', 'flower-02', 'flower-03', /* ... */
+  'acanthaceae', 'adenium', 'brassicarceae', 'bromeliaceae', 'cespasuchil',
+  'cinquefoil', 'daffodil', 'dahlia', 'daisy', 'dapplerose', 'flax',
+  'gardenia', 'gerbera', 'gesneriad', 'hibiscus', 'holly', 'jasmine',
+  'jonquil', 'lightsunflower', 'lilacrose', 'lotus', 'melastome', 'myosotis',
+  'narcissus', 'oleander', 'orchid', 'pansy', 'parsley', 'peaflower', 'pear',
+  'periwinkle', 'pinkcherry', 'pinkcosmos', 'pinkrose', 'pointsettia', 'poker',
+  'poppy', 'protea', 'redcherry', 'redrose', 'rose', 'sabi', 'sakura',
+  'spiralmela', 'spurge', 'sunflower', 'violet', 'wallflower', 'zinnia'
 ];
 export function randomFlower() {
   return FLOWERS[Math.floor(Math.random() * FLOWERS.length)];
 }
 export function flowerSrc(id) {
-  return `/assets/images/flowers/${id}.png`;
+  return `/assets/images/flowers/${id}.svg`;
 }
 ```
 
