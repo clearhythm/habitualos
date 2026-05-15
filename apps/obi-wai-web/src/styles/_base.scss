@@ -9,7 +9,7 @@
 
 html {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #EBEDFD 0%, #FDFCF3 70%, #c8e6d4 100%);
+  background: linear-gradient(to bottom, #f0ede4 0%, #faf8f2 60%, #e8ede8 100%);
   transition: background 0.3s ease;
 
   &[data-theme="dark"] {
@@ -33,7 +33,14 @@ body {
   }
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2 {
+  font-family: $font-family-heading;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: $space-md;
+}
+
+h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: $space-md;

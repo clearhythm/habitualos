@@ -1,0 +1,209 @@
+// Landing page — full-bleed dark layout
+// Scoped to body.landing-page to avoid leaking into app interior
+
+body.landing-page {
+  background: $color-landing-bg;
+  color: $color-landing-text;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  flex-shrink: 0;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $color-landing-text;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  opacity: 0.9;
+
+  &:hover {
+    opacity: 1;
+    text-decoration: none;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.landing-nav-link {
+  color: $color-landing-muted;
+  text-decoration: none;
+  font-size: 0.875rem;
+
+  &:hover {
+    color: $color-landing-text;
+    text-decoration: none;
+  }
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem 3rem;
+  text-align: center;
+}
+
+.landing-hero {
+  max-width: 480px;
+  width: 100%;
+}
+
+.landing-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: $color-landing-eyebrow;
+  margin-bottom: 1.25rem;
+}
+
+.landing-headline {
+  font-family: $font-family-heading;
+  font-weight: 400;
+  font-size: clamp(2.75rem, 8vw, 4rem);
+  line-height: 1.15;
+  color: $color-landing-text;
+  margin-bottom: 1.25rem;
+}
+
+.landing-subtext {
+  font-size: 0.95rem;
+  color: $color-landing-muted;
+  line-height: 1.65;
+  margin-bottom: 0;
+}
+
+.landing-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  gap: 0.75rem;
+  color: $color-landing-eyebrow;
+
+  &::before,
+  &::after {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 1px;
+    background: $color-landing-eyebrow;
+    opacity: 0.5;
+  }
+
+  svg {
+    opacity: 0.6;
+  }
+}
+
+.landing-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.landing-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: $font-family;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(240, 235, 224, 0.3);
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.landing-btn-primary {
+  background: rgba(240, 235, 224, 0.12);
+  color: $color-landing-text;
+  border-color: rgba(240, 235, 224, 0.4);
+
+  .landing-btn-arrow {
+    margin-left: auto;
+    opacity: 0.7;
+  }
+
+  &:hover {
+    background: rgba(240, 235, 224, 0.18);
+    border-color: rgba(240, 235, 224, 0.6);
+    color: $color-landing-text;
+  }
+}
+
+.landing-btn-secondary {
+  background: transparent;
+  color: $color-landing-muted;
+  border-color: rgba(240, 235, 224, 0.15);
+
+  &:hover {
+    background: rgba(240, 235, 224, 0.06);
+    color: $color-landing-text;
+    border-color: rgba(240, 235, 224, 0.25);
+  }
+}
+
+.landing-or {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: $color-landing-eyebrow;
+  font-size: 0.8rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(240, 235, 224, 0.12);
+  }
+}
+
+.landing-reassurance {
+  margin-top: 2rem;
+  font-size: 0.78rem;
+  color: $color-landing-eyebrow;
+  line-height: 1.7;
+}
+
+.landing-about {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  border-top: 1px solid rgba(240, 235, 224, 0.1);
+  text-align: center;
+
+  p {
+    font-size: 0.9rem;
+    color: $color-landing-muted;
+    line-height: 1.7;
+    margin-bottom: 0;
+  }
+}
