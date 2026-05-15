@@ -1,0 +1,57 @@
+---
+title: Welcome — Daily Practice
+layout: landing.njk
+bodyClass: welcome-page
+pageScript: /assets/js/pages/welcome.js
+---
+
+<button class="welcome-skip" id="btn-skip">Skip</button>
+
+<div class="welcome-container">
+
+  <div class="welcome-name-step" id="step-name">
+    <h1>Welcome to<br>the garden.</h1>
+    <p>What should we call you?</p>
+    <form class="welcome-name-form" id="name-form">
+      <input
+        type="text"
+        id="name-input"
+        placeholder="First name or nickname"
+        autocomplete="off"
+        maxlength="40"
+        required
+      />
+      <button type="submit" class="welcome-btn welcome-btn-primary" id="name-submit">Continue →</button>
+    </form>
+  </div>
+
+  <div class="welcome-carousel" id="step-carousel">
+
+    <div class="welcome-card" id="card-0">
+      <div class="welcome-card-icon">🌱</div>
+      <h2 class="welcome-card-heading">Your practice</h2>
+      <p class="welcome-card-body">Pick something you want to show up for. Log it when you do it. Over time, you'll see what's working — and why.</p>
+    </div>
+
+    <div class="welcome-card" id="card-1">
+      <div class="welcome-card-icon">🌸</div>
+      <h2 class="welcome-card-heading">The garden</h2>
+      <p class="welcome-card-body">Everyone in your circle has a flower. When they practice, their flower blooms. Invite a friend and your garden grows.</p>
+    </div>
+
+    <div class="welcome-card" id="card-2">
+      <div class="welcome-card-icon">✨</div>
+      <h2 class="welcome-card-heading">Your coach</h2>
+      <p class="welcome-card-body">Need a nudge? Talk to Obi-Wai. He'll help you figure out what to practice and work through the resistance.</p>
+    </div>
+
+    <div class="welcome-dots" id="welcome-dots"></div>
+
+    <div class="welcome-nav">
+      <button class="welcome-btn welcome-btn-ghost" id="btn-prev">← Back</button>
+      <button class="welcome-btn welcome-btn-primary" id="btn-next">Next →</button>
+    </div>
+
+  </div>
+
+</div>

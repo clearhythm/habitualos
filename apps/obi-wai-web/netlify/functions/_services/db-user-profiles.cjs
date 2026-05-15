@@ -24,10 +24,19 @@ async function setUserPhone(userId, phoneNumber) {
   return true;
 }
 
+async function setDisplayName(userId, displayName) {
+  const ref = db.collection('users').doc(userId);
+  await ref.set(
+    { profile: { displayName }, _updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { mergeFields: ['profile.displayName', '_updatedAt'] }
+  );
+  return true;
+}
+
 // Get all users who have a phone number registered (filter in JS — no exists operator)
 async function getAllUsersWithPhone() {
   const results = await dbCore.query({ collection: 'users' });
   return results.filter(u => u.profile && u.profile.phoneNumber);
 }
 
-module.exports = { getUserByPhone, setUserPhone, getAllUsersWithPhone };
+module.exports = { getUserByPhone, setUserPhone, getAllUsersWithPhone, setDisplayName };

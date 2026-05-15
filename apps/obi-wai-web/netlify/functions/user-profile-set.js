@@ -1,11 +1,11 @@
 /**
  * POST /api/user-profile-set
  *
- * Save the user's phone number for SMS reminders.
- * Body: { userId, phoneNumber }
+ * Save profile fields. Accepts any combination of: phoneNumber, displayName.
+ * Body: { userId, phoneNumber?, displayName? }
  * Returns: { success: true }
  */
-const { setUserPhone } = require('./_services/db-user-profiles.cjs');
+const { setUserPhone, setDisplayName } = require('./_services/db-user-profiles.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -19,28 +19,36 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { userId, phoneNumber } = body;
+  const { userId, phoneNumber, displayName } = body;
 
   if (!userId || !userId.startsWith('u-')) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid userId' }) };
   }
 
-  if (!phoneNumber) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'phoneNumber required' }) };
+  if (!phoneNumber && !displayName) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'At least one field required: phoneNumber, displayName' }) };
   }
 
-  // Normalize to E.164: strip non-digits, prepend +1 if 10 digits
-  const digits = String(phoneNumber).replace(/\D/g, '');
-  let normalized;
-  if (digits.length === 10) {
-    normalized = `+1${digits}`;
-  } else if (digits.length === 11 && digits.startsWith('1')) {
-    normalized = `+${digits}`;
-  } else {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid phone number format' }) };
+  if (phoneNumber) {
+    const digits = String(phoneNumber).replace(/\D/g, '');
+    let normalized;
+    if (digits.length === 10) {
+      normalized = `+1${digits}`;
+    } else if (digits.length === 11 && digits.startsWith('1')) {
+      normalized = `+${digits}`;
+    } else {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid phone number format' }) };
+    }
+    await setUserPhone(userId, normalized);
   }
 
-  await setUserPhone(userId, normalized);
+  if (displayName) {
+    const trimmed = String(displayName).trim().slice(0, 40);
+    if (!trimmed) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'displayName cannot be empty' }) };
+    }
+    await setDisplayName(userId, trimmed);
+  }
 
   return {
     statusCode: 200,

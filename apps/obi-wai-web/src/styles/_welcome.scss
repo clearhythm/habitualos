@@ -1,0 +1,198 @@
+// Welcome page — name prompt + onboarding carousel
+
+body.welcome-page {
+  background: $color-bg;
+  color: $color-text;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  position: relative;
+}
+
+.welcome-container {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+// ---- Skip button ----
+.welcome-skip {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// ---- Name step ----
+.welcome-name-step {
+  text-align: center;
+
+  h1 {
+    font-family: $font-family-heading;
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    font-weight: 400;
+    color: $color-text;
+    margin: 0 0 0.75rem;
+    line-height: 1.2;
+  }
+
+  > p {
+    color: $color-text-muted;
+    font-size: $font-size-lg;
+    margin: 0 0 2rem;
+  }
+}
+
+.welcome-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(240, 235, 224, 0.06);
+    border: 1px solid $color-border;
+    border-radius: 8px;
+    color: $color-text;
+    font-size: $font-size-lg;
+    text-align: center;
+    outline: none;
+    box-sizing: border-box;
+
+    &::placeholder {
+      color: $color-text-muted;
+    }
+
+    &:focus {
+      border-color: $color-landing-muted;
+      background: rgba(240, 235, 224, 0.09);
+    }
+  }
+}
+
+// ---- Buttons ----
+.welcome-btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  border: 1px solid $color-landing-btn-outline;
+  background: rgba(240, 235, 224, 0.08);
+  color: $color-text;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.welcome-btn-primary {
+  background: rgba(240, 235, 224, 0.12);
+  border-color: rgba(240, 235, 224, 0.35);
+  font-weight: 500;
+  width: 100%;
+
+  &:hover:not(:disabled) {
+    background: rgba(240, 235, 224, 0.2);
+  }
+}
+
+.welcome-btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: $color-text-muted;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+
+  &:hover {
+    color: $color-text;
+  }
+}
+
+// ---- Carousel ----
+.welcome-carousel {
+  width: 100%;
+  text-align: center;
+}
+
+.welcome-card {
+  display: none;
+  padding: 0.5rem 0 1.5rem;
+
+  &.active {
+    display: block;
+  }
+}
+
+.welcome-card-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+}
+
+.welcome-card-heading {
+  font-family: $font-family-heading;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 400;
+  color: $color-text;
+  margin: 0 0 1rem;
+}
+
+.welcome-card-body {
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+  line-height: 1.7;
+  margin: 0 auto;
+  max-width: 360px;
+}
+
+// ---- Dots ----
+.welcome-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 2rem 0 1.5rem;
+}
+
+.welcome-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(240, 235, 224, 0.2);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+
+  &.active {
+    background: $color-text;
+  }
+}
+
+// ---- Nav row ----
+.welcome-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  #btn-next {
+    flex: 1;
+  }
+}
