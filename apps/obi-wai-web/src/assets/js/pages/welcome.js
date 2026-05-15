@@ -38,7 +38,7 @@ function showCard(index) {
   document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
   const nextBtn = document.getElementById('btn-next');
   if (index === CARD_COUNT - 1) {
-    nextBtn.textContent = isLearnMoreMode() ? 'Create an account →' : 'Get started →';
+    nextBtn.textContent = 'Get started →';
   } else {
     nextBtn.textContent = 'Next →';
   }
