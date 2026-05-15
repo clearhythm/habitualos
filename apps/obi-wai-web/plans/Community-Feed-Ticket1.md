@@ -29,6 +29,7 @@ One doc per user per reaction type per practice (upsert for toggles). Notes are 
 ### User doc additions
 ```js
 profile.displayName: 'Frank'
+profile.avatarId: 'flower-07'     // randomly assigned at signup; see Flower Avatars ticket
 profile.linkedUserIds: ['u-erik']
 profile.invitedByUserId: 'u-erik'
 ```

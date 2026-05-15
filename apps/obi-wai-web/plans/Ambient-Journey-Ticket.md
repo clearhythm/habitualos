@@ -1,127 +1,135 @@
-# Ambient Journey — Collective Progress Visualization
+# Flower Avatars + Community Garden
 
-A shared animated landscape that advances based on cumulative check-ins from your circle. Non-judgmental, non-competitive. The point isn't how fast you move — it's that you're moving together.
+Replaces the abstract SVG landscape concept. The ambient storytelling is simpler and more concrete: each person in the community IS a flower. The garden page shows your whole circle blooming together. Practice activity affects the visual state of each flower.
 
-Depends on: Brand Redesign Ticket (visual language), Community Feed Ticket 1 (practice logs + linked users).
+Depends on: Community Feed Tickets 1–3 (linked users, reactions, feed UI).
 
 ---
 
 ## Concept
 
-Everyone travels through the same narrative landscape, but at their own pace determined by their circle's total check-ins. A circle of 3 people with 4 collective check-ins today is further along than a circle of 2 with 1 check-in. Progress is cumulative — it never goes backwards.
+- Each user has a flower avatar — randomly assigned at signup, cycleable on the Account page
+- The community feed shows flower avatars instead of initials
+- The Garden page (`/practice/garden/`) becomes a living view of your circle: each person's flower, their last practice, and a visual state (blooming vs. quiet)
+- Your own flower is also shown — it's yours in the garden alongside everyone else's
 
-**Journey chapters (example sequence):**
-1. Base of a mountain (0–20 check-ins)
-2. Climbing the mountain (20–50)
-3. Summit — wide open sky (50–100)
-4. Flying on a giant bird (100–175)
-5. Bird descends into a forest (175–275)
-6. Walking through the forest (275–400)
-7. Emerge at the ocean (400–550)
-8. Swimming with a whale (550–750)
-9. Arrive at Atlantis (750+)
-
-Thresholds are tunable. For a circle of 4 people checking in twice daily (~8/day), 20 check-ins ≈ 2–3 days. Each chapter ≈ a week or more of consistent community practice.
-
-**Replay mode**: A scrubber that lets you "rewind" and watch the journey advance — each tick represents a check-in, attributed to a circle member. A way to witness the collective history.
+**Ambient storytelling**: you open the app and see a garden. Some flowers are fully bloomed (practiced today). Some are quieter. No streaks, no scores — just a garden and who's been tending it.
 
 ---
 
-## Progress Mechanic
+## Avatar System
 
-- **Position** = total check-ins from `profile.linkedUserIds` + own check-ins, since account creation (or since feature launch)
-- Fetched from the same practice logs already stored per user
-- Backend: new field or computed on-the-fly — sum of `allLogs.length` for self + each linked user
-- Each user sees their own position (not a shared global counter)
+### Images
+- 20–30 pre-sourced flower images stored in `src/assets/images/flowers/`
+- Naming: `flower-01.png` through `flower-N.png` (or `.webp` if available)
+- Manifest: `src/assets/js/utils/flowers.js` — exports an array of flower IDs
+
+```js
+// flowers.js
+export const FLOWERS = [
+  'flower-01', 'flower-02', 'flower-03', /* ... */
+];
+export function randomFlower() {
+  return FLOWERS[Math.floor(Math.random() * FLOWERS.length)];
+}
+export function flowerSrc(id) {
+  return `/assets/images/flowers/${id}.png`;
+}
+```
+
+### Assignment
+- On first sign-in (new user): assign `randomFlower()`, save to `profile.avatarId` via `user-profile-set.js`
+- On Account page: show current flower, "← →" arrows to cycle through all options, save on change (or auto-save on cycle)
+- Migration: existing users without `profile.avatarId` get assigned a random one on next page load (client-side, saved immediately)
+
+### User doc addition
+```js
+profile.avatarId: 'flower-07'
+```
 
 ---
 
-## V1 Approach — Abstract SVG Paths
+## Garden Page (`/practice/garden/`)
 
-No detailed artwork needed in V1. The feeling of movement matters more than illustration quality.
+Currently exists but shows practice habits. Replace with:
 
-**Visual approach:**
-- SVG scene: landscape silhouettes (mountain profile, treeline, ocean horizon) — simple paths, no detailed illustration
-- A small marker (dot or minimal person figure) animates along a bezier path through the scene
-- Scene transitions: fade/dissolve when chapter threshold is crossed
-- Color palette: dark forest green from the brand redesign — scenes use the same palette
+### Layout
+A visual garden of flower cards — your circle (linked users + yourself), each represented by their flower.
 
-**Scene rendering:**
-- Each chapter is an SVG component with: background layer, path layer, foreground layer
-- The marker position = `(currentCheckIns - chapterStart) / (chapterEnd - chapterStart)` → `[0, 1]` progress along the SVG path
-- CSS `offset-path` + `offset-distance` for smooth marker movement along the path
+```
+┌─────────────────────────────────────┐
+│  🌸  Frank                          │
+│      Practiced · 2 hours ago        │
+│      [👁 I see you]                 │
+└─────────────────────────────────────┘
 
-**What the user sees on the homepage:**
-- The current scene replaces the March Challenge widget (below the Motivate/Log cards)
-- Chapter label: "Day 8 · Climbing the mountain"
-- Small byline: "3 people · 47 check-ins"
-- Tap/click → full-screen journey view with replay scrubber
+┌─────────────────────────────────────┐
+│  🌻  You                            │
+│      Practiced · this morning       │
+│      3 people have witnessed you    │
+└─────────────────────────────────────┘
+```
+
+### Visual state
+- **Practiced today**: flower image at full opacity, subtle glow/bloom ring
+- **Practiced in last 3 days**: flower at full opacity, no ring
+- **Not practiced in 3+ days**: flower at reduced opacity (0.5), grayscale filter
+- No streaks, no numbers — just a visual "is this garden being tended"
+
+### Data
+Fetched from the same `community-feed` endpoint (already returns circle entries). Garden page uses the same data, different render.
 
 ---
 
-## V2 Approach — Commissioned Illustrations
+## Community Feed Updates (feed uses flower avatars)
 
-Once the mechanic is proven with abstract SVGs, replace each chapter's background with a commissioned hand-drawn illustration. 9 chapters = 9 illustrations. Style: thin-line botanical, organic, consistent with the brand palette.
+In Community Feed Ticket 3:
+- Replace the initials/letter avatar on feed entries with the flower image
+- `<img src="/assets/images/flowers/${entry.avatarId}.png" ...>`
+- `community-feed.js` should return `avatarId` from each user's profile
+
+---
+
+## Account Page Updates
+
+Add avatar selector to `src/profile.njk`:
+- Shows current flower at ~80px
+- Left/right arrow buttons to cycle
+- Updates saved to `profile.avatarId` via `user-profile-set.js`
+- On first load, if no avatarId, assign random and save immediately
 
 ---
 
 ## Backend
 
-### New field: cumulative check-in count
+### `user-profile-set.js` (already updated in Ticket 1)
+Accept `avatarId` in addition to `displayName` and `phoneNumber`.
 
-Option A: Computed on-the-fly in `community-feed.js` (already fetches all logs for self + circle) — add `circleCheckInTotal` to the response. No new storage.
-
-Option B: Increment a `profile.circleCheckInCount` field each time anyone in the circle logs. More complex, but O(1) read instead of sum.
-
-**Recommendation**: Option A for V1. Revisit if performance is an issue.
-
-### Response addition to `community-feed.js`
-```js
-circleCheckInTotal: number  // sum of log counts for self + all linkedUserIds
-```
+### `community-feed.js`
+Return `avatarId` alongside `displayName` in each entry's user data.
 
 ---
 
-## Frontend
+## Files
 
-### `src/assets/js/pages/practice-index.js`
-- Render the journey widget below the Motivate/Log cards
-- Fetch `circleCheckInTotal` from community-feed response
-- Determine current chapter + position within chapter
-- Render SVG scene with animated marker
-- Tap → open full-screen journey overlay
-
-### `src/assets/js/utils/journey.js` (new)
-- `getChapter(total)` → returns `{ name, start, end, svgScene }`
-- `getProgress(total)` → `[0, 1]` within current chapter
-- Chapter definitions array (thresholds, labels, scene IDs)
-
-### `src/assets/svg/journey/` (new directory)
-- `mountain-base.svg`, `mountain-climb.svg`, `summit.svg`, `bird-flight.svg`, `forest.svg`, `ocean.svg`, `whale.svg`, `atlantis.svg`
-- V1: abstract silhouettes. V2: replace with illustrations.
-
-### Full-screen overlay
-- Opens from the widget
-- Shows the current scene full-screen
-- Progress bar showing position in current chapter
-- Chapter label + circle stats
-- Replay scrubber: drag to scrub through history, each step shows whose check-in it was
+| Action | File |
+|--------|------|
+| new    | `src/assets/images/flowers/` (drop-in from sourced assets) |
+| new    | `src/assets/js/utils/flowers.js` |
+| modify | `src/practice/garden.njk` — new garden layout |
+| modify | `src/assets/js/pages/practice-garden.js` — fetch circle, render flowers |
+| modify | `src/profile.njk` — add avatar selector |
+| modify | `src/assets/js/pages/profile.js` — load/save avatarId, cycle UI |
+| modify | `netlify/functions/community-feed.js` — return avatarId |
+| modify | `netlify/functions/user-profile-set.js` — accept avatarId |
 
 ---
 
 ## Verification
 
-1. Create 3 test accounts, link them, add 15 check-ins across the group
-2. Homepage shows mountain scene, marker positioned at ~75% along the path
-3. Add 5 more check-ins → crosses 20 threshold → scene transitions to "Climbing" chapter
-4. Open full-screen view → replay scrubber shows each check-in attributed to a person
-5. Two unconnected users with different circle sizes show different positions
-6. Page loads fast — SVG scenes are inline or cached, no blocking requests
-
----
-
-## Open Questions
-
-- Does the journey advance in real-time (WebSocket/SSE) or only on page load? For V1: page load only.
-- Do you want to "name" the chapters or keep them wordless (just visual)?
-- Should check-ins before the feature launched count toward position, or start fresh?
+1. New user signs in → gets a random flower assigned to `profile.avatarId`
+2. Account page shows the flower, arrows cycle through all options, saves on change
+3. Garden page shows circle's flowers — Frank's flower + your flower
+4. Frank practiced today → his flower is fully bloomed; you haven't → yours is muted
+5. Community feed entries show flower avatars
+6. Existing user with no avatarId → gets randomly assigned on next page load

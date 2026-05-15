@@ -1,6 +1,8 @@
-# Community Feed — Ticket 3: Feed UI + Community Page
+# Community Garden — Ticket 3: Feed UI + Community Page
 
-Replace the March Challenge widget with the Community Feed, add the Community page, update nav and account page. Depends on Tickets 1 and 2.
+Replace the March Challenge widget with the Community Garden feed, add the Community page, update nav and account page. Depends on Tickets 1 and 2.
+
+The feed is called **Community Garden**. Entries show flower avatars (from `profile.avatarId`) instead of initials. Avatar images live in `src/assets/images/flowers/`. See the Flower Avatars ticket for the full avatar system — that ticket builds on top of this one.
 
 ## Files
 
@@ -13,11 +15,13 @@ Replace the March Challenge widget with the Community Feed, add the Community pa
 
 ## Feed card design
 
-```
-Frank practiced · 2 hours ago
+Flower avatar left, entry info right. Avatar is a circle-cropped flower image (`profile.avatarId`). Falls back to a plain colored circle if no avatar yet.
 
-[👁 I see you · 1]  [🤝 I'm with you]
-[🌱 Keep going]     [📝 Note]
+```
+[🌸]  Frank practiced · 2 hours ago
+
+      [👁 I see you · 1]  [🤝 I'm with you]
+      [🌱 Keep going]     [📝 Note]
 
 Erik: "With you on this one."
 ```
