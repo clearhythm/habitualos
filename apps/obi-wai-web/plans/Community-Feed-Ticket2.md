@@ -12,13 +12,31 @@ Build the social graph wiring: personal connect link and email invite. Depends o
 
 ## Connect page logic (`connect.js`)
 
-Three user states:
+Four user states:
 
-1. **Signed in** (`userId` in localStorage + `user._signedIn === true`): POST `/api/community-connect` immediately with `{ fromUserId: userId, targetUserId: id }`. On success → redirect to `/practice/?joined=1`.
+1. **Signed in, has displayName**: POST `/api/community-connect` immediately with `{ fromUserId: userId, targetUserId: id }`. On success → redirect to `/practice/?joined=1`.
 
-2. **Not signed in**: Show context-first landing page: "You've been invited to Daily Practice." with two buttons: "Sign in" and "Create account" — both link to `/signin/?next=/connect/?id=[targetId]`. Do NOT silently redirect.
+2. **Signed in, no displayName** (new user completing onboarding): Show name prompt inline — "What should we call you?" single text input + "Join the garden" button. On submit: POST `/api/user-profile-set { userId, displayName }`, then POST `/api/community-connect`, then redirect to `/practice/?joined=1`.
 
-3. **Returning after sign-in** (`?id=` still in URL, now signed in): Same as case 1 — POST connect, redirect.
+3. **Not signed in**: Show context-first landing page: "You've been invited to Daily Practice." with two buttons: "Sign in" and "Create account" — both link to `/signin/?next=/connect/?id=[targetId]`. Do NOT silently redirect.
+
+4. **Returning after sign-in** (`?id=` still in URL, now signed in): Check for displayName — if missing, show name prompt (state 2); if present, connect immediately (state 1).
+
+### Name prompt UI
+```
+┌─────────────────────────────────────┐
+│  🌸  You've been invited            │
+│      to the garden.                 │
+│                                     │
+│  What should we call you?           │
+│  [ Frank                          ] │
+│                                     │
+│  [ Join the garden →              ] │
+└─────────────────────────────────────┘
+```
+- Single field, autofocus
+- No last name required — first name or nickname
+- Shown only once; after this, name lives on the Account page
 
 Edge cases:
 - Already linked → redirect to `/practice/?already-connected=1`
