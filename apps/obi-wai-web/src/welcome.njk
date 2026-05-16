@@ -5,18 +5,62 @@ bodyClass: welcome-page
 pageScript: /assets/js/pages/welcome.js
 ---
 
-<button class="welcome-skip" id="btn-skip">Skip</button>
+<header class="welcome-header">
+  <a href="/" class="welcome-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2C12 2 7 7 7 13C7 16.3137 9.23858 19 12 19C14.7614 19 17 16.3137 17 13C17 7 12 2 12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M12 19V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M9 16C7 15 5 13 5 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    </svg>
+    Daily Practice
+  </a>
+</header>
 
 <div class="welcome-container">
 
-  <div class="welcome-name-step" id="step-name">
-    <h1>Welcome to<br>the garden.</h1>
-    <p>What should we call you?</p>
+  <!-- Step: Carousel -->
+  <div id="step-carousel" class="welcome-carousel">
+
+    <div class="welcome-card" id="card-0">
+      <div class="welcome-card-icon">🌱</div>
+      <h2 class="welcome-card-heading">Your daily practice</h2>
+      <p class="welcome-card-body">Pick something you want to do daily. Log it when you do it. See patterns over time, and get support to stay on track.</p>
+    </div>
+
+    <div class="welcome-card" id="card-1">
+      <div class="welcome-card-icon">🌸</div>
+      <h2 class="welcome-card-heading">Get friend support</h2>
+      <p class="welcome-card-body">Invite a friend to log practices with you. When either of you check in, a flower blooms. Together, a garden grows.</p>
+    </div>
+
+    <div class="welcome-card" id="card-2">
+      <div class="welcome-card-icon">🐉</div>
+      <h2 class="welcome-card-heading">AI support, 24x7</h2>
+      <p class="welcome-card-body">Want a little extra motivation or practice support? Obi-Wai is a guide that learns about you. Visit and chat anytime.</p>
+    </div>
+
+    <div class="welcome-dots" id="welcome-dots"></div>
+
+    <div class="welcome-nav">
+      <button class="welcome-btn welcome-btn-primary" id="btn-next">Next →</button>
+      <button class="welcome-btn welcome-btn-ghost" id="btn-prev">← Back</button>
+    </div>
+
+    <div class="welcome-skip-row">
+      <button class="welcome-skip" id="btn-skip">skip</button>
+    </div>
+
+  </div>
+
+  <!-- Step: Name -->
+  <div id="step-name" style="display:none; text-align:center;">
+    <h1>What should we<br>call you?</h1>
+    <p class="welcome-step-sub">First name or nickname is fine.</p>
     <form class="welcome-name-form" id="name-form">
       <input
         type="text"
         id="name-input"
-        placeholder="First name or nickname"
+        placeholder="Your name"
         autocomplete="off"
         maxlength="40"
         required
@@ -25,33 +69,30 @@ pageScript: /assets/js/pages/welcome.js
     </form>
   </div>
 
-  <div class="welcome-carousel" id="step-carousel">
+  <!-- Step: Email (unauthenticated signup only) -->
+  <div id="step-email" style="display:none; text-align:center;">
+    <h1>Almost there.</h1>
+    <p class="welcome-step-sub">What's your email? We'll send you a link to create your account — no password needed.</p>
+    <form class="welcome-name-form" id="email-form">
+      <input
+        type="email"
+        id="email-input"
+        placeholder="your@email.com"
+        autocomplete="email"
+        required
+      />
+      <div id="email-error" style="display:none; color:#f87171; font-size:0.875rem; margin-top:-0.25rem;"></div>
+      <button type="submit" class="welcome-btn welcome-btn-primary" id="email-submit">Send me a link →</button>
+    </form>
+  </div>
 
-    <div class="welcome-card" id="card-0">
-      <div class="welcome-card-icon">🌱</div>
-      <h2 class="welcome-card-heading">Your practice</h2>
-      <p class="welcome-card-body">Pick something you want to show up for. Log it when you do it. Over time, you'll see what's working — and why.</p>
-    </div>
-
-    <div class="welcome-card" id="card-1">
-      <div class="welcome-card-icon">🌸</div>
-      <h2 class="welcome-card-heading">The garden</h2>
-      <p class="welcome-card-body">Everyone in your circle has a flower. When they practice, their flower blooms. Invite a friend and your garden grows.</p>
-    </div>
-
-    <div class="welcome-card" id="card-2">
-      <div class="welcome-card-icon">✨</div>
-      <h2 class="welcome-card-heading">Your coach</h2>
-      <p class="welcome-card-body">Need a nudge? Talk to Obi-Wai. He'll help you figure out what to practice and work through the resistance.</p>
-    </div>
-
-    <div class="welcome-dots" id="welcome-dots"></div>
-
-    <div class="welcome-nav">
-      <button class="welcome-btn welcome-btn-ghost" id="btn-prev">← Back</button>
-      <button class="welcome-btn welcome-btn-primary" id="btn-next">Next →</button>
-    </div>
-
+  <!-- Step: Confirmation -->
+  <div id="step-confirm" style="display:none; text-align:center;">
+    <div class="welcome-card-icon">📬</div>
+    <h1>Check your email.</h1>
+    <p class="welcome-step-sub">We sent a link to <strong id="confirm-email"></strong>.<br>Click it to finish creating your account.</p>
+    <p style="font-size:0.8rem; color:#8aab8e; margin-top:1.5rem;">Check your spam if you don't see it.<span class="welcome-br-desktop"><br></span> Link expires in 15 minutes.</p>
+    <button id="btn-change-email" style="margin-top:1.25rem; background:none; border:none; cursor:pointer; font-size:0.875rem; color:rgba(240,235,224,0.5); text-decoration:underline;">Use a different email</button>
   </div>
 
 </div>

@@ -15,6 +15,10 @@ body.landing-page {
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
   flex-shrink: 0;
+
+  &.landing-nav-centered {
+    justify-content: center;
+  }
 }
 
 .landing-brand {
@@ -23,7 +27,11 @@ body.landing-page {
   gap: 0.5rem;
   color: $color-landing-text;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 1.15rem;
+
+  @media (min-width: $breakpoint-md) {
+    font-size: 1rem;
+  }
   font-weight: 500;
   letter-spacing: 0.01em;
   opacity: 0.9;
@@ -60,54 +68,33 @@ body.landing-page {
 }
 
 .landing-hero {
-  max-width: 480px;
+  max-width: 600px;
   width: 100%;
-}
-
-.landing-eyebrow {
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: $color-landing-eyebrow;
-  margin-bottom: 1.25rem;
 }
 
 .landing-headline {
   font-family: $font-family-heading;
   font-weight: 400;
-  font-size: clamp(2.75rem, 8vw, 4rem);
-  line-height: 1.15;
+  font-size: 3.25rem;
+  line-height: 1.1;
   color: $color-landing-text;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+
+  @media (min-width: $breakpoint-md) {
+    font-size: 4.75rem;
+  }
 }
 
 .landing-subtext {
-  font-size: 0.95rem;
-  color: $color-landing-muted;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  color: rgba(240, 235, 224, 0.7);
   line-height: 1.65;
   margin-bottom: 0;
 }
 
-.landing-ornament {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 2rem 0;
-  gap: 0.75rem;
-  color: $color-landing-eyebrow;
-
-  &::before,
-  &::after {
-    content: '';
+.landing-subtext-break {
+  @media (min-width: $breakpoint-md) {
     display: block;
-    width: 40px;
-    height: 1px;
-    background: $color-landing-eyebrow;
-    opacity: 0.5;
-  }
-
-  svg {
-    opacity: 0.6;
   }
 }
 
@@ -117,7 +104,7 @@ body.landing-page {
   gap: 0.75rem;
   width: 100%;
   max-width: 320px;
-  margin: 0 auto;
+  margin: 2.5rem auto 0;
 }
 
 .landing-btn {
@@ -126,9 +113,9 @@ body.landing-page {
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.85rem 1.5rem;
+  padding: clamp(0.85rem, 2vw, 1.1rem) clamp(1.5rem, 3vw, 2rem);
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
   font-family: $font-family;
   cursor: pointer;
   text-decoration: none;
@@ -174,7 +161,7 @@ body.landing-page {
   align-items: center;
   gap: 0.75rem;
   color: $color-landing-eyebrow;
-  font-size: 0.8rem;
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
 
   &::before,
   &::after {
@@ -185,25 +172,13 @@ body.landing-page {
   }
 }
 
-.landing-reassurance {
-  margin-top: 2rem;
-  font-size: 0.78rem;
-  color: $color-landing-eyebrow;
-  line-height: 1.7;
+.landing-ctas {
+  margin-top: 2.5rem;
 }
 
-.landing-about {
-  max-width: 480px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-  border-top: 1px solid rgba(240, 235, 224, 0.1);
-  text-align: center;
-
-  p {
-    font-size: 0.9rem;
-    color: $color-landing-muted;
-    line-height: 1.7;
-    margin-bottom: 0;
-  }
+.landing-reassurance {
+  margin-top: 2rem;
+  font-size: clamp(0.82rem, 1.5vw, 1rem);
+  color: $color-landing-eyebrow;
+  line-height: 1.8;
 }

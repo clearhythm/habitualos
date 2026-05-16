@@ -18,43 +18,78 @@ body.welcome-page {
   margin: 0 auto;
 }
 
-// ---- Skip button ----
-.welcome-skip {
+// ---- Header ----
+.welcome-header {
   position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1.5rem;
+}
+
+.welcome-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $color-landing-text;
+  font-size: 1.15rem;
+
+  @media (min-width: $breakpoint-md) {
+    font-size: 1rem;
+  }
+  font-weight: 500;
+  opacity: 0.85;
+  text-decoration: none;
+
+  &:hover {
+    opacity: 1;
+    color: $color-landing-text;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: $color-landing-text;
+  }
+}
+
+// ---- Skip button ----
+.welcome-skip-row {
+  text-align: center;
+  margin-top: 1.25rem;
+}
+
+.welcome-skip {
   color: $color-text-muted;
   font-size: $font-size-sm;
   background: none;
   border: none;
   cursor: pointer;
-  text-decoration: underline;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity 0.2s;
 
   &:hover {
-    opacity: 1;
+    opacity: 0.9;
   }
 }
 
-// ---- Name step ----
-.welcome-name-step {
-  text-align: center;
+// ---- Step headings (name / email / confirm) ----
+.welcome-container h1 {
+  font-family: $font-family-heading;
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 400;
+  color: $color-text;
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
 
-  h1 {
-    font-family: $font-family-heading;
-    font-size: clamp(1.75rem, 5vw, 2.5rem);
-    font-weight: 400;
-    color: $color-text;
-    margin: 0 0 0.75rem;
-    line-height: 1.2;
-  }
-
-  > p {
-    color: $color-text-muted;
-    font-size: $font-size-lg;
-    margin: 0 0 2rem;
-  }
+.welcome-step-sub {
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+  margin: 0 0 2rem;
+  line-height: 1.6;
 }
 
 .welcome-name-form {
@@ -156,7 +191,7 @@ body.welcome-page {
 }
 
 .welcome-card-body {
-  color: $color-text-muted;
+  color: rgba(240, 235, 224, 0.7);
   font-size: $font-size-lg;
   line-height: 1.7;
   margin: 0 auto;
@@ -186,13 +221,26 @@ body.welcome-page {
   }
 }
 
+.welcome-br-desktop {
+  display: none;
+
+  @media (min-width: $breakpoint-md) {
+    display: inline;
+  }
+}
+
 // ---- Nav row ----
 .welcome-nav {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 0.75rem;
 
   #btn-next {
-    flex: 1;
+    width: 100%;
+  }
+
+  #btn-prev {
+    font-size: $font-size-sm;
   }
 }
