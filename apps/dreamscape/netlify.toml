@@ -43,7 +43,3 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-[[redirects]]
-  from = "/"
-  to = "/library/"
-  status = 302

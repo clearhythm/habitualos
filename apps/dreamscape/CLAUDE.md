@@ -1,84 +1,74 @@
-# dreamscape — Claude Context
+# Daily Practice — Claude Context
 
-Standalone Netlify app within the HabitualOS monorepo. Personal audio session composer for self-directed hypnotherapy and inner work. Designed to compose trance recordings into seamless sessions, leveraging the hypnagogic state for low-friction practice.
+Standalone Netlify app within the HabitualOS monorepo (hosted in the `apps/dreamscape` directory). A presence-based practice timer for a small, invitation-only circle. The app is a room that is always alive — you come to practice, your circle witnesses you, and the room reflects how many people are present through ambient sound and a living waveform.
+
+Target domain: `daily.habitualos.com`
 
 ## Quick Start
 
 1. Read root `CLAUDE.md` (monorepo conventions)
-2. Read `docs/architecture/` for system design (when created)
-3. Read `docs/endpoints/` for API contracts (when created)
+2. Read `plans/` for ticket specs
 
-## Core Problem
+## Core Concept
 
-Stitching custom trance recordings currently takes ~4 hours for a 10-15 minute session. Dreamscape makes session composition trivial and repeatable.
+No feed, no kudos, no performance. Just presence. Real-time Firestore presence (witnessing / practicing / idle) drives the waveform visualization and ambient audio layer.
 
-## MVP Features
+## Tech Stack
 
-1. **Audio segment library** — load and store recordings
-2. **Session builder** — arrange segments in order
-3. **Sequential playback** with smooth crossfades between segments
-4. **Secondary music layer** — independent volume control, fade automation (louder between segments, quieter under voice)
-5. **Per-segment music** — music can vary per segment with crossfades
+- **Frontend**: 11ty + Nunjucks, vanilla JS modules
+- **Real-time**: Firebase Firestore `onSnapshot` (push only, no polling)
+- **Auth**: Firebase Anonymous Auth tied to invite token
+- **Audio**: Web Audio API (`src/assets/js/audio-engine.js`) + Wake Lock API
+- **Backend**: Netlify Functions
 
-## Critical Technical Requirement
+## Key Files
 
-Background audio must not cut out when the phone screen locks. Architecture: **Wake Lock API + Web Audio API**. Validate this before building anything else.
+| File | Purpose |
+|---|---|
+| `src/assets/js/audio-engine.js` | Web Audio API + Wake Lock — shared by all pages |
+| `src/assets/js/presence.js` | Firestore presence module (Ticket 1) |
+| `src/index.njk` | Homepage — the room (waveform + presence) |
+| `src/practice.njk` | Full-screen practice timer |
+| `src/history.njk` | Chronological session feed |
+| `src/invite.njk` | Invitation landing page |
+| `src/admin.njk` | Admin — generate invite links |
 
-## Tech Approach
+## Routes
 
-- 11ty + Nunjucks (same as other HabitualOS apps)
-- Web Audio API for all mixing, crossfade, gain automation
-- Netlify Functions for backend
-- Shared streaming edge function (`packages/edge-functions/chat-stream-core.ts`) if agentic features added
-- Native app via Capacitor if PWA background audio proves unreliable
+- `/` — the room
+- `/practice/` — timer
+- `/history/` — session feed
+- `/invite/` — invitation landing (reads `?token=` from URL)
+- `/admin/` — admin (obscure URL, no nav link)
 
-## Architecture (Planned)
+## Data Model
 
-**Audio Engine** (`src/assets/js/audio/`)
-- Web Audio API mixing, crossfade, gain automation
-- Wake Lock API integration for background playback
+**`presence/{userId}`** — `{ userId, name, state: witnessing|practicing|idle, updatedAt }`
 
-**Segment Library** (`src/library/`, `netlify/functions/segment-*`)
-- Upload, store, list audio recordings
-- Metadata: title, duration, type (intro, voice, music)
+**`sessions/{sessionId}`** — `{ userId, name, state: active|completed, practiceType, note, startedAt, stoppedAt, duration }`
 
-**Session Builder** (`src/sessions/`, `netlify/functions/session-*`)
-- Ordered segment arrangement
-- Per-segment music assignment
-- Volume envelope configuration
+**`invitations/{token}`** — `{ token, createdAt, expiresAt, inviterName, usedAt, usedBy }`
 
-**Playback** (`src/play/`, `netlify/functions/`)
-- Sequential playback with crossfades
-- Music layer with independent volume
+**`circle/{userId}`** — `{ userId, name, joinedAt, inviteToken }`
 
-## Key Pages
+## Build Order (Tickets)
 
-- `/library/` — segment library
-- `/sessions/` — session list and builder
-- `/play/{sessionId}/` — session playback (to be built)
+0. Project setup ✓ (this)
+1. Firestore presence service
+2. Practice timer
+3. Waveform visualization
+4. Ambient audio
+5. Invitation system
+6. Session feed
 
 ## Local Development
 
 ```
 npm run dev       # netlify dev (starts 11ty + functions)
-npm run serve     # serve built site
 ```
-
-## ID Formats (to be defined)
-
-- Segments: `seg-{random}`
-- Sessions: `sess-{timestamp}-{random}`
 
 ## Design
 
-- Default dark mode (sleep/nighttime use case)
-- Color palette: deep indigo/violet (`#6b5ce7` primary, `#1a1735` sidemenu/footer)
-- Background gradient: soft lavender (light) / deep midnight navy (dark)
-
-## Longer Vision
-
-- Practice tracking (session log, usage patterns)
-- ACA canonical script library built in
-- Sleep-entry UX optimized for hypnagogic state work
-- Agentic/chat interface for session composition guidance
-- Eventually standalone brand and domain
+- Default dark mode
+- Nature/presence aesthetic — earthy, calm, not corporate
+- No individual performance tracking in the room visual — collective presence only

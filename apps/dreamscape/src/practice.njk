@@ -1,0 +1,27 @@
+---
+layout: base.njk
+title: Practice — Daily Practice
+permalink: /practice/
+pageScript: /assets/js/pages/practice.js
+---
+
+<div class="practice-screen" id="practice-screen">
+  <div class="practice-setup" id="practice-setup">
+    <input type="text" id="practice-name" class="practice-name-input" placeholder="What are you practicing? (optional)">
+    <button class="btn-primary" id="start-btn">Begin</button>
+  </div>
+
+  <div class="practice-active" id="practice-active" hidden>
+    <div class="timer" id="timer">00:00</div>
+    <div class="practice-label" id="practice-label"></div>
+    <div class="practice-controls">
+      <button class="btn-secondary" id="pause-btn">Pause</button>
+      <button class="btn-quiet" id="stop-btn">Stop</button>
+    </div>
+  </div>
+
+  <div class="practice-note" id="practice-note" hidden>
+    <textarea id="note-input" class="note-input" placeholder="What came up? (optional)"></textarea>
+    <button class="btn-primary" id="save-btn">Save Session</button>
+  </div>
+</div>
