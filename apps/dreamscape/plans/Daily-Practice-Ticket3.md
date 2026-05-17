@@ -32,3 +32,7 @@ Subscribe to Firestore presence collection via `presence.js` from Ticket 1. Driv
 - Waveform animates on page load
 - When a second browser tab sets presence to `witnessing`, waveform visibly shifts
 - Name events appear and fade correctly as presence state changes
+
+## Testing Note (carry over from Ticket 2)
+
+- Verify RTDB presence is visible across clients: open two tabs (one incognito), start a session in one, confirm the other sees the presence state change in the waveform. This is the first point where RTDB presence has visible UI to test against.
