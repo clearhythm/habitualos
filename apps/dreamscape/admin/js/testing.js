@@ -1,5 +1,9 @@
 const seedStatus = document.getElementById('seed-status');
 
+// Render test users table from single source of truth
+document.getElementById('test-users-table').innerHTML =
+  TEST_USERS.map(u => `<tr><td><code>${u.userId}</code></td><td>${u.name}</td><td>${u.role}</td></tr>`).join('');
+
 function showStatus(msg, type) {
   seedStatus.textContent = msg;
   seedStatus.className = type;
@@ -34,7 +38,8 @@ document.querySelectorAll('.seed-btn').forEach(btn => {
 
 document.getElementById('reset-btn').addEventListener('click', async () => {
   const btn = document.getElementById('reset-btn');
-  if (!confirm('Delete all test user data (u-test-alice, u-test-bob, u-test-carol)?')) return;
+  const names = TEST_USERS.map(u => u.name).join(', ');
+  if (!confirm(`Delete all test user data for: ${names}?`)) return;
   btn.disabled = true;
   btn.textContent = 'Resetting…';
   try {

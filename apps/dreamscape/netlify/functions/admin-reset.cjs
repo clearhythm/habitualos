@@ -1,4 +1,4 @@
-const TEST_USER_IDS = ['u-test-erik', 'u-test-sarah', 'u-test-frank', 'u-test-roi'];
+const { TEST_USER_IDS } = require('./_utils/test-users.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };

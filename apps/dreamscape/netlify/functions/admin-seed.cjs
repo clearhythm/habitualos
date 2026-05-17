@@ -1,9 +1,4 @@
-const TEST_USERS = {
-  erik:  { userId: 'u-test-erik',  name: 'Erik'  },
-  sarah: { userId: 'u-test-sarah', name: 'Sarah' },
-  frank: { userId: 'u-test-frank', name: 'Frank' },
-  roi:   { userId: 'u-test-roi',   name: "Ro'i"  },
-};
+const { TEST_USERS } = require('./_utils/test-users.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
@@ -16,10 +11,10 @@ exports.handler = async (event) => {
 
   // TODO: implement seeding logic once notes data model is built
   // Scenarios:
-  //   no-notes      — ensure alice/bob/carol are in circle, delete any notes for alice
-  //   notes-waiting — seed a note from bob to alice with unlockedAt=null
-  //   notes-unlocked — seed a note from bob to alice with unlockedAt=Date.now()
-  //   all-caught-up — seed a note from bob to alice, marked readAt=Date.now()
+  //   no-notes      — all users in circle, no notes for erik
+  //   notes-waiting — note from sarah/roi to erik, unlockedAt=null
+  //   notes-unlocked — note from sarah/roi to erik, unlockedAt=Date.now()
+  //   all-caught-up — note from sarah/roi to erik, readAt=Date.now()
 
   return {
     statusCode: 200,
