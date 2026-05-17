@@ -34,9 +34,10 @@ Set `ADMIN_SECRET` in `apps/dreamscape/.env` and enter the same value in the adm
 
 | ID | Name | Role |
 |---|---|---|
-| `u-test-alice` | Alice | Note recipient (simulates "you") |
-| `u-test-bob` | Bob | Note sender |
-| `u-test-carol` | Carol | Circle member, no notes |
+| `u-test-erik` | Erik | Note recipient (simulates "you") |
+| `u-test-sarah` | Sarah | Circle member, note sender |
+| `u-test-frank` | Frank | Circle member, no notes |
+| `u-test-roi` | Ro'i | Circle member, note sender |
 
 ### Scenarios
 

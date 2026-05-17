@@ -7,18 +7,18 @@ const PROTO_STATES = ['notes waiting', 'notes unlocked', 'all caught up'];
 let protoStateIdx  = 0;
 
 const MOCK_CIRCLE = [
-  { _userId: 'u-sarah', _name: 'Sarah',  lastPracticed: 'today',       daysSince: 0, hasNote: true  },
-  { _userId: 'u-frank', _name: 'Frank',  lastPracticed: '2 hours ago', daysSince: 0, hasNote: false },
-  { _userId: 'u-roi',   _name: "Ro'i",   lastPracticed: '3 days ago',  daysSince: 3, hasNote: true  },
-  { _userId: 'u-mike',  _name: 'Mike',   lastPracticed: '8 days ago',  daysSince: 8, hasNote: false },
+  { _userId: 'u-test-sarah', _name: 'Sarah',  lastPracticed: 'today',       daysSince: 0, hasNote: true  },
+  { _userId: 'u-test-frank', _name: 'Frank',  lastPracticed: '2 hours ago', daysSince: 0, hasNote: false },
+  { _userId: 'u-test-roi',   _name: "Ro'i",   lastPracticed: '3 days ago',  daysSince: 3, hasNote: true  },
+  { _userId: 'u-test-erik',  _name: 'Erik',   lastPracticed: '8 days ago',  daysSince: 8, hasNote: false },
 ];
 
 const MOCK_THREADS = {
-  'u-sarah': [
+  'u-test-sarah': [
     { from: 'them', text: 'Your consistency is inspiring me to get back on track!', sentAt: '2 days ago' },
     { from: 'me',   text: 'Sarah! You crushed it this week. Keep going.',            sentAt: '5 days ago' },
   ],
-  'u-roi': [
+  'u-test-roi': [
     { from: 'them', text: "Been thinking of you. Hope you're finding your rhythm.",  sentAt: '1 day ago'  },
   ],
 };

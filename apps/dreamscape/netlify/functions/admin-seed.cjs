@@ -1,7 +1,8 @@
 const TEST_USERS = {
-  alice: { userId: 'u-test-alice', name: 'Alice' },
-  bob:   { userId: 'u-test-bob',   name: 'Bob'   },
-  carol: { userId: 'u-test-carol', name: 'Carol' },
+  erik:  { userId: 'u-test-erik',  name: 'Erik'  },
+  sarah: { userId: 'u-test-sarah', name: 'Sarah' },
+  frank: { userId: 'u-test-frank', name: 'Frank' },
+  roi:   { userId: 'u-test-roi',   name: "Ro'i"  },
 };
 
 exports.handler = async (event) => {
