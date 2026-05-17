@@ -565,3 +565,289 @@
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+// Prototype toggle
+.proto-toggle {
+  position: fixed;
+  top: 18px;
+  right: $space-lg;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: $space-xs $space-md;
+  border: 1px dashed rgba($color-text-muted, 0.2);
+  border-radius: 6px;
+}
+
+.proto-label {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.3);
+  letter-spacing: 0.05em;
+}
+
+.proto-btn {
+  background: transparent;
+  border: none;
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.4);
+  cursor: pointer;
+  padding: 0;
+
+  strong { color: rgba($color-text-muted, 0.7); }
+  &:hover { color: $color-text-muted; }
+}
+
+// Circle / community page
+.circle-page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: $space-2xl $space-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2xl;
+}
+
+.section-sublabel {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.4);
+  margin-top: $space-xs;
+  margin-bottom: $space-md;
+}
+
+.circle-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: $space-md;
+}
+
+.circle-tabs {
+  display: flex;
+  gap: $space-sm;
+}
+
+.circle-tab {
+  background: transparent;
+  border: none;
+  font-size: $font-size-base;
+  color: rgba($color-text-muted, 0.4);
+  cursor: pointer;
+  padding: 0 0 $space-xs;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+
+  &:hover { color: $color-text-muted; }
+
+  &.active {
+    color: $color-text;
+    border-bottom-color: $color-primary;
+  }
+}
+
+.section-label {
+  font-size: $font-size-base;
+  color: rgba($color-text-muted, 0.5);
+  letter-spacing: 0.03em;
+}
+
+.circle-row {
+  border-bottom: 1px solid $color-border;
+}
+
+.circle-row-main {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md 0;
+}
+
+.circle-row-name {
+  font-size: $font-size-lg;
+  color: $color-text;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+}
+
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.55);
+  flex-shrink: 0;
+}
+
+.unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.55);
+  flex-shrink: 0;
+}
+
+.circle-row-meta {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.5);
+}
+
+
+.compose-input {
+  width: 100%;
+  background: $color-bg-muted;
+  border: 1px solid $color-border-hover;
+  border-radius: 8px;
+  color: $color-text;
+  caret-color: $color-primary;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  padding: $space-sm $space-md;
+  resize: none;
+  outline: none;
+
+  &::placeholder { color: rgba($color-text-muted, 0.4); }
+  &:focus { border-color: $color-primary; }
+}
+
+.compose-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: $space-sm;
+  margin-top: $space-sm;
+}
+
+.btn-send {
+  background: $color-primary;
+  border: none;
+  border-radius: 20px;
+  color: white;
+  font-size: $font-size-sm;
+  padding: $space-xs $space-md;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.85; }
+}
+
+.circle-row-main {
+  cursor: pointer;
+  &:hover .circle-row-name { color: rgba($color-text, 0.8); }
+}
+
+.circle-thread {
+  padding-bottom: $space-md;
+  animation: fadeIn 0.2s ease;
+}
+
+.thread-history {
+  margin-top: $space-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+.thread-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 80%;
+
+  &--me   { align-self: flex-end; align-items: flex-end; }
+  &--them { align-self: flex-start; }
+}
+
+.thread-msg-text,
+.thread-locked-text {
+  font-size: $font-size-base;
+  border-radius: 12px;
+  padding: $space-sm $space-md;
+  line-height: 1.5;
+}
+
+.thread-msg-text {
+  color: $color-text;
+  background: $color-bg-muted;
+
+  .thread-msg--me & { background: rgba($color-primary, 0.25); }
+}
+
+.thread-locked-text {
+  color: rgba($color-text-muted, 0.35);
+  background: rgba($color-bg-muted, 0.4);
+  font-style: italic;
+}
+
+.thread-msg-meta {
+  font-size: 0.75rem;
+  color: rgba($color-text-muted, 0.4);
+  padding: 0 $space-xs;
+}
+
+.circle-invite {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+  margin-top: $space-xl;
+  align-items: center;
+}
+
+.circle-invite-label {
+  font-size: $font-size-base;
+  color: rgba($color-text-muted, 0.5);
+  letter-spacing: 0.03em;
+}
+
+.btn-invite {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid $color-border-hover;
+  border-radius: 20px;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  padding: $space-xs $space-md;
+  text-decoration: none;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: $color-primary;
+    color: $color-text;
+    text-decoration: none;
+  }
+}
+
+.sent-confirmation {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.6);
+  padding-bottom: $space-md;
+  animation: fadeIn 0.3s ease;
+}
+
+// Notes waiting
+.note-waiting-row {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  padding: $space-md;
+  background: rgba($color-primary, 0.06);
+  border: 1px solid rgba($color-primary, 0.15);
+  border-radius: 8px;
+  margin-top: $space-md;
+}
+
+
+.note-waiting-meta {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.5);
+
+  &--icon {
+    display: flex;
+    align-items: center;
+    gap: $space-sm;
+
+    i { font-size: 1.1rem; opacity: 0.7; }
+  }
+}

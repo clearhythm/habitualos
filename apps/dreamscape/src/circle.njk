@@ -1,0 +1,32 @@
+---
+layout: base.njk
+title: Circle — Daily Practice
+permalink: /circle/
+pageScript: /assets/js/pages/circle.js
+---
+
+<div class="circle-page">
+  <div class="proto-toggle">
+    <span class="proto-label">proto</span>
+    <button class="proto-btn" id="proto-state">state: <strong>notes waiting</strong></button>
+  </div>
+  <div class="circle-section">
+    <div class="section-label" id="notes-section-label">Waiting for you</div>
+    <div id="notes-waiting-list"></div>
+  </div>
+
+  <div class="circle-section">
+    <div class="circle-section-header">
+      <span class="section-label">Circle</span>
+      <div class="circle-tabs">
+        <button class="circle-tab active" data-tab="celebrate">celebrate</button>
+        <button class="circle-tab" data-tab="encourage">encourage</button>
+      </div>
+    </div>
+    <div id="circle-list"></div>
+    <div class="circle-invite">
+      <span class="circle-invite-label">Expand your circle</span>
+      <a href="/invite/" class="circle-invite-link btn-invite">Invite someone</a>
+    </div>
+  </div>
+</div>
