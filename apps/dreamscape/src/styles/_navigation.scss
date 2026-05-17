@@ -1,9 +1,3 @@
-// Navigation Styles - Dreamscape
-// ------------------------------------------------------
-// Hamburger menu animation, sidemenu, and scroll-based header
-// ------------------------------------------------------
-
-// Navbar base styles
 .navbar {
   position: fixed;
   top: 0;
@@ -12,7 +6,6 @@
   z-index: 1000;
   padding: 1rem 1.5rem;
   background-color: transparent;
-  box-shadow: none;
   transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   display: flex;
   align-items: center;
@@ -20,33 +13,24 @@
   gap: 1.25rem;
 }
 
-// Active state (after scroll)
 .navbar.active {
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-  html[data-theme="dark"] & {
-    background-color: $dark-color-bg;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  }
+  background-color: $color-bg;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .navbar-brand {
   font-size: 1.3rem;
   font-weight: 600;
-  color: #1e1b3a;
+  color: $color-text;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.4rem;
 
-  html[data-theme="dark"] & {
-    color: $dark-color-text;
+  &:hover {
+    text-decoration: none;
+    opacity: 0.8;
   }
-}
-
-.navbar-brand:hover {
-  text-decoration: none;
 }
 
 .navbar-brand-icon {
@@ -55,75 +39,38 @@
   flex-shrink: 0;
 }
 
-.navbar.active .navbar-brand {
-  color: #1e1b3a;
-}
-
-// Hamburger Toggle
+// Hamburger
 .sidemenu-toggle {
   width: 24px;
   height: 18px;
   position: relative;
   padding: 10px;
-  transform: rotate(0deg);
-  transition: 0.5s ease-in-out;
   cursor: pointer;
   z-index: 2000;
   flex-shrink: 0;
-}
+  transition: 0.5s ease-in-out;
 
-.sidemenu-toggle span {
-  display: block;
-  position: absolute;
-  height: 3px;
-  width: 24px;
-  background: #333;
-  border-radius: 1px;
-  opacity: 1;
-  left: 0;
-  transform: rotate(0deg);
-  transition: 0.25s ease-in-out;
-
-  html[data-theme="dark"] & {
-    background: $dark-color-text;
+  span {
+    display: block;
+    position: absolute;
+    height: 3px;
+    width: 24px;
+    background: $color-text;
+    border-radius: 1px;
+    left: 0;
+    transition: 0.25s ease-in-out;
   }
+
+  span:nth-child(1) { top: 0;   width: 85%; }
+  span:nth-child(2) { top: 8px; }
+  span:nth-child(3) { top: 16px; width: 65%; }
+
+  &.open span:nth-child(1) { top: 8px;  width: 28px; height: 4px; transform: rotate(135deg); }
+  &.open span:nth-child(2) { opacity: 0; left: -60px; }
+  &.open span:nth-child(3) { top: 8px;  width: 28px; height: 4px; transform: rotate(-135deg); }
 }
 
-.sidemenu-toggle span:nth-child(1) {
-  top: 0px;
-  width: 85%;
-}
-
-.sidemenu-toggle span:nth-child(2) {
-  top: 8px;
-}
-
-.sidemenu-toggle span:nth-child(3) {
-  top: 16px;
-  width: 65%;
-}
-
-// Hamburger → X animation
-.sidemenu-toggle.open span:nth-child(1) {
-  top: 8px;
-  width: 28px;
-  height: 4px;
-  transform: rotate(135deg);
-}
-
-.sidemenu-toggle.open span:nth-child(2) {
-  opacity: 0;
-  left: -60px;
-}
-
-.sidemenu-toggle.open span:nth-child(3) {
-  top: 8px;
-  width: 28px;
-  height: 4px;
-  transform: rotate(-135deg);
-}
-
-// Sidemenu container
+// Sidemenu overlay
 .sidemenu-main {
   position: fixed;
   z-index: 1000;
@@ -138,22 +85,21 @@
   transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 
-// Open state
 .sidemenu-open {
   overflow-y: hidden;
+
+  .sidemenu-main {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
-.sidemenu-open .sidemenu-main {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-// Close button inside sidemenu panel
+// Close button
 .sidemenu-close {
   position: absolute;
-  top: .65rem;
-  left: .85rem;
+  top: 0.65rem;
+  left: 0.85rem;
   width: 44px;
   height: 44px;
   background: none;
@@ -161,9 +107,7 @@
   cursor: pointer;
   opacity: 0.85;
 
-  &:hover {
-    opacity: 1;
-  }
+  &:hover { opacity: 1; }
 
   span {
     display: block;
@@ -176,26 +120,15 @@
     transition: 0.25s ease-in-out;
   }
 
-  span:nth-child(1) {
-    top: 20px;
-    transform: rotate(135deg);
-  }
-
-  span:nth-child(2) {
-    top: 20px;
-    opacity: 0;
-  }
-
-  span:nth-child(3) {
-    top: 20px;
-    transform: rotate(-135deg);
-  }
+  span:nth-child(1) { top: 20px; transform: rotate(135deg); }
+  span:nth-child(2) { top: 20px; opacity: 0; }
+  span:nth-child(3) { top: 20px; transform: rotate(-135deg); }
 }
 
-// Left panel (menu content)
+// Left panel
 .sidemenu-left {
-  z-index: 1001;
   position: relative;
+  z-index: 1001;
   height: 100vh;
   width: 100%;
   max-width: 600px;
@@ -204,64 +137,40 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-}
 
-.sidemenu-left ul {
-  list-style: none;
-  padding-top: 8vh;
-  margin-top: 1rem;
-  padding-bottom: 3vh;
-  flex-grow: 1;
-}
+  ul {
+    list-style: none;
+    padding-top: 8vh;
+    margin-top: 1rem;
+    padding-bottom: 3vh;
+    flex-grow: 1;
 
-.sidemenu-left ul li {
-  padding: 0.5rem 0;
-  margin: 0;
-}
+    li {
+      padding: 0.5rem 0;
+      margin: 0;
 
-.sidemenu-left ul li h3 {
-  padding: 0;
-  margin: 0;
-  font-size: 2rem;
-}
+      h3 {
+        padding: 0;
+        margin: 0;
+        font-size: 2rem;
 
-.sidemenu-left ul li h3 a {
-  text-decoration: none;
-  color: #c8c5e8;
-  transition: opacity 0.2s;
-}
+        a {
+          text-decoration: none;
+          color: #c8c5e8;
+          transition: opacity 0.2s;
 
-.sidemenu-left ul li h3 a:hover {
-  opacity: 0.8;
-}
-
-// Secondary navigation (nested links)
-.sidemenu-left ul.nav-secondary {
-  list-style: none;
-  padding: 1rem 0 0 1.5rem;
-  margin: 0;
-
-  li {
-    padding: 0.25rem 0;
-  }
-
-  a {
-    text-decoration: none;
-    color: #c8c5e8;
-    font-size: 1.25rem;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 0.8;
+          &:hover { opacity: 0.8; }
+        }
+      }
     }
   }
+
+  footer {
+    padding: 2rem 0;
+  }
 }
 
-.sidemenu-left footer {
-  padding: 2rem 0;
-}
-
-// Right overlay (dark background)
+// Right overlay
 .sidemenu-right {
   position: fixed;
   width: 100%;
@@ -272,20 +181,11 @@
   z-index: 900;
 }
 
-// Mobile: full screen menu
 @media (max-width: 768px) {
-  .sidemenu-left {
-    max-width: 100%;
-  }
-
-  .sidemenu-right {
-    display: none;
-  }
+  .sidemenu-left  { max-width: 100%; }
+  .sidemenu-right { display: none; }
 }
 
-// Desktop: 40% width menu with overlay
 @media (min-width: 769px) {
-  .sidemenu-left {
-    max-width: 40%;
-  }
+  .sidemenu-left { max-width: 40%; }
 }

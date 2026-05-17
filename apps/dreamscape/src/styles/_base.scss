@@ -1,4 +1,3 @@
-// Reset and base styles
 *,
 *::before,
 *::after {
@@ -7,14 +6,11 @@
   padding: 0;
 }
 
+[hidden] { display: none !important; }
+
 html {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #eceaf8 0%, #fdfcff 70%, #e8e4f8 100%);
-  transition: background 0.3s ease;
-
-  &[data-theme="dark"] {
-    background: linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917);
-  }
+  background: linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917);
 }
 
 body {
@@ -27,10 +23,6 @@ body {
   flex-direction: column;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  html[data-theme="dark"] & {
-    color: $dark-color-text;
-  }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -39,17 +31,9 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: $space-md;
 }
 
-h1 {
-  font-size: $font-size-3xl;
-}
-
-h2 {
-  font-size: $font-size-2xl;
-}
-
-h3 {
-  font-size: $font-size-xl;
-}
+h1 { font-size: $font-size-3xl; }
+h2 { font-size: $font-size-2xl; }
+h3 { font-size: $font-size-xl; }
 
 p {
   margin-bottom: $space-md;

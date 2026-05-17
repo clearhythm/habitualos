@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebas
 import {
   getFirestore,
   doc, getDoc, setDoc, updateDoc,
-  collection, addDoc,
+  collection,
   query, where, orderBy, limit,
   onSnapshot, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js";
@@ -29,7 +29,7 @@ export const rtdb = getDatabase(app);
 
 export {
   doc, getDoc, setDoc, updateDoc,
-  collection, addDoc,
+  collection,
   query, where, orderBy, limit,
   onSnapshot, serverTimestamp,
   ref, set, onValue, onDisconnect, rtdbTimestamp,

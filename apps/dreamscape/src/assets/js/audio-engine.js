@@ -74,6 +74,28 @@ export function releaseWakeLock() {
   wakeLock = null;
 }
 
+export function playChime() {
+  const ctx = new AudioContext();
+  const now = ctx.currentTime;
+  const duration = 8;
+
+  // Tibetan singing bowl approximation — fundamental + two harmonics
+  [396, 792, 1188].forEach((freq, i) => {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime([0.5, 0.25, 0.12][i], now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  });
+
+  setTimeout(() => ctx.close(), (duration + 1) * 1000);
+}
+
 async function _onVisibilityChange() {
   if (document.visibilityState === 'visible') {
     if (audioCtx?.state === 'suspended') await audioCtx.resume();

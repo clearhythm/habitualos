@@ -14,53 +14,54 @@
   &:hover {
     text-decoration: none;
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   }
 
-  &:active {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
 .btn-primary {
   background-color: $color-primary;
   color: white;
 
-  &:hover {
-    background-color: $color-primary-dark;
-  }
-}
-
-.btn-success {
-  background-color: $color-success;
-  color: white;
-
-  &:hover {
-    background-color: darken($color-success, 10%);
-  }
+  &:hover { background-color: $color-primary-dark; }
 }
 
 .btn-secondary {
   background-color: $color-bg-muted;
   color: $color-text;
 
-  &:hover {
-    background-color: darken($color-bg-muted, 5%);
-  }
+  &:hover { background-color: $color-border-hover; }
 }
 
 .btn-danger {
   background-color: $color-danger;
   color: white;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid $color-border-hover;
+  color: $color-text;
 
   &:hover {
-    background-color: darken($color-danger, 10%);
+    background: $color-bg-muted;
+    border-color: $color-primary;
   }
+}
+
+.btn-quiet {
+  background: transparent;
+  border: none;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  cursor: pointer;
+  padding: $space-sm $space-md;
+  text-decoration: none;
+  display: inline-block;
+
+  &:hover { color: $color-text; text-decoration: none; }
 }
 
 .btn-sm {
@@ -68,58 +69,18 @@
   font-size: $font-size-sm;
 }
 
-.btn-ghost {
-  background: transparent;
-  border: 1px solid $color-border;
-  color: $color-text;
-
-  &:hover {
-    background: $color-bg-muted;
-    border-color: $color-primary;
-  }
-
-  html[data-theme="dark"] & {
-    border-color: $dark-color-border-hover;
-    color: $dark-color-text;
-
-    &:hover {
-      background: lighten($dark-color-bg, 5%);
-      border-color: $color-primary;
-    }
-  }
-}
-
 // Cards
 .card {
-  background: $color-bg;
+  background: $color-bg-surface;
   border: 1px solid $color-border;
   border-radius: 12px;
   padding: $space-lg;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    border-color: $color-border-hover;
     transform: translateY(-2px);
-  }
-
-  html[data-theme="dark"] & {
-    background: $dark-color-bg;
-    border-color: $dark-color-border;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-
-    &:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-      border-color: $dark-color-border-hover;
-    }
-  }
-}
-
-.card-clickable {
-  cursor: pointer;
-
-  &:hover {
-    border-color: $color-primary;
   }
 }
 
@@ -140,47 +101,26 @@
 }
 
 // Forms
-.form-group {
-  margin-bottom: $space-lg;
-}
-
-.label {
-  display: block;
-  font-weight: 500;
-  margin-bottom: $space-sm;
-  color: $color-text;
-}
-
 .input,
 .textarea {
   width: 100%;
   padding: $space-sm $space-md;
   font-size: $font-size-base;
   font-family: $font-family;
-  border: 1px solid $color-border;
+  background: $color-bg-muted;
+  border: 1px solid $color-border-hover;
   border-radius: 6px;
+  color: $color-text;
+  caret-color: $color-primary;
   transition: all 0.2s;
 
   &:focus {
     outline: none;
     border-color: $color-primary;
-    box-shadow: 0 0 0 3px rgba($color-primary, 0.1);
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.15);
   }
 
-  &::placeholder {
-    color: $color-text-muted;
-  }
-
-  html[data-theme="dark"] & {
-    background: $dark-color-border-hover;
-    border-color: $dark-color-border-hover;
-    color: $dark-color-text;
-
-    &:focus {
-      border-color: $color-primary;
-      background: $dark-color-bg;
-    }
-  }
+  &::placeholder { color: $color-text-muted; }
 }
 
 .textarea {
@@ -188,123 +128,258 @@
   resize: vertical;
 }
 
-// Chat interface
-.chat-container {
+.empty-state {
+  color: $color-text-muted;
+  text-align: center;
+  padding: $space-2xl 0;
+}
+
+// Practice setup
+.practice-setup {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  align-items: center;
+  gap: $space-xl;
+  padding-top: $space-2xl;
+  text-align: center;
 }
 
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: $space-md;
+.practice-setup {
   display: flex;
   flex-direction: column;
-  gap: $space-md;
-  border-radius: 8px;
-  margin-bottom: $space-md;
+  align-items: center;
+  gap: $space-xl;
 }
 
-.chat-message {
-  padding: $space-md;
-  border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word;
+.setup-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-sm;
+  width: 100%;
+  max-width: 320px;
 }
 
-.chat-message-user {
-  background-color: $color-primary;
-  color: white;
-  align-self: flex-end;
-  border-bottom-right-radius: 4px;
-}
-
-.chat-message-assistant {
-  background-color: white;
-  color: $color-text;
-  align-self: flex-start;
-  border: 1px solid $color-border;
-  border-bottom-left-radius: 4px;
-
-  html[data-theme="dark"] & {
-    background-color: $dark-color-bg;
-    color: $dark-color-text;
-    border-color: $dark-color-border;
-  }
-}
-
-.chat-form {
+.duration-presets {
   display: flex;
   gap: $space-sm;
-
-  .input {
-    flex: 1;
-  }
-
-  .btn {
-    white-space: nowrap;
-  }
 }
 
-// Progress bar
-.progress {
-  background-color: $color-bg-muted;
-  border-radius: 4px;
-  overflow: hidden;
-  height: 8px;
-  margin: $space-md 0;
-}
-
-.progress-bar {
-  height: 100%;
-  background-color: $color-primary;
-  transition: width 0.3s ease;
-}
-
-// Dark Mode Toggle (in sidemenu)
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: $space-md;
-  padding: $space-md;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+.duration-btn {
+  padding: $space-sm $space-md;
+  background: transparent;
+  border: 1px solid $color-border-hover;
+  border-radius: 20px;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
   cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  color: white;
-  font-size: 1rem;
-  width: 100%;
-  justify-content: space-between;
+  transition: all 0.15s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    border-color: $color-primary;
+    color: $color-text;
   }
 
-  .theme-icon {
-    font-size: $font-size-2xl;
+  &.active {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: white;
   }
 }
 
-// Breadcrumb
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: $space-sm;
-  margin-bottom: $space-lg;
+.custom-duration-input {
+  width: 100%;
+  padding: $space-sm $space-md;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text;
+  caret-color: $color-primary;
+  font-size: $font-size-base;
+  text-align: center;
+  outline: none;
+
+  &::placeholder { color: rgba(255, 255, 255, 0.25); transition: color 0.15s; }
+  &:focus::placeholder { color: transparent; }
+  &:focus { border-bottom-color: $color-primary; }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { -webkit-appearance: none; }
+}
+
+.practice-name-label {
   font-size: $font-size-sm;
   color: $color-text-muted;
+}
 
-  a {
-    color: $color-primary;
+.practice-name-input {
+  width: 100%;
+  max-width: 320px;
+  padding: $space-md;
+  font-size: $font-size-lg;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  color: $color-text;
+  caret-color: $color-primary;
+  outline: none;
 
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+  &::placeholder { color: rgba(255, 255, 255, 0.25); transition: color 0.15s; }
+  &:focus::placeholder { color: transparent; }
+  &:focus { border-bottom-color: $color-primary; }
+}
 
-  .separator {
-    color: $color-text-muted;
-  }
+.practice-label {
+  position: absolute;
+  top: $space-2xl;
+  left: 0;
+  right: 0;
+  font-size: $font-size-base;
+  color: $color-text-muted;
+  text-align: center;
+}
+
+.timer-complete-label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: -$space-md;
+  animation: fadeIn 0.4s ease;
+}
+
+.timer-icon-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: $space-md;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 1; }
+}
+
+.timer-finish-controls {
+  position: absolute;
+  bottom: $space-2xl;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-md;
+  padding: 0 $space-xl;
+  animation: fadeIn 0.2s ease;
+}
+
+.btn-finish {
+  width: 100%;
+  padding: $space-md $space-lg;
+  background: white;
+  color: #111;
+  border: none;
+  border-radius: 50px;
+  font-size: $font-size-base;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.9; }
+}
+
+.timer {
+  font-size: clamp(4rem, 20vw, 8rem);
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: $color-text;
+  line-height: 1;
+}
+
+.note-label {
+  font-size: $font-size-base;
+  color: $color-text;
+  align-self: flex-start;
+}
+
+.note-optional {
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+}
+
+.note-input {
+  width: 100%;
+  max-width: 560px;
+  min-height: 140px;
+  padding: $space-md;
+  background: $color-bg-muted;
+  border: 1px solid $color-border-hover;
+  border-radius: 8px;
+  color: $color-text;
+  caret-color: $color-primary;
+  font-size: $font-size-base;
+  font-family: $font-family;
+  resize: none;
+  outline: none;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { border-color: $color-primary; }
+}
+
+// Timer modal
+.timer-modal {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sound-toggle {
+  position: absolute;
+  top: $space-lg;
+  right: $space-lg;
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  opacity: 0.35;
+  padding: $space-sm;
+  line-height: 1;
+  transition: opacity 0.15s;
+  z-index: 1;
+
+  &:hover { opacity: 0.75; }
+}
+
+#timer-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-xl;
+}
+
+.note-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-lg;
+  width: 100%;
+  max-width: 560px;
+  padding: 0 $space-xl;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

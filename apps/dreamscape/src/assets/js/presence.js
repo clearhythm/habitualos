@@ -1,4 +1,5 @@
-import { rtdb, db, ref, set, onValue, onDisconnect, rtdbTimestamp, collection, addDoc, doc, updateDoc, serverTimestamp, onSnapshot } from './firebase.js';
+import { rtdb, db, ref, set, onValue, onDisconnect, rtdbTimestamp, doc, setDoc, updateDoc, collection, serverTimestamp, onSnapshot } from './firebase.js';
+import { makeId } from './utils.js';
 
 const PRESENCE_PATH = 'presence';
 const SESSIONS_COL = 'sessions';
@@ -7,6 +8,8 @@ let _userId = null;
 let _name = null;
 let _state = 'witnessing';
 let _activeSessionId = null;
+let _practiceType = null;
+let _startedAt = null;
 
 function _getUserId() {
   let id = localStorage.getItem('dp-userId');
@@ -21,6 +24,10 @@ function _getName() {
   return localStorage.getItem('dp-name') || 'Someone';
 }
 
+function _presenceRecord(state) {
+  return { _userId, _name, state, updatedAt: rtdbTimestamp() };
+}
+
 export function initPresence() {
   _userId = _getUserId();
   _name = _getName();
@@ -30,29 +37,15 @@ export function initPresence() {
 
   onValue(connectedRef, (snap) => {
     if (!snap.val()) return;
-
-    onDisconnect(userRef).set({
-      name: _name,
-      state: 'idle',
-      updatedAt: rtdbTimestamp(),
-    });
-
-    set(userRef, {
-      name: _name,
-      state: _state,
-      updatedAt: rtdbTimestamp(),
-    });
+    onDisconnect(userRef).set(_presenceRecord('idle'));
+    set(userRef, _presenceRecord(_state));
   });
 }
 
 export function setPresenceState(state) {
   _state = state;
   if (!_userId) return;
-  set(ref(rtdb, `${PRESENCE_PATH}/${_userId}`), {
-    name: _name,
-    state,
-    updatedAt: rtdbTimestamp(),
-  });
+  set(ref(rtdb, `${PRESENCE_PATH}/${_userId}`), _presenceRecord(state));
 }
 
 export function subscribeToCircle(callback) {
@@ -60,42 +53,52 @@ export function subscribeToCircle(callback) {
   return onValue(circleRef, (snap) => {
     const members = [];
     snap.forEach((child) => {
-      members.push({ userId: child.key, ...child.val() });
+      members.push({ _userId: child.key, ...child.val() });
     });
     callback(members);
   });
 }
 
-export async function startSession(practiceType) {
+export function startSession(practiceType) {
   setPresenceState('practicing');
-  const sessionRef = await addDoc(collection(db, SESSIONS_COL), {
-    userId: _userId,
-    name: _name,
-    state: 'active',
-    practiceType: practiceType || null,
-    startedAt: serverTimestamp(),
-  });
-  _activeSessionId = sessionRef.id;
-  return sessionRef.id;
+  _activeSessionId = makeId('sess');
+  _practiceType = practiceType || null;
+  _startedAt = new Date();
 }
 
 export async function endSession(note, durationSeconds) {
   if (!_activeSessionId) return;
-  await updateDoc(doc(db, SESSIONS_COL, _activeSessionId), {
-    state: 'completed',
+  const sessionId = _activeSessionId;
+  setDoc(doc(db, SESSIONS_COL, sessionId), {
+    _sessionId: sessionId,
+    _userId,
+    _name,
+    practiceType: _practiceType,
     note: note || null,
     duration: durationSeconds,
+    startedAt: _startedAt,
     stoppedAt: serverTimestamp(),
   });
+  setPresenceState('witnessing');
+}
+
+export function cancelSession() {
   _activeSessionId = null;
+  _practiceType = null;
+  _startedAt = null;
   setPresenceState('witnessing');
 }
 
 export function subscribeToSessions(callback) {
   return onSnapshot(collection(db, SESSIONS_COL), (snap) => {
-    const sessions = snap.docs.map(d => ({ sessionId: d.id, ...d.data() }));
+    const sessions = snap.docs.map(d => d.data());
     callback(sessions);
   });
+}
+
+export async function saveReflection(note) {
+  if (!_activeSessionId || !note) return;
+  await updateDoc(doc(db, SESSIONS_COL, _activeSessionId), { note });
 }
 
 export function getCurrentUserId() { return _userId; }
