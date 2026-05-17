@@ -1,6 +1,12 @@
+const TEST_USERS = [
+  { userId: 'u-test-erik',  name: 'Erik',  role: 'Note recipient (you)' },
+  { userId: 'u-test-sarah', name: 'Sarah', role: 'Circle member, note sender' },
+  { userId: 'u-test-frank', name: 'Frank', role: 'Circle member, no notes' },
+  { userId: 'u-test-roi',   name: "Ro'i",  role: 'Circle member, note sender' },
+];
+
 const seedStatus = document.getElementById('seed-status');
 
-// Render test users table from single source of truth
 document.getElementById('test-users-table').innerHTML =
   TEST_USERS.map(u => `<tr><td><code>${u.userId}</code></td><td>${u.name}</td><td>${u.role}</td></tr>`).join('');
 
@@ -23,8 +29,6 @@ document.querySelectorAll('.seed-btn').forEach(btn => {
       showStatus(`Seed failed: ${err.message}`, 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = btn.dataset.label || btn.textContent.replace('Seeding…', scenario);
-      // Restore original label
       const labels = {
         'no-notes':       'A — No notes',
         'notes-waiting':  'B — Notes waiting (locked)',
