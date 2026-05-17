@@ -5,7 +5,7 @@
 # Set "Package directory" to "apps/obi-wai-web" in Netlify UI.
 [build]
   base = "apps/obi-wai-web"
-  ignore = "[ -z \"$CACHED_COMMIT_REF\" ] && exit 1 || git -C $(git rev-parse --show-toplevel) diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/obi-wai-web/ packages/edge-functions/"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -qE '^(apps/obi-wai-web|packages/edge-functions)/'"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/obi-wai-web/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/obi-wai-web/netlify/edge-functions/_lib/ && pnpm --filter obi-wai-web build"
   publish = "_site"
   functions = "netlify/functions"

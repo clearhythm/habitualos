@@ -1,6 +1,6 @@
 [build]
   base = "apps/signal"
-  ignore = "cd $(git rev-parse --show-toplevel) && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/signal/ packages/"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -qE '^(apps/signal|packages)/'"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter signal build"
   publish = "_site"
   functions = "netlify/functions"

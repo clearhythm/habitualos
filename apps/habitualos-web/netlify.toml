@@ -4,6 +4,6 @@
 # =============================================================================
 [build]
   base = "apps/habitualos-web"
-  ignore = "cd $(git rev-parse --show-toplevel) && git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- apps/habitualos-web/"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -qE '^apps/habitualos-web/'"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter habitualos-web build"
   publish = "_site"
