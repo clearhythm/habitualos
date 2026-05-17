@@ -7,11 +7,6 @@ const TEST_USERS = {
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
 
-  const key = event.headers['x-admin-key'];
-  if (!key || key !== process.env.ADMIN_SECRET) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden' }) };
-  }
-
   const { scenario } = JSON.parse(event.body || '{}');
   const validScenarios = ['no-notes', 'notes-waiting', 'notes-unlocked', 'all-caught-up'];
   if (!validScenarios.includes(scenario)) {
