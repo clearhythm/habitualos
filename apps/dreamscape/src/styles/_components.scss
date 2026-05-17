@@ -1,3 +1,185 @@
+// Circle room — homepage
+.circle-room {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 80px);
+  gap: $space-xl;
+}
+
+.circle-stage {
+  position: relative;
+  width: 480px;
+  height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Outer rings container — sits behind center ring
+.outer-rings {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.community-ring {
+  position: absolute;
+  width: 473px;
+  height: 473px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.04);
+}
+
+.outer-ring-static {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.10);
+}
+
+.outer-ring {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 2px solid rgba($color-primary, 0.55);
+  animation: ring-pulse 3s ease-in-out infinite;
+
+  &:nth-child(2) { animation-delay: 0.6s; }
+  &:nth-child(3) { animation-delay: 1.2s; }
+  &:nth-child(4) { animation-delay: 1.8s; }
+}
+
+// Center ring — the self / practice button
+.center-ring {
+  position: relative;
+  z-index: 1;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  animation: ring-pulse 3s ease-in-out infinite;
+  cursor: pointer;
+
+  &[data-state="practicing"] {
+    animation-duration: 1.8s;
+    background: $color-primary;
+    box-shadow: 0 0 30px rgba($color-primary, 0.4);
+  }
+}
+
+.center-ring-label {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
+  text-align: center;
+  line-height: 1.4;
+}
+
+@keyframes ring-pulse {
+  0%   { transform: scale(0.92); opacity: 0.7; }
+  50%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(0.92); opacity: 0.7; }
+}
+
+.circle-quote {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  max-width: 220px;
+  animation: fadeIn 1.5s ease;
+
+  em { font-style: italic; }
+}
+
+.quote-attribution {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.6);
+  font-style: normal;
+}
+
+.circle-legend {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  font-size: $font-size-sm;
+}
+
+.legend-you       { color: rgba($color-primary, 0.9); }
+.legend-circle    { color: rgba($color-primary, 0.55); }
+.legend-community { color: rgba($color-primary, 0.25); }
+.legend-sep       { color: rgba($color-text-muted, 0.3); }
+
+// Name reveal
+.circle-presence {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: $space-xs;
+  text-align: center;
+  height: 11rem;
+}
+
+.circle-name {
+  font-size: $font-size-2xl;
+  color: rgba($color-text, 0.9);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+
+  &.visible { opacity: 1; }
+}
+
+.circle-descriptor {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.5);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+
+  &.visible { opacity: 1; }
+}
+
+.presence-dots {
+  position: relative;
+  width: 200px;
+  height: 90px;
+  margin-top: $space-md;
+}
+
+.presence-dot {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba($color-primary, 0);
+  transition: background 0.6s ease;
+
+  &.revealed {
+    background: rgba($color-primary, 0.2);
+  }
+
+  &.active {
+    background: rgba($color-primary, 0.7);
+  }
+}
+
+
 // Buttons
 .btn {
   display: inline-block;

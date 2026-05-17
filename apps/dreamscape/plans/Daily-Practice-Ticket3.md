@@ -1,38 +1,49 @@
-# Daily Practice — Ticket 3: Homepage Waveform Visualization
+# Daily Practice — Ticket 3: Homepage — The Circle
 
-The homepage is the room. A living visual that reflects how many people are present — not a dashboard, not a feed.
+The homepage is a living ambient room. You feel accompanied without being distracted by identity.
 
-## Requirements
+## Visual Design
 
-- Animated waveform rendered on `<canvas>`, always visible
-- Two ambient states driven by presence count:
-  - **Empty** (0 people): slow, sparse, low-amplitude breathing wave
-  - **Present** (1+ people): richer, slightly higher amplitude, warmer; more people = more complex layering
-- The waveform reflects *collective* presence only — not who specifically
-- Names appear ambientally as events happen: "Frank joined." / "Ro'i is practicing." / "Frank finished."
-  - Fade in, hold ~4 seconds, fade out
-  - Not a persistent list — just a quiet event stream
-- Link to session history (`/history/`) present but quiet — not centered
-- Link to start a practice (`/practice/`) — the primary action, but not aggressive
+**Center ring** — always present, represents you
+- Pulses from small to larger radius, continuously
+- Slow/gentle when witnessing, slightly more alive when practicing
+- Tapping it navigates to `/practice/`
+- Small muted label "practice" just below it
+
+**Outer rings** — one per other person currently present (state: witnessing or practicing)
+- Appear only when others are in the circle (not idle)
+- Same pulse behavior as center ring, keyed to their state
+- Slightly more opaque than center (you = full primary purple, others = ~55% opacity)
+- Positioned at a radius just beyond the center ring's max size
+- Tapping the outer ring area reveals names below (see below)
+- If no one else is present, outer rings are absent — room feels like solitude, not emptiness
+
+**Name reveal**
+- Tapping outer rings shows a small list of who is present, fades out after ~4 seconds
+- Format: first name only, state ("practicing" or "here")
+- Ambient by default, identity available on demand
+
+**Below the rings**
+- Quiet link: "your history" → `/history/`
 
 ## Data Source
 
-Subscribe to Firestore presence collection via `presence.js` from Ticket 1. Drive all visualization state from presence snapshots.
+`subscribeToCircle()` from `presence.js` — RTDB presence, push-based.
+Filter out idle members. Current user (`getCurrentUserId()`) drives the center ring.
 
-## Implementation Notes
+## Implementation
 
 - Page: `src/index.njk` + `src/assets/js/pages/home.js`
-- Canvas animation loop using `requestAnimationFrame`
-- Waveform: simple sine wave composition — base frequency + 1-2 harmonics that grow with presence count
-- Keep the math simple: this is ambience, not scientific visualization
-- Name events: listen for presence state changes in the `onSnapshot` callback, generate human-readable event strings, append to a queue that fades in/out via CSS opacity transitions
+- Canvas or pure CSS/SVG animation for the rings (prefer CSS — simpler, no canvas needed for this design)
+- CSS `@keyframes` pulse scaling the ring radius via `transform: scale()`
+- Outer rings: rendered dynamically from presence snapshot, added/removed as people join/leave
+- Name reveal: absolutely positioned text below rings, CSS opacity transition, auto-fade via setTimeout
 
 ## Definition of Done
 
-- Waveform animates on page load
-- When a second browser tab sets presence to `witnessing`, waveform visibly shifts
-- Name events appear and fade correctly as presence state changes
-
-## Testing Note (carry over from Ticket 2)
-
-- Verify RTDB presence is visible across clients: open two tabs (one incognito), start a session in one, confirm the other sees the presence state change in the waveform. This is the first point where RTDB presence has visible UI to test against.
+- Center ring pulses continuously on page load
+- Navigates to `/practice/` on tap
+- Outer rings appear/disappear as presence changes (test with two tabs)
+- Tapping outer rings reveals names, fades after 4 seconds
+- "your history" link present and quiet
+- RTDB presence verified across two clients (carry-over from Ticket 2 test)
