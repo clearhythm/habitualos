@@ -1,0 +1,43 @@
+/* Loading pulse */
+.loading-placeholder {
+  color: #cbd5e1;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* Keep page bg white — explicit contrast with dark app */
+body { background-color: #f4f6fb; }
+
+.navbar { border-bottom: 1px solid #e6e7e9; background: #fff; }
+.navbar-brand a { color: #1e293b; text-decoration: none; font-weight: 600; }
+
+.card-header { background: #fff; }
+
+.seed-btn { min-width: 180px; }
+
+#seed-status {
+  padding: .75rem 1rem;
+  border-radius: .375rem;
+  font-size: .875rem;
+}
+
+#seed-status.success {
+  background: #f0fdf4;
+  border-left: 4px solid #22c55e;
+  color: #166534;
+}
+
+#seed-status.error {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+}
+
+.table-vcenter td,
+.table-vcenter th { vertical-align: middle; }
+
+.table tbody tr:hover { background-color: #f8fafc; }
