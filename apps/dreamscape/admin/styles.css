@@ -10,7 +10,8 @@
 }
 
 /* Keep page bg white — explicit contrast with dark app */
-body { background-color: #f4f6fb; }
+html, body { background-color: #f4f6fb; min-height: 100vh; }
+.page { overflow: visible; min-height: 100vh; }
 
 .navbar { border-bottom: 1px solid #e6e7e9; background: #fff; }
 .navbar-brand a { color: #1e293b; text-decoration: none; font-weight: 600; }
@@ -43,7 +44,8 @@ body { background-color: #f4f6fb; }
 .table tbody tr:hover { background-color: #f8fafc; }
 
 /* Nav */
-.admin-nav-link { color: #64748b; font-weight: 500; padding: .375rem .75rem; border-radius: .375rem; }
+.admin-nav-center { position: absolute; left: 50%; transform: translateX(-50%); }
+.admin-nav-link { color: #64748b; font-weight: 500; padding: .375rem .75rem; border-radius: .375rem; text-decoration: none; }
 .admin-nav-link:hover { color: #1e293b; background: #f1f5f9; }
 .admin-nav-link.active { color: #1e293b; background: #f1f5f9; }
 
