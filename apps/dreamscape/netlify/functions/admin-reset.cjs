@@ -1,4 +1,4 @@
-const { query, remove } = require('@habitualos/db-core');
+const { query, remove, get } = require('@habitualos/db-core');
 const { TEST_USER_IDS } = require('./_utils/test-users.cjs');
 
 exports.handler = async (event) => {
@@ -30,6 +30,9 @@ exports.handler = async (event) => {
     for (const s of (sessions || [])) {
       deletions.push(remove({ collection: 'sessions', id: s._sessionId }));
     }
+
+    // user doc
+    deletions.push(remove({ collection: 'users', id: userId }));
   }
 
   await Promise.all(deletions);

@@ -15,7 +15,8 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid scenario' }) };
   }
 
-  // Ensure connections exist between erik and each circle member
+  // Ensure user docs and connections exist for all test users
+  await ensureUsers();
   await ensureConnections();
 
   // Clear existing notes for erik
@@ -35,6 +36,19 @@ exports.handler = async (event) => {
 
   return { statusCode: 200, body: JSON.stringify({ ok: true, scenario }) };
 };
+
+async function ensureUsers() {
+  await Promise.all(TEST_USERS.map(async (u) => {
+    const existing = await require('@habitualos/db-core').get({ collection: 'users', id: u.userId });
+    if (!existing) {
+      await create({
+        collection: 'users',
+        id: u.userId,
+        data: { _userId: u.userId, _name: u.name, joinedAt: Date.now(), inviteToken: 'test' },
+      });
+    }
+  }));
+}
 
 async function ensureConnections() {
   const members = [SARAH, FRANK, ROI];
