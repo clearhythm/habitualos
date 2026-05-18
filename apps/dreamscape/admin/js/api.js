@@ -16,7 +16,7 @@ async function adminFetch(path, options = {}) {
 }
 
 window.AdminAPI = {
-  getCircle:    ()             => adminFetch('admin-circle'),
+  getUsers:     ()             => adminFetch('admin-users'),
   getSessions:  ()             => adminFetch('admin-sessions'),
   seed:         (scenario)     => adminFetch('admin-seed', { method: 'POST', body: JSON.stringify({ scenario }) }),
   reset:        ()             => adminFetch('admin-reset', { method: 'POST' }),

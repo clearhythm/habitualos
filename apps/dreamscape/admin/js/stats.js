@@ -30,7 +30,7 @@ async function loadUsers() {
   const tbody = document.getElementById('users-table');
   tbody.innerHTML = loadingRow(4);
   try {
-    const { members } = await AdminAPI.getCircle();
+    const { members } = await AdminAPI.getUsers();
     if (!members.length) {
       tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No users yet</td></tr>`;
       return;

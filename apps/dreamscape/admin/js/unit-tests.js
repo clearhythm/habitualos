@@ -37,9 +37,9 @@ const TESTS = [
     },
   },
   {
-    name: 'admin-circle: GET — returns members array',
+    name: 'admin-users: GET — returns members array',
     async run() {
-      const data = await AdminAPI.getCircle();
+      const data = await AdminAPI.getUsers();
       assert(Array.isArray(data.members), `expected members array, got: ${JSON.stringify(data)}`);
     },
   },
