@@ -10,8 +10,7 @@
 }
 
 /* Keep page bg white — explicit contrast with dark app */
-html, body { background-color: #f4f6fb; min-height: 100vh; }
-.page { overflow: visible; min-height: 100vh; }
+html, body, .page, .page-wrapper, .page-body { background-color: #f4f6fb; }
 
 .navbar { border-bottom: 1px solid #e6e7e9; background: #fff; }
 .navbar-brand a { color: #1e293b; text-decoration: none; font-weight: 600; }
