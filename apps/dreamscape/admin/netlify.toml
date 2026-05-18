@@ -2,6 +2,7 @@
   publish = "."
   command = "cd $(git rev-parse --show-toplevel) && pnpm install"
   functions = "../netlify/functions"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -qE '^(apps/dreamscape/admin|apps/dreamscape/netlify|packages)/'"
 
 [functions]
   node_bundler = "esbuild"
