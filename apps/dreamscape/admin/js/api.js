@@ -26,4 +26,5 @@ window.AdminAPI = {
   circleData:   (userId)       => adminFetch(`circle-data?userId=${encodeURIComponent(userId)}`),
   notesUnlock:  (userId)       => adminFetch('notes-unlock', { method: 'POST', body: JSON.stringify({ userId }) }),
   notesMarkRead:(userId, fromUserId) => adminFetch('notes-mark-read', { method: 'POST', body: JSON.stringify({ userId, fromUserId }) }),
+  getLogs:      ()             => adminFetch('admin-logs'),
 };

@@ -15,6 +15,11 @@
         <h1 class="navbar-brand mb-0">
           <a href=".">Daily Practice Admin</a>
         </h1>
+        <div class="navbar-nav flex-row gap-1 mx-auto">
+          <a href="#" class="nav-link admin-nav-link active" data-view="usage">Usage</a>
+          <a href="#" class="nav-link admin-nav-link" data-view="testing">Testing</a>
+          <a href="#" class="nav-link admin-nav-link" data-view="logs">Logs</a>
+        </div>
         <div class="navbar-nav flex-row order-md-last">
           <span class="badge bg-green-lt">Zero Trust</span>
         </div>
@@ -25,142 +30,176 @@
       <div class="page-body">
         <div class="container-xl">
 
-          <!-- Unit Tests -->
-          <div class="row row-deck row-cards mb-4">
-            <div class="col-12">
-              <h2 class="mb-3">Unit Tests</h2>
-            </div>
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">API Endpoints</h3>
-                  <div class="card-options">
-                    <button class="btn btn-sm btn-primary" id="run-tests-btn">Run all tests</button>
+          <!-- Usage -->
+          <div id="view-usage" class="admin-view">
+            <div class="row row-deck row-cards">
+              <div class="col-12">
+                <h2 class="mb-3">Stats / Usage</h2>
+              </div>
+
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Users</h3>
+                    <div class="card-options">
+                      <button class="btn btn-sm btn-outline-secondary" id="refresh-stats">Refresh</button>
+                    </div>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-vcenter card-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>User ID</th>
+                            <th>Last practiced</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody id="users-table">
+                          <tr><td colspan="4" class="text-center text-muted py-3">Loading…</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
-                <div class="card-body">
-                  <p class="text-muted small mb-3">
-                    Runs live assertions against all API endpoints using test users.
-                    Seed scenario B first to ensure notes exist for unlock/read tests.
-                  </p>
-                  <div id="test-results" hidden></div>
+              </div>
+
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Recent Sessions</h3>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-vcenter card-table">
+                        <thead>
+                          <tr>
+                            <th>User</th>
+                            <th>Started</th>
+                            <th>Duration</th>
+                            <th>State</th>
+                            <th>Note</th>
+                          </tr>
+                        </thead>
+                        <tbody id="sessions-table">
+                          <tr><td colspan="5" class="text-center text-muted py-3">Loading…</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Scenarios -->
-          <div class="row row-deck row-cards mb-4">
-            <div class="col-12">
-              <h2 class="mb-3">Scenarios</h2>
-            </div>
-
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Seed Test Scenarios</h3>
-                </div>
-                <div class="card-body">
-                  <p class="text-muted small mb-3">
-                    Seeds a fixed test user (<code>u-test-erik</code>) into connections with the given note/unlock state.
-                    Use these to verify the circle page renders each state correctly.
-                  </p>
-                  <div class="d-flex flex-wrap gap-2 mb-3">
-                    <button class="btn btn-outline-secondary seed-btn" data-scenario="no-notes">
-                      A — No notes
-                    </button>
-                    <button class="btn btn-outline-warning seed-btn" data-scenario="notes-waiting">
-                      B — Notes waiting (locked)
-                    </button>
-                    <button class="btn btn-outline-success seed-btn" data-scenario="notes-unlocked">
-                      C — Notes unlocked
-                    </button>
-                    <button class="btn btn-outline-info seed-btn" data-scenario="all-caught-up">
-                      D — All caught up
-                    </button>
+          <!-- Testing -->
+          <div id="view-testing" class="admin-view" hidden>
+            <div class="row row-deck row-cards">
+              <div class="col-12">
+                <h2 class="mb-3">Unit Tests</h2>
+              </div>
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">API Endpoints</h3>
+                    <div class="card-options">
+                      <button class="btn btn-sm btn-primary" id="run-tests-btn">Run all tests</button>
+                    </div>
                   </div>
-                  <div>
-                    <button class="btn btn-outline-danger" id="reset-btn">Reset test data</button>
+                  <div class="card-body">
+                    <p class="text-muted small mb-3">
+                      Runs live assertions against all API endpoints using test users.
+                      Seed scenario B first to ensure notes exist for unlock/read tests.
+                    </p>
+                    <div id="test-results" hidden></div>
                   </div>
-                  <div id="seed-status" class="mt-3" hidden></div>
                 </div>
               </div>
-            </div>
 
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Test Users</h3>
+              <div class="col-12">
+                <h2 class="mb-3">Scenarios</h2>
+              </div>
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Seed Test Scenarios</h3>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-muted small mb-3">
+                      Seeds test users into the <code>users</code> collection, creates connections,
+                      and sets note/unlock state for <code>u-test-erik</code>.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      <button class="btn btn-outline-secondary seed-btn" data-scenario="no-notes">
+                        A — No notes
+                      </button>
+                      <button class="btn btn-outline-warning seed-btn" data-scenario="notes-waiting">
+                        B — Notes waiting (locked)
+                      </button>
+                      <button class="btn btn-outline-success seed-btn" data-scenario="notes-unlocked">
+                        C — Notes unlocked
+                      </button>
+                      <button class="btn btn-outline-info seed-btn" data-scenario="all-caught-up">
+                        D — All caught up
+                      </button>
+                    </div>
+                    <div>
+                      <button class="btn btn-outline-danger" id="reset-btn">Reset test data</button>
+                    </div>
+                    <div id="seed-status" class="mt-3" hidden></div>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <table class="table table-sm">
-                    <thead>
-                      <tr><th>ID</th><th>Name</th><th>Role</th></tr>
-                    </thead>
-                    <tbody id="test-users-table"></tbody>
-                  </table>
+              </div>
+
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Test Users</h3>
+                  </div>
+                  <div class="card-body">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr><th>ID</th><th>Name</th><th>Role</th></tr>
+                      </thead>
+                      <tbody id="test-users-table"></tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Stats / Usage -->
-          <div class="row row-deck row-cards">
-            <div class="col-12">
-              <h2 class="mb-3">Stats / Usage</h2>
-            </div>
-
-            <!-- Users -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Users</h3>
-                  <div class="card-options">
-                    <button class="btn btn-sm btn-outline-secondary" id="refresh-stats">Refresh</button>
-                  </div>
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>User ID</th>
-                          <th>Last practiced</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody id="users-table">
-                        <tr><td colspan="4" class="text-center text-muted py-3">Loading…</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+          <!-- Logs -->
+          <div id="view-logs" class="admin-view" hidden>
+            <div class="row row-deck row-cards">
+              <div class="col-12">
+                <h2 class="mb-3">API Logs</h2>
               </div>
-            </div>
-
-            <!-- Recent sessions -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Recent Sessions</h3>
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
-                      <thead>
-                        <tr>
-                          <th>User</th>
-                          <th>Started</th>
-                          <th>Duration</th>
-                          <th>State</th>
-                          <th>Note</th>
-                        </tr>
-                      </thead>
-                      <tbody id="sessions-table">
-                        <tr><td colspan="5" class="text-center text-muted py-3">Loading…</td></tr>
-                      </tbody>
-                    </table>
+              <div class="col-12">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 class="card-title">Recent activity</h3>
+                    <div class="card-options">
+                      <button class="btn btn-sm btn-outline-secondary" id="refresh-logs">Refresh</button>
+                    </div>
+                  </div>
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-vcenter card-table">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Result</th>
+                            <th>Params / Error</th>
+                          </tr>
+                        </thead>
+                        <tbody id="logs-table">
+                          <tr><td colspan="4" class="text-center text-muted py-3">Load logs to begin</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -174,8 +213,10 @@
   </div>
 
   <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
   <script src="js/unit-tests.js"></script>
   <script src="js/testing.js"></script>
   <script src="js/stats.js"></script>
+  <script src="js/logs.js"></script>
 </body>
 </html>
