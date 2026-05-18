@@ -4,7 +4,7 @@
 # =============================================================================
 [build]
   base = "apps/dreamscape"
-  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -qE '^(apps/dreamscape|packages/edge-functions)/'"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -E '^(apps/dreamscape|packages/edge-functions)/' | grep -qvE '^apps/dreamscape/admin/'"
   command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/dreamscape/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/dreamscape/netlify/edge-functions/_lib/ && pnpm --filter dreamscape build"
   publish = "_site"
   functions = "netlify/functions"
