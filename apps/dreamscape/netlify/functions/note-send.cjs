@@ -1,4 +1,4 @@
-const { create, uniqueId } = require('@habitualos/db-core');
+const api = require('./_utils/api.cjs');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
@@ -8,21 +8,6 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'fromUserId, toUserId, and text required' }) };
   }
 
-  const _noteId = uniqueId('note');
-  await create({
-    collection: 'notes',
-    id: _noteId,
-    data: {
-      _noteId,
-      _fromUserId: fromUserId,
-      _fromName: fromName || '',
-      _toUserId: toUserId,
-      text: text.trim(),
-      sentAt: Date.now(),
-      unlockedAt: null,
-      readAt: null,
-    },
-  });
-
+  const _noteId = await api.createNote({ fromUserId, fromName, toUserId, text });
   return { statusCode: 200, body: JSON.stringify({ _noteId }) };
 };
