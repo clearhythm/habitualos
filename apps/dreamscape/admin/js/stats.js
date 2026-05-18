@@ -1,3 +1,7 @@
+const MAIN_APP_URL = window.location.hostname === 'localhost'
+  ? 'http://localhost:8888'
+  : 'https://daily.habitualos.com';
+
 function formatDate(ts) {
   if (!ts) return '—';
   return new Date(ts).toLocaleString('en-US', {
@@ -22,26 +26,29 @@ function errorRow(cols, msg) {
   return `<tr><td colspan="${cols}" class="text-center text-danger py-3">${msg}</td></tr>`;
 }
 
-async function loadCircle() {
-  const tbody = document.getElementById('circle-table');
-  tbody.innerHTML = loadingRow(5);
+async function loadUsers() {
+  const tbody = document.getElementById('users-table');
+  tbody.innerHTML = loadingRow(4);
   try {
     const { members } = await AdminAPI.getCircle();
     if (!members.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No members yet</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No users yet</td></tr>`;
       return;
     }
     tbody.innerHTML = members.map(m => `
       <tr>
-        <td><strong>${m.name}</strong></td>
+        <td><strong>${m.name || '—'}</strong></td>
         <td><code class="text-muted">${m.userId}</code></td>
-        <td>${formatDate(m.joinedAt)}</td>
         <td>${m.lastPracticedAt ? formatDate(m.lastPracticedAt) : '—'}</td>
-        <td>${m.sessionCount ?? '—'}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary sign-in-as-btn" data-userid="${m.userId}">
+            Sign in as…
+          </button>
+        </td>
       </tr>
     `).join('');
   } catch (err) {
-    tbody.innerHTML = errorRow(5, err.message);
+    tbody.innerHTML = errorRow(4, err.message);
   }
 }
 
@@ -56,10 +63,10 @@ async function loadSessions() {
     }
     tbody.innerHTML = sessions.map(s => `
       <tr>
-        <td>${s.name || s.userId}</td>
+        <td>${s._name || s._userId}</td>
         <td>${formatDate(s.startedAt)}</td>
         <td>${formatDuration(s.duration)}</td>
-        <td><span class="badge ${s.state === 'completed' ? 'bg-green-lt' : 'bg-yellow-lt'}">${s.state}</span></td>
+        <td><span class="badge ${s.state === 'completed' ? 'bg-green-lt' : 'bg-yellow-lt'}">${s.state || '—'}</span></td>
         <td class="text-muted small">${s.note ? s.note.substring(0, 60) : '—'}</td>
       </tr>
     `).join('');
@@ -68,7 +75,27 @@ async function loadSessions() {
   }
 }
 
-document.getElementById('refresh-circle').addEventListener('click', () => {
-  loadCircle();
+document.getElementById('refresh-stats').addEventListener('click', () => {
+  loadUsers();
   loadSessions();
 });
+
+document.getElementById('users-table').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.sign-in-as-btn');
+  if (!btn) return;
+  const targetUserId = btn.dataset.userid;
+  btn.disabled = true;
+  btn.textContent = 'Opening…';
+  try {
+    const { token } = await AdminAPI.signInAs(targetUserId);
+    window.open(`${MAIN_APP_URL}/?su=${token}`, '_blank');
+  } catch (err) {
+    alert(`Sign in failed: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign in as…';
+  }
+});
+
+loadUsers();
+loadSessions();

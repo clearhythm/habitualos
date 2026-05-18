@@ -16,11 +16,14 @@ async function adminFetch(path, options = {}) {
 }
 
 window.AdminAPI = {
-  getCircle:   ()         => adminFetch('admin-circle'),
-  getSessions: ()         => adminFetch('admin-sessions'),
-  seed:        (scenario) => adminFetch('admin-seed', {
-    method: 'POST',
-    body: JSON.stringify({ scenario }),
-  }),
-  reset:       ()         => adminFetch('admin-reset', { method: 'POST' }),
+  getCircle:    ()             => adminFetch('admin-circle'),
+  getSessions:  ()             => adminFetch('admin-sessions'),
+  seed:         (scenario)     => adminFetch('admin-seed', { method: 'POST', body: JSON.stringify({ scenario }) }),
+  reset:        ()             => adminFetch('admin-reset', { method: 'POST' }),
+  signInAs:     (targetUserId) => adminFetch('admin-sign-in-as', { method: 'POST', body: JSON.stringify({ targetUserId }) }),
+  // direct API calls for unit tests
+  noteSend:     (body)         => adminFetch('note-send', { method: 'POST', body: JSON.stringify(body) }),
+  circleData:   (userId)       => adminFetch(`circle-data?userId=${encodeURIComponent(userId)}`),
+  notesUnlock:  (userId)       => adminFetch('notes-unlock', { method: 'POST', body: JSON.stringify({ userId }) }),
+  notesMarkRead:(userId, fromUserId) => adminFetch('notes-mark-read', { method: 'POST', body: JSON.stringify({ userId, fromUserId }) }),
 };

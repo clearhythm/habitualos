@@ -41,3 +41,17 @@ body { background-color: #f4f6fb; }
 .table-vcenter th { vertical-align: middle; }
 
 .table tbody tr:hover { background-color: #f8fafc; }
+
+/* Unit test results */
+#test-results { display: flex; flex-direction: column; gap: .375rem; }
+
+.test-result {
+  padding: .5rem .75rem;
+  border-radius: .375rem;
+  font-size: .875rem;
+  font-family: ui-monospace, monospace;
+}
+
+.test-result--running { background: #f8fafc; color: #64748b; }
+.test-result--pass    { background: #f0fdf4; color: #166534; }
+.test-result--fail    { background: #fef2f2; color: #991b1b; }

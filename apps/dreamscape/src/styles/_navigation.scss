@@ -189,3 +189,15 @@
 @media (min-width: 769px) {
   .sidemenu-left { max-width: 40%; }
 }
+
+.nav-badge {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e8704a;
+  margin-left: 6px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}

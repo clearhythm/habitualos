@@ -80,6 +80,12 @@ export async function endSession(note, durationSeconds) {
     stoppedAt: serverTimestamp(),
   });
   setPresenceState('witnessing');
+  // fire-and-forget: unlock any notes waiting for this user's practice
+  fetch('/api/notes-unlock', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: _userId }),
+  }).catch(() => {});
 }
 
 export function cancelSession() {

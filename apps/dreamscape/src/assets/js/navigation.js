@@ -7,6 +7,43 @@
 // - Auto-close menu on link click
 // ------------------------------------------------------
 
+// ?su= sign-in-as: validate one-time admin token and store userId
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const su = params.get('su');
+  if (!su) return;
+  try {
+    const res = await fetch('/api/auth-as', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: su }),
+    });
+    if (res.ok) {
+      const { userId } = await res.json();
+      localStorage.setItem('dp-userId', userId);
+    }
+  } catch (_) {}
+  params.delete('su');
+  const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+  window.history.replaceState({}, '', newUrl);
+})();
+
+// Nav badge: show dot on Circle link when there are unread notes
+(async () => {
+  const userId = localStorage.getItem('dp-userId');
+  if (!userId) return;
+  try {
+    const res  = await fetch(`/api/circle-data?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    const notes = data.receivedNotes || [];
+    const hasUnread = notes.some(n => n.unlockedAt && !n.readAt);
+    if (hasUnread) {
+      const badge = document.getElementById('nav-circle-badge');
+      if (badge) badge.hidden = false;
+    }
+  } catch (_) {}
+})();
+
 // Scroll handler: Add background to navbar after scrolling
 function updateNavbar() {
   const navbar = document.querySelector('.navbar');

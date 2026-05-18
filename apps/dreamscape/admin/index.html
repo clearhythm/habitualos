@@ -25,74 +25,34 @@
       <div class="page-body">
         <div class="container-xl">
 
-          <!-- Activity -->
+          <!-- Unit Tests -->
           <div class="row row-deck row-cards mb-4">
             <div class="col-12">
-              <h2 class="mb-3">Activity</h2>
+              <h2 class="mb-3">Unit Tests</h2>
             </div>
-
-            <!-- Circle members -->
             <div class="col-12">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Circle Members</h3>
+                  <h3 class="card-title">API Endpoints</h3>
                   <div class="card-options">
-                    <button class="btn btn-sm btn-outline-secondary" id="refresh-circle">Refresh</button>
+                    <button class="btn btn-sm btn-primary" id="run-tests-btn">Run all tests</button>
                   </div>
                 </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>User ID</th>
-                          <th>Joined</th>
-                          <th>Last practiced</th>
-                          <th>Sessions</th>
-                        </tr>
-                      </thead>
-                      <tbody id="circle-table">
-                        <tr><td colspan="5" class="text-center text-muted py-3">Enter admin key to load</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Recent sessions -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <h3 class="card-title">Recent Sessions</h3>
-                </div>
-                <div class="card-body p-0">
-                  <div class="table-responsive">
-                    <table class="table table-vcenter card-table">
-                      <thead>
-                        <tr>
-                          <th>User</th>
-                          <th>Started</th>
-                          <th>Duration</th>
-                          <th>State</th>
-                          <th>Note</th>
-                        </tr>
-                      </thead>
-                      <tbody id="sessions-table">
-                        <tr><td colspan="5" class="text-center text-muted py-3">Enter admin key to load</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
+                <div class="card-body">
+                  <p class="text-muted small mb-3">
+                    Runs live assertions against all API endpoints using test users.
+                    Seed scenario B first to ensure notes exist for unlock/read tests.
+                  </p>
+                  <div id="test-results" hidden></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Testing -->
-          <div class="row row-deck row-cards">
+          <!-- Scenarios -->
+          <div class="row row-deck row-cards mb-4">
             <div class="col-12">
-              <h2 class="mb-3">Testing</h2>
+              <h2 class="mb-3">Scenarios</h2>
             </div>
 
             <div class="col-12">
@@ -102,7 +62,7 @@
                 </div>
                 <div class="card-body">
                   <p class="text-muted small mb-3">
-                    Seeds a fixed test user (<code>u-test-alice</code>) into the circle with the given note/unlock state.
+                    Seeds a fixed test user (<code>u-test-erik</code>) into connections with the given note/unlock state.
                     Use these to verify the circle page renders each state correctly.
                   </p>
                   <div class="d-flex flex-wrap gap-2 mb-3">
@@ -142,8 +102,71 @@
                 </div>
               </div>
             </div>
-
           </div>
+
+          <!-- Stats / Usage -->
+          <div class="row row-deck row-cards">
+            <div class="col-12">
+              <h2 class="mb-3">Stats / Usage</h2>
+            </div>
+
+            <!-- Users -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Users</h3>
+                  <div class="card-options">
+                    <button class="btn btn-sm btn-outline-secondary" id="refresh-stats">Refresh</button>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                      <thead>
+                        <tr>
+                          <th>Name</th>
+                          <th>User ID</th>
+                          <th>Last practiced</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody id="users-table">
+                        <tr><td colspan="4" class="text-center text-muted py-3">Loading…</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent sessions -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Recent Sessions</h3>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Started</th>
+                          <th>Duration</th>
+                          <th>State</th>
+                          <th>Note</th>
+                        </tr>
+                      </thead>
+                      <tbody id="sessions-table">
+                        <tr><td colspan="5" class="text-center text-muted py-3">Loading…</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -151,7 +174,8 @@
   </div>
 
   <script src="js/api.js"></script>
-  <script src="js/activity.js"></script>
+  <script src="js/unit-tests.js"></script>
   <script src="js/testing.js"></script>
+  <script src="js/stats.js"></script>
 </body>
 </html>
