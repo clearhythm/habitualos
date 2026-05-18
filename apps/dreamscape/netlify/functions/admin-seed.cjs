@@ -32,8 +32,8 @@ exports.handler = async (event) => {
     await api.createNote({ fromUserId: SARAH, fromName: 'Sarah', toUserId: ERIK, text: 'Test note from Sarah (waiting)' });
     await api.createNote({ fromUserId: ROI,   fromName: "Ro'i",  toUserId: ERIK, text: "Test note from Ro'i (waiting)" });
   } else if (scenario === 'notes-unlocked') {
-    const noteIdSarah = await api.createNote({ fromUserId: SARAH, fromName: 'Sarah', toUserId: ERIK, text: 'Test note from Sarah (unlocked)' });
-    const noteIdRoi   = await api.createNote({ fromUserId: ROI,   fromName: "Ro'i",  toUserId: ERIK, text: "Test note from Ro'i (unlocked)" });
+    await api.createNote({ fromUserId: SARAH, fromName: 'Sarah', toUserId: ERIK, text: 'Test note from Sarah (unlocked)' });
+    await api.createNote({ fromUserId: ROI,   fromName: "Ro'i",  toUserId: ERIK, text: "Test note from Ro'i (unlocked)" });
     await api.unlockNotes(ERIK);
   }
   // no-notes and all-caught-up: connections exist, no notes

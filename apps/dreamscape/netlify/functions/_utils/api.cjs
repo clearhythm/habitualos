@@ -4,40 +4,52 @@ const dbConnections = require('../_services/db-connections.cjs');
 const dbNotes       = require('../_services/db-notes.cjs');
 const dbSessions    = require('../_services/db-sessions.cjs');
 
-// Log every API action — fire and forget
-function log(action, params = {}) {
+async function call(action, params, fn) {
+  let result, error;
+  try {
+    result = await fn();
+  } catch (err) {
+    error = err.message || String(err);
+    create({
+      collection: 'api-logs',
+      id: uniqueId('log'),
+      data: { action, params, error, createdAt: Date.now() },
+    }).catch(() => {});
+    throw err;
+  }
   create({
     collection: 'api-logs',
     id: uniqueId('log'),
-    data: { action, params, createdAt: Date.now() },
+    data: { action, params, result, createdAt: Date.now() },
   }).catch(() => {});
+  return result;
 }
 
 const api = {
   // Users
-  upsertUser(params)      { log('user.upsert', params);       return dbUsers.upsertUser(params); },
-  getUser(userId)         { log('user.get', { userId });       return dbUsers.getUser(userId); },
-  getAllUsers()            { log('user.getAll');                return dbUsers.getAllUsers(); },
-  deleteUser(userId)      { log('user.delete', { userId });    return dbUsers.deleteUser(userId); },
+  upsertUser(p)       { return call('user.upsert',              { userId: p.userId },         () => dbUsers.upsertUser(p)); },
+  getUser(userId)     { return call('user.get',                 { userId },                   () => dbUsers.getUser(userId)); },
+  getAllUsers()        { return call('user.getAll',              {},                           () => dbUsers.getAllUsers()); },
+  deleteUser(userId)  { return call('user.delete',              { userId },                   () => dbUsers.deleteUser(userId)); },
 
   // Connections
-  ensureConnection(params)          { log('connection.ensure', params);          return dbConnections.ensureConnection(params); },
-  getConnectionsForUser(userId)     { log('connection.getForUser', { userId });  return dbConnections.getConnectionsForUser(userId); },
-  deleteConnectionsForUser(userId)  { log('connection.deleteForUser', { userId }); return dbConnections.deleteConnectionsForUser(userId); },
+  ensureConnection(p)           { return call('connection.ensure',       { userAId: p.userAId, userBId: p.userBId }, () => dbConnections.ensureConnection(p)); },
+  getConnectionsForUser(userId) { return call('connection.getForUser',   { userId },           () => dbConnections.getConnectionsForUser(userId)); },
+  deleteConnectionsForUser(uid) { return call('connection.deleteForUser',{ userId: uid },      () => dbConnections.deleteConnectionsForUser(uid)); },
 
   // Notes
-  createNote(params)                { log('note.create', { fromUserId: params.fromUserId, toUserId: params.toUserId }); return dbNotes.createNote(params); },
-  getReceivedNotes(userId)          { log('note.getReceived', { userId });       return dbNotes.getReceivedNotes(userId); },
-  getSentNotes(userId)              { log('note.getSent', { userId });           return dbNotes.getSentNotes(userId); },
-  unlockNotes(userId)               { log('note.unlock', { userId });            return dbNotes.unlockNotes(userId); },
-  markNotesRead(params)             { log('note.markRead', params);              return dbNotes.markNotesRead(params); },
-  deleteNotesForUser(userId)        { log('note.deleteForUser', { userId });     return dbNotes.deleteNotesForUser(userId); },
+  createNote(p)                 { return call('note.create',     { fromUserId: p.fromUserId, toUserId: p.toUserId }, () => dbNotes.createNote(p)); },
+  getReceivedNotes(userId)      { return call('note.getReceived',{ userId },                  () => dbNotes.getReceivedNotes(userId)); },
+  getSentNotes(userId)          { return call('note.getSent',    { userId },                  () => dbNotes.getSentNotes(userId)); },
+  unlockNotes(userId)           { return call('note.unlock',     { userId },                  () => dbNotes.unlockNotes(userId)); },
+  markNotesRead(p)              { return call('note.markRead',   p,                           () => dbNotes.markNotesRead(p)); },
+  deleteNotesForUser(userId)    { return call('note.deleteForUser',{ userId },                () => dbNotes.deleteNotesForUser(userId)); },
 
   // Sessions
-  getLastSessionForUser(userId)     { log('session.getLast', { userId });        return dbSessions.getLastSessionForUser(userId); },
-  getRecentSessions(limit)          { log('session.getRecent', { limit });       return dbSessions.getRecentSessions(limit); },
-  getSessionsForUser(userId)        { log('session.getForUser', { userId });     return dbSessions.getSessionsForUser(userId); },
-  deleteSessionsForUser(userId)     { log('session.deleteForUser', { userId });  return dbSessions.deleteSessionsForUser(userId); },
+  getLastSessionForUser(userId) { return call('session.getLast',   { userId },               () => dbSessions.getLastSessionForUser(userId)); },
+  getRecentSessions(limit)      { return call('session.getRecent', { limit },                () => dbSessions.getRecentSessions(limit)); },
+  getSessionsForUser(userId)    { return call('session.getForUser',{ userId },               () => dbSessions.getSessionsForUser(userId)); },
+  deleteSessionsForUser(userId) { return call('session.deleteForUser',{ userId },            () => dbSessions.deleteSessionsForUser(userId)); },
 };
 
 module.exports = api;
