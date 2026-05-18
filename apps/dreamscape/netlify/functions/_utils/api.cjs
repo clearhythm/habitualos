@@ -12,11 +12,11 @@ async function call(action, params, fn) {
     result = 500;
     error = err.message || String(err);
   }
-  create({
+  await create({
     collection: 'api-logs',
     id: uniqueId('log'),
     data: { action, params, result, ...(error ? { error } : {}), createdAt: Date.now() },
-  }).catch(() => {});
+  });
   if (error) throw new Error(error);
   return value;
 }
