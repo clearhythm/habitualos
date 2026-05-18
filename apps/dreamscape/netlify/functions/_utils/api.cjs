@@ -5,24 +5,20 @@ const dbNotes       = require('../_services/db-notes.cjs');
 const dbSessions    = require('../_services/db-sessions.cjs');
 
 async function call(action, params, fn) {
-  let result, error;
+  let value, result = 200, error;
   try {
-    result = await fn();
+    value = await fn();
   } catch (err) {
+    result = 500;
     error = err.message || String(err);
-    create({
-      collection: 'api-logs',
-      id: uniqueId('log'),
-      data: { action, params, error, createdAt: Date.now() },
-    }).catch(() => {});
-    throw err;
   }
   create({
     collection: 'api-logs',
     id: uniqueId('log'),
-    data: { action, params, result, createdAt: Date.now() },
+    data: { action, params, result, ...(error ? { error } : {}), createdAt: Date.now() },
   }).catch(() => {});
-  return result;
+  if (error) throw new Error(error);
+  return value;
 }
 
 const api = {
