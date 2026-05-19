@@ -137,6 +137,9 @@ if (muteBtn) {
 // ─── Mock sessions (replace with Firestore fetch later)
 // Each user has a stored chime signature: 3 semitone offsets + a timing pattern.
 // Most recent first — in production this comes pre-sorted from the query
+// TODO: load from user profile
+const SELF_CHIME = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
+
 const MOCK_SESSIONS = [
   { name: "Ro'i",  lastPracticed: '2 hours ago',    chime: { notes: [-7,  0,  4], timing: [0, 0.35, 0.70] } },
   { name: 'Yuki',  lastPracticed: 'this morning',   chime: { notes: [0,   5, 12], timing: [0, 0.18, 0.62] } },
@@ -209,8 +212,9 @@ async function runChimeLoop() {
     await waitOrAdvance(10000);
   }
   _currentSession = null;
-
   showFeedMessage('You', 'are caught up now');
+  swingChime();
+  playSignature(SELF_CHIME);
 }
 
 document.getElementById('wind-chime')?.addEventListener('click', () => {
