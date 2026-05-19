@@ -192,7 +192,7 @@ async function runChimeLoop() {
     return;
   }
 
-  await sleep(3000);
+  await waitOrAdvance(3000);
 
   for (const session of sessions) {
     _currentSession = session;
@@ -218,7 +218,13 @@ function swingChime() {
   chime.classList.remove('chime-swaying');
   void chime.offsetWidth;
   chime.classList.add('chime-swaying');
-  chime.addEventListener('animationend', () => chime.classList.remove('chime-swaying'), { once: true });
+  function onEnd(e) {
+    if (e.animationName === 'chime-sway') {
+      chime.classList.remove('chime-swaying');
+      chime.removeEventListener('animationend', onEnd);
+    }
+  }
+  chime.addEventListener('animationend', onEnd);
 }
 
 // ─── Feed message
