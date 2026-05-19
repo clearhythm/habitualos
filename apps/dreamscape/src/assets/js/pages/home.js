@@ -60,10 +60,15 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const arrayBuffer = await fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer());
     _chimeBuffer = await _audioCtx.decodeAudioData(arrayBuffer);
-    // Pref already set — try to resume immediately on next gesture
-    if (getAudioPref() === 'on') resumeOnGesture();
   } catch (err) { console.warn('Chime audio init failed:', err); }
 })();
+
+let _loopStarted = false;
+function startChimeLoop() {
+  if (_loopStarted) return;
+  _loopStarted = true;
+  runChimeLoop();
+}
 
 document.addEventListener('audioReady', async (e) => {
   _muted = !e.detail.enabled;
@@ -71,9 +76,12 @@ document.addEventListener('audioReady', async (e) => {
   setAmbientVolume(_volume);
   if (!_muted && _audioCtx) {
     if (_audioCtx.state === 'suspended') {
-      wireGestureResume();
+      try { await _audioCtx.resume(); } catch (_) {}
+    }
+    if (_audioCtx.state === 'running') {
+      startChimeLoop();
     } else {
-      if (_currentSession) playSignature(_currentSession.chime);
+      wireGestureResume();
     }
   }
   syncMuteBtn();
@@ -83,7 +91,7 @@ function wireGestureResume() {
   async function handler() {
     if (!_audioCtx || !_chimeBuffer || _muted) return;
     if (_audioCtx.state === 'suspended') await _audioCtx.resume();
-    if (_currentSession && !_muted) playSignature(_currentSession.chime);
+    startChimeLoop();
     ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, handler));
   }
   ['click', 'touchstart', 'keydown'].forEach(e =>
@@ -164,7 +172,16 @@ function playSignature(sig) {
 // ─── Main chime loop
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-let _sessionIndex = 0;
+let _advanceResolve = null;
+function advanceChime() {
+  if (_advanceResolve) { _advanceResolve(); _advanceResolve = null; }
+}
+function waitOrAdvance(ms) {
+  return new Promise(resolve => {
+    _advanceResolve = resolve;
+    setTimeout(() => { _advanceResolve = null; resolve(); }, ms);
+  });
+}
 
 async function runChimeLoop() {
   const sessions = MOCK_SESSIONS; // replace with Firestore fetch later
@@ -180,14 +197,19 @@ async function runChimeLoop() {
   for (const session of sessions) {
     _currentSession = session;
     showFeedMessage(session.name, `practiced ${session.lastPracticed}`);
-swingChime();
+    swingChime();
     playSignature(session.chime);
-    await sleep(10000);
+    await waitOrAdvance(10000);
   }
   _currentSession = null;
 
   showFeedMessage('You', 'are caught up now');
 }
+
+document.getElementById('wind-chime')?.addEventListener('click', () => {
+  swingChime();
+  advanceChime();
+});
 
 // ─── Wind chime sway
 function swingChime() {
@@ -250,4 +272,3 @@ function setOrbColor() {
 // ─── Init
 setSkyGradient();
 setOrbColor();
-runChimeLoop();

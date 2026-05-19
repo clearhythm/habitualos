@@ -14,7 +14,9 @@ async function isAutoplayBlocked() {
     return navigator.getAutoplayPolicy('audiocontext') !== 'allowed';
   }
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  try { await ctx.resume(); } catch (_) {}
+  try {
+    await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 500))]);
+  } catch (_) {}
   const blocked = ctx.state !== 'running';
   ctx.close();
   return blocked;
