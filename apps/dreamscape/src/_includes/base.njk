@@ -5,24 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title or "Daily Practice" }}</title>
   <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
   {% include "nav.njk" %}
 
-  <main class="main" style="padding-top: 80px;">
+  <main class="main">
+    {% if noContainer %}
+      {{ content | safe }}
+    {% else %}
     <div class="container">
       {{ content | safe }}
     </div>
+    {% endif %}
   </main>
 
+  {% if not noFooter %}
   <footer class="footer">
     <div class="container">
       <p>Daily Practice &copy; 2026 Erik Burns</p>
     </div>
   </footer>
+  {% endif %}
 
+  {% include "audio-splash.njk" %}
   <script type="module" src="/assets/js/navigation.js"></script>
+  <script type="module" src="/assets/js/audio-unlock.js"></script>
   {% if pageScript %}
   <script type="module" src="{{ pageScript }}"></script>
   {% endif %}

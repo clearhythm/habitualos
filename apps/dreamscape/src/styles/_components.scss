@@ -1,181 +1,255 @@
-// Circle room — homepage
-.circle-room {
+// ─── ARCHIVED: circle room (see index_anim_circles.njk + home_anim_circles.js)
+// .circle-room { ... }  ← preserved in those files
+
+// ─── Blossom Scene — Homepage ──────────────────────────────────────────────
+
+.blossom-scene {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  // JS sets time-of-day gradient on load; this is the night fallback
+  background: linear-gradient(to bottom, #050310, #0a0617);
+
+}
+
+
+// Content — floating in the sky clearing above the canopy
+.blossom-content {
+  position: absolute;
+  top: 28%;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 80px);
   gap: $space-xl;
-}
+  z-index: 2;
 
-.circle-stage {
-  position: relative;
-  width: 480px;
-  height: 480px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-// Outer rings container — sits behind center ring
-.outer-rings {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.community-ring {
-  position: absolute;
-  width: 473px;
-  height: 473px;
-  border-radius: 50%;
-  background: rgba($color-primary, 0.04);
-}
-
-.outer-ring-static {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: rgba($color-primary, 0.10);
-}
-
-.outer-ring {
-  position: absolute;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  border: 2px solid rgba($color-primary, 0.55);
-  animation: ring-pulse 3s ease-in-out infinite;
-
-  &:nth-child(2) { animation-delay: 0.6s; }
-  &:nth-child(3) { animation-delay: 1.2s; }
-  &:nth-child(4) { animation-delay: 1.8s; }
-}
-
-// Center ring — the self / practice button
-.center-ring {
-  position: relative;
-  z-index: 1;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: rgba($color-primary, 0.9);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  animation: ring-pulse 3s ease-in-out infinite;
-  cursor: pointer;
-
-  &[data-state="practicing"] {
-    animation-duration: 1.8s;
-    background: $color-primary;
-    box-shadow: 0 0 30px rgba($color-primary, 0.4);
+  @media (max-width: 768px) {
+    top: 18%;
   }
 }
 
-.center-ring-label {
-  font-size: $font-size-sm;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.05em;
-  text-align: center;
-  line-height: 1.4;
-}
-
-@keyframes ring-pulse {
-  0%   { transform: scale(0.92); opacity: 0.7; }
-  50%  { transform: scale(1.08); opacity: 1; }
-  100% { transform: scale(0.92); opacity: 0.7; }
-}
-
-.circle-quote {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  text-align: center;
+// Ambient message feed
+.feed-message {
   display: flex;
   flex-direction: column;
-  gap: $space-xs;
-  max-width: 220px;
-  animation: fadeIn 1.5s ease;
+  align-items: center;
+  gap: 0.2em;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
 
-  em { font-style: italic; }
+  &.feed-visible { opacity: 1; }
 }
 
-.quote-attribution {
+.feed-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem;
+  font-weight: 400;
+  color: rgba($color-text, 0.90);
+  line-height: 1.1;
+
+  &--quiet {
+    font-size: $font-size-lg;
+    color: rgba($color-text, 0.35);
+  }
+}
+
+.feed-time {
   font-size: $font-size-sm;
-  color: rgba($color-text-muted, 0.6);
-  font-style: normal;
+  color: rgba($color-text, 0.38);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+
+  & + & { margin-top: -0.1em; }
 }
 
-.circle-legend {
+// Practice orb — straddles scene/footer boundary, half in sky half in ground
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0.6em 2.6em .8em;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: none;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: rgba($color-text, 0.80);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: rgba($color-text, 1);
+    border-color: rgba(255, 255, 255, 0.60);
+    text-decoration: none;
+  }
+}
+
+.practice-pill { @extend .pill; }
+
+// ─── Audio splash — shown only when autoplay is blocked
+.audio-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(5, 3, 16, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.audio-splash-inner {
+  position: absolute;
+  top: 28%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    top: 18%;
+  }
+}
+
+.audio-splash-icon {
+  width: 52px;
+  height: 52px;
+  color: rgba($color-text, 0.40);
+}
+
+.audio-splash-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: rgba($color-text, 0.70);
+  margin: 0;
+}
+
+.audio-splash-btn { @extend .pill; }
+
+.audio-splash-skip {
+  background: none;
+  border: none;
+  color: rgba($color-text, 0.30);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover { color: rgba($color-text, 0.55); }
+}
+
+// ─── Invite pill — shown only in the empty/quiet state
+.invite-pill {
+  @extend .pill;
+  transition: color 0.2s, border-color 0.2s, opacity 0.6s ease;
+  opacity: 0;
+
+  &:not([hidden]) { opacity: 1; }
+}
+
+// ─── Wind chime — inline SVG, hangs centered below feed message
+.wind-chime {
+  width: 56px;
+  height: 80px;
+  transform-origin: 50% 3.75%; // pivot at top cap (3px / 80px)
+  animation: chime-idle 9s ease-in-out infinite;
+  filter: drop-shadow(0 2px 10px rgba(255,255,255,0.12));
+  opacity: 0;
+  transition: opacity 0.8s ease;
+
+  &.chime-visible { opacity: 1; }
+
+  &.chime-swaying {
+    animation: chime-sway 4s ease-out forwards;
+  }
+}
+
+@keyframes chime-idle {
+  0%, 100% { transform: rotate(-0.8deg); }
+  50%       { transform: rotate(0.8deg); }
+}
+
+@keyframes chime-sway {
+  0%   { transform: rotate(0deg); }
+  10%  { transform: rotate(10deg); }
+  26%  { transform: rotate(-7deg); }
+  42%  { transform: rotate(4.5deg); }
+  56%  { transform: rotate(-2.5deg); }
+  68%  { transform: rotate(1.5deg); }
+  80%  { transform: rotate(-0.8deg); }
+  90%  { transform: rotate(0.4deg); }
+  100% { transform: rotate(0deg); }
+}
+
+// ─── Ambient Player ────────────────────────────────────────────────────────
+
+.ambient-player {
+  position: fixed;
+  bottom: $space-xl;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: $space-sm;
-  font-size: $font-size-sm;
+  opacity: 0.28;
+  transition: opacity 0.3s ease;
+
+  &:hover { opacity: 0.85; }
 }
 
-.legend-you       { color: rgba($color-primary, 0.9); }
-.legend-circle    { color: rgba($color-primary, 0.55); }
-.legend-community { color: rgba($color-primary, 0.25); }
-.legend-sep       { color: rgba($color-text-muted, 0.3); }
-
-// Name reveal
-.circle-presence {
+.ambient-mute-btn {
+  background: transparent;
+  border: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  padding: $space-xs;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: $space-xs;
-  text-align: center;
-  height: 11rem;
+  line-height: 1;
+  transition: color 0.15s;
+
+  &:hover { color: $color-text; }
+  &[data-muted="true"] { color: rgba($color-text-muted, 0.4); }
 }
 
-.circle-name {
-  font-size: $font-size-2xl;
-  color: rgba($color-text, 0.9);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
+.ambient-volume {
+  width: 64px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgba($color-text-muted, 0.25);
+  border-radius: 1px;
+  outline: none;
+  cursor: pointer;
 
-  &.visible { opacity: 1; }
-}
-
-.circle-descriptor {
-  font-size: $font-size-sm;
-  color: rgba($color-text-muted, 0.5);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-
-  &.visible { opacity: 1; }
-}
-
-.presence-dots {
-  position: relative;
-  width: 200px;
-  height: 90px;
-  margin-top: $space-md;
-}
-
-.presence-dot {
-  position: absolute;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba($color-primary, 0);
-  transition: background 0.6s ease;
-
-  &.revealed {
-    background: rgba($color-primary, 0.2);
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba($color-text, 0.55);
+    cursor: pointer;
   }
 
-  &.active {
-    background: rgba($color-primary, 0.7);
+  &::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba($color-text, 0.55);
+    border: none;
+    cursor: pointer;
   }
 }
 
@@ -321,17 +395,55 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $space-xl;
-  padding-top: $space-2xl;
+  justify-content: center;
+  gap: $space-2xl;
+  height: 100%;
   text-align: center;
 }
 
-.practice-setup {
+.practice-field {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $space-xl;
+  gap: $space-xs;
+
+  .practice-examples { margin-top: $space-sm; }
 }
+
+.settings-rows {
+  width: 100%;
+  max-width: 300px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.85rem 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  text-align: left;
+
+  &:last-child { border-bottom: none; }
+}
+
+.settings-row-label {
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.settings-row-value {
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.30);
+  letter-spacing: 0.02em;
+}
+
 
 .setup-field {
   display: flex;
@@ -397,19 +509,56 @@
 .practice-name-input {
   width: 100%;
   max-width: 320px;
-  padding: $space-md;
-  font-size: $font-size-lg;
+  padding: 0 0 $space-sm;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem;
+  font-weight: 400;
   text-align: center;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  color: $color-text;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  color: rgba($color-text, 0.90);
   caret-color: $color-primary;
   outline: none;
+  line-height: 1.1;
 
-  &::placeholder { color: rgba(255, 255, 255, 0.25); transition: color 0.15s; }
-  &:focus::placeholder { color: transparent; }
-  &:focus { border-bottom-color: $color-primary; }
+  &::placeholder { color: rgba(255, 255, 255, 0.20); }
+  &:focus { border-bottom-color: rgba(255, 255, 255, 0.50); }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { -webkit-appearance: none; }
+  &[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+}
+
+.practice-examples {
+  display: flex;
+  gap: $space-sm;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: $space-md;
+}
+
+.example-tag {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  color: rgba($color-text, 0.38);
+  font-size: $font-size-sm;
+  padding: 0.25em 0.9em;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover {
+    color: rgba($color-text, 0.70);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.practice-settings {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-lg;
 }
 
 .practice-label {
@@ -600,12 +749,21 @@
 
 // Circle / community page
 .circle-page {
-  max-width: 560px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: $space-2xl $space-lg;
+  padding: 28vh $space-lg $space-2xl;
   display: flex;
   flex-direction: column;
   gap: $space-2xl;
+  min-height: 100dvh;
+
+  @media (max-width: 768px) { padding-top: 18vh; }
+
+  &--empty {
+    gap: $space-md;
+
+    .circle-invite { margin-top: $space-md; }
+  }
 }
 
 .section-sublabel {
@@ -622,33 +780,62 @@
   margin-bottom: $space-md;
 }
 
-.circle-tabs {
+.circle-header {
   display: flex;
-  gap: $space-sm;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-lg;
 }
 
-.circle-tab {
-  background: transparent;
-  border: none;
-  font-size: $font-size-base;
-  color: rgba($color-text-muted, 0.4);
-  cursor: pointer;
-  padding: 0 0 $space-xs;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+.circle-icon {
+  width: 48px;
+  height: 48px;
+  color: rgba($color-text, 0.30);
 
-  &:hover { color: $color-text-muted; }
+  .circle-icon-center {
+    fill: none;
+    transition: fill 0.3s ease;
+  }
 
-  &.active {
-    color: $color-text;
-    border-bottom-color: $color-primary;
+  &.has-notes .circle-icon-center {
+    fill: currentColor;
   }
 }
 
+.circle-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: $space-xs;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: $space-sm;
+}
+
+.circle-list-header-label {
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.28);
+  letter-spacing: 0.04em;
+}
+
+.circle-list-header-sort {
+  background: none;
+  border: none;
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.28);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover { color: rgba($color-text, 0.60); }
+}
+
 .section-label {
-  font-size: $font-size-base;
-  color: rgba($color-text-muted, 0.5);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  color: rgba($color-text, 0.35);
   letter-spacing: 0.03em;
+  margin-bottom: $space-sm;
 }
 
 .circle-row {
@@ -663,8 +850,10 @@
 }
 
 .circle-row-name {
-  font-size: $font-size-lg;
-  color: $color-text;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: rgba($color-text, 0.85);
   flex: 1;
   display: flex;
   align-items: center;
@@ -691,7 +880,8 @@
 
 .circle-row-meta {
   font-size: $font-size-sm;
-  color: rgba($color-text-muted, 0.5);
+  color: rgba($color-text, 0.30);
+  letter-spacing: 0.02em;
 }
 
 
@@ -793,6 +983,7 @@
   gap: $space-sm;
   margin-top: $space-xl;
   align-items: center;
+
 }
 
 .circle-invite-label {

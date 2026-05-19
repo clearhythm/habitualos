@@ -7,7 +7,6 @@ const noteView       = document.getElementById('note-view');
 const timerEl        = document.getElementById('timer');
 const labelEl        = document.getElementById('practice-label');
 const nameInput      = document.getElementById('practice-name');
-const customDuration = document.getElementById('custom-duration');
 const noteInput      = document.getElementById('note-input');
 const startBtn       = document.getElementById('start-btn');
 const pauseBtn       = document.getElementById('pause-btn');
@@ -17,6 +16,10 @@ const finishControls  = document.getElementById('finish-controls');
 const completeLabel   = document.getElementById('complete-label');
 const soundToggle     = document.getElementById('sound-toggle');
 const saveBtn         = document.getElementById('save-btn');
+const durationValue   = document.getElementById('duration-value');
+const bellStartValue  = document.getElementById('bell-start-value');
+const bellEndValue    = document.getElementById('bell-end-value');
+const friendChimesVal = document.getElementById('friend-chimes-value');
 
 let timerInterval    = null;
 let totalSeconds     = 5 * 60;
@@ -25,21 +28,30 @@ let isPaused         = false;
 
 initPresence();
 
-document.querySelectorAll('.duration-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    customDuration.value = '';
-    totalSeconds = parseInt(btn.dataset.minutes) * 60;
-  });
+// ─── Settings rows
+const DURATIONS = [2, 5, 10, 15, 20, 30, 45, 60];
+let durationIndex = DURATIONS.indexOf(5);
+
+document.getElementById('settings-duration').addEventListener('click', () => {
+  durationIndex = (durationIndex + 1) % DURATIONS.length;
+  const mins = DURATIONS[durationIndex];
+  totalSeconds = mins * 60;
+  durationValue.textContent = mins >= 60 ? `${mins / 60}h` : `${mins}m`;
 });
 
-customDuration.addEventListener('input', () => {
-  const val = parseInt(customDuration.value);
-  if (val > 0) {
-    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
-    totalSeconds = val * 60;
-  }
+function toggleValue(el) {
+  el.textContent = el.textContent === 'on' ? 'off' : 'on';
+}
+
+document.getElementById('settings-bell-start').addEventListener('click', () => toggleValue(bellStartValue));
+document.getElementById('settings-bell-end').addEventListener('click', () => toggleValue(bellEndValue));
+document.getElementById('settings-friend-chimes').addEventListener('click', () => toggleValue(friendChimesVal));
+
+document.querySelectorAll('.example-tag').forEach(tag => {
+  tag.addEventListener('click', () => {
+    nameInput.value = tag.textContent;
+    nameInput.focus();
+  });
 });
 
 function fmt(s) {

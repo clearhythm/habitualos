@@ -1,10 +1,10 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 $space-md;
+  padding: 5rem $space-md $space-md;
 
   @media (min-width: $breakpoint-md) {
-    padding: 0 $space-xl;
+    padding: 5rem $space-xl $space-md;
   }
 }
 

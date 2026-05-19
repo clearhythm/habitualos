@@ -3,45 +3,72 @@ layout: base.njk
 title: Practice — Daily Practice
 permalink: /practice/
 pageScript: /assets/js/pages/practice.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
 ---
 
-<div class="practice-setup">
-  <div class="setup-field">
-    <label class="practice-name-label" for="practice-name">What are you practicing?</label>
-    <input type="text" id="practice-name" class="practice-name-input" placeholder="Optional">
-  </div>
-  <div class="setup-field">
-    <label class="practice-name-label">Duration</label>
-    <div class="duration-presets">
-      <button class="duration-btn" data-minutes="2">2m</button>
-      <button class="duration-btn active" data-minutes="5">5m</button>
-      <button class="duration-btn" data-minutes="10">10m</button>
-      <button class="duration-btn" data-minutes="15">15m</button>
-      <button class="duration-btn" data-minutes="30">30m</button>
+<div class="blossom-scene">
+
+  <div class="practice-setup" id="practice-setup">
+
+    <div class="practice-field">
+      <input type="text" id="practice-name" class="practice-name-input" placeholder="optional" autocomplete="off">
+      <p class="feed-time">what are you practicing?</p>
+      <div class="practice-examples">
+        <button class="example-tag">meditation</button>
+        <button class="example-tag">prayer</button>
+        <button class="example-tag">exercise</button>
+      </div>
     </div>
-    <input type="number" id="custom-duration" class="custom-duration-input" placeholder="Custom (minutes)" min="1" max="180">
+
+    <div class="settings-rows">
+      <button class="settings-row" id="settings-duration">
+        <span class="settings-row-label">Duration</span>
+        <span class="settings-row-value" id="duration-value">5m</span>
+      </button>
+      <button class="settings-row" id="settings-ambient">
+        <span class="settings-row-label">Ambient sound</span>
+        <span class="settings-row-value">off</span>
+      </button>
+      <button class="settings-row" id="settings-bell-start">
+        <span class="settings-row-label">Starting bell</span>
+        <span class="settings-row-value" id="bell-start-value">off</span>
+      </button>
+      <button class="settings-row" id="settings-bell-end">
+        <span class="settings-row-label">Ending bell</span>
+        <span class="settings-row-value" id="bell-end-value">on</span>
+      </button>
+      <button class="settings-row" id="settings-friend-chimes">
+        <span class="settings-row-label">Friend chimes</span>
+        <span class="settings-row-value" id="friend-chimes-value">on</span>
+      </button>
+    </div>
+
+    <button class="pill" id="start-btn">begin</button>
+
   </div>
-  <button class="btn-primary" id="start-btn">Begin</button>
-</div>
 
-<div class="timer-modal" id="timer-modal" hidden>
-  <button class="sound-toggle" id="sound-toggle">🔊</button>
-  <div class="practice-label" id="practice-label"></div>
+  <div class="timer-modal" id="timer-modal" hidden>
+    <button class="sound-toggle" id="sound-toggle">🔊</button>
+    <div class="practice-label" id="practice-label"></div>
 
-  <div id="timer-view">
-    <div class="timer-complete-label" id="complete-label" hidden>You completed</div>
-    <div class="timer" id="timer">00:00</div>
-    <button class="timer-icon-btn" id="pause-btn">⏸</button>
-    <div class="timer-finish-controls" id="finish-controls" hidden>
-      <button class="btn-finish" id="stop-btn">Finish</button>
-      <button class="btn-quiet" id="discard-btn">Discard session</button>
+    <div id="timer-view">
+      <div class="timer-complete-label" id="complete-label" hidden>You completed</div>
+      <div class="timer" id="timer">00:00</div>
+      <button class="timer-icon-btn" id="pause-btn">⏸</button>
+      <div class="timer-finish-controls" id="finish-controls" hidden>
+        <button class="btn-finish" id="stop-btn">Finish</button>
+        <button class="btn-quiet" id="discard-btn">Discard session</button>
+      </div>
+    </div>
+
+    <div id="note-view" class="note-view" hidden>
+      <div class="note-label">Your reflection <span class="note-optional">(optional)</span></div>
+      <textarea id="note-input" class="note-input" placeholder="What came up?"></textarea>
+      <button class="btn-primary" id="save-btn">Save reflection</button>
+      <a href="/" class="btn-quiet" id="skip-btn">Skip</a>
     </div>
   </div>
 
-  <div id="note-view" class="note-view" hidden>
-    <div class="note-label">Your reflection <span class="note-optional">(optional)</span></div>
-    <textarea id="note-input" class="note-input" placeholder="What came up?"></textarea>
-    <button class="btn-primary" id="save-btn">Save reflection</button>
-    <a href="/" class="btn-quiet" id="skip-btn">Skip</a>
-  </div>
 </div>

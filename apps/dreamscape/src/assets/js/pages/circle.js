@@ -16,7 +16,7 @@ function allCaughtUp() { return !hasLocked() && !hasUnread(); }
 async function loadCircleData() {
   _userId = localStorage.getItem('dp-userId');
   _name   = localStorage.getItem('dp-name') || 'You';
-  if (!_userId) return;
+  if (!_userId) { renderCircle(); return; }
 
   try {
     const res  = await fetch(`/api/circle-data?userId=${encodeURIComponent(_userId)}`);
@@ -26,8 +26,8 @@ async function loadCircleData() {
     _sentNotes     = data.sentNotes     || [];
   } catch (_) {}
 
-  renderNotesSection();
   renderCircle();
+  if (_circle.length) renderNotesSection();
 }
 
 const NOTE_STATUS = {
@@ -37,24 +37,21 @@ const NOTE_STATUS = {
 };
 
 function renderNotesSection() {
+  const icon      = document.getElementById('circle-icon');
+  const subtitle  = document.getElementById('circle-subtitle');
+  const subtitle2 = document.getElementById('circle-subtitle-2');
   if (allCaughtUp()) {
-    notesSectionLabel.textContent = 'How this works';
-    notesWaitingList.innerHTML = `
-      <div class="note-waiting-row">
-        <span class="note-waiting-meta">${NOTE_STATUS.caughtUp}</span>
-      </div>`;
+    if (icon) icon.classList.remove('has-notes');
+    if (subtitle)  subtitle.textContent  = 'send notes to support friends';
+    if (subtitle2) subtitle2.textContent = 'they can read them when they practice';
   } else if (hasLocked()) {
-    notesSectionLabel.textContent = 'Waiting for you';
-    notesWaitingList.innerHTML = `
-      <div class="note-waiting-row">
-        <span class="note-waiting-meta">${NOTE_STATUS.waiting}</span>
-      </div>`;
+    if (icon) icon.classList.add('has-notes');
+    if (subtitle)  subtitle.textContent  = 'you have unread notes';
+    if (subtitle2) subtitle2.textContent = 'practice to unlock';
   } else {
-    notesSectionLabel.textContent = 'Waiting for you';
-    notesWaitingList.innerHTML = `
-      <div class="note-waiting-row">
-        <span class="note-waiting-meta">${NOTE_STATUS.unlocked}</span>
-      </div>`;
+    if (icon) icon.classList.add('has-notes');
+    if (subtitle)  subtitle.textContent  = 'you have unread notes';
+    if (subtitle2) subtitle2.textContent = 'scroll down to read';
   }
 }
 
@@ -113,11 +110,26 @@ function sortedCircle() {
     : list.sort((a, b) => b.daysSince - a.daysSince);
 }
 
+const circleListHeader = document.querySelector('.circle-list-header');
+const circleSection    = document.querySelector('.circle-section');
+
 function renderCircle() {
+  if (circleSection) circleSection.removeAttribute('hidden');
+  const page = document.querySelector('.circle-page');
   if (!_circle.length) {
-    circleList.innerHTML = '<div class="circle-empty">Your circle is empty — invite someone to practice with.</div>';
+    const icon      = document.getElementById('circle-icon');
+    const subtitle  = document.getElementById('circle-subtitle');
+    const subtitle2 = document.getElementById('circle-subtitle-2');
+    if (icon)      icon.classList.remove('has-notes');
+    if (subtitle)  subtitle.textContent  = 'invite a small group of friends';
+    if (subtitle2) subtitle2.textContent = 'for mutual support in your practice';
+    if (circleListHeader) circleListHeader.hidden = true;
+    if (page) page.classList.add('circle-page--empty');
+    circleList.innerHTML = '';
     return;
   }
+  if (circleListHeader) circleListHeader.hidden = false;
+  if (page) page.classList.remove('circle-page--empty');
 
   circleList.innerHTML = sortedCircle().map(person => {
     const notes = threadNotes(person.userId);
@@ -211,13 +223,13 @@ circleList.addEventListener('click', (e) => {
   }
 });
 
-document.querySelectorAll('.circle-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.circle-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    currentTab = tab.dataset.tab;
+const modeBtn = document.getElementById('circle-mode-btn');
+if (modeBtn) {
+  modeBtn.addEventListener('click', () => {
+    currentTab = currentTab === 'celebrate' ? 'encourage' : 'celebrate';
+    modeBtn.textContent = currentTab === 'celebrate' ? 'Celebrate ▾' : 'Encourage ▴';
     renderCircle();
   });
-});
+}
 
 loadCircleData();

@@ -2,28 +2,53 @@
 layout: base.njk
 title: Daily Practice
 pageScript: /assets/js/pages/home.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
 ---
 
-<div class="circle-room">
-  <div class="circle-stage" id="circle-stage">
-    <div class="community-ring"></div>
-    <div class="outer-rings" id="outer-rings">
-      <div class="outer-ring-static"></div>
+<div class="blossom-scene">
+
+  <div class="blossom-content">
+    <svg class="wind-chime chime-visible" id="wind-chime" viewBox="0 0 56 80" aria-hidden="true">
+      <circle cx="28" cy="3" r="2.5" fill="rgba(255,255,255,0.45)"/>
+      <line x1="5" y1="10" x2="51" y2="10" stroke="rgba(255,255,255,0.40)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="10" y1="10" x2="10" y2="24" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+      <line x1="20" y1="10" x2="20" y2="18" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+      <line x1="30" y1="10" x2="30" y2="22" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+      <line x1="40" y1="10" x2="40" y2="16" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+      <line x1="50" y1="10" x2="50" y2="20" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>
+      <rect x="8"  y="24" width="4" height="22" rx="2" fill="rgba(255,255,255,0.52)"/>
+      <rect x="18" y="18" width="4" height="16" rx="2" fill="rgba(255,255,255,0.45)"/>
+      <rect x="28" y="22" width="4" height="30" rx="2" fill="rgba(255,255,255,0.60)"/>
+      <rect x="38" y="16" width="4" height="18" rx="2" fill="rgba(255,255,255,0.45)"/>
+      <rect x="48" y="20" width="4" height="24" rx="2" fill="rgba(255,255,255,0.50)"/>
+      <circle cx="28" cy="60" r="3.5" fill="rgba(255,255,255,0.35)"/>
+      <line x1="30" y1="52" x2="28" y2="57" stroke="rgba(255,255,255,0.20)" stroke-width="0.8"/>
+    </svg>
+    <div class="feed-message feed-visible" id="feed-message">
+      <span class="feed-name">Present</span>
+      <span class="feed-time">since your last visit</span>
     </div>
-    <a href="/practice/" class="center-ring" id="center-ring">
-      <span class="center-ring-label">practice</span>
-    </a>
+    <a href="/practice/" class="practice-pill">practice</a>
   </div>
-  <div class="circle-legend">
-    <span class="legend-you">you</span>
-    <span class="legend-sep">·</span>
-    <span class="legend-circle">your circle</span>
-    <span class="legend-sep">·</span>
-    <span class="legend-community">the community</span>
-  </div>
-  <div class="circle-presence" id="circle-presence">
-    <div class="circle-name" id="circle-name"></div>
-    <div class="circle-descriptor" id="circle-descriptor"></div>
-    <div class="presence-dots" id="presence-dots"></div>
-  </div>
+
+  <a href="/invite/" class="invite-pill" id="invite-pill" hidden>Invite a friend</a>
+
+</div>
+
+<div class="ambient-player" id="ambient-player">
+  <button class="ambient-mute-btn" id="ambient-mute-btn" aria-label="Toggle sound">
+    <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    </svg>
+    <svg id="icon-sound-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+      <line x1="23" y1="9" x2="17" y2="15"/>
+      <line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
+  </button>
+  <input type="range" class="ambient-volume" id="ambient-volume"
+         min="0" max="1" step="0.01" value="1" aria-label="Volume">
 </div>

@@ -44,21 +44,54 @@
   } catch (_) {}
 })();
 
-// Scroll handler: Add background to navbar after scrolling
-function updateNavbar() {
-  const navbar = document.querySelector('.navbar');
-  navbar.classList.toggle('active', window.scrollY > 50);
+// Time-of-day sky top color — matches homepage gradient, used for scrolled masthead bg
+const SKY_TOPS = [
+  { h:  0, c: '#050310' }, { h:  4, c: '#080514' }, { h:  5, c: '#0d0c1a' },
+  { h:  6, c: '#1a1040' }, { h:  7, c: '#2d1b50' }, { h:  8, c: '#1a4a7a' },
+  { h: 10, c: '#1a5a8a' }, { h: 12, c: '#1255a0' }, { h: 16, c: '#1a5a8a' },
+  { h: 18, c: '#2d3a6a' }, { h: 19, c: '#2d1b50' }, { h: 20, c: '#1a0b3a' },
+  { h: 22, c: '#050310' }, { h: 24, c: '#050310' },
+];
+
+function lerpChannel(a, b, t) { return Math.round(a + (b - a) * t); }
+function hexToRgb(hex) {
+  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
 }
 
-window.addEventListener('scroll', updateNavbar);
-updateNavbar(); // run once on load to catch restored scroll position
+function skyTopColor() {
+  const hour = new Date().getHours() + new Date().getMinutes() / 60;
+  let prev = SKY_TOPS[0], next = SKY_TOPS[1];
+  for (let i = 0; i < SKY_TOPS.length - 1; i++) {
+    if (hour >= SKY_TOPS[i].h && hour < SKY_TOPS[i + 1].h) {
+      prev = SKY_TOPS[i]; next = SKY_TOPS[i + 1]; break;
+    }
+  }
+  const t = (hour - prev.h) / (next.h - prev.h);
+  const [r1,g1,b1] = hexToRgb(prev.c), [r2,g2,b2] = hexToRgb(next.c);
+  return `rgb(${lerpChannel(r1,r2,t)},${lerpChannel(g1,g2,t)},${lerpChannel(b1,b2,t)})`;
+}
+
+// Scroll handler: fade in masthead background once page content scrolls under it
+const masthead = document.getElementById('sidemenu-toggle');
+function updateNavbar() {
+  if (!masthead) return;
+  const scrolled = window.scrollY > 40;
+  masthead.classList.toggle('scrolled', scrolled);
+  if (scrolled) masthead.style.setProperty('--masthead-bg', skyTopColor());
+}
+window.addEventListener('scroll', updateNavbar, { passive: true });
 
 // Menu toggle and auto-close
 document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('sidemenu-toggle');
   const menuLinks = document.querySelectorAll('.sidemenu-main a');
 
-  // Toggle menu on hamburger click
+  function closeMenu() {
+    if (toggle) toggle.classList.remove('open');
+    document.body.classList.remove('sidemenu-open');
+  }
+
+  // Toggle menu on masthead click
   if (toggle) {
     toggle.addEventListener('click', function() {
       toggle.classList.toggle('open');
@@ -66,22 +99,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Close button inside sidemenu panel
-  const closeBtn = document.getElementById('sidemenu-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function() {
-      if (toggle) toggle.classList.remove('open');
-      document.body.classList.remove('sidemenu-open');
-    });
-  }
+  // Click dark overlay to close
+  const overlay = document.querySelector('.sidemenu-right');
+  if (overlay) overlay.addEventListener('click', closeMenu);
 
   // Auto-close menu when any link is clicked
-  menuLinks.forEach(link => {
-    link.addEventListener('click', function() {
-      if (toggle) {
-        toggle.classList.remove('open');
-        document.body.classList.remove('sidemenu-open');
-      }
-    });
-  });
+  menuLinks.forEach(link => link.addEventListener('click', closeMenu));
 });

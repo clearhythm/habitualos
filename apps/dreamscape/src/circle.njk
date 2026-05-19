@@ -3,26 +3,36 @@ layout: base.njk
 title: Circle — Daily Practice
 permalink: /circle/
 pageScript: /assets/js/pages/circle.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
 ---
 
-<div class="circle-page">
-  <div class="circle-section">
-    <div class="section-label" id="notes-section-label">Waiting for you</div>
-    <div id="notes-waiting-list"></div>
-  </div>
+<div class="blossom-scene">
+  <div class="circle-page">
 
-  <div class="circle-section">
-    <div class="circle-section-header">
-      <span class="section-label">Circle</span>
-      <div class="circle-tabs">
-        <button class="circle-tab active" data-tab="celebrate">celebrate</button>
-        <button class="circle-tab" data-tab="encourage">encourage</button>
+    <div class="circle-header">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" class="circle-icon" id="circle-icon" aria-hidden="true">
+        <circle cx="24" cy="24" r="20"/>
+        <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
+      </svg>
+      <div class="feed-message feed-visible">
+        <span class="feed-name">Circle</span>
+        <span class="feed-time" id="circle-subtitle"></span>
+        <span class="feed-time" id="circle-subtitle-2"></span>
       </div>
     </div>
-    <div id="circle-list"></div>
-    <div class="circle-invite">
-      <span class="circle-invite-label">Want more support?</span>
-      <a href="/invite/" class="circle-invite-link btn-invite">Invite a friend</a>
+
+    <div class="circle-section" hidden>
+      <div class="circle-list-header">
+        <span class="circle-list-header-label">Name</span>
+        <button class="circle-list-header-sort" id="circle-mode-btn">Celebrate ▾</button>
+      </div>
+      <div id="circle-list"></div>
+      <div class="circle-invite">
+        <a href="/invite/" class="pill">invite</a>
+      </div>
     </div>
+
   </div>
 </div>
