@@ -1,11 +1,29 @@
 ---
 layout: base.njk
-title: History — Daily Practice
+title: Ago — Daily Practice
 permalink: /history/
 pageScript: /assets/js/pages/history.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
 ---
 
-<h1 class="page-title">History</h1>
-<div class="session-feed" id="session-feed">
-  <p class="empty-state">Loading sessions…</p>
+<div class="blossom-scene">
+  <div class="history-page">
+
+    <div class="circle-header">
+      <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" class="circle-icon circle-icon--lg" aria-hidden="true">
+        <path d="M12 60 L36 26 L60 48 L72 32 L88 60"/>
+        <path d="M8 80 C20 72 32 88 48 80 C64 72 76 88 88 80"/>
+      </svg>
+      <div class="feed-message feed-visible">
+        <span class="feed-name">Ago</span>
+      </div>
+    </div>
+
+    <div class="session-feed" id="session-feed">
+      <p class="empty-state">Loading past journey…</p>
+    </div>
+
+  </div>
 </div>

@@ -748,6 +748,20 @@
 }
 
 // Circle / community page
+.history-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 28vh $space-lg $space-2xl;
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+  min-height: 100dvh;
+
+  @media (max-width: 768px) { padding-top: 18vh; }
+
+  .empty-state { padding-top: 0; }
+}
+
 .circle-page {
   max-width: 480px;
   margin: 0 auto;
@@ -790,6 +804,8 @@
 .circle-icon {
   width: 48px;
   height: 48px;
+
+  &--lg { width: 72px; height: 72px; }
   color: rgba($color-text, 0.30);
 
   .circle-icon-center {
