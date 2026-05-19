@@ -14,10 +14,9 @@ html {
 }
 
 body.scene-page {
-  overflow: hidden;
   height: 100dvh;
 
-  .main { padding-bottom: 0; overflow: hidden; }
+  .main { padding-bottom: 0; }
 }
 
 body {
