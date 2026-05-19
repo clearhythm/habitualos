@@ -47,6 +47,7 @@ function setSkyGradient() {
 // Gesture is only needed to call resume() on the suspended context.
 import { getAudioPref, setAudioPref } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
+import { log } from '../utils/log.js';
 
 const PREF_KEY = 'dp-audio-pref';
 let _audioCtx = null;
@@ -60,38 +61,39 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const arrayBuffer = await fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer());
     _chimeBuffer = await _audioCtx.decodeAudioData(arrayBuffer);
-  } catch (err) { console.warn('Chime audio init failed:', err); }
+  } catch (err) { log('warn', 'Chime audio init failed:', err); }
 })();
 
 let _loopStarted = false;
 function startChimeLoop() {
+  log('debug', '[chime] startChimeLoop called, _loopStarted=', _loopStarted);
   if (_loopStarted) return;
   _loopStarted = true;
   runChimeLoop();
 }
 
 document.addEventListener('audioReady', async (e) => {
+  log('debug', '[chime] audioReady fired, enabled=', e.detail.enabled, 'ctx state=', _audioCtx?.state);
   _muted = !e.detail.enabled;
   setAmbientMuted(_muted);
   setAmbientVolume(_volume);
-  if (!_muted && _audioCtx) {
-    if (_audioCtx.state === 'suspended') {
-      try { await _audioCtx.resume(); } catch (_) {}
-    }
-    if (_audioCtx.state === 'running') {
-      startChimeLoop();
-    } else {
-      wireGestureResume();
-    }
+  // Feed + swing don't need audio — start the loop regardless
+  startChimeLoop();
+  // Try to resume audio within this gesture context
+  if (!_muted && _audioCtx && _audioCtx.state === 'suspended') {
+    try { await _audioCtx.resume(); } catch (_) {}
+    log('debug', '[chime] after resume attempt, ctx state=', _audioCtx?.state);
+    if (_audioCtx.state === 'suspended') wireGestureResume();
   }
   syncMuteBtn();
 });
 
 function wireGestureResume() {
   async function handler() {
-    if (!_audioCtx || !_chimeBuffer || _muted) return;
-    if (_audioCtx.state === 'suspended') await _audioCtx.resume();
-    startChimeLoop();
+    if (_audioCtx && _audioCtx.state === 'suspended') {
+      try { await _audioCtx.resume(); } catch (_) {}
+    }
+    if (_currentSession && !_muted) playSignature(_currentSession.chime);
     ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, handler));
   }
   ['click', 'touchstart', 'keydown'].forEach(e =>
@@ -179,11 +181,15 @@ function advanceChime() {
 function waitOrAdvance(ms) {
   return new Promise(resolve => {
     _advanceResolve = resolve;
-    setTimeout(() => { _advanceResolve = null; resolve(); }, ms);
+    setTimeout(() => {
+      if (_advanceResolve === resolve) _advanceResolve = null;
+      resolve();
+    }, ms);
   });
 }
 
 async function runChimeLoop() {
+  log('debug', '[chime] runChimeLoop started');
   const sessions = MOCK_SESSIONS; // replace with Firestore fetch later
 
   if (sessions.length === 0) {
@@ -195,6 +201,7 @@ async function runChimeLoop() {
   await waitOrAdvance(3000);
 
   for (const session of sessions) {
+    log('debug', '[chime] showing session:', session.name);
     _currentSession = session;
     showFeedMessage(session.name, `practiced ${session.lastPracticed}`);
     swingChime();
@@ -212,19 +219,23 @@ document.getElementById('wind-chime')?.addEventListener('click', () => {
 });
 
 // ─── Wind chime sway
+let _swayEndCb = null;
 function swingChime() {
   const chime = document.getElementById('wind-chime');
   if (!chime) return;
+  if (_swayEndCb) { chime.removeEventListener('animationend', _swayEndCb); _swayEndCb = null; }
   chime.classList.remove('chime-swaying');
-  void chime.offsetWidth;
+  void window.getComputedStyle(chime).animationName; // force style flush
   chime.classList.add('chime-swaying');
-  function onEnd(e) {
+  _swayEndCb = (e) => {
+    log('debug', '[chime] animationend:', e.animationName);
     if (e.animationName === 'chime-sway') {
       chime.classList.remove('chime-swaying');
-      chime.removeEventListener('animationend', onEnd);
+      chime.removeEventListener('animationend', _swayEndCb);
+      _swayEndCb = null;
     }
-  }
-  chime.addEventListener('animationend', onEnd);
+  };
+  chime.addEventListener('animationend', _swayEndCb);
 }
 
 // ─── Feed message

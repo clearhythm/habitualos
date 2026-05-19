@@ -1,3 +1,5 @@
+import { log } from './utils/log.js';
+
 const PREF_KEY = 'dp-audio-pref';
 
 export function getAudioPref() {
@@ -28,21 +30,26 @@ async function isAutoplayBlocked() {
 
   const blocked = await isAutoplayBlocked();
 
+  log('debug', '[audio-unlock] blocked=', blocked, 'pref=', getAudioPref());
+
+  function dispatch(enabled) {
+    log('debug', '[audio-unlock] dispatching audioReady, enabled=', enabled);
+    setTimeout(() => document.dispatchEvent(new CustomEvent('audioReady', { detail: { enabled } })), 0);
+  }
+
   if (!blocked) {
-    // Browser allows autoplay — honor pref (default on), no splash ever
     const pref = getAudioPref() ?? 'on';
-    document.dispatchEvent(new CustomEvent('audioReady', { detail: { enabled: pref === 'on' } }));
+    dispatch(pref === 'on');
     return;
   }
 
-  // Autoplay is blocked — only skip splash if user explicitly said no
   const pref = getAudioPref();
   if (pref === 'off') {
-    document.dispatchEvent(new CustomEvent('audioReady', { detail: { enabled: false } }));
+    dispatch(false);
     return;
   }
 
-  // No pref, or pref='on' but still blocked — show splash to capture gesture
+  log('debug', '[audio-unlock] showing splash');
   splash.removeAttribute('hidden');
 
   document.getElementById('audio-splash-enable').addEventListener('click', () => {
