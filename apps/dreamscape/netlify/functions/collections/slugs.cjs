@@ -1,4 +1,4 @@
-const { get, create, patch } = require('@habitualos/db-core');
+const { get, create } = require('@habitualos/db-core');
 const { log } = require('../_utils/log.cjs');
 
 const COL = 'slugs';
@@ -19,21 +19,16 @@ async function assignSlug(userId, name) {
     const existing = await getSlug(candidate);
     if (!existing) {
       await create({ collection: COL, id: candidate, data: { userId, name, createdAt: Date.now() } });
-      log('debug', '[db-slugs] assigned slug', candidate, 'to', userId);
+      log('debug', '[slugs] assigned slug', candidate, 'to', userId);
       return candidate;
     }
     if (existing.userId === userId) {
-      log('debug', '[db-slugs] slug already owned by this user:', candidate);
+      log('debug', '[slugs] slug already owned by this user:', candidate);
       return candidate;
     }
     candidate = base + n;
     n++;
   }
-}
-
-async function getSlugForUser(userId, name) {
-  const existing = await assignSlug(userId, name);
-  return existing;
 }
 
 module.exports = { getSlug, assignSlug, slugify };

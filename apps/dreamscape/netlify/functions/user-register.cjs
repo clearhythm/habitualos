@@ -1,21 +1,11 @@
-const { upsertUser, updateUser } = require('./_services/db-users.cjs');
-const { assignSlug } = require('./_services/db-slugs.cjs');
-const { ensureConnection } = require('./_services/db-connections.cjs');
+const { upsertUser, updateUser } = require('./collections/users.cjs');
+const { assignSlug } = require('./collections/slugs.cjs');
+const { ensureConnection } = require('./collections/connections.cjs');
+const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
-
-  let body;
-  try { body = JSON.parse(event.body || '{}'); } catch (_) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'invalid JSON' }) };
-  }
-
-  const { userId, name, chime, connectUserId } = body;
-
-  if (!userId || !userId.startsWith('u-')) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'invalid userId' }) };
-  }
+exports.handler = handle('user.register', 'POST', async (event, { userId, name, chime, connectUserId }) => {
+  if (!userId || !userId.startsWith('u-')) throw new Error('invalid userId');
 
   log('debug', '[user-register] userId:', userId, 'name:', name, 'connectUserId:', connectUserId);
 
@@ -39,8 +29,5 @@ exports.handler = async (event) => {
     log('debug', '[user-register] connected', userId, '↔', connectUserId);
   }
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ ok: true }),
-  };
-};
+  return { ok: true };
+});

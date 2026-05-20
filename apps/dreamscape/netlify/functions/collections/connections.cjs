@@ -6,11 +6,11 @@ async function ensureConnection({ userAId, userBId, initiatedBy }) {
   const [a, b] = [userAId, userBId].sort();
   const existing = await query({ collection: COL, where: [`_userAId::eq::${a}`] });
   if ((existing || []).some(c => c._userBId === b)) return;
-  const _connId = uniqueId('conn');
+  const connId = uniqueId('conn');
   await create({
     collection: COL,
-    id: _connId,
-    data: { _connId, _userAId: a, _userBId: b, _initiatedBy: initiatedBy },
+    id: connId,
+    data: { _connId: connId, _userAId: a, _userBId: b, _initiatedBy: initiatedBy },
   });
 }
 

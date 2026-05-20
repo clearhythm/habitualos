@@ -12,6 +12,7 @@ export function signIn({ userId, name }) {
   localStorage.setItem(KEY_USER_ID,   userId);
   localStorage.setItem(KEY_NAME,      name || '');
   localStorage.setItem(KEY_SIGNED_IN, 'true');
+  document.cookie = 'dp-auth=1; path=/; samesite=lax; max-age=31536000';
   log('debug', '[auth] signed in as', userId, name);
 }
 
@@ -19,6 +20,7 @@ export function signOut() {
   localStorage.removeItem(KEY_USER_ID);
   localStorage.removeItem(KEY_NAME);
   localStorage.removeItem(KEY_SIGNED_IN);
+  document.cookie = 'dp-auth=; path=/; samesite=lax; max-age=0';
   window.location.replace('/signin/');
 }
 

@@ -1,40 +1,40 @@
+import { getCircleData, invalidateCircleCache } from '../collections/circle.js';
+import { sendNote as apiSendNote, markRead as apiMarkRead } from '../collections/notes.js';
+import { getUserId, getName } from '../auth/auth.js';
+
 const circleList       = document.getElementById('circle-list');
 const notesWaitingList  = document.getElementById('notes-waiting-list');
 const notesSectionLabel = document.getElementById('notes-section-label');
 
-let _userId = null;
-let _name   = null;
-let _circle = [];
-let _receivedNotes = [];
-let _sentNotes     = [];
+let userId = null;
+let userName = null;
+let circle = [];
+let receivedNotes = [];
+let sentNotes     = [];
 let currentTab = 'celebrate';
 
-function hasLocked()  { return _receivedNotes.some(n => !n.unlockedAt); }
-function hasUnread()  { return _receivedNotes.some(n => n.unlockedAt && !n.readAt); }
+function hasLocked()  { return receivedNotes.some(n => !n.unlockedAt); }
+function hasUnread()  { return receivedNotes.some(n => n.unlockedAt && !n.readAt); }
 function allCaughtUp() { return !hasLocked() && !hasUnread(); }
 
 async function loadCircleData() {
-  _userId = localStorage.getItem('dp-userId');
-  _name   = localStorage.getItem('dp-name') || 'You';
-  if (!_userId) { renderCircle(); return; }
+  userId = getUserId();
+  userName = getName() || 'You';
+  if (!userId) { renderCircle(); return; }
 
   try {
-    const res  = await fetch(`/api/circle-data?userId=${encodeURIComponent(_userId)}`);
-    const data = await res.json();
-    _circle        = data.circle        || [];
-    _receivedNotes = data.receivedNotes || [];
-    _sentNotes     = data.sentNotes     || [];
+    const data = await getCircleData();
+    circle        = data.circle        || [];
+    receivedNotes = data.receivedNotes || [];
+    sentNotes     = data.sentNotes     || [];
   } catch (_) {}
 
-  renderCircle();
-  if (_circle.length) renderNotesSection();
-}
+  const unread = receivedNotes.some(n => n.unlockedAt && !n.readAt);
+  localStorage.setItem('dp-has-unread', unread ? 'true' : 'false');
 
-const NOTE_STATUS = {
-  waiting:    'You have new notes from your circle · Practice to unlock them',
-  unlocked:   'You have new notes from your circle · Scroll down to read them',
-  caughtUp:   'Celebrate and encourage your circle · Notes unlock when they practice',
-};
+  renderCircle();
+  if (circle.length) renderNotesSection();
+}
 
 function renderNotesSection() {
   const icon      = document.getElementById('circle-icon');
@@ -55,8 +55,8 @@ function renderNotesSection() {
   }
 }
 
-function threadNotes(userId) {
-  return _receivedNotes.filter(n => n._fromUserId === userId);
+function threadNotes(fromUserId) {
+  return receivedNotes.filter(n => n._fromUserId === fromUserId);
 }
 
 function relativeTime(ms) {
@@ -71,8 +71,8 @@ function relativeTime(ms) {
   return `${days}d ago`;
 }
 
-function renderThread(userId, name) {
-  const notes = threadNotes(userId);
+function renderThread(fromUserId, name) {
+  const notes = threadNotes(fromUserId);
 
   const history = notes.map(n => {
     if (!n.unlockedAt) {
@@ -90,21 +90,21 @@ function renderThread(userId, name) {
   }).join('');
 
   return `
-    <div class="circle-thread" id="thread-${userId}">
+    <div class="circle-thread" id="thread-${fromUserId}">
       <textarea class="compose-input" placeholder="Write ${name} a note…" rows="3"></textarea>
       <div class="compose-actions">
-        <button class="btn-quiet btn-cancel" data-userid="${userId}">cancel</button>
-        <button class="btn-send" data-userid="${userId}">send note</button>
+        <button class="btn-quiet btn-cancel" data-userid="${fromUserId}">cancel</button>
+        <button class="btn-send" data-userid="${fromUserId}">send note</button>
       </div>
       ${history ? `<div class="thread-history">${history}</div>` : ''}
     </div>`;
 }
 
 function sortedCircle() {
-  const list = _circle.map(person => {
-    const daysSince = person.daysSince ?? Infinity;
-    return { ...person, daysSince };
-  });
+  const list = circle.map(person => ({
+    ...person,
+    daysSince: person.daysSince ?? Infinity,
+  }));
   return currentTab === 'celebrate'
     ? list.sort((a, b) => a.daysSince - b.daysSince)
     : list.sort((a, b) => b.daysSince - a.daysSince);
@@ -116,7 +116,7 @@ const circleSection    = document.querySelector('.circle-section');
 function renderCircle() {
   if (circleSection) circleSection.removeAttribute('hidden');
   const page = document.querySelector('.circle-page');
-  if (!_circle.length) {
+  if (!circle.length) {
     const icon      = document.getElementById('circle-icon');
     const subtitle  = document.getElementById('circle-subtitle');
     const subtitle2 = document.getElementById('circle-subtitle-2');
@@ -154,8 +154,8 @@ function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function showSentConfirmation(userId) {
-  const row = document.getElementById(`row-${userId}`);
+function showSentConfirmation(fromUserId) {
+  const row = document.getElementById(`row-${fromUserId}`);
   const el  = document.createElement('div');
   el.className = 'sent-confirmation';
   el.textContent = "Note sent — they'll get it when they practice.";
@@ -169,33 +169,31 @@ circleList.addEventListener('click', (e) => {
   const sendBtn   = e.target.closest('.btn-send');
 
   if (sendBtn) {
-    const userId   = sendBtn.dataset.userid;
-    const thread   = document.getElementById(`thread-${userId}`);
+    const toUserId = sendBtn.dataset.userid;
+    const thread   = document.getElementById(`thread-${toUserId}`);
     const textarea = thread.querySelector('.compose-input');
     const text     = textarea.value.trim();
     if (!text) return;
     textarea.value = '';
     thread.hidden  = true;
-    showSentConfirmation(userId);
-    fetch('/api/note-send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fromUserId: _userId, fromName: _name, toUserId: userId, text }),
-    }).catch(() => {});
+    showSentConfirmation(toUserId);
+    apiSendNote({ fromUserId: userId, fromName: userName, toUserId, text })
+      .then(() => invalidateCircleCache())
+      .catch(() => {});
     return;
   }
 
   if (cancelBtn) {
-    const userId = cancelBtn.dataset.userid;
-    const thread = document.getElementById(`thread-${userId}`);
+    const toUserId = cancelBtn.dataset.userid;
+    const thread = document.getElementById(`thread-${toUserId}`);
     thread.querySelector('.compose-input').value = '';
     thread.hidden = true;
     return;
   }
 
   if (rowMain) {
-    const userId = rowMain.dataset.userid;
-    const thread = document.getElementById(`thread-${userId}`);
+    const fromUserId = rowMain.dataset.userid;
+    const thread = document.getElementById(`thread-${fromUserId}`);
     const isOpen = !thread.hidden;
     circleList.querySelectorAll('.circle-thread').forEach(t => {
       t.hidden = true;
@@ -204,20 +202,22 @@ circleList.addEventListener('click', (e) => {
     if (!isOpen) {
       thread.hidden = false;
       thread.querySelector('.compose-input').focus();
-      // mark-read if there are unlocked unread notes from this person
-      const hasUnread = _receivedNotes.some(n => n._fromUserId === userId && n.unlockedAt && !n.readAt);
+      const hasUnread = receivedNotes.some(n => n._fromUserId === fromUserId && n.unlockedAt && !n.readAt);
       if (hasUnread) {
-        fetch('/api/notes-mark-read', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: _userId, fromUserId: userId }),
-        }).then(() => {
-          _receivedNotes.forEach(n => {
-            if (n._fromUserId === userId && n.unlockedAt) n.readAt = Date.now();
-          });
-          renderCircle();
-          renderNotesSection();
-        }).catch(() => {});
+        apiMarkRead({ userId, fromUserId })
+          .then(() => {
+            receivedNotes.forEach(n => {
+              if (n._fromUserId === fromUserId && n.unlockedAt) n.readAt = Date.now();
+            });
+            invalidateCircleCache();
+            const stillUnread = receivedNotes.some(n => n.unlockedAt && !n.readAt);
+            localStorage.setItem('dp-has-unread', stillUnread ? 'true' : 'false');
+            const badge = document.getElementById('nav-circle-badge');
+            if (badge && !stillUnread) badge.hidden = true;
+            renderCircle();
+            renderNotesSection();
+          })
+          .catch(() => {});
       }
     }
   }

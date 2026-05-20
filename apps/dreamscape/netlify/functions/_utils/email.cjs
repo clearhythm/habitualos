@@ -1,7 +1,7 @@
-const { sendMagicLink: _sendMagicLink } = require('@habitualos/email-service');
+const { sendMagicLink: sendMagicLinkEmail } = require('@habitualos/email-service');
 
 async function sendMagicLink({ to, verifyUrl }) {
-  return _sendMagicLink({
+  return sendMagicLinkEmail({
     to,
     verifyUrl,
     appName: 'Daily Practice',

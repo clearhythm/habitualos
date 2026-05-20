@@ -3,12 +3,12 @@ const { create, query, patch, remove, uniqueId } = require('@habitualos/db-core'
 const COL = 'notes';
 
 async function createNote({ fromUserId, fromName, toUserId, text }) {
-  const _noteId = uniqueId('note');
+  const noteId = uniqueId('note');
   await create({
     collection: COL,
-    id: _noteId,
+    id: noteId,
     data: {
-      _noteId,
+      _noteId: noteId,
       _fromUserId: fromUserId,
       _fromName: fromName || '',
       _toUserId: toUserId,
@@ -18,7 +18,7 @@ async function createNote({ fromUserId, fromName, toUserId, text }) {
       readAt: null,
     },
   });
-  return _noteId;
+  return noteId;
 }
 
 async function getReceivedNotes(userId) {

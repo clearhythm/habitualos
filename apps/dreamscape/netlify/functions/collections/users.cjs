@@ -17,6 +17,14 @@ async function getUser(userId) {
   return get({ collection: COL, id: userId });
 }
 
+async function updateUser(userId, data) {
+  await patch({ collection: COL, id: userId, data });
+}
+
+async function updateLastPracticed(userId) {
+  await patch({ collection: COL, id: userId, data: { lastPracticedAt: Date.now() } });
+}
+
 async function getAllUsers() {
   return query({ collection: COL }) || [];
 }
@@ -25,8 +33,4 @@ async function deleteUser(userId) {
   return remove({ collection: COL, id: userId });
 }
 
-async function updateUser(userId, data) {
-  await patch({ collection: COL, id: userId, data });
-}
-
-module.exports = { upsertUser, updateUser, getUser, getAllUsers, deleteUser };
+module.exports = { upsertUser, getUser, updateUser, updateLastPracticed, getAllUsers, deleteUser };

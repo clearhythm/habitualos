@@ -1,4 +1,5 @@
-import { initPresence, startSession, endSession, cancelSession, saveReflection, setPresenceState } from '../presence.js';
+import { initPresence, setPresenceState } from '../presence.js';
+import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
 import { play, stop, setMuted, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
 
 const modal          = document.getElementById('timer-modal');

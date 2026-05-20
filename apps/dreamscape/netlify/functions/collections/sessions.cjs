@@ -17,7 +17,8 @@ async function getSessionsForUser(userId) {
 
 async function deleteSessionsForUser(userId) {
   const sessions = await getSessionsForUser(userId);
-  await Promise.all(sessions.map(s => remove({ collection: COL, id: s._sessionId })));
+  // handle both old (_sessionId) and new (sessionId) field names
+  await Promise.all(sessions.map(s => remove({ collection: COL, id: s.sessionId || s._sessionId })));
 }
 
 module.exports = { getLastSessionForUser, getRecentSessions, getSessionsForUser, deleteSessionsForUser };

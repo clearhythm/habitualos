@@ -1,19 +1,19 @@
-const { getSlug } = require('./_services/db-slugs.cjs');
+const { getSlug } = require('./collections/slugs.cjs');
+const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'GET') return { statusCode: 405, body: 'Method Not Allowed' };
-
-  const slug = (event.queryStringParameters?.slug || '').toLowerCase().trim();
-  if (!slug) return { statusCode: 400, body: JSON.stringify({ error: 'slug required' }) };
+exports.handler = handle('slug.lookup', 'GET', async (event, params) => {
+  const slug = (params.slug || '').toLowerCase().trim();
+  if (!slug) throw new Error('slug required');
 
   log('debug', '[slug-lookup] looking up slug:', slug);
 
   const doc = await getSlug(slug);
-  if (!doc) return { statusCode: 404, body: JSON.stringify({ error: 'not found' }) };
+  if (!doc) {
+    const err = new Error('not found');
+    err.statusCode = 404;
+    throw err;
+  }
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ userId: doc.userId, name: doc.name }),
-  };
-};
+  return { userId: doc.userId, name: doc.name };
+});

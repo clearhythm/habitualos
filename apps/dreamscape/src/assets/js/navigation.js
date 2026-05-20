@@ -1,11 +1,5 @@
-//
 // navigation.js - Dreamscape
-// ------------------------------------------------------
-// Handles:
-// - Sidemenu toggle (hamburger → X animation)
-// - Scroll-based navbar background
-// - Auto-close menu on link click
-// ------------------------------------------------------
+// Handles: sidemenu toggle, scroll-based navbar background, auto-close menu on link click
 
 // ?su= sign-in-as: validate one-time admin token and store userId
 (async () => {
@@ -28,20 +22,28 @@
   window.history.replaceState({}, '', newUrl);
 })();
 
-// Nav badge: show dot on Circle link when there are unread notes
+// Nav badge: show dot on Circle link when there are unread notes.
+// Read from LS first — only fetch once if not cached.
 (async () => {
   const userId = localStorage.getItem('dp-userId');
   if (!userId) return;
-  try {
-    const res  = await fetch(`/api/circle-data?userId=${encodeURIComponent(userId)}`);
-    const data = await res.json();
-    const notes = data.receivedNotes || [];
-    const hasUnread = notes.some(n => n.unlockedAt && !n.readAt);
-    if (hasUnread) {
-      const badge = document.getElementById('nav-circle-badge');
-      if (badge) badge.hidden = false;
-    }
-  } catch (_) {}
+
+  const cached = localStorage.getItem('dp-has-unread');
+
+  if (cached === null) {
+    try {
+      const res  = await fetch(`/api/unread-check?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+      localStorage.setItem('dp-has-unread', data.hasUnread ? 'true' : 'false');
+      if (data.hasUnread) {
+        const badge = document.getElementById('nav-circle-badge');
+        if (badge) badge.hidden = false;
+      }
+    } catch (_) {}
+  } else if (cached === 'true') {
+    const badge = document.getElementById('nav-circle-badge');
+    if (badge) badge.hidden = false;
+  }
 })();
 
 // Time-of-day sky top color — matches homepage gradient, used for scrolled masthead bg
@@ -91,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.classList.remove('sidemenu-open');
   }
 
-  // Toggle menu on masthead click
   if (toggle) {
     toggle.addEventListener('click', function() {
       toggle.classList.toggle('open');
@@ -99,10 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Click dark overlay to close
   const overlay = document.querySelector('.sidemenu-right');
   if (overlay) overlay.addEventListener('click', closeMenu);
 
-  // Auto-close menu when any link is clicked
   menuLinks.forEach(link => link.addEventListener('click', closeMenu));
 });

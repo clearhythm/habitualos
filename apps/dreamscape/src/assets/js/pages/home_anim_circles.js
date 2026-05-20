@@ -1,4 +1,5 @@
-import { initPresence, subscribeToCircle, getCurrentUserId } from '../presence.js';
+import { initPresence, subscribeToCircle } from '../presence.js';
+import { getUserId } from '../auth/auth.js';
 
 const outerRings       = document.getElementById('outer-rings');
 const centerRing       = document.getElementById('center-ring');
@@ -66,7 +67,7 @@ function showName() {
   circleName.classList.remove('visible');
   circleDescriptor.classList.remove('visible');
   setTimeout(() => {
-    circleName.textContent       = person._name;
+    circleName.textContent       = person.name;
     circleDescriptor.textContent = descriptor;
     circleName.classList.add('visible');
     circleDescriptor.classList.add('visible');
@@ -87,17 +88,17 @@ function startRotation() {
 }
 
 const MOCK_OTHERS = [
-  { _name: 'Frank', state: 'witnessing' },
-  { _name: "Ro'i", state: 'practicing' },
-  { _name: 'Erik', state: 'witnessing' },
+  { name: 'Frank', state: 'witnessing' },
+  { name: "Ro'i", state: 'practicing' },
+  { name: 'Erik', state: 'witnessing' },
 ];
 
 showSelf();
 initPresence();
 
 subscribeToCircle((members) => {
-  const myId    = getCurrentUserId();
-  const myState = members.find(m => m._userId === myId)?.state || 'witnessing';
+  const myId    = getUserId();
+  const myState = members.find(m => m.userId === myId)?.state || 'witnessing';
   const others  = MOCK_OTHERS; // members.filter(m => m._userId !== myId && m.state !== 'idle');
 
   centerRing.dataset.state = myState;

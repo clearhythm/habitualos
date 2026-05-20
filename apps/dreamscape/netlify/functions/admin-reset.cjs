@@ -1,17 +1,18 @@
-const api = require('./_utils/api.cjs');
+const { deleteConnectionsForUser } = require('./collections/connections.cjs');
+const { deleteNotesForUser } = require('./collections/notes.cjs');
+const { deleteSessionsForUser } = require('./collections/sessions.cjs');
+const { deleteUser } = require('./collections/users.cjs');
+const { handle } = require('./_utils/api.cjs');
 const { TEST_USER_IDS } = require('./_utils/test-users.cjs');
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
-
+exports.handler = handle('admin.reset', 'POST', async () => {
   await Promise.all(TEST_USER_IDS.map(async (userId) => {
     await Promise.all([
-      api.deleteConnectionsForUser(userId),
-      api.deleteNotesForUser(userId),
-      api.deleteSessionsForUser(userId),
-      api.deleteUser(userId),
+      deleteConnectionsForUser(userId),
+      deleteNotesForUser(userId),
+      deleteSessionsForUser(userId),
+      deleteUser(userId),
     ]);
   }));
-
-  return { statusCode: 200, body: JSON.stringify({ ok: true, deletedFor: TEST_USER_IDS }) };
-};
+  return { ok: true, deletedFor: TEST_USER_IDS };
+});
