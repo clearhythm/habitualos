@@ -39,6 +39,9 @@ importers:
       '@habitualos/db-core':
         specifier: workspace:*
         version: link:../../packages/db-core
+      '@habitualos/email-service':
+        specifier: workspace:*
+        version: link:../../packages/email-service
       '@habitualos/frontend-utils':
         specifier: workspace:*
         version: link:../../packages/frontend-utils
