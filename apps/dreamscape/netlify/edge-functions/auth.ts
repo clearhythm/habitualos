@@ -3,16 +3,20 @@ import type { Context } from '@netlify/edge-functions';
 export default async (request: Request, context: Context) => {
   const { pathname } = new URL(request.url);
 
-  // Pass through: auth pages, static assets, API routes
+  // Pass through: static assets, API routes, signin
   if (
-    pathname.startsWith('/signin') ||
-    pathname.startsWith('/join')   ||
-    pathname.startsWith('/assets') ||
-    pathname.startsWith('/styles') ||
-    pathname.startsWith('/api')    ||
+    pathname.startsWith('/signin')    ||
+    pathname.startsWith('/assets')    ||
+    pathname.startsWith('/styles')    ||
+    pathname.startsWith('/api')       ||
     pathname.startsWith('/.netlify')
   ) {
     return context.next();
+  }
+
+  // Rewrite /join/{slug} → /join/ (SPA-style, slug read by client JS)
+  if (pathname.startsWith('/join/') && pathname !== '/join/') {
+    return context.rewrite(new URL('/join/', request.url));
   }
 
   const cookie = request.headers.get('cookie') || '';
