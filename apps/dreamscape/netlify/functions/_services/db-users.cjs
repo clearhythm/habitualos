@@ -1,4 +1,4 @@
-const { create, get, query, remove } = require('@habitualos/db-core');
+const { create, get, patch, query, remove } = require('@habitualos/db-core');
 
 const COL = 'users';
 
@@ -25,4 +25,8 @@ async function deleteUser(userId) {
   return remove({ collection: COL, id: userId });
 }
 
-module.exports = { upsertUser, getUser, getAllUsers, deleteUser };
+async function updateUser(userId, data) {
+  await patch({ collection: COL, id: userId, data });
+}
+
+module.exports = { upsertUser, updateUser, getUser, getAllUsers, deleteUser };

@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
   <link rel="stylesheet" href="/styles/main.css">
+  <script>(function(){var p=location.pathname;if(!p.startsWith('/signin')&&!p.startsWith('/join')){if(localStorage.getItem('dp-signed-in')!=='true'){sessionStorage.setItem('dp-next-path',p+location.search);location.replace('/signin/');}}})()</script>
 </head>
 <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
   {% include "nav.njk" %}

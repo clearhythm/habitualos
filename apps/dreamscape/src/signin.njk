@@ -1,0 +1,47 @@
+---
+layout: base.njk
+title: Sign In — Daily Practice
+permalink: /signin/
+pageScript: /assets/js/pages/signin.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
+---
+
+<div class="blossom-scene">
+  <div class="auth-page">
+
+    <div class="circle-header">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" class="circle-icon" aria-hidden="true">
+        <circle cx="24" cy="24" r="20"/>
+        <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
+      </svg>
+      <div class="feed-message feed-visible">
+        <span class="feed-name">Daily Practice</span>
+      </div>
+    </div>
+
+    <div class="auth-steps">
+
+      <div class="auth-step" id="step-verify">
+        <p class="feed-time auth-step-label">Signing you in…</p>
+      </div>
+
+      <div class="auth-step" id="step-form" hidden>
+        <div class="practice-field">
+          <input type="email" id="signin-email" class="practice-name-input" placeholder="your@email.com" autocomplete="email" inputmode="email">
+          <p class="feed-time auth-step-label">what's your email?</p>
+        </div>
+        <p class="auth-error" id="signin-error" hidden></p>
+        <button class="pill" id="signin-btn">send me a link</button>
+      </div>
+
+      <div class="auth-step" id="step-sent" hidden>
+        <p class="feed-time auth-step-label">check your email</p>
+        <p class="auth-subtext">we sent a link to <span id="sent-email"></span></p>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1058,3 +1058,89 @@
     i { font-size: 1.1rem; opacity: 0.7; }
   }
 }
+
+// ─── Auth pages (signin, join)
+.auth-page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 28vh $space-lg $space-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+  min-height: 100dvh;
+
+  @media (max-width: 768px) { padding-top: 18vh; }
+}
+
+.auth-steps {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-lg;
+  text-align: center;
+
+  .practice-field {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-md;
+  }
+
+  .pill { align-self: center; }
+}
+
+.auth-step-label {
+  margin: 0;
+}
+
+.auth-subtext {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.7);
+  margin: 0;
+
+  span { color: $color-text; }
+}
+
+.auth-error {
+  font-size: $font-size-sm;
+  color: rgba(#e88, 0.9);
+  margin: 0;
+}
+
+.auth-chime-actions {
+  display: flex;
+  gap: $space-lg;
+  align-items: center;
+}
+
+.chime-preview {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba($color-border-hover, 0.5);
+  cursor: pointer;
+  transition: border-color 0.2s, opacity 0.2s;
+  color: rgba($color-text, 0.6);
+
+  &:hover, &:focus {
+    border-color: rgba($color-primary, 0.5);
+    color: $color-text;
+    outline: none;
+  }
+
+  &:active { opacity: 0.7; }
+}
+
+.chime-icon {
+  width: 36px;
+  height: 36px;
+}
