@@ -1,0 +1,14 @@
+---
+layout: base.njk
+title: Sign Up — Daily Practice
+permalink: /signup/
+noContainer: true
+noFooter: true
+bodyClass: scene-page
+---
+
+{% include "signup-steps.njk" %}
+<script type="module">
+  import { startSignupFlow } from '/assets/js/pages/signup.js';
+  startSignupFlow();
+</script>

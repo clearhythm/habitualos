@@ -28,6 +28,8 @@ async function isAutoplayBlocked() {
   const splash = document.getElementById('audio-splash');
   if (!splash) return;
 
+  if (!/(?:^|;\s*)dp-auth=1/.test(document.cookie)) return;
+
   const blocked = await isAutoplayBlocked();
 
   log('debug', '[audio-unlock] blocked=', blocked, 'pref=', getAudioPref());

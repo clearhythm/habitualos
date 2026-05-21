@@ -1,0 +1,63 @@
+<div class="blossom-scene">
+  <div class="auth-page">
+
+    <div class="circle-header">
+      <div id="header-chime-wrap">
+        {% include "wind-chime.njk" %}
+      </div>
+      <div class="feed-message feed-visible">
+        <span class="feed-name" id="header-title">Welcome,</span>
+      </div>
+    </div>
+
+    <div class="auth-steps">
+
+      <div class="auth-step" id="step-loading">
+        <p class="feed-time auth-step-label">…</p>
+      </div>
+
+      <div class="auth-step" id="step-error" hidden>
+        <p class="feed-time auth-step-label">this link doesn't work</p>
+        <p class="auth-subtext">it may have been mistyped or removed</p>
+      </div>
+
+      <div class="auth-step" id="step-name" hidden>
+        <div class="practice-field">
+          <input type="text" id="join-name" class="practice-name-input" placeholder="friend" autocomplete="given-name" maxlength="40">
+          <p class="auth-subtext" id="name-subtext">Practice with support from your friends.<br>Provide your name above to begin.</p>
+        </div>
+        <button class="pill" id="name-btn">continue</button>
+      </div>
+
+      <div class="auth-step" id="step-chime" hidden>
+        <div class="practice-field">
+          <p class="auth-subtext">Tap the chime above to play it.<br>Your friends will hear it when you practice.</p>
+        </div>
+        <div class="auth-chime-actions">
+          <button class="pill" id="chime-btn">sounds good</button>
+          <button class="btn-quiet" id="chime-retry-btn">try another</button>
+        </div>
+      </div>
+
+      <div class="auth-step" id="step-email" hidden>
+        <div class="practice-field">
+          <input type="email" id="join-email" class="practice-name-input" placeholder="you@email.com" autocomplete="email" inputmode="email">
+          <p class="auth-subtext">Friends can send chimes to encourage you.<br>This is where they'll get sent.</p>
+        </div>
+        <p class="auth-error" id="join-error" hidden></p>
+        <button class="pill" id="email-btn">i'm ready</button>
+      </div>
+
+      <div class="auth-step" id="step-sent" hidden>
+        <p class="auth-subtext">We sent a link to <span id="join-sent-email"></span>.<br>Tap it to finish setting up your account.<br>Not there? Check your spam folder.</p>
+        <button class="btn-quiet" id="edit-email-btn">edit email</button>
+      </div>
+
+      <div class="auth-step" id="step-connecting" hidden>
+        <p class="feed-time auth-step-label">connecting…</p>
+      </div>
+
+    </div>
+
+  </div>
+</div>

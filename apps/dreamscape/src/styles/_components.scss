@@ -91,6 +91,13 @@
     border-color: rgba(255, 255, 255, 0.60);
     text-decoration: none;
   }
+
+  &:disabled {
+    border-color: transparent;
+    color: rgba($color-text, 0.30);
+    cursor: default;
+    pointer-events: none;
+  }
 }
 
 .practice-pill { @extend .pill; }
@@ -190,6 +197,11 @@
   80%  { transform: rotate(-0.8deg); }
   90%  { transform: rotate(0.4deg); }
   100% { transform: rotate(0deg); }
+}
+
+@keyframes chime-idle-gentle {
+  0%, 100% { transform: rotate(-4deg); }
+  50%       { transform: rotate(4deg); }
 }
 
 // ─── Ambient Player ────────────────────────────────────────────────────────
@@ -525,6 +537,8 @@
   &::placeholder { color: rgba(255, 255, 255, 0.20); }
   &:focus { border-bottom-color: rgba(255, 255, 255, 0.50); }
 
+  &[type="email"] { font-size: 2rem; }
+
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button { -webkit-appearance: none; }
   &[type="number"] { -moz-appearance: textfield; appearance: textfield; }
@@ -799,6 +813,16 @@
   flex-direction: column;
   align-items: center;
   gap: $space-lg;
+
+  #header-chime-wrap .wind-chime {
+    opacity: 1;
+    animation: chime-idle-gentle 5s ease-in-out infinite;
+    width: 44px;
+    height: 63px;
+    cursor: pointer;
+
+    &.chime-swaying { animation: chime-sway 4s ease-out forwards; }
+  }
 }
 
 .circle-icon {
@@ -1066,7 +1090,7 @@
   padding: 28vh $space-lg $space-xl;
   display: flex;
   flex-direction: column;
-  gap: $space-lg;
+  gap: $space-md;
   min-height: 100dvh;
 
   @media (max-width: 768px) { padding-top: 18vh; }
@@ -1081,7 +1105,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $space-lg;
+  gap: $space-md;
   text-align: center;
 
   .practice-field {
@@ -1089,10 +1113,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: $space-md;
+    gap: $space-sm;
   }
 
-  .pill { align-self: center; }
+  .pill { align-self: center; margin-top: $space-md; }
 }
 
 .auth-step-label {
@@ -1115,8 +1139,9 @@
 
 .auth-chime-actions {
   display: flex;
-  gap: $space-lg;
+  flex-direction: column;
   align-items: center;
+  gap: $space-sm;
 }
 
 .chime-preview {
