@@ -29,6 +29,15 @@
   @media (max-width: 768px) {
     top: 18%;
   }
+
+  #wind-chime .wind-chime {
+    opacity: 1;
+    cursor: pointer;
+  }
+
+  #wind-chime .wind-chime.chime-swaying {
+    animation: chime-sway 4s ease-out forwards;
+  }
 }
 
 // Ambient message feed

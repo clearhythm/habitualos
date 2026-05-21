@@ -21,9 +21,10 @@ function generateUserId() {
  * @param {Object} options
  * @param {() => string} options.getBaseUrl - returns the app's base URL (e.g. from env var)
  * @param {(opts: { to: string, verifyUrl: string }) => Promise<void>} options.sendEmail
+ * @param {string} [options.verifyPath='/signin/'] - path where the token is consumed
  * @returns {Function} Netlify handler
  */
-function createMagicLinkSendHandler({ getBaseUrl, sendEmail }) {
+function createMagicLinkSendHandler({ getBaseUrl, sendEmail, verifyPath = '/signin/' }) {
   return async function handler(event) {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -58,7 +59,7 @@ function createMagicLinkSendHandler({ getBaseUrl, sendEmail }) {
       // Create magic link token
       const tokenId = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
       const baseUrl = getBaseUrl();
-      const verifyUrl = `${baseUrl}/signin/verify/?token=${tokenId}`;
+      const verifyUrl = `${baseUrl}${verifyPath}?token=${tokenId}`;
 
       // Send email
       await sendEmail({ to: normalizedEmail, verifyUrl });

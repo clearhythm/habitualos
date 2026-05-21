@@ -119,35 +119,40 @@
   }
 }
 
+// Utility links — Settings + Sign out, above footer
+.sidemenu-utility {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-top: auto;
+  padding-bottom: 1rem;
+
+  a, button {
+    display: block;
+    background: none;
+    border: none;
+    padding: 0.3rem 0;
+    font-family: inherit;
+    font-size: 1.2rem;
+    color: rgba(#c8c5e8, 0.5);
+    text-decoration: none;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.2s;
+
+    &:hover { color: rgba(#c8c5e8, 0.85); }
+  }
+}
+
 // Footer block — pinned to bottom, left-aligned with nav links
 .sidemenu-footer {
-  margin-top: auto;
   padding-bottom: 2.5rem;
-}
-
-.sidemenu-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: rgba(#c8c5e8, 0.35);
-  letter-spacing: 0.06em;
-  margin-bottom: 0.35rem;
-}
-
-.sidemenu-brand-icon {
-  width: 1.4rem;
-  height: 1.4rem;
-  flex-shrink: 0;
-  opacity: 0.5;
 }
 
 .sidemenu-copyright {
   margin: 0;
   font-size: 0.8rem;
-  color: rgba(#c8c5e8, 0.35);
-  padding-left: calc(1.4rem + 0.5rem); // align with text, not icon
+  color: rgba(#c8c5e8, 0.25);
 }
 
 .sidemenu-right { display: none; }

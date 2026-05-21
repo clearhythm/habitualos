@@ -1,4 +1,4 @@
-import { setSkyGradient } from '../sky-gradient.js';
+import { setSkyGradient, lerpHex } from '../sky-gradient.js';
 
 // ─── Wind chime audio — pitch-shifted signatures via Web Audio API
 // Fetch starts immediately; AudioContext + decode happen on first gesture.
@@ -49,10 +49,11 @@ document.addEventListener('audioReady', async (e) => {
 
 function wireGestureResume() {
   async function handler() {
-    if (_audioCtx && _audioCtx.state === 'suspended') {
+    const wasSuspended = _audioCtx && _audioCtx.state === 'suspended';
+    if (wasSuspended) {
       try { await _audioCtx.resume(); } catch (_) {}
     }
-    if (_currentSession && !_muted) playSignature(_currentSession.chime);
+    if (wasSuspended && _currentSession && !_muted && !document.body.classList.contains('sidemenu-open')) playSignature(_currentSession.chime);
     ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, handler));
   }
   ['click', 'touchstart', 'keydown'].forEach(e =>
@@ -134,12 +135,24 @@ function playSignature(sig) {
 }
 
 // ─── Main chime loop
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
 let _advanceResolve = null;
+let _navOpen        = false;
+
 function advanceChime() {
   if (_advanceResolve) { _advanceResolve(); _advanceResolve = null; }
 }
+
+function pauseLoop() { _navOpen = true; }
+
+function resumeLoop() {
+  _navOpen = false;
+  if (_currentSession) {
+    showFeedMessage(_currentSession.name, `practiced ${_currentSession.lastPracticed}`);
+    swingChime();
+    playSignature(_currentSession.chime);
+  }
+}
+
 function waitOrAdvance(ms) {
   return new Promise(resolve => {
     _advanceResolve = resolve;
@@ -165,15 +178,19 @@ async function runChimeLoop() {
   for (const session of sessions) {
     log('debug', '[chime] showing session:', session.name);
     _currentSession = session;
-    showFeedMessage(session.name, `practiced ${session.lastPracticed}`);
-    swingChime();
-    playSignature(session.chime);
+    if (!_navOpen) {
+      showFeedMessage(session.name, `practiced ${session.lastPracticed}`);
+      swingChime();
+      playSignature(session.chime);
+    }
     await waitOrAdvance(10000);
   }
   _currentSession = null;
-  showFeedMessage('You', 'are caught up now');
-  swingChime();
-  playSignature(SELF_CHIME);
+  if (!_navOpen) {
+    showFeedMessage('You', 'are caught up now');
+    swingChime();
+    playSignature(SELF_CHIME);
+  }
 }
 
 document.getElementById('wind-chime')?.addEventListener('click', () => {
@@ -184,7 +201,7 @@ document.getElementById('wind-chime')?.addEventListener('click', () => {
 // ─── Wind chime sway
 let _swayEndCb = null;
 function swingChime() {
-  const chime = document.getElementById('wind-chime');
+  const chime = document.querySelector('#wind-chime .wind-chime');
   if (!chime) return;
   if (_swayEndCb) { chime.removeEventListener('animationend', _swayEndCb); _swayEndCb = null; }
   chime.classList.remove('chime-swaying');
@@ -248,6 +265,9 @@ function setOrbColor() {
     orb.style.setProperty('--orb-glow', prev.glow);
   }
 }
+
+document.addEventListener('nav:open',  pauseLoop);
+document.addEventListener('nav:close', resumeLoop);
 
 // ─── Init
 setSkyGradient();

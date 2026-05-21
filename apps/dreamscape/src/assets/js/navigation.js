@@ -1,3 +1,5 @@
+import { signOut } from './auth/auth.js';
+
 // navigation.js - Dreamscape
 // Handles: sidemenu toggle, scroll-based navbar background, auto-close menu on link click
 
@@ -95,8 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (toggle) {
     toggle.addEventListener('click', function() {
+      const opening = !document.body.classList.contains('sidemenu-open');
       toggle.classList.toggle('open');
       document.body.classList.toggle('sidemenu-open');
+      document.dispatchEvent(new CustomEvent(opening ? 'nav:open' : 'nav:close'));
     });
   }
 
@@ -104,4 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (overlay) overlay.addEventListener('click', closeMenu);
 
   menuLinks.forEach(link => link.addEventListener('click', closeMenu));
+
+  document.getElementById('signout-btn')?.addEventListener('click', signOut);
 });

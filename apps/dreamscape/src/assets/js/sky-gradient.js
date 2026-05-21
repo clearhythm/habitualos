@@ -19,7 +19,7 @@ function hexToRgb(hex) {
   return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
 }
 
-function lerpHex(a, b, t) {
+export function lerpHex(a, b, t) {
   const ra = hexToRgb(a), rb = hexToRgb(b);
   return `rgb(${Math.round(ra[0]+(rb[0]-ra[0])*t)},${Math.round(ra[1]+(rb[1]-ra[1])*t)},${Math.round(ra[2]+(rb[2]-ra[2])*t)})`;
 }
