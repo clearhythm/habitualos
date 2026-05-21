@@ -10,7 +10,8 @@
 
 html {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917);
+  background-color: #0a0917;
+  background-image: linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917);
 }
 
 body.scene-page {
