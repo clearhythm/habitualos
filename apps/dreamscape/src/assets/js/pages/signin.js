@@ -26,11 +26,12 @@ if (isSignedIn()) {
   });
 } else {
   initSigninForm({
-    emailInput:  document.getElementById('signin-email'),
-    submitBtn:   document.getElementById('signin-btn'),
-    errorEl:     document.getElementById('signin-error'),
-    sentEmailEl: document.getElementById('sent-email'),
-    formStep:    document.getElementById('step-form'),
-    sentStep:    document.getElementById('step-sent'),
+    emailInput:    document.getElementById('signin-email'),
+    submitBtn:     document.getElementById('signin-btn'),
+    errorEl:       document.getElementById('signin-error'),
+    sentEmailEl:   document.getElementById('sent-email'),
+    formStep:      document.getElementById('step-form'),
+    sentStep:      document.getElementById('step-sent'),
+    tryAnotherBtn: document.getElementById('signin-try-another'),
   });
 }

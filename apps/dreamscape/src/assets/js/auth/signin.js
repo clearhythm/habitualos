@@ -25,7 +25,7 @@ export async function consumeToken(token) {
   window.location.replace(readIntendedPath());
 }
 
-export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep }) {
+export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {
   submitBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email || !email.includes('@')) {
@@ -50,5 +50,13 @@ export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, fo
     }
   });
   emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
+
+  tryAnotherBtn?.addEventListener('click', () => {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'send link';
+    sentStep.hidden = true;
+    formStep.hidden = false;
+    emailInput.focus();
+  });
 }
 
