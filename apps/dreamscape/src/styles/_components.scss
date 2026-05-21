@@ -1126,6 +1126,7 @@
   }
 
   .pill { align-self: center; margin-top: $space-md; }
+  .pill + .btn-quiet { margin-top: calc(-1 * #{$space-sm}); }
 }
 
 .auth-step-label {
@@ -1177,4 +1178,65 @@
 .chime-icon {
   width: 36px;
   height: 36px;
+}
+
+// ─── About page
+.about-page {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 10vh 2rem 6rem;
+}
+
+.about-content {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2xl;
+}
+
+.about-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $space-sm;
+}
+
+.about-icon {
+  width: 52px;
+  height: 52px;
+  color: rgba($color-text, 0.45);
+  margin-bottom: $space-sm;
+
+  svg, .wind-chime {
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+  }
+
+  &--clickable {
+    cursor: pointer;
+    color: rgba($color-text, 0.85);
+  }
+}
+
+.about-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: $font-size-2xl;
+  font-weight: 600;
+  color: rgba($color-text, 0.9);
+  margin: 0;
+}
+
+.about-body {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.75);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.about-contact {
+  margin-top: $space-md;
 }

@@ -2,6 +2,14 @@ import { consumeToken, initSigninForm } from '../auth/signin.js';
 import { isSignedIn } from '../auth/auth.js';
 import { readIntendedPath } from '../auth/auth-intent.js';
 import { log } from '../utils/log.js';
+import { initChimeAudio, playChime, generateChime, swingChime } from '../chime.js';
+
+const chimeWrap = document.getElementById('header-chime-wrap');
+chimeWrap?.addEventListener('click', async () => {
+  await initChimeAudio();
+  playChime(generateChime());
+  swingChime(chimeWrap);
+});
 
 const params = new URLSearchParams(window.location.search);
 const token  = params.get('token');

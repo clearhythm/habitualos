@@ -10,13 +10,15 @@
   <div class="sidemenu-left">
     <ul>
       <li><h3><a href="/">Home</a></h3></li>
-      <li><h3><a href="/practice/">Practice</a></h3></li>
-      <li><h3><a href="/circle/">Chimes<span id="nav-circle-badge" class="nav-badge" hidden></span></a></h3></li>
-      <li><h3><a href="/history/">Ago</a></h3></li>
+      <li id="about-nav-link" hidden><h3><a href="/about/">About</a></h3></li>
+      <li data-auth-only hidden><h3><a href="/practice/">Practice</a></h3></li>
+      <li data-auth-only hidden><h3><a href="/circle/">Chimes<span id="nav-circle-badge" class="nav-badge" hidden></span></a></h3></li>
+      <li data-auth-only hidden><h3><a href="/history/">Ago</a></h3></li>
     </ul>
     <div class="sidemenu-utility">
-      <a href="/settings/">Settings</a>
-      <button id="signout-btn">Sign out</button>
+      <a href="/settings/" data-auth-only hidden>Settings</a>
+      <button id="signout-btn" data-auth-only hidden>Sign out</button>
+      <a href="/signin/" id="signin-nav-link" hidden>Sign in</a>
     </div>
     <div class="sidemenu-footer">
       <p class="sidemenu-copyright">

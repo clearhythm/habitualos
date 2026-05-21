@@ -1,0 +1,53 @@
+---
+layout: base.njk
+title: About — Daily Practice
+permalink: /about/
+noContainer: true
+noFooter: true
+---
+<script type="module">
+  import { initChimeAudio, playChime, generateChime, swingChime } from '/assets/js/chime.js';
+  const wrap = document.getElementById('about-chime-wrap');
+  wrap?.addEventListener('click', async () => {
+    await initChimeAudio();
+    playChime(generateChime());
+    swingChime(wrap);
+  });
+</script>
+
+<div class="about-page">
+  <div class="about-content">
+
+    <section class="about-section">
+      <div class="about-icon">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 60 L36 26 L60 48 L72 32 L88 60"/>
+          <path d="M8 80 C20 72 32 88 48 80 C64 72 76 88 88 80"/>
+        </svg>
+      </div>
+      <h2 class="about-heading">Daily Presence</h2>
+      <p class="about-body">Daily Practice is a lightweight app designed to help you do one of the hardest things in life: develop and consistently show up for a daily practice. You deserve the support to do this. You are worth it.</p>
+    </section>
+
+    <section class="about-section">
+      <div class="about-icon about-icon--clickable" id="about-chime-wrap">
+        {% include "wind-chime.njk" %}
+      </div>
+      <h2 class="about-heading">Chimes with Friends</h2>
+      <p class="about-body">Daily Practice is built around a simple concept of chimes. A chime is a sonic signature unique to you and everyone else in Daily Practice. Anytime someone practices, you get to hear their chime. You can even enable real-time chimes while you practice, making the experience feel more communal and supportive. Coming soon — send chimes as voice notes for even more mutual support.</p>
+    </section>
+
+    <section class="about-section">
+      <div class="about-icon">
+        <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+          <circle cx="24" cy="24" r="20"/>
+          <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
+        </svg>
+      </div>
+      <h2 class="about-heading">Made with Love</h2>
+      <p class="about-body">This app was made with love by Erik Burns. Reach out if you need support or just want to say hello.</p>
+      <a href="mailto:erik@habitualos.com?subject=Daily%20Practice" class="pill about-contact" target="_blank">Contact</a>
+    </section>
+
+  </div>
+</div>

@@ -7,6 +7,7 @@ export default async (request: Request, context: Context) => {
   if (
     pathname.startsWith('/signin')    ||
     pathname.startsWith('/signup')    ||
+    pathname.startsWith('/about')     ||
     pathname.startsWith('/assets')    ||
     pathname.startsWith('/styles')    ||
     pathname.startsWith('/api')       ||

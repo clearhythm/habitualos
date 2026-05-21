@@ -12,10 +12,9 @@ bodyClass: scene-page
   <div class="auth-page">
 
     <div class="circle-header">
-      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" class="circle-icon" aria-hidden="true">
-        <circle cx="24" cy="24" r="20"/>
-        <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
-      </svg>
+      <div id="header-chime-wrap">
+        {% include "wind-chime.njk" %}
+      </div>
       <div class="feed-message feed-visible">
         <span class="feed-name">Sign In</span>
       </div>
@@ -29,16 +28,16 @@ bodyClass: scene-page
 
       <div class="auth-step" id="step-form">
         <div class="practice-field">
-          <input type="email" id="signin-email" class="practice-name-input" placeholder="your@email.com" autocomplete="email" inputmode="email">
-          <p class="feed-time auth-step-label">what's your email?</p>
+          <input type="email" id="signin-email" class="practice-name-input" placeholder="you@email.com" autocomplete="email" inputmode="email">
+          <p class="auth-subtext">Enter the email you signed up with.<br>We'll send you a link to sign in.</p>
         </div>
         <p class="auth-error" id="signin-error" hidden></p>
-        <button class="pill" id="signin-btn">send me a link</button>
+        <button class="pill" id="signin-btn">send link</button>
+        <a href="mailto:erik@habitualos.com?subject=Daily%20Practice%3A%20help%20with%20sign%20in" class="btn-quiet" target="_blank">need help?</a>
       </div>
 
       <div class="auth-step" id="step-sent" hidden>
-        <p class="feed-time auth-step-label">check your email</p>
-        <p class="auth-subtext">we sent a link to <span id="sent-email"></span></p>
+        <p class="auth-subtext">We sent a link to <span id="sent-email"></span>.<br>Click the link to sign in to your account.<br>Not there? Check your spam folder.</p>
       </div>
 
     </div>

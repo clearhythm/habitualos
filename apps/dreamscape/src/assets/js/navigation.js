@@ -1,4 +1,4 @@
-import { signOut } from './auth/auth.js';
+import { signOut, isSignedIn } from './auth/auth.js';
 
 // navigation.js - Dreamscape
 // Handles: sidemenu toggle, scroll-based navbar background, auto-close menu on link click
@@ -110,4 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
   menuLinks.forEach(link => link.addEventListener('click', closeMenu));
 
   document.getElementById('signout-btn')?.addEventListener('click', signOut);
+
+  if (isSignedIn()) {
+    document.querySelectorAll('[data-auth-only]').forEach(el => el.hidden = false);
+  } else {
+    document.getElementById('about-nav-link').hidden = false;
+    document.getElementById('signin-nav-link').hidden = false;
+  }
 });
