@@ -103,23 +103,17 @@ export async function startSignupFlow({ sharerName = null } = {}) {
     nameSubtext.innerHTML = `${sharerName} invited you to join.<br>Provide your first name to begin.`;
   }
 
-  // If email already sent, user is mid-flow — don't wipe their data
   const pendingEmail = localStorage.getItem('dp-pending-email');
-  if (pendingEmail) {
-    document.getElementById('join-sent-email').textContent = pendingEmail;
-    show('step-sent');
-    return;
-  }
 
-  // Clear any stale pending data from a previous session
-  // (dp-pending-connect is managed by join.js — don't touch it here)
-  localStorage.removeItem('dp-pending-chime');
-  localStorage.removeItem('dp-pending-name');
+  if (!pendingEmail) {
+    // Clear any stale pending data from a previous session
+    // (dp-pending-connect is managed by join.js — don't touch it here)
+    localStorage.removeItem('dp-pending-chime');
+    localStorage.removeItem('dp-pending-name');
+  }
 
   let _pendingChime  = null;
   let _chimeAssigned = false;
-
-  show('step-name');
 
   // ─── Name step
   const nameInput = document.getElementById('join-name');
@@ -221,4 +215,11 @@ export async function startSignupFlow({ sharerName = null } = {}) {
     show('step-email');
     emailInput.focus();
   });
+
+  if (pendingEmail) {
+    document.getElementById('join-sent-email').textContent = pendingEmail;
+    show('step-sent');
+  } else {
+    show('step-name');
+  }
 }
