@@ -34,23 +34,21 @@ function formatDuration(seconds) {
 }
 
 function renderSessions(sessions) {
-  const list = document.getElementById('session-list');
-  const empty = document.getElementById('session-empty');
-  if (!list) return;
+  const feed = document.getElementById('session-feed');
+  if (!feed) return;
 
   if (!sessions.length) {
-    if (empty) empty.hidden = false;
+    feed.innerHTML = '<p class="empty-state">Nothing yet.</p>';
     return;
   }
 
-  if (empty) empty.hidden = true;
   const sorted = sessions.slice().sort((a, b) => {
     const aAt = a.stoppedAt?.seconds ? a.stoppedAt.seconds * 1000 : (a.startedAt || 0);
     const bAt = b.stoppedAt?.seconds ? b.stoppedAt.seconds * 1000 : (b.startedAt || 0);
     return bAt - aAt;
   });
 
-  list.innerHTML = sorted.map(s => {
+  feed.innerHTML = sorted.map(s => {
     const startMs = s.startedAt instanceof Object ? s.startedAt?.seconds * 1000 : s.startedAt;
     return `
       <div class="session-row">
