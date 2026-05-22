@@ -1,6 +1,5 @@
 import { isSignedIn, getUserId } from '../auth/auth.js';
 import { initChimeAudio, playChime, generateChime, swingChime } from '../chime.js';
-import { getAudioPref, setAudioPref } from '../audio-unlock.js';
 import { fetchProfile, saveProfile } from '../collections/users.js';
 import { log } from '../utils/log.js';
 
@@ -15,9 +14,6 @@ const nameError       = document.getElementById('name-error');
 const saveBtn         = document.getElementById('save-btn');
 const savedIndicator  = document.getElementById('settings-saved');
 const changeChimeBtn  = document.getElementById('change-chime-btn');
-const soundToggleBtn  = document.getElementById('sound-toggle-btn');
-const soundIconOn     = document.getElementById('settings-icon-on');
-const soundIconOff    = document.getElementById('settings-icon-off');
 
 let _pendingChime  = null;
 let _originalName  = '';
@@ -36,17 +32,6 @@ function markSaved() { saveBtn.hidden = true;  savedIndicator.hidden = false; }
 // ─── Chime
 function playPending()  { playChime(_pendingChime); swingChime(headerChimeWrap); }
 function changeChime()  { _pendingChime = generateChime(); playPending(); if (isDirty()) markDirty(); }
-
-// ─── Sound
-function syncSoundIcon(pref) {
-  soundIconOn.style.display  = pref === 'off' ? 'none' : '';
-  soundIconOff.style.display = pref === 'off' ? '' : 'none';
-}
-function toggleSound() {
-  const next = (getAudioPref() ?? 'on') === 'off' ? 'on' : 'off';
-  setAudioPref(next);
-  syncSoundIcon(next);
-}
 
 // ─── Save
 async function save() {
@@ -74,7 +59,6 @@ async function save() {
 // ─── Events
 headerChimeWrap.addEventListener('click', async () => { await initChimeAudio(); playPending(); });
 changeChimeBtn.addEventListener('click', changeChime);
-soundToggleBtn.addEventListener('click', toggleSound);
 nameInput.addEventListener('input', () => { if (isDirty()) markDirty(); else saveBtn.hidden = true; });
 saveBtn.addEventListener('click', save);
 nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
@@ -94,8 +78,7 @@ nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
   _originalName  = nameInput.value;
   _originalChime = _pendingChime;
 
-  syncSoundIcon(getAudioPref() ?? 'on');
-  document.querySelectorAll('.auth-step').forEach(el => { el.hidden = true; });
+document.querySelectorAll('.auth-step').forEach(el => { el.hidden = true; });
   document.getElementById('step-settings').hidden = false;
 
   initChimeAudio().then(playPending);
