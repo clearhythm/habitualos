@@ -240,9 +240,9 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
 
     return {
       result: results.map(s => {
-        const startMs = s.startedAt instanceof Object
-          ? s.startedAt.seconds * 1000
-          : (s.startedAt || null);
+        const startMs = s._startedAt instanceof Object
+          ? s._startedAt.seconds * 1000
+          : (s._startedAt || null);
         return {
           practiceType: s.practiceType || 'Practice',
           duration: s.duration ? `${Math.max(1, Math.round(s.duration / 60))} minutes` : null,
@@ -308,19 +308,19 @@ exports.handler = handle('reflect.chat.save', 'POST', async (event, { userId, me
 
 ---
 
-## Session Data Shape (from collections/sessions.cjs)
+## Practice Log Data Shape (from collections/sessions.cjs, collection: `practice-logs`)
 
 ```javascript
-// Each session returned by getSessionsForUser(userId):
+// Each doc returned by getSessionsForUser(userId):
 {
-  sessionId: string,        // unique ID
+  _practiceId: string,      // unique ID
   _userId: string,
+  _startedAt: Firestore Timestamp | Date,  // can be { seconds, nanoseconds } or Date
+  _stoppedAt: Firestore Timestamp | null,
+  name: string,             // user's display name at time of session
   practiceType: string,     // e.g. "breathwork", "meditation"
   duration: number,         // seconds practiced
   note: string | null,      // optional reflection note
-  startedAt: Firestore Timestamp | number,  // can be { seconds, nanoseconds } or ms timestamp
-  stoppedAt: Firestore Timestamp | null,
-  name: string,             // user's display name at time of session
 }
 ```
 

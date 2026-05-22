@@ -14,16 +14,16 @@ Everything else depends on this. Sets up Firestore as the real-time backend and 
 }
 ```
 
-**`sessions/{sessionId}`**
+**`practice-logs/{practiceId}`**
 ```json
 {
-  "userId": "string",
+  "_practiceId": "string",
+  "_userId": "string",
+  "_startedAt": "timestamp",
+  "_stoppedAt": "timestamp (on complete)",
   "name": "string",
-  "state": "active | completed",
   "practiceType": "string (optional)",
   "note": "string (optional)",
-  "startedAt": "timestamp",
-  "stoppedAt": "timestamp (on complete)",
   "duration": "number (seconds, on complete)"
 }
 ```

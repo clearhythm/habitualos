@@ -1,14 +1,14 @@
 const { query, remove } = require('@habitualos/db-core');
 
-const COL = 'sessions';
+const COL = 'practice-logs';
 
 async function getLastSessionForUser(userId) {
-  const rows = await query({ collection: COL, where: [`_userId::eq::${userId}`], orderBy: 'startedAt::desc', limit: 1 });
+  const rows = await query({ collection: COL, where: [`_userId::eq::${userId}`], orderBy: '_startedAt::desc', limit: 1 });
   return rows?.[0] || null;
 }
 
 async function getRecentSessions(limit = 20) {
-  return query({ collection: COL, orderBy: 'startedAt::desc', limit }) || [];
+  return query({ collection: COL, orderBy: '_startedAt::desc', limit }) || [];
 }
 
 async function getSessionsForUser(userId) {
@@ -17,8 +17,7 @@ async function getSessionsForUser(userId) {
 
 async function deleteSessionsForUser(userId) {
   const sessions = await getSessionsForUser(userId);
-  // handle both old (_sessionId) and new (sessionId) field names
-  await Promise.all(sessions.map(s => remove({ collection: COL, id: s.sessionId || s._sessionId })));
+  await Promise.all(sessions.map(s => remove({ collection: COL, id: s._practiceId })));
 }
 
 module.exports = { getLastSessionForUser, getRecentSessions, getSessionsForUser, deleteSessionsForUser };

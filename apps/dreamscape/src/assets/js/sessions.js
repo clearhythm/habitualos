@@ -20,15 +20,15 @@ export async function endSession(note, durationSeconds) {
   if (!sessionId) return;
   const userId = getUserId();
   const name = getName();
-  await setDoc(doc(db, 'sessions', sessionId), {
-    sessionId,
-    userId,
+  await setDoc(doc(db, 'practice-logs', sessionId), {
+    _practiceId: sessionId,
+    _userId: userId,
+    _startedAt: startedAt,
+    _stoppedAt: serverTimestamp(),
     name,
     practiceType,
     note: note || null,
     duration: durationSeconds,
-    startedAt,
-    stoppedAt: serverTimestamp(),
   });
   setPresenceState('witnessing');
   post('/api/session-complete', { userId }).catch(() => {});
@@ -47,5 +47,5 @@ export function cancelSession() {
 
 export async function saveReflection(note) {
   if (!sessionId || !note) return;
-  await updateDoc(doc(db, 'sessions', sessionId), { note });
+  await updateDoc(doc(db, 'practice-logs', sessionId), { note });
 }

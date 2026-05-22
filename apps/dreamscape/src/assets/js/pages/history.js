@@ -38,18 +38,18 @@ function renderSessions(sessions) {
   if (!feed) return;
 
   if (!sessions.length) {
-    feed.innerHTML = '<p class="empty-state">Nothing yet.</p>';
+    feed.innerHTML = '<p class="empty-state">You ready to begin?</p><div style="text-align:center;margin-top:0.25rem"><a href="/practice/" class="practice-pill">practice</a></div>';
     return;
   }
 
   const sorted = sessions.slice().sort((a, b) => {
-    const aAt = a.stoppedAt?.seconds ? a.stoppedAt.seconds * 1000 : (a.startedAt || 0);
-    const bAt = b.stoppedAt?.seconds ? b.stoppedAt.seconds * 1000 : (b.startedAt || 0);
+    const aAt = a._stoppedAt?.seconds ? a._stoppedAt.seconds * 1000 : (a._startedAt || 0);
+    const bAt = b._stoppedAt?.seconds ? b._stoppedAt.seconds * 1000 : (b._startedAt || 0);
     return bAt - aAt;
   });
 
   feed.innerHTML = sorted.map(s => {
-    const startMs = s.startedAt instanceof Object ? s.startedAt?.seconds * 1000 : s.startedAt;
+    const startMs = s._startedAt instanceof Object ? s._startedAt?.seconds * 1000 : s._startedAt;
     return `
       <div class="session-row">
         <div class="session-type">${escapeHtml(s.practiceType || 'Practice')}</div>
