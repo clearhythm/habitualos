@@ -32,8 +32,16 @@
   {% endif %}
 
   {% include "audio-splash.njk" %}
+  <script>
+    if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
+      var s = document.getElementById('audio-splash');
+      if (s) s.removeAttribute('hidden');
+    }
+  </script>
   <script type="module" src="/assets/js/navigation.js"></script>
+  {% if not noAudioUnlock %}
   <script type="module" src="/assets/js/audio-unlock.js"></script>
+  {% endif %}
   {% if pageScript %}
   <script type="module" src="{{ pageScript }}"></script>
   {% endif %}

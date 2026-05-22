@@ -1138,7 +1138,7 @@
   color: rgba($color-text-muted, 0.7);
   margin: 0;
 
-  span { color: $color-text; }
+  span:not(.auth-error) { color: $color-text; }
 }
 
 .auth-error {

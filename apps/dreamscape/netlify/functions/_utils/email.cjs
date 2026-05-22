@@ -6,6 +6,7 @@ async function sendMagicLink({ to, verifyUrl }) {
     verifyUrl,
     appName: 'Daily Practice',
     primaryColor: '#4a3f6b',
+    buttonColor: '#ffffff',
   });
 }
 

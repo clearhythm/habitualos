@@ -12,10 +12,10 @@ function getClient() {
   return resendClient;
 }
 
-async function sendMagicLink({ to, verifyUrl, appName = 'HabitualOS', primaryColor = '#3a7a10', fromEmail }) {
+async function sendMagicLink({ to, verifyUrl, appName = 'HabitualOS', primaryColor = '#3a7a10', buttonColor, fromEmail }) {
   const client = getClient();
   const from = fromEmail || process.env.RESEND_FROM_EMAIL || `${appName} <noreply@habitualos.com>`;
-  const { subject, text, html } = magicLinkTemplate.render({ appName, verifyUrl, primaryColor });
+  const { subject, text, html } = magicLinkTemplate.render({ appName, verifyUrl, primaryColor, buttonColor });
 
   const { data, error } = await client.emails.send({ from, to, subject, text, html });
 

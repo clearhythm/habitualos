@@ -21,8 +21,12 @@ export async function consumeToken(token) {
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'invalid token');
   signIn({ userId: data.userId, name: data.profile?.displayName || data.profile?.firstName || '' });
+  if (localStorage.getItem('dp-audio-pref') === null) {
+    document.cookie = 'dp-audio-check=1; path=/; samesite=lax; max-age=300';
+  }
+  const dest = readIntendedPath();
   clearIntendedPath();
-  window.location.replace(readIntendedPath());
+  window.location.replace(dest);
 }
 
 export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {
