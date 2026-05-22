@@ -1297,11 +1297,21 @@
 
 .session-when {
   display: flex;
-  gap: 0.6rem;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 0.3rem;
+}
+
+.session-date {
   font-size: $font-size-sm;
   color: $color-text-muted;
-  margin-top: 0.25rem;
-  opacity: 0.6;
+  opacity: 0.85;
+}
+
+.session-time {
+  font-size: 0.8rem;
+  color: $color-text-muted;
+  opacity: 0.5;
 }
 
 .session-note {

@@ -23,7 +23,13 @@ function formatDuration(seconds) {
 
 function formatDate(ms) {
   if (!ms) return '';
-  return new Date(ms).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const d = new Date(ms);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'today';
+  if (d.toDateString() === yesterday.toDateString()) return 'yesterday';
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 function formatTime(ms) {
@@ -57,8 +63,8 @@ function renderSessions(sessions) {
         </div>
         ${startMs ? `
         <div class="session-when">
-          <span>${formatDate(startMs)}</span>
-          <span>${formatTime(startMs)}</span>
+          <span class="session-date">${formatDate(startMs)}</span>
+          <span class="session-time">${formatTime(startMs)}</span>
         </div>` : ''}
         ${s.note ? `<div class="session-note">${escapeHtml(s.note)}</div>` : ''}
       </div>`;

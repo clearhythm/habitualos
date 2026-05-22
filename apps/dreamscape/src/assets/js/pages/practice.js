@@ -163,7 +163,7 @@ function discardSession() {
 async function save() {
   saveBtn.disabled = true;
   await saveReflection(noteInput.value.trim());
-  window.location.href = '/';
+  window.location.href = '/history/';
 }
 
 let _isMuted = false;
