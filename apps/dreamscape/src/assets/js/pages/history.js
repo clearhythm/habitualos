@@ -47,13 +47,15 @@ function renderSessions(sessions) {
   }
 
   const sorted = sessions.slice().sort((a, b) => {
-    const aAt = a._stoppedAt?.seconds ? a._stoppedAt.seconds * 1000 : (a._startedAt || 0);
-    const bAt = b._stoppedAt?.seconds ? b._stoppedAt.seconds * 1000 : (b._startedAt || 0);
+    const aAt = a._stoppedAt ? (a._stoppedAt.seconds ?? a._stoppedAt._seconds) * 1000 : (a._startedAt || 0);
+    const bAt = b._stoppedAt ? (b._stoppedAt.seconds ?? b._stoppedAt._seconds) * 1000 : (b._startedAt || 0);
     return bAt - aAt;
   });
 
   feed.innerHTML = sorted.map(s => {
-    const startMs = s._startedAt instanceof Object ? s._startedAt.seconds * 1000 : (s._startedAt || null);
+    const startMs = s._startedAt instanceof Object
+      ? (s._startedAt.seconds ?? s._startedAt._seconds) * 1000
+      : (s._startedAt || null);
     const dur = formatDuration(s.durationSeconds);
     return `
       <div class="session-row">
