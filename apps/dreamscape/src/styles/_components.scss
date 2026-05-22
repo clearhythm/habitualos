@@ -1268,32 +1268,51 @@
 }
 
 .session-row {
-  padding: 1.1rem 0;
+  padding: 1.25rem 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 
   &:last-child { border-bottom: none; }
 }
 
+.session-row-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .session-type {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 400;
   color: $color-text;
 }
 
-.session-meta {
+.session-duration {
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.45);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.session-when {
+  display: flex;
+  gap: 0.6rem;
   font-size: $font-size-sm;
   color: $color-text-muted;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
+  opacity: 0.6;
 }
 
 .session-note {
   font-size: $font-size-sm;
   font-style: italic;
   color: $color-text-muted;
-  opacity: 0.8;
-  margin-top: 0.35rem;
-  line-height: 1.5;
+  opacity: 0.75;
+  margin-top: 0.6rem;
+  line-height: 1.6;
+  padding-left: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 // ─── Reflect pill (secondary, below practice pill on homepage)

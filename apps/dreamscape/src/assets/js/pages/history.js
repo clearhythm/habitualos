@@ -14,23 +14,21 @@ async function loadHistory() {
   } catch (_) {}
 }
 
-function relativeTime(ms) {
-  if (!ms) return '';
-  const diff = Date.now() - ms;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 2)  return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
-
 function formatDuration(seconds) {
-  if (!seconds) return '';
+  if (!seconds) return null;
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return m > 0 ? `${m}m ${s > 0 ? s + 's' : ''}`.trim() : `${s}s`;
+  return m > 0 ? `${m}m${s > 0 ? ' ' + s + 's' : ''}` : `${s}s`;
+}
+
+function formatDate(ms) {
+  if (!ms) return '';
+  return new Date(ms).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(ms) {
+  if (!ms) return '';
+  return new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function renderSessions(sessions) {
@@ -49,13 +47,19 @@ function renderSessions(sessions) {
   });
 
   feed.innerHTML = sorted.map(s => {
-    const startMs = s._startedAt instanceof Object ? s._startedAt?.seconds * 1000 : s._startedAt;
+    const startMs = s._startedAt instanceof Object ? s._startedAt.seconds * 1000 : (s._startedAt || null);
+    const dur = formatDuration(s.duration);
     return `
       <div class="session-row">
-        <div class="session-type">${escapeHtml(s.practiceType || 'Practice')}</div>
-        <div class="session-meta">
-          ${s.duration ? formatDuration(s.duration) + ' · ' : ''}${relativeTime(startMs)}
+        <div class="session-row-header">
+          <div class="session-type">${escapeHtml(s.practiceType || 'Practice')}</div>
+          ${dur ? `<div class="session-duration">${dur}</div>` : ''}
         </div>
+        ${startMs ? `
+        <div class="session-when">
+          <span>${formatDate(startMs)}</span>
+          <span>${formatTime(startMs)}</span>
+        </div>` : ''}
         ${s.note ? `<div class="session-note">${escapeHtml(s.note)}</div>` : ''}
       </div>`;
   }).join('');
