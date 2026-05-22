@@ -48,11 +48,11 @@ function renderSessions(sessions) {
 
   feed.innerHTML = sorted.map(s => {
     const startMs = s._startedAt instanceof Object ? s._startedAt.seconds * 1000 : (s._startedAt || null);
-    const dur = formatDuration(s.duration);
+    const dur = formatDuration(s.durationSeconds);
     return `
       <div class="session-row">
         <div class="session-row-header">
-          <div class="session-type">${escapeHtml(s.practiceType || 'Practice')}</div>
+          <div class="session-type">${escapeHtml(s.practiceName || 'Practice')}</div>
           ${dur ? `<div class="session-duration">${dur}</div>` : ''}
         </div>
         ${startMs ? `

@@ -1,51 +1,53 @@
 import { db, doc, setDoc, updateDoc, serverTimestamp } from './firebase.js';
 import { setPresenceState } from './presence.js';
 import { post } from './api.js';
-import { getUserId, getName } from './auth/auth.js';
-import { makeId } from './utils.js';
+import { getUserId } from './auth/auth.js';
+import { generatePracticeLogId } from './utils.js';
 import { invalidateCircleCache } from './collections/circle.js';
 
-let sessionId = null;
-let practiceType = null;
+let practiceLogId = null;
+let _lastPracticeLogId = null;
+let practiceName = null;
 let startedAt = null;
 
-export function startSession(type) {
-  sessionId = makeId('sess');
-  practiceType = type || null;
+export function startSession(name) {
+  practiceLogId = generatePracticeLogId();
+  practiceName = name || null;
   startedAt = new Date();
   setPresenceState('practicing');
 }
 
-export async function endSession(note, durationSeconds) {
-  if (!sessionId) return;
+export async function endSession(durationSeconds) {
+  if (!practiceLogId) return;
   const userId = getUserId();
-  const name = getName();
-  await setDoc(doc(db, 'practice-logs', sessionId), {
-    _practiceId: sessionId,
+  await setDoc(doc(db, 'practice-logs', practiceLogId), {
+    _practiceId: practiceLogId,
     _userId: userId,
     _startedAt: startedAt,
     _stoppedAt: serverTimestamp(),
-    name,
-    practiceType,
-    note: note || null,
-    duration: durationSeconds,
+    practiceName,
+    note: null,
+    durationSeconds,
   });
   setPresenceState('witnessing');
   post('/api/session-complete', { userId }).catch(() => {});
   invalidateCircleCache();
-  sessionId = null;
-  practiceType = null;
+  _lastPracticeLogId = practiceLogId;
+  practiceLogId = null;
+  practiceName = null;
   startedAt = null;
 }
 
 export function cancelSession() {
-  sessionId = null;
-  practiceType = null;
+  practiceLogId = null;
+  _lastPracticeLogId = null;
+  practiceName = null;
   startedAt = null;
   setPresenceState('witnessing');
 }
 
 export async function saveReflection(note) {
-  if (!sessionId || !note) return;
-  await updateDoc(doc(db, 'practice-logs', sessionId), { note });
+  if (!_lastPracticeLogId || !note) return;
+  await updateDoc(doc(db, 'practice-logs', _lastPracticeLogId), { note });
+  _lastPracticeLogId = null;
 }

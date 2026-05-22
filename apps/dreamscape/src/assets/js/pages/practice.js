@@ -133,7 +133,7 @@ async function stopSession() {
   clearInterval(timerInterval);
   timerInterval = null;
   const practiced = totalSeconds - remainingSeconds;
-  await endSession(null, practiced);
+  await endSession(practiced);
   stop();
   releaseWakeLock();
   isPaused = false;

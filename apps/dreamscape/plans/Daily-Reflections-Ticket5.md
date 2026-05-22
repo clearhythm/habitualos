@@ -46,7 +46,7 @@ This ticket adds:
 ## File 1: `netlify/functions/reflect-post-practice.cjs` (NEW)
 
 **Endpoint:** POST `/api/reflect-post-practice`
-**Input:** `{ userId, practiceType, durationSeconds, note, timezone }`
+**Input:** `{ userId, practiceName, durationSeconds, note, timezone }`
 **Output:** `{ comment }`
 
 ```javascript
@@ -57,10 +57,10 @@ const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
 exports.handler = handle('reflect.post-practice', 'POST', async (event, {
-  userId, practiceType, durationSeconds, note, timezone = 'America/Los_Angeles'
+  userId, practiceName, durationSeconds, note, timezone = 'America/Los_Angeles'
 }) => {
   if (!userId) throw new Error('userId required');
-  if (!practiceType) throw new Error('practiceType required');
+  if (!practiceName) throw new Error('practiceName required');
 
   const [user, sessions] = await Promise.all([
     getUser(userId),
@@ -72,7 +72,7 @@ exports.handler = handle('reflect.post-practice', 'POST', async (event, {
   // Count prior sessions of THIS specific practice type
   // (the session just completed may or may not be in the list yet)
   const priorSessions = (sessions || []).filter(s =>
-    s.practiceType && s.practiceType.toLowerCase() === practiceType.toLowerCase()
+    s.practiceName && s.practiceName.toLowerCase() === practiceName.toLowerCase()
   );
   const sessionCount = priorSessions.length; // N prior (so this was session N+1, or "Nth+1")
 
@@ -94,8 +94,8 @@ exports.handler = handle('reflect.post-practice', 'POST', async (event, {
     : `their ${n}th session`;
 
   const userContent = [
-    `You witnessed ${name} complete ${durationMins ? `${durationMins} minute${durationMins !== 1 ? 's' : ''} of ` : ''}${practiceType}.`,
-    `This is ${countPhrase} of ${practiceType}.`,
+    `You witnessed ${name} complete ${durationMins ? `${durationMins} minute${durationMins !== 1 ? 's' : ''} of ` : ''}${practiceName}.`,
+    `This is ${countPhrase} of ${practiceName}.`,
     `Local time: ${localTimeStr}.`,
     note?.trim() ? `They wrote: "${note.trim()}"` : null,
     '',
@@ -111,7 +111,7 @@ exports.handler = handle('reflect.post-practice', 'POST', async (event, {
   });
 
   const comment = response.content?.[0]?.text?.trim() || '';
-  log('debug', '[reflect-post-practice] comment for', userId, practiceType, 'session', n);
+  log('debug', '[reflect-post-practice] comment for', userId, practiceName, 'session', n);
 
   return { comment };
 });
@@ -253,7 +253,7 @@ import { log } from '../utils/log.js';
 
 ### B. Add module-level state vars (after existing `let` declarations)
 ```javascript
-let _currentPracticeType = '';
+let _currentPracticeName = '';
 let _currentDurationSeconds = 0;
 let _currentNote = '';
 ```
@@ -283,7 +283,7 @@ Add this immediately after the element query variables (before event listeners):
 
 In `begin()`, add:
 ```javascript
-_currentPracticeType = nameInput.value.trim();
+_currentPracticeName = nameInput.value.trim();
 ```
 
 In `stopSession()`, capture duration:
@@ -363,7 +363,7 @@ async function loadPostPracticeQueue() {
   try {
     const result = await post('/api/reflect-post-practice', {
       userId,
-      practiceType: _currentPracticeType,
+      practiceName: _currentPracticeName,
       durationSeconds: _currentDurationSeconds,
       note: _currentNote || null,
       timezone,

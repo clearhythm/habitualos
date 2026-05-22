@@ -118,7 +118,7 @@ exports.handler = handle('reflect.chat.init', 'POST', async (event, { userId, ti
 
   // Last 10 unique practice names
   const recentNames = [...new Set(
-    recentSessions.map(s => s.practiceType).filter(Boolean)
+    recentSessions.map(s => s.practiceName).filter(Boolean)
   )].slice(0, 10);
 
   // Last 3 notes (non-empty, 80-char preview)
@@ -231,7 +231,7 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
     if (input.practice_name) {
       const filter = input.practice_name.toLowerCase();
       results = results.filter(s =>
-        s.practiceType && s.practiceType.toLowerCase().includes(filter)
+        s.practiceName && s.practiceName.toLowerCase().includes(filter)
       );
     }
 
@@ -244,8 +244,8 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
           ? s._startedAt.seconds * 1000
           : (s._startedAt || null);
         return {
-          practiceType: s.practiceType || 'Practice',
-          duration: s.duration ? `${Math.max(1, Math.round(s.duration / 60))} minutes` : null,
+          practiceName: s.practiceName || 'Practice',
+          duration: s.durationSeconds ? `${Math.max(1, Math.round(s.durationSeconds / 60))} minutes` : null,
           note: s.note || null,
           when: startMs
             ? new Date(startMs).toLocaleDateString('en-US', {
@@ -315,11 +315,10 @@ exports.handler = handle('reflect.chat.save', 'POST', async (event, { userId, me
 {
   _practiceId: string,      // unique ID
   _userId: string,
-  _startedAt: Firestore Timestamp | Date,  // can be { seconds, nanoseconds } or Date
+  _startedAt: Firestore Timestamp | Date,
   _stoppedAt: Firestore Timestamp | null,
-  name: string,             // user's display name at time of session
-  practiceType: string,     // e.g. "breathwork", "meditation"
-  duration: number,         // seconds practiced
+  practiceName: string,     // what the user named their practice
+  durationSeconds: number,  // elapsed seconds
   note: string | null,      // optional reflection note
 }
 ```
