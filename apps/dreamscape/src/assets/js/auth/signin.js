@@ -20,13 +20,39 @@ export async function consumeToken(token) {
   const res  = await fetch(`/api/auth-magic-link-consume?token=${encodeURIComponent(token)}`);
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'invalid token');
-  signIn({ userId: data.userId, name: data.profile?.displayName || data.profile?.firstName || '' });
+  const profile = data.profile || {};
+  signIn({ userId: data.userId, name: profile._name || profile.displayName || profile.firstName || '' });
   if (localStorage.getItem('dp-audio-pref') === null) {
     document.cookie = 'dp-audio-check=1; path=/; samesite=lax; max-age=300';
   }
+
+  const pending = data.profile?.pendingRegistration;
+  if (pending) {
+    await completePendingRegistration(data.userId, pending);
+    // Set welcome flag before redirecting
+    if (pending.connectName) {
+      localStorage.setItem('dp-welcome-from', pending.connectName);
+    } else {
+      localStorage.setItem('dp-first-visit', '1');
+    }
+  }
+
   const dest = readIntendedPath();
   clearIntendedPath();
   window.location.replace(dest);
+}
+
+async function completePendingRegistration(userId, pending) {
+  const { name, chime, connectUserId, connectName } = pending;
+  try {
+    await fetch('/api/user-register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, name: name || '', chime: chime || null, connectUserId: connectUserId || undefined }),
+    });
+    log('debug', '[signin] registration complete, connectName:', connectName);
+  } catch (err) { log('warn', '[signin] register failed:', err); }
+  localStorage.removeItem('dp-pending-email');
 }
 
 export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {
@@ -63,4 +89,3 @@ export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, fo
     emailInput.focus();
   });
 }
-

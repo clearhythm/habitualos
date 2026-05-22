@@ -29,5 +29,7 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
     log('debug', '[user-register] connected', userId, '↔', connectUserId);
   }
 
+  await updateUser(userId, { pendingRegistration: null });
+
   return { ok: true };
 });

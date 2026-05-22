@@ -11,6 +11,13 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
 </head>
 <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
+  {% include "audio-splash.njk" %}
+  <script>
+    if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
+      document.getElementById('audio-splash').removeAttribute('hidden');
+    }
+  </script>
+
   {% include "nav.njk" %}
 
   <main class="main">
@@ -30,14 +37,6 @@
     </div>
   </footer>
   {% endif %}
-
-  {% include "audio-splash.njk" %}
-  <script>
-    if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
-      var s = document.getElementById('audio-splash');
-      if (s) s.removeAttribute('hidden');
-    }
-  </script>
   <script type="module" src="/assets/js/navigation.js"></script>
   {% if not noAudioUnlock %}
   <script type="module" src="/assets/js/audio-unlock.js"></script>

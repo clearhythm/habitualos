@@ -1,4 +1,5 @@
 import { signOut, isSignedIn } from './auth/auth.js';
+import { addRipple, removeRipple } from './nav-ripple.js';
 
 // navigation.js - Dreamscape
 // Handles: sidemenu toggle, scroll-based navbar background, auto-close menu on link click
@@ -40,11 +41,13 @@ import { signOut, isSignedIn } from './auth/auth.js';
       if (data.hasUnread) {
         const badge = document.getElementById('nav-circle-badge');
         if (badge) badge.hidden = false;
+        addRipple('unread');
       }
     } catch (_) {}
   } else if (cached === 'true') {
     const badge = document.getElementById('nav-circle-badge');
     if (badge) badge.hidden = false;
+    addRipple('unread');
   }
 })();
 
@@ -96,7 +99,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (toggle) {
+    if (!localStorage.getItem('dp-nav-seen')) addRipple('first-time');
+
     toggle.addEventListener('click', function() {
+      if (!localStorage.getItem('dp-nav-seen')) {
+        localStorage.setItem('dp-nav-seen', '1');
+        removeRipple('first-time');
+      }
       const opening = !document.body.classList.contains('sidemenu-open');
       toggle.classList.toggle('open');
       document.body.classList.toggle('sidemenu-open');

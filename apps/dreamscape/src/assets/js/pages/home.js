@@ -24,9 +24,10 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 })();
 
 let _loopStarted = false;
+let _isWelcome   = false;
 function startChimeLoop() {
   log('debug', '[chime] startChimeLoop called, _loopStarted=', _loopStarted);
-  if (_loopStarted) return;
+  if (_loopStarted || _isWelcome) return;
   _loopStarted = true;
   runChimeLoop();
 }
@@ -268,6 +269,27 @@ function setOrbColor() {
 
 document.addEventListener('nav:open',  pauseLoop);
 document.addEventListener('nav:close', resumeLoop);
+
+// ─── Welcome state (join / first-time signup)
+{
+  const welcomeFrom = localStorage.getItem('dp-welcome-from');
+  const firstVisit  = localStorage.getItem('dp-first-visit');
+  localStorage.removeItem('dp-welcome-from');
+  localStorage.removeItem('dp-first-visit');
+
+  if (welcomeFrom || firstVisit) {
+    _isWelcome = true;
+    const feedEl = document.getElementById('feed-message');
+    if (feedEl) {
+      const nameEl = feedEl.querySelector('.feed-name');
+      const timeEl = feedEl.querySelector('.feed-time');
+      if (nameEl) nameEl.textContent = 'Welcome';
+      if (timeEl) timeEl.textContent = welcomeFrom
+        ? `You are now connected to ${welcomeFrom}, for support in your practice.`
+        : 'You can start a practice now, or reflect for help getting started.';
+    }
+  }
+}
 
 // ─── Init
 setSkyGradient();

@@ -21,6 +21,11 @@ bodyClass: scene-page
     </div>
 
     <div class="auth-steps">
+      <script>
+        if (new URLSearchParams(location.search).get('token')) {
+          document.getElementById('step-verify').removeAttribute('hidden');
+        }
+      </script>
 
       <div class="auth-step" id="step-verify" hidden>
         <p class="feed-time auth-step-label">Signing you in…</p>

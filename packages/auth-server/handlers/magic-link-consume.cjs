@@ -57,7 +57,7 @@ function createMagicLinkConsumeHandler() {
           userId,
           email,
           guestId: guestId || null,
-          profile: user?.profile || {}
+          profile: user || {}
         })
       };
     } catch (err) {

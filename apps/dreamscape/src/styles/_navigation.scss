@@ -157,6 +157,30 @@
 
 .sidemenu-right { display: none; }
 
+// Nav ripple ring — managed by nav-ripple.js
+@keyframes nav-ring-expand {
+  0%            { opacity: 0.65; transform: translateY(-50%) scale(1); }
+  15%           { opacity: 0;    transform: translateY(-50%) scale(2.4); }
+  15.01%, 100%  { opacity: 0;    transform: translateY(-50%) scale(1); }
+}
+
+.nav-ring {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.7);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.nav-ripple .nav-ring {
+  animation: nav-ring-expand 10s linear infinite;
+}
+
 .nav-badge {
   display: inline-block;
   width: 7px;

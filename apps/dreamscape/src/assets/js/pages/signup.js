@@ -1,6 +1,5 @@
 import { log } from '../utils/log.js';
 import { isSignedIn, getUserId, initGuestId } from '../auth/auth.js';
-import { saveIntendedPath, clearIntendedPath } from '../auth/auth-intent.js';
 import { initChimeAudio, playChime, generateChime, swingChime } from '../chime.js';
 
 // ─── Step navigation
@@ -14,12 +13,11 @@ export function show(id) {
   if (title) title.textContent = STEP_TITLES[id] ?? 'Welcome,';
 }
 
-// ─── Register + connect after magic link return
+// ─── Register + connect after magic link return (same-device fallback only)
 async function registerAndConnect() {
   show('step-connecting');
   const userId    = getUserId();
   const name      = localStorage.getItem('dp-pending-name') || '';
-  const connectId = localStorage.getItem('dp-pending-connect') || '';
   let chime = null;
   try { chime = JSON.parse(localStorage.getItem('dp-pending-chime') || 'null'); } catch (_) {}
 
@@ -27,26 +25,23 @@ async function registerAndConnect() {
     await fetch('/api/user-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, name, chime, connectUserId: connectId || undefined }),
+      body: JSON.stringify({ userId, name, chime }),
     });
   } catch (err) { log('warn', '[signup] register failed:', err); }
 
   localStorage.removeItem('dp-pending-name');
   localStorage.removeItem('dp-pending-chime');
-  localStorage.removeItem('dp-pending-connect');
   localStorage.removeItem('dp-pending-email');
-  clearIntendedPath();
   window.location.replace('/');
 }
 
 // ─── Entry point — called by signup.njk directly, or by join.js with sharer context
-export async function startSignupFlow({ sharerName = null } = {}) {
+export async function startSignupFlow({ sharerName = null, connectUserId = null, connectName = null } = {}) {
   if (isSignedIn()) {
     await registerAndConnect();
     return;
   }
 
-  saveIntendedPath(window.location.pathname);
   initGuestId();
 
   // Personalise name step copy if an inviter is known
@@ -59,7 +54,6 @@ export async function startSignupFlow({ sharerName = null } = {}) {
 
   if (!pendingEmail) {
     // Clear any stale pending data from a previous session
-    // (dp-pending-connect is managed by join.js — don't touch it here)
     localStorage.removeItem('dp-pending-chime');
     localStorage.removeItem('dp-pending-name');
   }
@@ -128,15 +122,26 @@ export async function startSignupFlow({ sharerName = null } = {}) {
     emailBtn.textContent = 'sending…';
     try {
       const guestId = getUserId();
+      const name  = localStorage.getItem('dp-pending-name') || '';
+      let chime = null;
+      try { chime = JSON.parse(localStorage.getItem('dp-pending-chime') || 'null'); } catch (_) {}
+
+      const pendingRegistration = { name, chime, connectUserId: connectUserId || null, connectName: connectName || null };
+
       const res = await fetch('/api/auth-magic-link-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, guestId }),
+        body: JSON.stringify({ email, guestId, pendingRegistration }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'send failed');
       if (data.verifyUrl) log('debug', '[signup] dev verifyUrl:', data.verifyUrl);
+
+      // Data is now in Firestore — clean up localStorage
+      localStorage.removeItem('dp-pending-name');
+      localStorage.removeItem('dp-pending-chime');
       localStorage.setItem('dp-pending-email', email);
+
       document.getElementById('join-sent-email').textContent = email;
       show('step-sent');
     } catch (err) {

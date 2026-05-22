@@ -14,8 +14,7 @@ async function init() {
     const res  = await fetch(`/api/slug-lookup?slug=${encodeURIComponent(slug)}`);
     const data = await res.json();
     if (!res.ok || !data.userId) { show('step-error'); return; }
-    localStorage.setItem('dp-pending-connect', data.userId);
-    startSignupFlow({ sharerName: data.name });
+    startSignupFlow({ sharerName: data.name, connectUserId: data.userId, connectName: data.name });
   } catch (err) {
     log('warn', '[join] slug lookup failed:', err);
     show('step-error');
