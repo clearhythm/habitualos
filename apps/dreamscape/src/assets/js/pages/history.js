@@ -52,13 +52,14 @@ function renderSessions(sessions) {
     return bAt - aAt;
   });
 
-  feed.innerHTML = sorted.map(s => {
+  feed.innerHTML = sorted.map((s, i) => {
+    const isLast = i === sorted.length - 1;
     const startMs = s._startedAt instanceof Object
       ? (s._startedAt.seconds ?? s._startedAt._seconds) * 1000
       : (s._startedAt || null);
     const dur = formatDuration(s.durationSeconds);
     return `
-      <div class="session-row">
+      <div class="session-row${isLast ? ' session-row--last' : ''}">
         <div class="session-row-header">
           <div class="session-type">${escapeHtml(s.practiceName || 'Practice')}</div>
           ${dur ? `<div class="session-duration">${dur}</div>` : ''}
@@ -70,7 +71,7 @@ function renderSessions(sessions) {
         </div>` : ''}
         ${s.note ? `<div class="session-note">${escapeHtml(s.note)}</div>` : ''}
       </div>`;
-  }).join('');
+  }).join('') + '<div style="text-align:center;padding:2rem 0 1rem"><a href="/practice/" class="practice-pill">practice</a></div>';
 }
 
 function escapeHtml(str) {

@@ -3,7 +3,7 @@ const { updateUser } = require('./collections/users.cjs');
 const { sendMagicLink } = require('./_utils/email.cjs');
 const { log } = require('./_utils/log.cjs');
 
-const BASE_URL  = process.env.BASE_URL || 'https://daily.habitualos.com';
+const PROD_URL    = process.env.BASE_URL || 'https://daily.habitualos.com';
 const VERIFY_PATH = '/signin/';
 
 function generateUserId() {
@@ -58,7 +58,8 @@ exports.handler = async function handler(event) {
     }
 
     const tokenId  = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
-    const verifyUrl = `${BASE_URL}${VERIFY_PATH}?token=${tokenId}`;
+    const baseUrl   = (event.headers?.host || '').includes('localhost') ? 'http://localhost:8888' : PROD_URL;
+    const verifyUrl = `${baseUrl}${VERIFY_PATH}?token=${tokenId}`;
 
     await sendMagicLink({ to: normalizedEmail, verifyUrl });
 
