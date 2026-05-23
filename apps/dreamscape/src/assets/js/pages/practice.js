@@ -23,8 +23,8 @@ const bellEndValue    = document.getElementById('bell-end-value');
 const friendChimesVal = document.getElementById('friend-chimes-value');
 
 let timerInterval    = null;
-let totalSeconds     = 5 * 60;
-let remainingSeconds = totalSeconds;
+let totalSeconds;
+let remainingSeconds;
 let isPaused         = false;
 
 initPresence();
@@ -33,10 +33,24 @@ initPresence();
 const DURATIONS = [2, 5, 10, 15, 20, 30, 45, 60];
 let durationIndex = DURATIONS.indexOf(5);
 
+const _params = new URLSearchParams(window.location.search);
+const _practice = _params.get('practice');
+const _duration = parseInt(_params.get('duration'), 10);
+
+if (_practice) nameInput.value = _practice;
+
+if (!isNaN(_duration) && _duration > 0) {
+  if (!DURATIONS.includes(_duration)) {
+    const insertAt = DURATIONS.findIndex(d => d > _duration);
+    insertAt === -1 ? DURATIONS.push(_duration) : DURATIONS.splice(insertAt, 0, _duration);
+  }
+  durationIndex = DURATIONS.indexOf(_duration);
+  durationValue.textContent = _duration >= 60 ? `${_duration / 60}h` : `${_duration}m`;
+}
+
 document.getElementById('settings-duration').addEventListener('click', () => {
   durationIndex = (durationIndex + 1) % DURATIONS.length;
   const mins = DURATIONS[durationIndex];
-  totalSeconds = mins * 60;
   durationValue.textContent = mins >= 60 ? `${mins / 60}h` : `${mins}m`;
 });
 
@@ -84,6 +98,7 @@ function tick() {
 
 function begin() {
   const practiceType = nameInput.value.trim();
+  totalSeconds = DURATIONS[durationIndex] * 60;
   remainingSeconds = totalSeconds;
 
   labelEl.textContent = practiceType;
