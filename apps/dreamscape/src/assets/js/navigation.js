@@ -125,5 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
   } else {
     document.getElementById('about-nav-link').hidden = false;
     document.getElementById('signin-nav-link').hidden = false;
+    if (location.hostname === 'localhost') document.getElementById('dev-signin-nav-link').hidden = false;
   }
 });

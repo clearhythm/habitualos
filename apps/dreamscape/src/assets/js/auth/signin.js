@@ -2,12 +2,12 @@ import { log } from '../utils/log.js';
 import { signIn } from './auth.js';
 import { readIntendedPath, clearIntendedPath } from './auth-intent.js';
 
-export async function sendLink(email) {
+export async function sendLink(email, { noEmail = false } = {}) {
   const guestId = localStorage.getItem('dp-userId');
   const res = await fetch('/api/auth-magic-link-send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, guestId }),
+    body: JSON.stringify({ email, guestId, ...(noEmail && { noEmail: true }) }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'send failed');
@@ -55,7 +55,7 @@ async function completePendingRegistration(userId, pending) {
   localStorage.removeItem('dp-pending-email');
 }
 
-export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {
+export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn, noEmail = false }) {
   submitBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email || !email.includes('@')) {
@@ -67,7 +67,8 @@ export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, fo
     submitBtn.disabled = true;
     submitBtn.textContent = 'sending…';
     try {
-      await sendLink(email);
+      const data = await sendLink(email, { noEmail });
+      if (data.verifyUrl) { window.location.href = data.verifyUrl; return; }
       sentEmailEl.textContent = email;
       formStep.hidden = true;
       sentStep.hidden = false;

@@ -17,9 +17,9 @@ exports.handler = async function handler(event) {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  let email, guestId, pendingRegistration;
+  let email, guestId, pendingRegistration, noEmail;
   try {
-    ({ email, guestId, pendingRegistration } = JSON.parse(event.body || '{}'));
+    ({ email, guestId, pendingRegistration, noEmail } = JSON.parse(event.body || '{}'));
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
@@ -61,10 +61,13 @@ exports.handler = async function handler(event) {
     const baseUrl   = (event.headers?.host || '').includes('localhost') ? 'http://localhost:8888' : PROD_URL;
     const verifyUrl = `${baseUrl}${VERIFY_PATH}?token=${tokenId}`;
 
-    await sendMagicLink({ to: normalizedEmail, verifyUrl });
+    const isLocal = (event.headers?.host || '').includes('localhost');
+    if (!(noEmail && isLocal)) {
+      await sendMagicLink({ to: normalizedEmail, verifyUrl });
+    }
 
     const response = { ok: true };
-    if (process.env.APP_ENV && process.env.APP_ENV !== 'production') {
+    if (isLocal) {
       response.token    = tokenId;
       response.verifyUrl = verifyUrl;
     }

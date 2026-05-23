@@ -6,6 +6,7 @@ export default async (request: Request, context: Context) => {
   // Pass through: static assets, API routes, public auth pages
   if (
     pathname.startsWith('/signin')    ||
+    pathname.startsWith('/dev-signin') ||
     pathname.startsWith('/signup')    ||
     pathname.startsWith('/about')     ||
     pathname.startsWith('/assets')    ||

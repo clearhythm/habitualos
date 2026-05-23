@@ -49,5 +49,6 @@ if (isSignedIn()) {
     formStep:      document.getElementById('step-form'),
     sentStep:      document.getElementById('step-sent'),
     tryAnotherBtn: document.getElementById('signin-try-another'),
+    noEmail:       location.pathname.includes('dev-signin'),
   });
 }
