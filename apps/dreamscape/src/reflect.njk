@@ -1,0 +1,50 @@
+---
+layout: base.njk
+title: Reflect — Daily Practice
+permalink: /reflect/
+pageScript: /assets/js/pages/reflect.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
+---
+
+<div class="reflect-page">
+
+  <div class="chat-messages" id="chat-messages">
+    <div class="circle-header">
+      <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3.8"
+           stroke-linecap="round" stroke-linejoin="round"
+           class="circle-icon circle-icon--lg" aria-hidden="true">
+        <circle cx="48" cy="36" r="18"/>
+        <path d="M24 80 C24 60 72 60 72 80"/>
+      </svg>
+      <div class="feed-message feed-visible">
+        <span class="feed-name">Reflect</span>
+      </div>
+    </div>
+  </div>
+
+  <form class="chat-input-row" id="chat-form" autocomplete="off">
+    <div class="chat-input-wrap">
+      <textarea
+        id="message-input"
+        class="chat-textarea"
+        rows="3"
+        placeholder="Reply…"
+        aria-label="Your message"
+      ></textarea>
+      <button type="submit" id="send-button" class="chat-send-btn" disabled aria-label="Send">↑</button>
+    </div>
+  </form>
+
+</div>
+
+<div id="ready-overlay" class="ready-overlay" hidden>
+  <div class="ready-content">
+    <p class="ready-label">ready to practice</p>
+    <p class="ready-practice-name" id="ready-practice-name"></p>
+    <p class="ready-duration" id="ready-duration"></p>
+    <a href="#" id="begin-btn" class="ready-begin">Begin →</a>
+    <button id="keep-chatting-btn" class="ready-dismiss">Keep chatting</button>
+  </div>
+</div>

@@ -1331,6 +1331,190 @@
 }
 
 
+// ─── Reflect Page ──────────────────────────────────────────────────────────────
+
+.reflect-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden; // prevent outer scroll; chat-messages scrolls internally
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28vh 1.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+
+  @media (max-width: 768px) { padding-top: 18vh; }
+}
+
+.chat-thinking {
+  font-style: italic;
+  opacity: 0.45;
+  font-size: 0.9rem;
+  align-self: flex-start;
+  color: $color-text-muted;
+}
+
+.chat-bubble {
+  max-width: 75%;
+  line-height: 1.65;
+  word-wrap: break-word;
+  font-size: 1rem;
+}
+
+.chat-bubble--assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px 12px 12px 2px; // sharp bottom-left — left-side bubble
+  font-size: 1.1rem;
+  color: $color-text;
+}
+
+.chat-bubble--user {
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 0.55rem 0.85rem;
+  border-radius: 12px 12px 2px 12px; // sharp bottom-right — right-side bubble
+  color: $color-text;
+  font-size: 1.1rem;
+}
+
+.chat-bubble--intro {
+  align-self: center;
+  text-align: center;
+  border-radius: 12px; // symmetric — centered bubble
+}
+
+.chat-input-row {
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: $color-bg;
+  position: sticky;
+  bottom: 0;
+}
+
+.chat-input-wrap {
+  position: relative;
+}
+
+.chat-textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  padding: 0.75rem 3.2rem 0.75rem 1rem; // right padding makes room for the button
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: $color-text;
+  line-height: 1.55;
+  max-height: 200px;
+  overflow-y: auto;
+
+  &::placeholder { color: $color-text-muted; opacity: 0.45; }
+  &:focus { outline: none; border-color: rgba(255, 255, 255, 0.22); }
+}
+
+.chat-send-btn {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: none;
+  border-radius: 8px;
+  color: $color-bg;
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, background 0.15s;
+
+  &:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:not(:disabled):hover { background: rgba(255, 255, 255, 1); }
+}
+
+// ─── Ready Overlay
+.ready-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 12, 26, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+
+  &[hidden] { display: none; }
+}
+
+.ready-content {
+  text-align: center;
+  padding: 2rem 1.5rem;
+  max-width: 380px;
+}
+
+.ready-label {
+  font-size: 0.78rem;
+  color: $color-text-muted;
+  margin: 0 0 0.5rem;
+}
+
+.ready-practice-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: $color-text;
+  margin: 0 0 0.3rem;
+}
+
+.ready-duration {
+  font-size: 0.9rem;
+  color: $color-text-muted;
+  margin: 0 0 2rem;
+}
+
+.ready-begin {
+  display: inline-block;
+  padding: 0.65rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 99px;
+  text-decoration: none;
+  color: $color-text;
+  font-size: 1rem;
+
+  &:hover { background: rgba(255, 255, 255, 0.07); }
+}
+
+.ready-dismiss {
+  display: block;
+  margin: 1rem auto 0;
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  font-size: 0.85rem;
+  cursor: pointer;
+  opacity: 0.5;
+
+  &:hover { opacity: 0.8; }
+}
+
 // ─── About page ────────────────────────────────────────────────────────────────
 
 .about-heading {
