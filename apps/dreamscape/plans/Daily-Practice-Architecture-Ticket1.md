@@ -26,6 +26,8 @@ After:
 ## Phase 0: Explore First
 
 Read these before implementing:
+- Root `CLAUDE.md` — monorepo conventions (commit style, log utility, code principles)
+- `apps/dreamscape/CLAUDE.md` — app-specific context and tech stack
 - `apps/dreamscape/.eleventy.js` — current config (CommonJS, manual SCSS step to replace)
 - `apps/dreamscape/package.json` — current scripts and deps
 - `apps/dreamscape/netlify.toml` — dev server setup (`targetPort = 8080`)
@@ -75,7 +77,10 @@ module.exports = async function(eleventyConfig) {
     },
   });
 
-  // Pass through static assets (images, audio, etc.) — NOT JS or SCSS (Vite owns those now)
+  // IMPORTANT: The old config used addPassthroughCopy("src/assets") to copy everything.
+  // That must be removed. Vite now owns src/assets/js/ and all SCSS — do NOT pass those through,
+  // or you will get unbundled files overwriting Vite's output.
+  // Only pass through non-JS/CSS static assets explicitly:
   eleventyConfig.addPassthroughCopy("src/assets/images");
   eleventyConfig.addPassthroughCopy("src/assets/music");
 
