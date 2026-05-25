@@ -2,6 +2,7 @@
   "name": "dreamscape",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "prestart": "mkdir -p netlify/edge-functions/_lib && cp ../../packages/edge-functions/chat-stream-core.ts netlify/edge-functions/_lib/",
     "start": "netlify dev",
@@ -10,7 +11,7 @@
     "build": "eleventy"
   },
   "dependencies": {
-    "@11ty/eleventy": "^2.0.1",
+    "@11ty/eleventy": "^3.0.0",
     "@anthropic-ai/sdk": "^0.71.2",
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/db-core": "workspace:*",
@@ -18,7 +19,9 @@
     "@habitualos/frontend-utils": "workspace:*"
   },
   "devDependencies": {
+    "@11ty/eleventy-plugin-vite": "6.0.0",
     "concurrently": "^9.2.1",
-    "sass": "^1.69.5"
+    "sass": "^1.69.5",
+    "vite": "^6.0.0"
   }
 }
