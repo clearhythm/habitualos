@@ -279,6 +279,47 @@ Add this immediately after the element query variables (before event listeners):
 })();
 ```
 
+---
+
+## File 2b: `src/assets/js/pages/reflect.js` (MODIFY) — Save on Clear
+
+This is a sibling change to the practice.js auto-save. When the user clicks "Start fresh" to clear their chat, save the conversation to Firestore first (if it hasn't already been saved).
+
+**Context:** `reflect.js` already has `LS_SAVED = 'reflect-chat-saved'` and `saveHistory()` sets it to `'false'` on every message. When the user navigates to `/practice/`, `practice.js` (section C above) fires the save and sets `LS_SAVED = 'true'`. If the user instead clears via the toolbar button without going to practice, we need to save here.
+
+**Where to find it:** The `startFreshBtn` click handler is in `src/assets/js/pages/reflect.js`, in the `// ─── Start fresh` section (search for `startFreshBtn.addEventListener`). It currently clears localStorage, removes DOM bubbles, and renders a fresh greeting.
+
+**What to add:** Before the clear, check if the conversation has unsaved user messages. If so, fire-and-forget a save to `/api/reflect-chat-save`, then mark as saved. Then proceed with the existing clear logic unchanged.
+
+```javascript
+startFreshBtn.addEventListener('click', async () => {
+  // Save unsaved chat if it has user messages
+  if (localStorage.getItem(LS_SAVED) !== 'true' && chatHistory.some(m => m.role === 'user')) {
+    try {
+      await fetch('/api/reflect-chat-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, messages: chatHistory }),
+      });
+      localStorage.setItem(LS_SAVED, 'true');
+    } catch {}
+  }
+
+  // existing clear logic follows unchanged...
+  clearHistory();
+  chatHistory = [];
+  chatInner.querySelectorAll('.chat-bubble, .chat-thinking').forEach(el => el.remove());
+  startFreshBtn.hidden = true;
+  // ... greeting render, saveHistory, renderMessage, focus
+});
+```
+
+Note: `reflect-chat-save` only supports `create` (no upsert). If `LS_SAVED === 'true'` the chat was already persisted (by practice.js), so we skip. This means two Firestore docs are never created for the same conversation — whichever path fires first wins.
+
+Note: reflect.js uses `fetch()` directly (not the `post()` helper from `api.js`). Keep it consistent with the rest of the file.
+
+---
+
 ### D. Capture practice type in `begin()` and duration in `stopSession()`
 
 In `begin()`, add:

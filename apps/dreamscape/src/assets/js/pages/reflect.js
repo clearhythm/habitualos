@@ -169,9 +169,22 @@ async function sendMessage(message) {
           if (data.type === 'token') {
             if (!started) { startStreaming(); started = true; }
             appendStreamToken(data.text);
-          } else if (data.type === 'tool_complete' && data.tool === 'go_to_practice') {
-            const { practiceName, durationMins } = data.result;
-            showReadyOverlay(practiceName, durationMins);
+          } else if (data.type === 'tool_start') {
+            // Only attach dots to an existing bubble — don't create one just for loading state.
+            // If no tokens have arrived yet, Ruminating… is already visible.
+            if (streamingEl) streamingEl.classList.add('is-loading');
+          } else if (data.type === 'tool_complete') {
+            if (data.tool === 'go_to_practice') {
+              if (streamingEl) streamingEl.classList.remove('is-loading');
+              const { practiceName, durationMins } = data.result;
+              showReadyOverlay(practiceName, durationMins);
+            } else if (streamingEl) {
+              streamingEl.classList.remove('is-loading');
+              if (streamingText) {
+                streamingText += '\n\n';
+                streamingEl.innerHTML = escapeHtml(streamingText).replace(/\n/g, '<br>');
+              }
+            }
           } else if (data.type === 'done') {
             // Always clear thinking — it may still be visible if no tokens fired (pure tool call)
             hideThinking();
@@ -275,7 +288,7 @@ chatHistory.forEach(msg => {
   renderMessage(msg.role, msg.content);
 });
 
-if (chatHistory.length > 0) {
+if (chatHistory.some(m => m.role === 'user')) {
   startFreshBtn.hidden = false;
 }
 

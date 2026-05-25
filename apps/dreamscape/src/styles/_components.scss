@@ -1372,12 +1372,22 @@
   .circle-header { margin-bottom: $space-xl; }
 }
 
+@keyframes thinking-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.8; }
+}
+
 .chat-thinking {
   font-style: italic;
-  opacity: 0.45;
   font-size: 0.9rem;
   align-self: flex-start;
   color: $color-text-muted;
+  animation: thinking-pulse 1.6s ease-in-out infinite;
+}
+
+.chat-bubble.is-loading::after {
+  content: '…';
+  animation: thinking-pulse 1.6s ease-in-out infinite;
 }
 
 .chat-bubble {
@@ -1478,26 +1488,30 @@
 }
 
 .chat-send-btn {
+  margin-left: auto;
   width: 1.75rem;
   height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.88);
-  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid $color-border-hover;
   border-radius: 8px;
-  color: $color-bg;
+  color: $color-text;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
 
   &:not(:disabled) {
     opacity: 1;
     pointer-events: auto;
   }
 
-  &:not(:disabled):hover { background: rgba(255, 255, 255, 1); }
+  &:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba($color-text, 0.5);
+  }
 }
 
 // ─── Ready Overlay
