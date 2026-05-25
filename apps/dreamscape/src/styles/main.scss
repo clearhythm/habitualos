@@ -1,8 +1,8 @@
 // Dreamscape Styles
 // Entry point for all Sass compilation
 
-@import 'variables';
-@import 'base';
-@import 'layout';
-@import 'components';
-@import 'navigation';
+@use 'variables';
+@use 'base';
+@use 'layout';
+@use 'components';
+@use 'navigation';
