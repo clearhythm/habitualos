@@ -90,6 +90,12 @@ window.addEventListener('scroll', updateNavbar, { passive: true });
 
 // Menu toggle and auto-close
 document.addEventListener('DOMContentLoaded', function() {
+  // Set --nav-height from actual rendered height so page-canvas mixin stays accurate.
+  const navEl = document.getElementById('sidemenu-toggle');
+  if (navEl) {
+    document.documentElement.style.setProperty('--nav-height', navEl.offsetHeight + 'px');
+  }
+
   const toggle = document.getElementById('sidemenu-toggle');
   const menuLinks = document.querySelectorAll('.sidemenu-main a');
 

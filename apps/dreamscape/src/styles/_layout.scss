@@ -1,5 +1,17 @@
 @use 'variables' as *;
 
+// Full-page canvas — fixed below the nav, spans full viewport width.
+// Scrollbar appears at the far browser edge. Content never goes behind the nav.
+// --nav-height is set from the nav's actual offsetHeight by navigation.js.
+// $nav-height is the SCSS fallback (used at compile time / before JS fires).
+@mixin page-canvas {
+  position: fixed;
+  top: var(--nav-height, #{$nav-height});
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;

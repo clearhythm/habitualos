@@ -4,7 +4,7 @@
  * Single source of truth for "am I signed in?" based on localStorage.
  */
 
-import { generateUserId } from "./utils.js";
+import { generateUserId, getTimezone, getTimeOfDayGreeting } from "./utils.js";
 
 const LOCAL_STORAGE_KEY = "user";
 
@@ -153,6 +153,17 @@ export function setUserId(newUserId) {
   } catch (e) {
     console.error("Failed to update userId in localStorage", e);
   }
+}
+
+/**
+ * Get the user's current time context.
+ * Useful for personalized greetings and passing tz to the server.
+ */
+export function getUserTimeContext() {
+  return {
+    timezone: getTimezone(),
+    greeting: getTimeOfDayGreeting(), // 'morning' | 'afternoon' | 'evening' | 'night'
+  };
 }
 
 // -----------------------------

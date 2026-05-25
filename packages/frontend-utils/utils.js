@@ -75,6 +75,26 @@ export function formatDate(dateString) {
 }
 
 /**
+ * Get the user's browser timezone (IANA string).
+ * e.g. "America/Los_Angeles"
+ */
+export function getTimezone() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+/**
+ * Get a time-of-day greeting word based on the browser's local hour.
+ * Returns: 'morning' | 'afternoon' | 'evening' | 'night'
+ */
+export function getTimeOfDayGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5  && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
+/**
  * Format runtime as relative time
  */
 export function formatRuntime(createdAt) {

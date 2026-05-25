@@ -30,6 +30,9 @@ $font-size-xl:   1.25rem;
 $font-size-2xl:  1.5rem;
 $font-size-3xl:  2rem;
 
+// Nav height — masthead padding (1rem × 2) + font (1.55rem × 1.2 line-height) ≈ 3.875rem
+$nav-height: 3.875rem;
+
 // Breakpoints
 $breakpoint-sm: 640px;
 $breakpoint-md: 768px;

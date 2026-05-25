@@ -1,4 +1,5 @@
-import { isSignedIn, getUserId } from '../auth/auth.js';
+import { isSignedIn, getUserId, getName } from '../auth/auth.js';
+import { getTimeOfDayGreeting } from '@habitualos/frontend-utils/utils.js';
 import { log } from '../utils/log.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
@@ -36,16 +37,18 @@ function clearHistory() {
 }
 
 // ─── DOM
-const userId       = getUserId();
-const chatMessages = document.getElementById('chat-messages');
-const chatForm     = document.getElementById('chat-form');
-const messageInput = document.getElementById('message-input');
-const sendButton   = document.getElementById('send-button');
-const readyOverlay = document.getElementById('ready-overlay');
-const beginBtn     = document.getElementById('begin-btn');
-const keepChatBtn  = document.getElementById('keep-chatting-btn');
+const userId         = getUserId();
+const chatMessages   = document.getElementById('chat-messages');   // scroll container
+const chatInner      = document.getElementById('chat-messages-inner'); // append target
+const chatForm       = document.getElementById('chat-form');
+const messageInput   = document.getElementById('message-input');
+const sendButton     = document.getElementById('send-button');
+const readyOverlay   = document.getElementById('ready-overlay');
+const beginBtn       = document.getElementById('begin-btn');
+const keepChatBtn    = document.getElementById('keep-chatting-btn');
+const startFreshBtn  = document.getElementById('start-fresh-btn');
 
-let chatHistory  = loadHistory();
+let chatHistory  = [];
 let streamingEl  = null;
 let streamingText = '';
 let thinkingEl   = null;
@@ -62,8 +65,8 @@ function renderMessage(role, content) {
   const div = document.createElement('div');
   div.className = `chat-bubble chat-bubble--${role}`;
   div.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatInner.appendChild(div);
+  chatMessages.scrollTo(0, chatMessages.scrollHeight);
   return div;
 }
 
@@ -71,8 +74,8 @@ function showThinking() {
   thinkingEl = document.createElement('p');
   thinkingEl.className = 'chat-thinking';
   thinkingEl.textContent = 'Ruminating…';
-  chatMessages.appendChild(thinkingEl);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatInner.appendChild(thinkingEl);
+  chatMessages.scrollTo(0, chatMessages.scrollHeight);
 }
 
 function hideThinking() {
@@ -84,14 +87,14 @@ function startStreaming() {
   streamingText = '';
   streamingEl = document.createElement('div');
   streamingEl.className = 'chat-bubble chat-bubble--assistant';
-  chatMessages.appendChild(streamingEl);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatInner.appendChild(streamingEl);
+  chatMessages.scrollTo(0, chatMessages.scrollHeight);
 }
 
 function appendStreamToken(text) {
   streamingText += text;
   streamingEl.innerHTML = escapeHtml(streamingText).replace(/\n/g, '<br>');
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatMessages.scrollTo(0, chatMessages.scrollHeight);
 }
 
 function finalizeStreaming() {
@@ -105,6 +108,8 @@ function showReadyOverlay(practiceName, durationMins) {
   document.getElementById('ready-practice-name').textContent = practiceName;
   document.getElementById('ready-duration').textContent = `${durationMins} minute${durationMins !== 1 ? 's' : ''}`;
   beginBtn.href = `/practice/?practice=${encodeURIComponent(practiceName)}&duration=${durationMins}`;
+  // Flag: clear chat on next visit (practice is starting)
+  localStorage.setItem('dp-reflect-clear-next', '1');
   readyOverlay.hidden = false;
   sendButton.disabled = true;
 }
@@ -119,6 +124,7 @@ async function sendMessage(message) {
   renderMessage('user', message);
   chatHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
   saveHistory(chatHistory);
+  startFreshBtn.hidden = false;
 
   sendButton.disabled = true;
   messageInput.disabled = true;
@@ -231,22 +237,61 @@ keepChatBtn.addEventListener('click', () => {
   updateSendButton();
 });
 
-// ─── Init
+// ─── Start fresh
 
-chatHistory.forEach((msg, i) => {
-  const el = renderMessage(msg.role, msg.content);
-  if (i === 0 && msg.role === 'assistant') el.classList.add('chat-bubble--intro');
-});
-
-if (chatHistory.length === 0) {
+startFreshBtn.addEventListener('click', () => {
+  clearHistory();
+  chatHistory = [];
+  // Remove all message bubbles (keep the circle-header and start-fresh btn in place)
+  chatInner.querySelectorAll('.chat-bubble, .chat-thinking').forEach(el => el.remove());
+  startFreshBtn.hidden = true;
+  const greeting  = getTimeOfDayGreeting();
+  const firstName = getName().split(' ')[0] || null;
   const opening = {
     role: 'assistant',
-    content: "What's present for you today?",
+    content: firstName
+      ? `Good ${greeting} ${firstName}, what's present for you today?`
+      : `Good ${greeting}, what's present for you today?`,
     timestamp: new Date().toISOString(),
   };
   chatHistory.push(opening);
   saveHistory(chatHistory);
-  renderMessage('assistant', opening.content).classList.add('chat-bubble--intro');
+  renderMessage('assistant', opening.content);
+  chatMessages.scrollTo(0, 0);
+  messageInput.focus();
+});
+
+// ─── Init
+
+// Auto-clear if user completed a practice last time
+if (localStorage.getItem('dp-reflect-clear-next') === '1') {
+  localStorage.removeItem('dp-reflect-clear-next');
+  clearHistory();
+}
+
+chatHistory = loadHistory();
+
+chatHistory.forEach(msg => {
+  renderMessage(msg.role, msg.content);
+});
+
+if (chatHistory.length > 0) {
+  startFreshBtn.hidden = false;
+}
+
+if (chatHistory.length === 0) {
+  const greeting   = getTimeOfDayGreeting();
+  const firstName  = getName().split(' ')[0] || null;
+  const opening = {
+    role: 'assistant',
+    content: firstName
+      ? `Good ${greeting} ${firstName}, what's present for you today?`
+      : `Good ${greeting}, what's present for you today?`,
+    timestamp: new Date().toISOString(),
+  };
+  chatHistory.push(opening);
+  saveHistory(chatHistory);
+  renderMessage('assistant', opening.content);
 }
 
 messageInput.focus();

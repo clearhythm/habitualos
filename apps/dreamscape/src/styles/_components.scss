@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'layout' as l;
 
 // ─── ARCHIVED: circle room (see index_anim_circles.njk + home_anim_circles.js)
 // .circle-room { ... }  ← preserved in those files
@@ -770,16 +771,22 @@
 
 // Circle / community page
 .history-page {
+  @include l.page-canvas;
+  overflow-y: scroll;
+}
+
+// Content centering wrapper inside the scroll container.
+.history-inner {
   max-width: 600px;
   width: 100%;
   margin: 0 auto;
-  padding: 28vh $space-lg $space-2xl;
+  padding: 15vh $space-lg $space-2xl;
   display: flex;
   flex-direction: column;
   gap: $space-lg;
-  min-height: 100dvh;
+  min-height: 100%;
 
-  @media (max-width: 768px) { padding-top: 18vh; }
+  @media (max-width: 768px) { padding-top: 10vh; }
 
   .empty-state { padding: 0; }
 }
@@ -1336,24 +1343,33 @@
 // ─── Reflect Page ──────────────────────────────────────────────────────────────
 
 .reflect-page {
+  @include l.page-canvas;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  overflow: hidden; // prevent outer scroll; chat-messages scrolls internally
-  max-width: 680px;
-  margin: 0 auto;
+}
+
+// Full-width scroll container — scrollbar at the far browser edge.
+.chat-messages {
+  flex: 1;
+  min-height: 0; // required for flex overflow to work correctly
+  overflow-y: scroll;
   width: 100%;
 }
 
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 28vh 1.5rem 0.5rem;
+// Content centering wrapper inside the scroll container.
+.chat-messages-inner {
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 15vh 1.5rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  min-height: 100%;
 
-  @media (max-width: 768px) { padding-top: 18vh; }
+  @media (max-width: 768px) { padding-top: 10vh; }
+
+  .circle-header { margin-bottom: $space-xl; }
 }
 
 .chat-thinking {
@@ -1395,26 +1411,38 @@
   border-radius: 12px; // symmetric — centered bubble
 }
 
-.chat-input-row {
-  padding: 0.75rem 1.25rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+// Full-width bottom bar — flex sibling of .chat-messages, never bounces on overscroll.
+.chat-input-shell {
+  flex-shrink: 0;
   background: $color-bg;
-  position: sticky;
-  bottom: 0;
 }
 
+// Centered form inside the shell.
+.chat-input-row {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0.75rem 1.25rem 1rem;
+}
+
+// Input box: border + bg live on the wrap; textarea is transparent inside it.
 .chat-input-wrap {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: rgba(255, 255, 255, 0.22); }
 }
 
 .chat-textarea {
   display: block;
   width: 100%;
   resize: none;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid $color-border;
-  border-radius: 12px;
-  padding: 0.75rem 3.2rem 0.75rem 1rem; // right padding makes room for the button
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1rem;
   font-family: inherit;
   font-size: 0.95rem;
   color: $color-text;
@@ -1423,15 +1451,35 @@
   overflow-y: auto;
 
   &::placeholder { color: $color-text-muted; opacity: 0.45; }
-  &:focus { outline: none; border-color: rgba(255, 255, 255, 0.22); }
+  &:focus { outline: none; }
+}
+
+// Bottom toolbar: tools left, send right.
+.chat-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.2rem 0.4rem 0.3rem;
+}
+
+.chat-toolbar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba($color-text, 0.25);
+  padding: 0.3rem;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  border-radius: 6px;
+  transition: color 0.2s;
+
+  &:hover { color: rgba($color-text, 0.65); }
 }
 
 .chat-send-btn {
-  position: absolute;
-  right: 0.55rem;
-  bottom: 0.55rem;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1439,7 +1487,6 @@
   border: none;
   border-radius: 8px;
   color: $color-bg;
-  font-size: 1rem;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -1536,4 +1583,38 @@
 
 .about-contact {
   margin-top: $space-md;
+}
+
+// ─── Tooltip ──────────────────────────────────────────────────────────────────
+
+[data-tooltip] {
+  position: relative;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #1a1a1a;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 100;
+  }
+
+  &:hover::after,
+  &:focus-visible::after {
+    opacity: 1;
+  }
 }
