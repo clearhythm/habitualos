@@ -46,6 +46,7 @@ const sendButton     = document.getElementById('send-button');
 const readyOverlay   = document.getElementById('ready-overlay');
 const beginBtn       = document.getElementById('begin-btn');
 const keepChatBtn    = document.getElementById('keep-chatting-btn');
+const saveChatBtn    = document.getElementById('save-chat-btn');
 const startFreshBtn  = document.getElementById('start-fresh-btn');
 
 let chatHistory  = [];
@@ -124,6 +125,7 @@ async function sendMessage(message) {
   renderMessage('user', message);
   chatHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
   saveHistory(chatHistory);
+  saveChatBtn.hidden = false;
   startFreshBtn.hidden = false;
 
   sendButton.disabled = true;
@@ -265,6 +267,28 @@ function buildOpening() {
   return { role: 'assistant', content, timestamp: new Date().toISOString() };
 }
 
+// ─── Save chat (temporary manual save — superseded by end_conversation tool in Ticket 3c)
+
+saveChatBtn.addEventListener('click', async () => {
+  if (!chatHistory.some(m => m.role === 'user')) return;
+  saveChatBtn.disabled = true;
+  saveChatBtn.setAttribute('data-tooltip', 'Saving…');
+  try {
+    await fetch('/api/reflect-chat-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, messages: chatHistory }),
+    });
+    localStorage.setItem(LS_SAVED, 'true');
+    saveChatBtn.setAttribute('data-tooltip', 'Saved');
+    setTimeout(() => saveChatBtn.setAttribute('data-tooltip', 'Save this conversation'), 2000);
+  } catch {
+    saveChatBtn.setAttribute('data-tooltip', 'Save failed');
+    setTimeout(() => saveChatBtn.setAttribute('data-tooltip', 'Save this conversation'), 2000);
+  }
+  saveChatBtn.disabled = false;
+});
+
 // ─── Start fresh
 
 startFreshBtn.addEventListener('click', () => {
@@ -272,6 +296,7 @@ startFreshBtn.addEventListener('click', () => {
   chatHistory = [];
   // Remove all message bubbles (keep the circle-header and start-fresh btn in place)
   chatInner.querySelectorAll('.chat-bubble, .chat-thinking').forEach(el => el.remove());
+  saveChatBtn.hidden = true;
   startFreshBtn.hidden = true;
   const opening = buildOpening();
   chatHistory.push(opening);
@@ -302,6 +327,7 @@ chatHistory.forEach(msg => {
 });
 
 if (chatHistory.some(m => m.role === 'user')) {
+  saveChatBtn.hidden = false;
   startFreshBtn.hidden = false;
 }
 
