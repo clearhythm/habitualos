@@ -205,23 +205,45 @@ These power the Ago activity feed (see `Feature-Ago-Activity-Feed.md`) — "had 
 
 ---
 
+## Status: Implementation complete — testing needed
+
+**Note:** Implementation was completed and pushed (commit `96d2600`). The data model and localStorage keys evolved significantly during implementation — the verification steps below reflect the final implementation, not the original ticket spec.
+
+**Key changes from original spec:**
+- `outcome` → `action` (`practice` | `closed` | `abandoned`)
+- `dp-reflect-clear-next` flag removed entirely — replaced by `reflect-chat-saved` LS check
+- `end_conversation` tool takes no input (no outcome enum)
+- `practiceName` / `practiceDuration` (seconds) saved when action is `practice`
+- `conversationStart` / `conversationEnd` are Firestore Timestamps, not strings
+- Client-side chatId generation via `generateReflectChatId()` + `getOrCreateChatId()`
+- `sendBeacon` used for pre-navigation saves (`beginBtn`, `end_conversation`); `flushPendingSave()` verifies on next load
+- `practice.js` calls `saveAbandonedIfPending()` after `endSession()` — saves any unsaved reflect chat as `abandoned`
+- Dev runs on `localhost:8889` (clean localStorage)
+
 ## Verification
 
-1. **Natural end without practice:** Have a complete conversation that ends gracefully. After the AI's farewell:
-   - No UI change on screen
-   - Firestore `reflect-chats` has a new doc with correct `messages` array and `outcome` field
-   - `localStorage['reflect-chat-saved'] === 'true'`
-   - `localStorage['dp-reflect-clear-next'] === '1'`
+Run at `http://localhost:8889`. Check Firestore `reflect-chats` collection after each scenario. All docs should have `action`, `conversationStart`, `conversationEnd`, `messages`, `_createdAt`.
 
-2. **Next visit clears correctly:** Reload after a natural end → fresh greeting appears, old conversation gone
+1. **Natural end (closed):** Have a conversation ending in goodbye. AI should call `end_conversation` after farewell.
+   - `reflect-chat-saved === 'true'` in localStorage
+   - Firestore doc: `action: 'closed'`, full messages array, both timestamps
+   - Reload → fresh greeting
 
-3. **Continuation edge case:** After AI says goodbye, type another message. Verify:
-   - `dp-reflect-clear-next` is removed from localStorage
-   - `reflect-chat-saved` is `'false'` (saveHistory reset it)
-   - New messages survive a reload
+2. **Go to practice:** Confirm practice, click Begin.
+   - Firestore doc: `action: 'practice'`, `practiceName`, `practiceDuration` (seconds)
+   - Reload reflect → fresh greeting
 
-4. **go_to_practice unchanged:** A conversation that ends in practice — verify `end_conversation` is never called, overlay appears as before, no regression
+3. **Abandoned via TTL:** Set `reflect-chat-timestamp` in localStorage to `Date.now() - 25 * 60 * 60 * 1000` (25h ago), reload.
+   - Firestore doc: `action: 'abandoned'`
+   - Fresh greeting shown
 
-5. **No user messages guard:** If `end_conversation` fires before the user has sent any message (unlikely but defensive), verify nothing is saved to Firestore
+4. **Abandoned via practice without overlay:** Start a conversation, navigate directly to `/practice/` via URL, complete a session, return to `/reflect/`.
+   - Firestore doc: `action: 'abandoned'` saved by `saveAbandonedIfPending()`
+   - Fresh greeting shown
 
-6. **Outcome accuracy:** Engineer a "rest" scenario and an "exploring" scenario — verify the correct enum value appears in Firestore
+5. **sendBeacon verification:** After clicking Begin, check `reflect-chat-pending-id` in localStorage. On next `/reflect/` load, `flushPendingSave()` should verify and clear it.
+
+6. **Continuation after end_conversation:** After AI says goodbye, type another message.
+   - `reflect-chat-saved` resets to `'false'`
+   - `reflect-chat-id` preserved (same chatId reused)
+   - New conversation eventually saves as a second doc or abandoned
