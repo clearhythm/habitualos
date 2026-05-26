@@ -58,5 +58,10 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
     };
   }
 
+  if (tool === 'end_conversation') {
+    log('debug', '[reflect-tool-execute] end_conversation userId:', userId);
+    return { result: { ok: true } };
+  }
+
   throw Object.assign(new Error(`Unknown tool: ${tool}`), { statusCode: 400 });
 });

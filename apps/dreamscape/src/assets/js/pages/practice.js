@@ -1,6 +1,8 @@
+import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
 import { play, stop, setMuted, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
+import { saveAbandonedIfPending } from '../collections/reflect-chats.js';
 
 const modal          = document.getElementById('timer-modal');
 const timerView      = document.getElementById('timer-view');
@@ -149,6 +151,7 @@ async function stopSession() {
   timerInterval = null;
   const practiced = totalSeconds - remainingSeconds;
   await endSession(practiced);
+  saveAbandonedIfPending(getUserId());
   stop();
   releaseWakeLock();
   isPaused = false;

@@ -1,21 +1,46 @@
 import { isSignedIn, getUserId, getName } from '../auth/auth.js';
 import { getTimeOfDayGreeting } from '@habitualos/frontend-utils/utils.js';
 import { log } from '../utils/log.js';
+import { saveReflectChatBeacon, saveReflectChat, getReflectChat } from '../collections/reflect-chats.js';
+import { generateReflectChatId } from '../utils/id.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
   window.location.replace('/signin/');
 }
 
 // ─── LocalStorage
-const LS_HISTORY   = 'reflect-chat-history';
-const LS_TIMESTAMP = 'reflect-chat-timestamp';
-const LS_SAVED     = 'reflect-chat-saved';
-const TTL_MS       = 24 * 60 * 60 * 1000;
+const LS_HISTORY      = 'reflect-chat-history';
+const LS_TIMESTAMP    = 'reflect-chat-timestamp';
+const LS_SAVED        = 'reflect-chat-saved';
+const LS_CHAT_ID      = 'reflect-chat-id';
+const LS_PENDING_ID   = 'reflect-chat-pending-id';
+const LS_PENDING_META = 'reflect-chat-pending-meta';
+const TTL_MS          = 24 * 60 * 60 * 1000;
+
+function getOrCreateChatId() {
+  let chatId = localStorage.getItem(LS_CHAT_ID);
+  if (!chatId) {
+    chatId = generateReflectChatId();
+    localStorage.setItem(LS_CHAT_ID, chatId);
+  }
+  return chatId;
+}
 
 function loadHistory() {
   try {
     const ts = localStorage.getItem(LS_TIMESTAMP);
     if (ts && Date.now() - parseInt(ts, 10) > TTL_MS) {
+      // Save abandoned chat before clearing — fetch is fine here (page-load context, no navigation race)
+      const raw = localStorage.getItem(LS_HISTORY);
+      const history = raw ? JSON.parse(raw) : [];
+      if (history.some(m => m.role === 'user')) {
+        persistChat({
+          messages: history,
+          action: 'abandoned',
+          conversationStart: history[0]?.timestamp || null,
+          conversationEnd: new Date().toISOString(),
+        }).catch(() => {});
+      }
       clearHistory();
       return [];
     }
@@ -33,13 +58,13 @@ function saveHistory(history) {
 }
 
 function clearHistory() {
-  [LS_HISTORY, LS_TIMESTAMP, LS_SAVED].forEach(k => localStorage.removeItem(k));
+  [LS_HISTORY, LS_TIMESTAMP, LS_SAVED, LS_CHAT_ID].forEach(k => localStorage.removeItem(k));
 }
 
 // ─── DOM
 const userId         = getUserId();
-const chatMessages   = document.getElementById('chat-messages');   // scroll container
-const chatInner      = document.getElementById('chat-messages-inner'); // append target
+const chatMessages   = document.getElementById('chat-messages');
+const chatInner      = document.getElementById('chat-messages-inner');
 const chatForm       = document.getElementById('chat-form');
 const messageInput   = document.getElementById('message-input');
 const sendButton     = document.getElementById('send-button');
@@ -49,10 +74,70 @@ const keepChatBtn    = document.getElementById('keep-chatting-btn');
 const saveChatBtn    = document.getElementById('save-chat-btn');
 const startFreshBtn  = document.getElementById('start-fresh-btn');
 
-let chatHistory  = [];
-let streamingEl  = null;
-let streamingText = '';
-let thinkingEl   = null;
+let chatHistory         = [];
+let streamingEl         = null;
+let streamingText       = '';
+let thinkingEl          = null;
+let pendingPracticeName = null;
+let pendingPracticeDuration = null; // seconds
+
+// ─── Save helpers
+
+/**
+ * persistChat — single save path for all cases.
+ * Reuses the conversation's chatId (or creates one), stores pending meta for
+ * cross-session verification, and routes to sendBeacon or fetch.
+ *
+ * useBeacon: true  → sendBeacon (pre-navigation safe) with fetch fallback
+ * useBeacon: false → fetch (returns promise, caller can await or .catch)
+ *
+ * messages defaults to chatHistory but can be overridden (e.g. TTL path
+ * where chatHistory isn't populated yet).
+ */
+function persistChat({ messages, action, conversationStart, conversationEnd, practiceName = null, practiceDuration = null, useBeacon = false }) {
+  const chatId = getOrCreateChatId();
+  const payload = { chatId, userId, messages, action, conversationStart, conversationEnd, practiceName, practiceDuration };
+
+  // Always store pending meta — survives clearHistory(), enables retry on next load
+  localStorage.setItem(LS_PENDING_ID, chatId);
+  localStorage.setItem(LS_PENDING_META, JSON.stringify({ action, conversationStart, conversationEnd, practiceName, practiceDuration, messages }));
+  localStorage.setItem(LS_SAVED, 'true');
+
+  if (useBeacon) {
+    const queued = saveReflectChatBeacon(payload);
+    if (!queued) saveReflectChat(payload).catch(() => {});
+    return null;
+  }
+  return saveReflectChat(payload);
+}
+
+/**
+ * flushPendingSave — on page load, verify the previous session's sendBeacon save made it.
+ * If not found, retries using stored meta. Runs async after page renders.
+ * Note: LS_PENDING_META is separate from LS_HISTORY, so it survives clearHistory().
+ */
+async function flushPendingSave() {
+  const pendingChatId = localStorage.getItem(LS_PENDING_ID);
+  if (!pendingChatId) return;
+
+  try {
+    const { found } = await getReflectChat(pendingChatId, userId);
+    if (!found) {
+      const raw = localStorage.getItem(LS_PENDING_META);
+      const meta = raw ? JSON.parse(raw) : null;
+      if (meta?.messages?.some(m => m.role === 'user')) {
+        log('debug', '[reflect] pending save not found — retrying chatId:', pendingChatId);
+        await saveReflectChat({ chatId: pendingChatId, userId, ...meta }).catch(() => {});
+      }
+    }
+  } catch {
+    // Network error — leave flags for next visit
+    return;
+  }
+
+  localStorage.removeItem(LS_PENDING_ID);
+  localStorage.removeItem(LS_PENDING_META);
+}
 
 // ─── Helpers
 
@@ -109,8 +194,8 @@ function showReadyOverlay(practiceName, durationMins) {
   document.getElementById('ready-practice-name').textContent = practiceName;
   document.getElementById('ready-duration').textContent = `${durationMins} minute${durationMins !== 1 ? 's' : ''}`;
   beginBtn.href = `/practice/?practice=${encodeURIComponent(practiceName)}&duration=${durationMins}`;
-  // Flag: clear chat on next visit (practice is starting)
-  localStorage.setItem('dp-reflect-clear-next', '1');
+  pendingPracticeName = practiceName;
+  pendingPracticeDuration = durationMins * 60;
   readyOverlay.hidden = false;
   sendButton.disabled = true;
 }
@@ -172,14 +257,23 @@ async function sendMessage(message) {
             if (!started) { startStreaming(); started = true; }
             appendStreamToken(data.text);
           } else if (data.type === 'tool_start') {
-            // Only attach dots to an existing bubble — don't create one just for loading state.
-            // If no tokens have arrived yet, Ruminating… is already visible.
             if (streamingEl) streamingEl.classList.add('is-loading');
           } else if (data.type === 'tool_complete') {
             if (data.tool === 'go_to_practice') {
               if (streamingEl) streamingEl.classList.remove('is-loading');
               const { practiceName, durationMins } = data.result;
               showReadyOverlay(practiceName, durationMins);
+            } else if (data.tool === 'end_conversation') {
+              if (streamingEl) streamingEl.classList.remove('is-loading');
+              if (chatHistory.some(m => m.role === 'user')) {
+                persistChat({
+                  messages: chatHistory,
+                  action: 'closed',
+                  conversationStart: chatHistory[0]?.timestamp || null,
+                  conversationEnd: new Date().toISOString(),
+                  useBeacon: true,
+                });
+              }
             } else if (streamingEl) {
               streamingEl.classList.remove('is-loading');
               if (streamingText) {
@@ -188,10 +282,8 @@ async function sendMessage(message) {
               }
             }
           } else if (data.type === 'done') {
-            // Always clear thinking — it may still be visible if no tokens fired (pure tool call)
             hideThinking();
             const text = finalizeStreaming();
-            // Only persist non-empty assistant turns
             if (text.trim()) {
               chatHistory.push({ role: 'assistant', content: text, timestamp: new Date().toISOString() });
               saveHistory(chatHistory);
@@ -245,6 +337,19 @@ messageInput.addEventListener('input', function () {
   updateSendButton();
 });
 
+beginBtn.addEventListener('click', () => {
+  if (!chatHistory.some(m => m.role === 'user')) return;
+  persistChat({
+    messages: chatHistory,
+    action: 'practice',
+    conversationStart: chatHistory[0]?.timestamp || null,
+    conversationEnd: new Date().toISOString(),
+    practiceName: pendingPracticeName,
+    practiceDuration: pendingPracticeDuration,
+    useBeacon: true,
+  });
+});
+
 keepChatBtn.addEventListener('click', () => {
   readyOverlay.hidden = true;
   messageInput.disabled = false;
@@ -255,31 +360,31 @@ keepChatBtn.addEventListener('click', () => {
 // ─── Greeting
 
 function buildOpening() {
-  const tod        = getTimeOfDayGreeting(); // morning | afternoon | evening | night
-  const timeTail   = tod === 'morning' ? 'this morning'
-                   : tod === 'evening' ? 'this evening'
-                   : tod === 'night'   ? 'tonight'
-                   : 'today';
-  const firstName  = getName().split(' ')[0] || null;
+  const tod      = getTimeOfDayGreeting();
+  const timeTail = tod === 'morning' ? 'this morning'
+                 : tod === 'evening' ? 'this evening'
+                 : tod === 'night'   ? 'tonight'
+                 : 'today';
+  const firstName = getName().split(' ')[0] || null;
   const content = firstName
     ? `Welcome ${firstName}, what's present for you ${timeTail}?`
     : `Welcome, what's present for you ${timeTail}?`;
   return { role: 'assistant', content, timestamp: new Date().toISOString() };
 }
 
-// ─── Save chat (temporary manual save — superseded by end_conversation tool in Ticket 3c)
+// ─── Save chat (manual fallback — fires with action 'closed', fetch is fine here)
 
 saveChatBtn.addEventListener('click', async () => {
   if (!chatHistory.some(m => m.role === 'user')) return;
   saveChatBtn.disabled = true;
   saveChatBtn.setAttribute('data-tooltip', 'Saving…');
   try {
-    await fetch('/api/reflect-chat-save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, messages: chatHistory }),
+    await persistChat({
+      messages: chatHistory,
+      action: 'closed',
+      conversationStart: chatHistory[0]?.timestamp || null,
+      conversationEnd: new Date().toISOString(),
     });
-    localStorage.setItem(LS_SAVED, 'true');
     saveChatBtn.setAttribute('data-tooltip', 'Saved');
     setTimeout(() => saveChatBtn.setAttribute('data-tooltip', 'Save this conversation'), 2000);
   } catch {
@@ -294,7 +399,6 @@ saveChatBtn.addEventListener('click', async () => {
 startFreshBtn.addEventListener('click', () => {
   clearHistory();
   chatHistory = [];
-  // Remove all message bubbles (keep the circle-header and start-fresh btn in place)
   chatInner.querySelectorAll('.chat-bubble, .chat-thinking').forEach(el => el.remove());
   saveChatBtn.hidden = true;
   startFreshBtn.hidden = true;
@@ -308,9 +412,8 @@ startFreshBtn.addEventListener('click', () => {
 
 // ─── Init
 
-// Auto-clear if user completed a practice last time
-if (localStorage.getItem('dp-reflect-clear-next') === '1') {
-  localStorage.removeItem('dp-reflect-clear-next');
+// If the conversation was saved (concluded or practiced), clear and start fresh
+if (localStorage.getItem(LS_SAVED) === 'true') {
   clearHistory();
 }
 
@@ -339,3 +442,6 @@ if (chatHistory.length === 0) {
 }
 
 messageInput.focus();
+
+// Async: verify previous session's sendBeacon save — retry silently if it didn't land
+flushPendingSave().catch(() => {});

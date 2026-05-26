@@ -73,7 +73,9 @@ Ask if they want to practice now or later.
 - If now: also ask how long they'd like to practice (or suggest a duration based on their history). Once you have both — what and how long — move to ready.
 
 READY
-When they confirm NOW and you have a duration: call go_to_practice with practiceName and durationMins. Write nothing after calling this tool — the interface takes over.`;
+When they confirm NOW and you have a duration: call go_to_practice with practiceName and durationMins. Write nothing after calling this tool — the interface takes over.
+
+When the conversation reaches a natural conclusion — the user says goodbye, chooses rest, or is clearly done — send your final message first, then call end_conversation. Do not call it mid-conversation or before your farewell.`;
 
   // Array format enables prompt caching — system prompt is ~600 tokens, called every message
   const systemMessages = [
@@ -100,6 +102,15 @@ When they confirm NOW and you have a duration: call go_to_practice with practice
       },
     },
     {
+      name: 'end_conversation',
+      description: 'Call this when the conversation has reached a natural conclusion — the user has said goodbye, chosen to rest, or indicated they are done for now without going to practice. Call it AFTER sending your final farewell message, never before.',
+      input_schema: {
+        type: 'object',
+        properties: {},
+        required: [],
+      },
+    },
+    {
       name: 'go_to_practice',
       description: 'Signal that the user is ready to practice NOW. Call ONLY when they have confirmed. Write nothing after calling this tool.',
       input_schema: {
@@ -107,7 +118,7 @@ When they confirm NOW and you have a duration: call go_to_practice with practice
         properties: {
           practiceName: {
             type: 'string',
-            description: '1-3 words from their own language describing what they will practice',
+            description: '1-3 words from their own language describing what they will practice. Lowercase unless the user explicitly typed otherwise.',
           },
           durationMins: {
             type: 'number',

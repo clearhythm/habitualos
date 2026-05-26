@@ -14,6 +14,7 @@
   framework = "#custom"
   command = "pnpm --filter dreamscape run eleventy:serve"
   targetPort = 8080
+  port = 8889
   autoLaunch = false
   functions = "netlify/functions"
   publish = "_site"
