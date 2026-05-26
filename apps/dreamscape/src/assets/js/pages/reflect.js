@@ -250,6 +250,21 @@ keepChatBtn.addEventListener('click', () => {
   updateSendButton();
 });
 
+// ─── Greeting
+
+function buildOpening() {
+  const tod        = getTimeOfDayGreeting(); // morning | afternoon | evening | night
+  const timeTail   = tod === 'morning' ? 'this morning'
+                   : tod === 'evening' ? 'this evening'
+                   : tod === 'night'   ? 'tonight'
+                   : 'today';
+  const firstName  = getName().split(' ')[0] || null;
+  const content = firstName
+    ? `Welcome ${firstName}, what's present for you ${timeTail}?`
+    : `Welcome, what's present for you ${timeTail}?`;
+  return { role: 'assistant', content, timestamp: new Date().toISOString() };
+}
+
 // ─── Start fresh
 
 startFreshBtn.addEventListener('click', () => {
@@ -258,15 +273,7 @@ startFreshBtn.addEventListener('click', () => {
   // Remove all message bubbles (keep the circle-header and start-fresh btn in place)
   chatInner.querySelectorAll('.chat-bubble, .chat-thinking').forEach(el => el.remove());
   startFreshBtn.hidden = true;
-  const greeting  = getTimeOfDayGreeting();
-  const firstName = getName().split(' ')[0] || null;
-  const opening = {
-    role: 'assistant',
-    content: firstName
-      ? `Good ${greeting} ${firstName}, what's present for you today?`
-      : `Good ${greeting}, what's present for you today?`,
-    timestamp: new Date().toISOString(),
-  };
+  const opening = buildOpening();
   chatHistory.push(opening);
   saveHistory(chatHistory);
   renderMessage('assistant', opening.content);
@@ -284,6 +291,12 @@ if (localStorage.getItem('dp-reflect-clear-next') === '1') {
 
 chatHistory = loadHistory();
 
+// If no user messages exist, the session never started — regenerate the greeting fresh
+if (!chatHistory.some(m => m.role === 'user')) {
+  clearHistory();
+  chatHistory = [];
+}
+
 chatHistory.forEach(msg => {
   renderMessage(msg.role, msg.content);
 });
@@ -293,15 +306,7 @@ if (chatHistory.some(m => m.role === 'user')) {
 }
 
 if (chatHistory.length === 0) {
-  const greeting   = getTimeOfDayGreeting();
-  const firstName  = getName().split(' ')[0] || null;
-  const opening = {
-    role: 'assistant',
-    content: firstName
-      ? `Good ${greeting} ${firstName}, what's present for you today?`
-      : `Good ${greeting}, what's present for you today?`,
-    timestamp: new Date().toISOString(),
-  };
+  const opening = buildOpening();
   chatHistory.push(opening);
   saveHistory(chatHistory);
   renderMessage('assistant', opening.content);
