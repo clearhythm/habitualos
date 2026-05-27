@@ -17,17 +17,18 @@ if (!_practice || isNaN(_durationMins) || _durationMins <= 0) {
 }
 
 // ─── DOM
-const timerView      = document.getElementById('timer-view');
-const noteView       = document.getElementById('note-view');
-const timerEl        = document.getElementById('timer');
-const labelEl        = document.getElementById('practice-label');
-const noteInput      = document.getElementById('note-input');
-const pauseBtn       = document.getElementById('pause-btn');
-const stopBtn        = document.getElementById('stop-btn');
-const discardBtn     = document.getElementById('discard-btn');
-const finishControls = document.getElementById('finish-controls');
-const completeLabel  = document.getElementById('complete-label');
-const saveBtn        = document.getElementById('save-btn');
+const timerView    = document.getElementById('timer-view');
+const noteView     = document.getElementById('note-view');
+const timerEl      = document.getElementById('timer');
+const labelEl      = document.getElementById('practice-label');
+const noteInput    = document.getElementById('note-input');
+const pauseBtn     = document.getElementById('pause-btn');
+const iconPause    = document.getElementById('icon-pause');
+const iconPlay     = document.getElementById('icon-play');
+const stopBtn      = document.getElementById('stop-btn');
+const discardBtn   = document.getElementById('discard-btn');
+const completeLabel = document.getElementById('complete-label');
+const saveBtn      = document.getElementById('save-btn');
 
 let timerInterval    = null;
 let totalSeconds     = _durationMins * 60;
@@ -51,6 +52,22 @@ function showNote() {
   noteView.hidden  = false;
 }
 
+function setRunningState() {
+  iconPause.style.display = '';
+  iconPlay.style.display  = 'none';
+  pauseBtn.setAttribute('aria-label', 'Pause');
+  stopBtn.hidden    = false;
+  discardBtn.hidden = true;
+}
+
+function setPausedState() {
+  iconPause.style.display = 'none';
+  iconPlay.style.display  = '';
+  pauseBtn.setAttribute('aria-label', 'Continue');
+  stopBtn.hidden    = true;
+  discardBtn.hidden = false;
+}
+
 // ─── Timer
 function tick() {
   timerInterval = setInterval(() => {
@@ -71,22 +88,22 @@ async function onComplete() {
   completeLabel.hidden = false;
   timerEl.textContent  = fmt(totalSeconds);
   pauseBtn.hidden      = true;
-  stopBtn.textContent  = 'Continue';
-  finishControls.hidden = false;
+  stopBtn.hidden       = true;
+  discardBtn.hidden    = true;
+  // Auto-transition to note view after chime settles
+  setTimeout(() => stopSession(), 2500);
 }
 
 function togglePause() {
   if (isPaused) {
     tick();
-    pauseBtn.textContent  = '⏸';
-    finishControls.hidden = true;
+    setRunningState();
     isPaused = false;
     setPresenceState('practicing');
   } else {
     clearInterval(timerInterval);
-    timerInterval         = null;
-    pauseBtn.textContent  = '▶';
-    finishControls.hidden = false;
+    timerInterval = null;
+    setPausedState();
     isPaused = true;
     setPresenceState('witnessing');
   }
@@ -100,28 +117,20 @@ async function stopSession() {
   saveAbandonedIfPending(getUserId());
   stop();
   releaseWakeLock();
-  isPaused              = false;
-  completeLabel.hidden  = true;
-  finishControls.hidden = true;
-  stopBtn.textContent   = 'Finish';
-  pauseBtn.hidden       = false;
-  pauseBtn.textContent  = '⏸';
+  isPaused = false;
+  completeLabel.hidden = true;
+  pauseBtn.hidden = false;
+  setRunningState();
   showNote();
 }
 
 function discardSession() {
   clearInterval(timerInterval);
-  timerInterval         = null;
+  timerInterval = null;
   cancelSession();
   stop();
   releaseWakeLock();
-  isPaused              = false;
-  completeLabel.hidden  = true;
-  finishControls.hidden = true;
-  stopBtn.textContent   = 'Finish';
-  pauseBtn.hidden       = false;
-  pauseBtn.textContent  = '⏸';
-  window.location.href  = '/practice/';
+  window.location.href = '/practice/';
 }
 
 async function save() {
@@ -131,10 +140,10 @@ async function save() {
 }
 
 // ─── Ambient player (shared with homepage)
-const muteBtn     = document.getElementById('ambient-mute-btn');
+const muteBtn      = document.getElementById('ambient-mute-btn');
 const volumeSlider = document.getElementById('ambient-volume');
-const iconOn      = document.getElementById('icon-sound-on');
-const iconOff     = document.getElementById('icon-sound-off');
+const iconOn       = document.getElementById('icon-sound-on');
+const iconOff      = document.getElementById('icon-sound-off');
 
 let _isMuted = getAudioPref() === 'off';
 let _volume  = parseFloat(localStorage.getItem('dp-volume') ?? '1');
@@ -180,11 +189,9 @@ discardBtn.addEventListener('click', discardSession);
 saveBtn.addEventListener('click', save);
 
 // ─── Begin immediately
-labelEl.textContent     = _practice;
-timerEl.textContent     = fmt(totalSeconds);
-pauseBtn.hidden         = false;
-pauseBtn.textContent    = '⏸';
-finishControls.hidden   = true;
+labelEl.textContent = _practice;
+timerEl.textContent = fmt(totalSeconds);
+setRunningState();
 showTimer();
 tick();
 

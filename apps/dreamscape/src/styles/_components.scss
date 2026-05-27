@@ -597,7 +597,7 @@
   top: $space-2xl;
   left: 0;
   right: 0;
-  font-size: $font-size-lg;
+  font-size: $font-size-2xl;
   font-family: 'Cormorant Garamond', serif;
   color: $color-text-muted;
   text-align: center;
@@ -610,43 +610,42 @@
   animation: fadeIn 0.4s ease;
 }
 
-.timer-icon-btn {
+.timer-circle-btn {
   background: transparent;
   border: none;
   color: white;
-  font-size: 2.5rem;
-  line-height: 1;
   cursor: pointer;
-  padding: $space-md;
-  opacity: 0.85;
-  transition: opacity 0.15s;
+  padding: 0;
+  width: 80px;
+  height: 80px;
+  opacity: 0.75;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
+  svg { width: 100%; height: 100%; }
   &:hover { opacity: 1; }
 }
 
-.timer-finish-controls {
-  position: absolute;
-  bottom: $space-2xl;
-  left: 0;
-  right: 0;
+.timer-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $space-md;
-  padding: 0 $space-xl;
-  animation: fadeIn 0.2s ease;
+  gap: $space-xs;
+  margin-top: $space-sm;
 }
 
-.timer-finish-controls .btn {
-  width: 100%;
-  max-width: 280px;
+.timer-discard {
+  font-size: $font-size-sm;
+  opacity: 0.6;
 }
 
 .timer {
   font-size: clamp(4rem, 20vw, 8rem);
   font-family: 'Cormorant Garamond', serif;
   font-weight: 300;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
   letter-spacing: -0.02em;
   color: $color-text;
   line-height: 1;
