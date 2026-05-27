@@ -38,10 +38,27 @@ bodyClass: scene-page
     </div>
 
     <div id="note-view" class="note-view" hidden>
-      <div class="note-label">Your reflection <span class="note-optional">(optional)</span></div>
-      <textarea id="note-input" class="note-input" placeholder="What came up?"></textarea>
-      <button class="btn btn-primary" id="save-btn">Save reflection</button>
-      <a href="/" class="btn-quiet" id="skip-btn">Skip</a>
+      <div class="circle-header">
+        <svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3.8"
+             stroke-linecap="round" stroke-linejoin="round"
+             class="circle-icon circle-icon--lg" aria-hidden="true">
+          <path d="M20 76 C16 50 36 20 70 14"/>
+          <path d="M20 76 C40 70 62 54 70 14"/>
+          <path d="M20 76 C26 58 44 36 62 20"/>
+          <path d="M20 76 C30 60 52 42 66 18"/>
+          <path d="M20 76 C36 66 56 50 68 16"/>
+        </svg>
+        <div class="feed-message feed-visible">
+          <span class="feed-name">Reflect</span>
+        </div>
+      </div>
+      <div class="chat-input-wrap note-input-wrap">
+        <textarea id="note-input" class="chat-textarea" rows="4"
+          placeholder="What came up for you, if anything? (optional)"
+          aria-label="Your reflection"></textarea>
+      </div>
+      <button class="btn btn-primary" id="save-btn">save</button>
+      <a href="/" class="btn-quiet" id="skip-btn">skip</a>
     </div>
   </div>
 

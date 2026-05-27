@@ -661,6 +661,11 @@
   font-size: $font-size-sm;
 }
 
+.note-input-wrap {
+  width: 100%;
+  max-width: 480px;
+}
+
 .note-input {
   width: 100%;
   max-width: 560px;
