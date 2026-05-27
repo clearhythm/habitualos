@@ -116,7 +116,6 @@ async function stopSession() {
   const practiced = totalSeconds - remainingSeconds;
   await endSession(practiced);
   saveAbandonedIfPending(getUserId());
-  playChime();
   releaseWakeLock();
   isPaused = false;
   completeLabel.hidden = true;

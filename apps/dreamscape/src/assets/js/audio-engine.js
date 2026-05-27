@@ -81,12 +81,16 @@ export function releaseWakeLock() {
 
 export async function playChime() {
   try {
-    const ctx = new AudioContext();
-    const ab  = await fetch('/assets/music/effects/singing-bowl.mp3').then(r => r.arrayBuffer());
-    const buf = await ctx.decodeAudioData(ab);
+    const ctx  = new AudioContext();
+    const ab   = await fetch('/assets/music/effects/singing-bowl.mp3').then(r => r.arrayBuffer());
+    const buf  = await ctx.decodeAudioData(ab);
+    const gain = ctx.createGain();
+    gain.gain.value = 0.25;
+    gain.connect(ctx.destination);
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(ctx.destination);
+    src.playbackRate.value = Math.pow(2, 2 / 12); // +2 semitones
+    src.connect(gain);
     src.start();
     src.onended = () => ctx.close();
   } catch (_) {}
