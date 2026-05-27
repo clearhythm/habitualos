@@ -56,6 +56,7 @@ function setRunningState() {
   iconPause.style.display = '';
   iconPlay.style.display  = 'none';
   pauseBtn.setAttribute('aria-label', 'Pause');
+  pauseBtn.setAttribute('data-tooltip', 'pause practice');
   stopBtn.hidden    = false;
   discardBtn.hidden = true;
 }
@@ -64,6 +65,7 @@ function setPausedState() {
   iconPause.style.display = 'none';
   iconPlay.style.display  = '';
   pauseBtn.setAttribute('aria-label', 'Continue');
+  pauseBtn.setAttribute('data-tooltip', 'continue practice');
   stopBtn.hidden    = true;
   discardBtn.hidden = false;
 }
