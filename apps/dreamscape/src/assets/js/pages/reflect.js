@@ -80,6 +80,7 @@ let streamingText       = '';
 let thinkingEl          = null;
 let pendingPracticeName = null;
 let pendingPracticeDuration = null; // seconds
+let _pendingAction      = null;     // action to persist after 'done' (e.g. 'non-practice')
 
 // ─── Save helpers
 
@@ -273,15 +274,8 @@ async function sendMessage(message) {
               showReadyOverlay(practiceName, durationSecs);
             } else if (data.tool === 'end_conversation') {
               if (streamingEl) streamingEl.classList.remove('is-loading');
-              if (chatHistory.some(m => m.role === 'user')) {
-                persistChat({
-                  messages: chatHistory,
-                  action: 'closed',
-                  conversationStart: chatHistory[0]?.timestamp || null,
-                  conversationEnd: new Date().toISOString(),
-                  useBeacon: true,
-                });
-              }
+              // Defer persist until 'done' so the final assistant message is included
+              _pendingAction = 'non-practice';
             } else if (streamingEl) {
               streamingEl.classList.remove('is-loading');
               if (streamingText) {
@@ -295,6 +289,17 @@ async function sendMessage(message) {
             if (text.trim()) {
               chatHistory.push({ role: 'assistant', content: text, timestamp: new Date().toISOString() });
               saveHistory(chatHistory);
+            }
+            // Persist deferred action now that the final message is in history
+            if (_pendingAction && chatHistory.some(m => m.role === 'user')) {
+              persistChat({
+                messages: chatHistory,
+                action: _pendingAction,
+                conversationStart: chatHistory[0]?.timestamp || null,
+                conversationEnd: new Date().toISOString(),
+                useBeacon: true,
+              });
+              _pendingAction = null;
             }
           } else if (data.type === 'error') {
             throw new Error(data.error);
@@ -380,7 +385,7 @@ function buildOpening() {
   return { role: 'assistant', content, timestamp: new Date().toISOString() };
 }
 
-// ─── Save chat (manual fallback — fires with action 'closed', fetch is fine here)
+// ─── Save chat (manual fallback — fires with action 'non-practice', fetch is fine here)
 
 saveChatBtn.addEventListener('click', async () => {
   if (!chatHistory.some(m => m.role === 'user')) return;
@@ -389,7 +394,7 @@ saveChatBtn.addEventListener('click', async () => {
   try {
     await persistChat({
       messages: chatHistory,
-      action: 'closed',
+      action: 'non-practice',
       conversationStart: chatHistory[0]?.timestamp || null,
       conversationEnd: new Date().toISOString(),
     });

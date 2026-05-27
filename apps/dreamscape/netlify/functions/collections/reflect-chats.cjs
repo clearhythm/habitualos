@@ -11,7 +11,7 @@ function toTimestamp(iso) {
 /**
  * saveReflectChat — writes a reflect chat doc.
  * If chatId is provided (client-generated), uses it. Otherwise generates one.
- * action: 'practice' | 'closed' | 'abandoned'
+ * action: 'practice' | 'non-practice' | 'abandoned'
  */
 async function saveReflectChat({ chatId, userId, messages, action, conversationStart, conversationEnd, practiceName, practiceDuration }) {
   const id = chatId || uniqueId('rc');
