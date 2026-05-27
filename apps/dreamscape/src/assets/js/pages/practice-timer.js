@@ -1,7 +1,7 @@
 import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
-import { play, stop, setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
+import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
 import { getAudioPref, setAudioPref } from '../audio-unlock.js';
 import { saveAbandonedIfPending } from '../collections/reflect-chats.js';
 import { log } from '../utils/log.js';
@@ -84,7 +84,6 @@ function tick() {
 }
 
 async function onComplete() {
-  stop();
   playChime();
   releaseWakeLock();
   completeLabel.hidden = false;
@@ -117,7 +116,7 @@ async function stopSession() {
   const practiced = totalSeconds - remainingSeconds;
   await endSession(practiced);
   saveAbandonedIfPending(getUserId());
-  stop();
+  playChime();
   releaseWakeLock();
   isPaused = false;
   completeLabel.hidden = true;
@@ -130,7 +129,6 @@ function discardSession() {
   clearInterval(timerInterval);
   timerInterval = null;
   cancelSession();
-  stop();
   releaseWakeLock();
   window.location.href = '/practice/';
 }
@@ -204,6 +202,5 @@ showTimer();
 tick();
 
 startSession(_practice);
-play();
 acquireWakeLock();
 log('debug', '[practice-timer] started', _practice, _durationMins, 'mins');
