@@ -148,9 +148,9 @@ if (muteBtn) {
 // Each user has a stored chime signature: 3 semitone offsets + a timing pattern.
 // Most recent first — in production this comes pre-sorted from the query
 // TODO: load from user profile
-const SELF_CHIME       = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
-// "all caught up" — 4 ascending bright notes, quick and light
-const CAUGHT_UP_CHIME  = { notes: [12, 16, 19, 24], timing: [0, 0.12, 0.24, 0.38] };
+const SELF_CHIME      = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
+// "all caught up" — 3 ascending bright notes, quick twinkle finish
+const CAUGHT_UP_CHIME = { notes: [12, 16, 19], timing: [0, 0.12, 0.24] };
 
 const MOCK_SESSIONS = [
   { name: "Ro'i",  lastPracticed: '2 hours ago',    chime: { notes: [-7,  0,  4], timing: [0, 0.35, 0.70] } },
@@ -245,6 +245,7 @@ async function runChimeLoop() {
     showFeedMessage('You', 'are caught up now');
     swingChime();
     playSignature(CAUGHT_UP_CHIME);
+    // TODO: play time-of-day bird sound after chime settles (needs effects/bird-*.mp3 files)
   }
 }
 
