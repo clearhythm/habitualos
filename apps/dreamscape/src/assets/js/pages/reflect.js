@@ -15,7 +15,7 @@ const LS_SAVED        = 'reflect-chat-saved';
 const LS_CHAT_ID      = 'reflect-chat-id';
 const LS_PENDING_ID   = 'reflect-chat-pending-id';
 const LS_PENDING_META = 'reflect-chat-pending-meta';
-const TTL_MS          = 24 * 60 * 60 * 1000;
+const TTL_MS          = 4 * 60 * 60 * 1000;
 
 function getOrCreateChatId() {
   let chatId = localStorage.getItem(LS_CHAT_ID);
