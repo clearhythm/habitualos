@@ -138,7 +138,8 @@ function discardSession() {
 async function save() {
   saveBtn.disabled = true;
   await saveReflection(noteInput.value.trim());
-  window.location.href = '/history/';
+  localStorage.setItem('dp-just-practiced', '1');
+  window.location.href = '/';
 }
 
 // ─── Ambient player (shared with homepage)
@@ -189,6 +190,11 @@ pauseBtn.addEventListener('click', togglePause);
 stopBtn.addEventListener('click', stopSession);
 discardBtn.addEventListener('click', discardSession);
 saveBtn.addEventListener('click', save);
+
+// Skip — set practiced flag so homepage shows "practiced just now"
+document.getElementById('skip-btn')?.addEventListener('click', () => {
+  localStorage.setItem('dp-just-practiced', '1');
+});
 
 // ─── Begin immediately
 labelEl.textContent = _practice;

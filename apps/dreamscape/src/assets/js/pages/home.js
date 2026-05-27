@@ -148,7 +148,9 @@ if (muteBtn) {
 // Each user has a stored chime signature: 3 semitone offsets + a timing pattern.
 // Most recent first — in production this comes pre-sorted from the query
 // TODO: load from user profile
-const SELF_CHIME = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
+const SELF_CHIME       = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
+// "all caught up" — 4 ascending bright notes, quick and light
+const CAUGHT_UP_CHIME  = { notes: [12, 16, 19, 24], timing: [0, 0.12, 0.24, 0.38] };
 
 const MOCK_SESSIONS = [
   { name: "Ro'i",  lastPracticed: '2 hours ago',    chime: { notes: [-7,  0,  4], timing: [0, 0.35, 0.70] } },
@@ -242,7 +244,7 @@ async function runChimeLoop() {
   if (!_navOpen) {
     showFeedMessage('You', 'are caught up now');
     swingChime();
-    playSignature(SELF_CHIME);
+    playSignature(CAUGHT_UP_CHIME);
   }
 }
 
@@ -331,6 +333,25 @@ document.addEventListener('nav:close', resumeLoop);
 
 // ─── Intro tagline (applied before welcome state check so welcome can override)
 applyIntroTagline();
+
+// ─── Just practiced — return from timer
+{
+  const justPracticed = localStorage.getItem('dp-just-practiced');
+  if (justPracticed) {
+    localStorage.removeItem('dp-just-practiced');
+    const feedEl = document.getElementById('feed-message');
+    if (feedEl) {
+      const nameEl = feedEl.querySelector('.feed-name');
+      const timeEl = feedEl.querySelector('.feed-time');
+      if (nameEl) nameEl.textContent = 'You';
+      if (timeEl) timeEl.textContent = 'practiced just now';
+    }
+    const mainBtn = document.getElementById('main-action-btn');
+    if (mainBtn) { mainBtn.href = '/history/'; mainBtn.textContent = 'history'; }
+    const reflectPill = document.getElementById('reflect-pill');
+    if (reflectPill) reflectPill.removeAttribute('hidden');
+  }
+}
 
 // ─── Welcome state (join / first-time signup)
 {
