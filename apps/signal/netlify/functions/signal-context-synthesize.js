@@ -276,7 +276,7 @@ Write exactly three paragraphs:
 2. How they work — behavioral patterns, working style, how they handle friction and decisions
 3. Direction — what they're moving toward professionally
 
-Ground every claim in the signal data above. Do not invent anything not supported by the signals. Write in third person. Approximately 100 words per paragraph.`;
+Ground every claim in the signal data above. Do not invent anything not supported by the signals. Write in third person. Approximately 100 words per paragraph. Plain prose only — no markdown, no headers, no bullet points.`;
 
         try {
           const narrativeResponse = await anthropic.messages.create({

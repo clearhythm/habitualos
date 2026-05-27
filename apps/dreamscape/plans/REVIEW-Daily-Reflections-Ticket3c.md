@@ -6,7 +6,7 @@ Dreamscape is a presence-based practice timer app (`apps/dreamscape`) within the
 
 **No `console.log`** — use `log()` from `netlify/functions/_utils/log.cjs` (backend) or `src/assets/js/utils/log.js` (frontend). No uppercase/all-caps. Dark mode only.
 
-**Local dev:** `npm run dev` from `apps/dreamscape/` (Netlify dev at http://localhost:8888). Must be signed in (`dp-userId`, `dp-signed-in` in localStorage) to test the reflect chat.
+**Local dev:** `npm run dev` from `apps/dreamscape/` (Netlify dev at http://localhost:8889 — port set in `netlify.toml` `[dev]`). Must be signed in (`dp-userId`, `dp-signed-in` in localStorage) to test the reflect chat.
 
 **Monorepo:** single `.git` at root. Working directories: `apps/dreamscape/` and `packages/`.
 

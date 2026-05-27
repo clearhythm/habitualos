@@ -211,6 +211,19 @@
   50%       { transform: rotate(4deg); }
 }
 
+// ─── One-time chime hint — expanding ring, first visit with queue only
+@keyframes chime-hint-ring {
+  0%   { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.18); }
+  70%  { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); }
+}
+
+.wind-chime.chime-hint-pulse {
+  animation: chime-idle 9s ease-in-out infinite,
+             chime-hint-ring 2s ease-out 1.5s infinite;
+  border-radius: 50%;
+}
+
 // ─── Ambient Player ────────────────────────────────────────────────────────
 
 .ambient-player {
@@ -222,25 +235,23 @@
   display: flex;
   align-items: center;
   gap: $space-sm;
-  opacity: 0.28;
+  opacity: 0.45;
   transition: opacity 0.3s ease;
 
-  &:hover { opacity: 0.85; }
+  &:hover { opacity: 0.8; }
 }
 
 .ambient-mute-btn {
   background: transparent;
   border: none;
-  color: $color-text-muted;
+  color: white;
   cursor: pointer;
   padding: $space-xs;
   display: flex;
   align-items: center;
   line-height: 1;
-  transition: color 0.15s;
 
-  &:hover { color: $color-text; }
-  &[data-muted="true"] { color: rgba($color-text-muted, 0.4); }
+  &[data-muted="true"] { opacity: 0.5; }
 }
 
 .ambient-volume {
@@ -248,7 +259,7 @@
   -webkit-appearance: none;
   appearance: none;
   height: 2px;
-  background: rgba($color-text-muted, 0.25);
+  background: white;
   border-radius: 1px;
   outline: none;
   cursor: pointer;
@@ -258,7 +269,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: rgba($color-text, 0.55);
+    background: white;
     cursor: pointer;
   }
 
@@ -266,7 +277,7 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: rgba($color-text, 0.55);
+    background: white;
     border: none;
     cursor: pointer;
   }

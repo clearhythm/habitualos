@@ -1,0 +1,402 @@
+// Head-to-head demo pages (spock-vs-data, kirk-vs-data, etc.)
+
+.svd-hero {
+  padding: 5rem 1.5rem 1.5rem;
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto;
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 1rem;
+  }
+
+  p {
+    font-size: 1.125rem;
+    color: #9ca3af;
+    max-width: 560px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+}
+
+// ─── Verdict strip ─────────────────────────────────────────────────────────────
+
+.svd-verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.875rem 1.25rem;
+  margin: 0 auto 1.5rem;
+  max-width: 900px;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  animation: svd-verdict-in 0.25s ease;
+
+  @keyframes svd-verdict-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.svd-verdict-winner {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+}
+
+.svd-verdict-scores {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+// ─── Profile grid & cards ──────────────────────────────────────────────────────
+
+.svd-profiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.svd-profile-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  transition: box-shadow 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+
+  .svd-card-cta {
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin: 0 0 1.25rem;
+    text-align: center;
+  }
+
+  .tagline {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    margin: 0.5rem 0 0.75rem;
+    line-height: 1.5;
+  }
+
+  .bio {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    line-height: 1.6;
+    margin: 0 0 1.25rem;
+
+    &.loading {
+      height: 4rem;
+      background: #334155;
+      border-radius: 6px;
+      animation: svd-pulse 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+.svd-card--winner {
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.6), 0 8px 32px rgba(22, 163, 74, 0.1);
+}
+
+.svd-card--loser {
+  opacity: 0.72;
+  filter: saturate(0.75);
+
+  &:hover, &:focus-within {
+    opacity: 1;
+    filter: none;
+  }
+
+  @media (hover: none) {
+    &:active {
+      opacity: 1;
+      filter: none;
+    }
+  }
+}
+
+.svd-profile-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(124, 58, 237, 0.5);
+  margin: 0 auto 0.75rem;
+  display: block;
+}
+
+.svd-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.svd-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &.is-out {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+}
+
+.svd-card-cta {
+  display: flex;
+  justify-content: center;
+}
+
+.svd-roles-section {
+  max-width: 900px;
+  margin: 0 auto 3rem;
+  padding: 0 1.5rem;
+}
+
+.svd-roles-label {
+  font-size: 1.25rem;
+  color: #e2e8f0;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.svd-roles-arrow {
+  color: #7c3aed;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.svd-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  max-width: 900px;
+  margin: 0 auto 2.5rem;
+}
+
+.svd-role-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.svd-role-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #7c3aed;
+    color: #e2e8f0;
+  }
+
+  &.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+  }
+}
+
+// Score ring
+.svd-scored-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.svd-ring-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.svd-ring {
+  transform: rotate(-90deg);
+}
+
+.svd-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 7;
+}
+
+.svd-ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.svd-ring-score {
+  position: absolute;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+// Score bars
+.svd-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.svd-score-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.svd-score-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.svd-score-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: #0f172a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.svd-score-bar {
+  height: 100%;
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.svd-score-val {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+// Recommendation badge
+.svd-recommendation {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.rec-strong-candidate { background: rgba(22, 163, 74, 0.3); color: #86efac; }
+.rec-worth-applying   { background: rgba(124, 58, 237, 0.3); color: #c4b5fd; }
+.rec-stretch          { background: rgba(234, 88, 12, 0.3); color: #fdba74; }
+.rec-questionable-fit { background: #1c1917; color: #78716c; }
+.rec-poor-fit         { background: rgba(185, 28, 28, 0.3); color: #fca5a5; }
+
+.svd-summary {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #334155;
+}
+
+.svd-section-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+// Evidence
+.svd-evidence-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  li {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+}
+
+.svd-ev-pro   { color: #86efac; font-weight: 700; }
+.svd-ev-con   { color: #fca5a5; font-weight: 700; }
+.svd-ev-title {
+  color: #e2e8f0;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+  &:hover { border-bottom-color: #7c3aed; }
+}
+
+// CTA footer
+.svd-cta {
+  text-align: center;
+  padding: 3rem 1.5rem 5rem;
+
+  p {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+    font-size: 0.9375rem;
+  }
+}
+
+// Skeleton loading
+@keyframes svd-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.7; }
+}
+
+.skeleton {
+  background: #334155;
+  border-radius: 4px;
+  animation: svd-pulse 1.5s ease-in-out infinite;
+}

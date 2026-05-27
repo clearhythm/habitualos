@@ -58,7 +58,8 @@ exports.handler = async function handler(event) {
     }
 
     const tokenId  = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
-    const baseUrl   = (event.headers?.host || '').includes('localhost') ? 'http://localhost:8888' : PROD_URL;
+    const host      = event.headers?.host || '';
+    const baseUrl   = host.includes('localhost') ? `http://${host}` : PROD_URL;
     const verifyUrl = `${baseUrl}${VERIFY_PATH}?token=${tokenId}`;
 
     const isLocal = (event.headers?.host || '').includes('localhost');

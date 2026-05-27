@@ -21,8 +21,16 @@ Set `ADMIN_SECRET` in the admin site's Netlify environment variables. Do NOT set
 
 ## Local dev
 
-Point `js/api.js` BASE_URL at `http://localhost:8888` (already the default for localhost).
+```
+cd apps/dreamscape/admin
+netlify dev
+```
+
+Serves at `http://localhost:8888` (netlify default — no `[dev]` section in `admin/netlify.toml`). Cannot open `index.html` directly; `js/api.js` uses relative `/api/` paths that require the netlify dev proxy to reach functions.
+
 Set `ADMIN_SECRET` in `apps/dreamscape/.env` and enter the same value in the admin key field.
+
+Run admin dev separately from the main app (which runs at 8889 from `apps/dreamscape/`).
 
 ## Sections
 

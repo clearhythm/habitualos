@@ -1,6 +1,4 @@
-const MAIN_APP_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:8888'
-  : 'https://daily.habitualos.com';
+const MAIN_APP_URL = 'https://daily.habitualos.com';
 
 function formatDate(ts) {
   if (!ts) return '—';

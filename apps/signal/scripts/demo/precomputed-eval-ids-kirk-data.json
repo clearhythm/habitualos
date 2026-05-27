@@ -1,0 +1,30 @@
+{
+  "Starship Captain": {
+    "kirk": "eval-demo-kirk-starship-captain-1775866433531",
+    "data": "eval-demo-data-starship-captain-1775866449700"
+  },
+  "Science Officer": {
+    "kirk": "eval-demo-kirk-science-officer-1775866462170",
+    "data": "eval-demo-data-science-officer-1775866478578"
+  },
+  "Ship's Counselor": {
+    "kirk": "eval-demo-kirk-ship-s-counselor-1775866492015",
+    "data": "eval-demo-data-ship-s-counselor-1775866507866"
+  },
+  "Startup Founder": {
+    "kirk": "eval-demo-kirk-startup-founder-1775866522817",
+    "data": "eval-demo-data-startup-founder-1775866540420"
+  },
+  "Chief Technology Officer": {
+    "kirk": "eval-demo-kirk-chief-technology-officer-1775866555587",
+    "data": "eval-demo-data-chief-technology-officer-1775866571357"
+  },
+  "Venture Capitalist": {
+    "kirk": "eval-demo-kirk-venture-capitalist-1775866591632",
+    "data": "eval-demo-data-venture-capitalist-1775866608069"
+  },
+  "Baby Nanny": {
+    "kirk": "eval-demo-kirk-baby-nanny-1775866619965",
+    "data": "eval-demo-data-baby-nanny-1775866632798"
+  }
+}

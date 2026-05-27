@@ -23,13 +23,55 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
   } catch (err) { log('warn', 'Chime audio init failed:', err); }
 })();
 
+// ─── Intro tagline — alternates visit-to-visit via localStorage
+const TAGLINES = [
+  { name: 'Practice', sub: 'is only the beginning' },
+  { name: 'Presence', sub: 'is the gift of you being here' },
+];
+
+function applyIntroTagline() {
+  const raw = localStorage.getItem('dp-tagline-index');
+  const idx = parseInt(raw ?? '0', 10);
+  const next = (idx + 1) % TAGLINES.length;
+  localStorage.setItem('dp-tagline-index', String(next));
+  const t = TAGLINES[idx];
+  log('debug', '[tagline] raw=', raw, 'idx=', idx, 'next=', next, 'showing=', t.name);
+  const el = document.getElementById('feed-message');
+  if (el) {
+    const nameEl = el.querySelector('.feed-name');
+    const timeEl = el.querySelector('.feed-time');
+    log('debug', '[tagline] nameEl=', nameEl, 'timeEl=', timeEl);
+    if (nameEl) nameEl.textContent = t.name;
+    if (timeEl) timeEl.textContent = t.sub;
+    log('debug', '[tagline] after set — nameEl.textContent=', nameEl?.textContent);
+  } else {
+    log('warn', '[tagline] feed-message element not found');
+  }
+}
+
+// ─── One-time chime hint — expanding ring on first visit with a queue
+const LS_CHIME_HINT = 'dp-chime-hint-seen';
+
+function maybeShowChimeHint() {
+  if (localStorage.getItem(LS_CHIME_HINT)) return;
+  if (!MOCK_SESSIONS.length) return;
+  document.querySelector('#wind-chime .wind-chime')?.classList.add('chime-hint-pulse');
+  localStorage.setItem(LS_CHIME_HINT, '1');
+}
+
+const INTRO_MS = 8000;
+let _introTimer  = null;
+let _loopRunning = false;
 let _loopStarted = false;
 let _isWelcome   = false;
+
 function startChimeLoop() {
   log('debug', '[chime] startChimeLoop called, _loopStarted=', _loopStarted);
   if (_loopStarted || _isWelcome) return;
   _loopStarted = true;
-  runChimeLoop();
+  playSignature(SELF_CHIME);
+  maybeShowChimeHint();
+  _introTimer = setTimeout(() => { _introTimer = null; runChimeLoop(); }, INTRO_MS);
 }
 
 document.addEventListener('audioReady', async (e) => {
@@ -67,6 +109,7 @@ function syncMuteBtn() {
   const iconOff = document.getElementById('icon-sound-off');
   if (iconOn)  iconOn.style.display  = _muted ? 'none' : '';
   if (iconOff) iconOff.style.display = _muted ? '' : 'none';
+  if (volumeSlider) volumeSlider.value = _muted ? 0 : _volume;
 }
 
 // ─── Master volume + mute
@@ -166,6 +209,7 @@ function waitOrAdvance(ms) {
 
 async function runChimeLoop() {
   log('debug', '[chime] runChimeLoop started');
+  _loopRunning = true;
   const sessions = MOCK_SESSIONS; // replace with Firestore fetch later
 
   if (sessions.length === 0) {
@@ -173,8 +217,6 @@ async function runChimeLoop() {
     setTimeout(() => document.getElementById('invite-pill').removeAttribute('hidden'), 800);
     return;
   }
-
-  await waitOrAdvance(3000);
 
   for (const session of sessions) {
     log('debug', '[chime] showing session:', session.name);
@@ -196,6 +238,13 @@ async function runChimeLoop() {
 
 document.getElementById('wind-chime')?.addEventListener('click', () => {
   swingChime();
+  if (_introTimer) {
+    clearTimeout(_introTimer);
+    _introTimer = null;
+    document.querySelector('#wind-chime .wind-chime')?.classList.remove('chime-hint-pulse');
+    if (!_loopRunning) runChimeLoop();
+    return;
+  }
   advanceChime();
 });
 
@@ -269,6 +318,9 @@ function setOrbColor() {
 
 document.addEventListener('nav:open',  pauseLoop);
 document.addEventListener('nav:close', resumeLoop);
+
+// ─── Intro tagline (applied before welcome state check so welcome can override)
+applyIntroTagline();
 
 // ─── Welcome state (join / first-time signup)
 {

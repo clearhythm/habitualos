@@ -1,0 +1,63 @@
+---
+layout: base.njk
+permalink: /kirk-vs-data/
+title: "Kirk vs. Data — Signal Demo"
+description: "Two legends from opposite ends of the human spectrum. Seven job openings. See who Signal scores higher."
+bodyClass: "kirk-vs-data-page"
+css: /styles/head-to-head.css
+showDemoModal: true
+---
+
+<div id="demo-config" hidden
+  data-demo-id="kirk-vs-data"
+  data-character-ids='["kirk","data"]'>
+</div>
+
+<div class="svd-hero">
+  <h1>Two Legends.<br>Six Job Openings.<br>One Winner.</h1>
+  <p>Signal builds a behavioral profile from real work history, then scores fit against job listings for skills, alignment, and personality. We ran it on Kirk and Data.</p>
+</div>
+
+<hr class="svd-divider">
+
+<div class="svd-roles-section">
+  <p class="svd-roles-label">
+    <svg class="svd-roles-arrow" width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 28 3 C 26 3, 2 10, 4 36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="M 4 36 L 0 28 M 4 36 L 12 30" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    Pick a role to see who fits
+  </p>
+  <div class="svd-role-picker" id="role-picker"></div>
+</div>
+
+<div class="svd-verdict" id="svd-verdict" hidden></div>
+
+<div class="svd-profiles" id="profile-grid">
+  <div class="svd-profile-card" id="card-kirk">
+    <img id="avatar-kirk" src="/assets/images/avatar-placeholder.svg" alt="Kirk" class="svd-profile-avatar">
+    <h2 id="name-kirk">Kirk</h2>
+    <div class="svd-card-body" id="body-kirk">
+      <p class="tagline skeleton" style="height:1rem;width:70%">&nbsp;</p>
+      <p class="bio skeleton">&nbsp;</p>
+      <div class="svd-skill-tags"></div>
+    </div>
+  </div>
+  <div class="svd-profile-card" id="card-data">
+    <img id="avatar-data" src="/assets/images/avatar-placeholder.svg" alt="Data" class="svd-profile-avatar">
+    <h2 id="name-data">Data</h2>
+    <div class="svd-card-body" id="body-data">
+      <p class="tagline skeleton" style="height:1rem;width:70%">&nbsp;</p>
+      <p class="bio skeleton">&nbsp;</p>
+      <div class="svd-skill-tags"></div>
+    </div>
+  </div>
+</div>
+
+<hr class="svd-divider">
+<div class="svd-cta">
+  <p>Your work history tells your story. Signal makes it visible.</p>
+  <a href="/waitlist/" class="btn btn-primary">Get early access →</a>
+</div>
+
+<script src="/assets/js/head-to-head.js"></script>
