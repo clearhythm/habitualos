@@ -209,17 +209,32 @@
   50%       { transform: rotate(4deg); }
 }
 
-// ─── One-time chime hint — expanding ring, first visit with queue only
+// ─── Chime pulse ring — 1px border ring, matches nav ring cadence (10s cycle)
+// top: 38% centers on visual mass of chime (crossbar+pipes mid-point ~y=31/80)
 @keyframes chime-hint-ring {
-  0%   { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0.18); }
-  70%  { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); }
-  100% { box-shadow: 0 0 0 0px rgba(255, 255, 255, 0); }
+  0%            { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+  15%           { opacity: 0;    transform: translate(-50%, -50%) scale(2.1); }
+  15.01%, 100%  { opacity: 0;    transform: translate(-50%, -50%) scale(1); }
 }
 
-.wind-chime.chime-hint-pulse {
-  animation: chime-idle 9s ease-in-out infinite,
-             chime-hint-ring 2s ease-out 1.5s infinite;
-  border-radius: 50%;
+#wind-chime {
+  position: relative;
+
+  &.chime-hint-pulse::after {
+    content: '';
+    position: absolute;
+    $d: 48px;
+    width: $d;
+    height: $d;
+    top:  38%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    animation: chime-hint-ring 10s linear infinite;
+  }
 }
 
 // ─── Ambient Player ────────────────────────────────────────────────────────
@@ -340,6 +355,8 @@
   border: none;
   color: $color-text-muted;
   font-size: $font-size-sm;
+  font-family: inherit;
+  line-height: inherit;
   cursor: pointer;
   padding: $space-sm $space-md;
   text-decoration: none;
@@ -611,7 +628,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80px;
+  min-height: 64px;
 }
 
 .timer-circle-btn {
@@ -620,13 +637,14 @@
   color: white;
   cursor: pointer;
   padding: 0;
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   opacity: 0.75;
   transition: opacity 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: -1rem;
 
   svg { width: 100%; height: 100%; }
   &:hover { opacity: 1; }
@@ -637,7 +655,7 @@
   flex-direction: column;
   align-items: center;
   gap: $space-xs;
-  margin-top: $space-sm;
+  margin-top: -1rem;
 }
 
 .timer-discard {
@@ -689,10 +707,6 @@
   &:focus { border-color: $color-primary; }
 }
 
-// Ambient player above timer modal when both present
-.blossom-scene + .ambient-player {
-  z-index: 2001;
-}
 
 // Timer modal
 .timer-modal {
@@ -715,7 +729,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $space-xl;
+  gap: $space-lg;
 }
 
 .note-view {
@@ -1323,12 +1337,17 @@
   line-height: 1.6;
 }
 
-// ─── Reflect pill (secondary, below practice pill on homepage)
+// ─── Homepage action links — all secondary links use semi-opaque white
 .practice-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+
+  .btn-quiet {
+    color: rgba(255, 255, 255, 0.45);
+    &:hover { color: rgba(255, 255, 255, 0.80); }
+  }
 }
 
 .reflect-pill {
@@ -1607,5 +1626,31 @@
   &:hover::after,
   &:focus-visible::after {
     opacity: 1;
+  }
+}
+
+
+
+// ─── Witness button — both labels overlay in same grid cell so width never changes
+// opacity cross-fade keeps size stable while transitioning smoothly in both directions
+#celebrate-btn {
+  display: inline-grid;
+
+  .witness-label,
+  .witness-label-done {
+    grid-area: 1 / 1;
+    transition: opacity 0.25s ease;
+  }
+
+  .witness-label-done { opacity: 0; }
+
+  &.btn-received {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.65);
+    pointer-events: none;
+    transition: background 0.2s ease, border-color 0.2s ease;
+
+    .witness-label      { opacity: 0; }
+    .witness-label-done { opacity: 1; }
   }
 }

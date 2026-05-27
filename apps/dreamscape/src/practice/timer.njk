@@ -11,6 +11,7 @@ bodyClass: scene-page
 <div class="blossom-scene">
 
   <div class="timer-modal" id="timer-modal">
+    {% include "ambient-player.njk" %}
     <div id="timer-view">
       <div class="practice-label" id="practice-label"></div>
       <div class="timer" id="timer">00:00</div>
@@ -64,5 +65,3 @@ bodyClass: scene-page
   </div>
 
 </div>
-
-{% include "ambient-player.njk" %}
