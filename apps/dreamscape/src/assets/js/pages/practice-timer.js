@@ -9,10 +9,10 @@ import { log } from '../utils/log.js';
 // ─── Params — redirect back to setup if missing
 const _params       = new URLSearchParams(window.location.search);
 const _practice     = _params.get('practice') ?? '';
-const _durationMins = parseInt(_params.get('duration'), 10);
+const _durationSecs = parseInt(_params.get('duration'), 10);
 
-if (!_practice || isNaN(_durationMins) || _durationMins <= 0) {
-  log('debug', '[practice-timer] missing params, redirecting to setup');
+if (isNaN(_durationSecs) || _durationSecs <= 0) {
+  log('debug', '[practice-timer] missing duration, redirecting to setup');
   window.location.replace('/practice/');
 }
 
@@ -31,7 +31,7 @@ const completeLabel = document.getElementById('complete-label');
 const saveBtn      = document.getElementById('save-btn');
 
 let timerInterval    = null;
-let totalSeconds     = _durationMins * 60;
+let totalSeconds     = _durationSecs;
 let remainingSeconds = totalSeconds;
 let isPaused         = false;
 
@@ -86,11 +86,10 @@ function tick() {
 async function onComplete() {
   playChime();
   releaseWakeLock();
-  completeLabel.hidden = false;
-  timerEl.textContent  = fmt(totalSeconds);
   pauseBtn.hidden      = true;
   stopBtn.hidden       = true;
   discardBtn.hidden    = true;
+  completeLabel.hidden = false;
   // Auto-transition to note view after chime settles
   setTimeout(() => stopSession(), 2500);
 }
@@ -135,7 +134,7 @@ function discardSession() {
 async function save() {
   saveBtn.disabled = true;
   await saveReflection(noteInput.value.trim());
-  localStorage.setItem('dp-just-practiced', '1');
+  localStorage.setItem('dp-home-state', 'just-practiced');
   window.location.href = '/';
 }
 
@@ -188,9 +187,9 @@ stopBtn.addEventListener('click', stopSession);
 discardBtn.addEventListener('click', discardSession);
 saveBtn.addEventListener('click', save);
 
-// Skip — set practiced flag so homepage shows "practiced just now"
+// Skip — set home state so homepage shows "practiced just now"
 document.getElementById('skip-btn')?.addEventListener('click', () => {
-  localStorage.setItem('dp-just-practiced', '1');
+  localStorage.setItem('dp-home-state', 'just-practiced');
 });
 
 // ─── Begin immediately
@@ -202,4 +201,4 @@ tick();
 
 startSession(_practice);
 acquireWakeLock();
-log('debug', '[practice-timer] started', _practice, _durationMins, 'mins');
+log('debug', '[practice-timer] started', _practice, _durationSecs, 'secs');

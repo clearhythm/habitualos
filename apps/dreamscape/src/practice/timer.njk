@@ -11,25 +11,26 @@ bodyClass: scene-page
 <div class="blossom-scene">
 
   <div class="timer-modal" id="timer-modal">
-    <div class="practice-label" id="practice-label"></div>
-
     <div id="timer-view">
-      <div class="timer-complete-label" id="complete-label" hidden>You completed</div>
+      <div class="practice-label" id="practice-label"></div>
       <div class="timer" id="timer">00:00</div>
 
-      <button class="timer-circle-btn" id="pause-btn" aria-label="Pause" data-tooltip="pause practice">
-        <svg id="icon-pause" viewBox="0 0 64 64" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="32" cy="32" r="26"/>
-          <line x1="26" y1="22" x2="26" y2="42"/>
-          <line x1="38" y1="22" x2="38" y2="42"/>
-        </svg>
-        <svg id="icon-play" viewBox="0 0 64 64" fill="none" stroke="currentColor"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
-          <circle cx="32" cy="32" r="26"/>
-          <path d="M27 22 L43 32 L27 42 Z"/>
-        </svg>
-      </button>
+      <div class="timer-center-slot">
+        <button class="timer-circle-btn" id="pause-btn" aria-label="Pause" data-tooltip="pause practice">
+          <svg id="icon-pause" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="32" cy="32" r="26"/>
+            <line x1="26" y1="22" x2="26" y2="42"/>
+            <line x1="38" y1="22" x2="38" y2="42"/>
+          </svg>
+          <svg id="icon-play" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="32" cy="32" r="26"/>
+            <path d="M27 22 L43 32 L27 42 Z"/>
+          </svg>
+        </button>
+        <div class="timer-complete-label" id="complete-label" hidden>is now complete</div>
+      </div>
 
       <div class="timer-actions">
         <button class="btn-quiet" id="stop-btn" data-tooltip="save practice">finish</button>

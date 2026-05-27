@@ -53,7 +53,7 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
     return {
       result: {
         practiceName: input.practiceName,
-        durationMins: input.durationMins,
+        durationSecs: input.durationSecs,
       },
     };
   }

@@ -70,10 +70,10 @@ Help them find what they want to practice. What's present. What's calling. Work 
 TIMING + DURATION
 Ask if they want to practice now or later.
 - If later: acknowledge warmly, close the conversation. Do NOT call go_to_practice.
-- If now: also ask how long they'd like to practice (or suggest a duration based on their history). Once you have both — what and how long — move to ready.
+- If now: also ask how long they'd like to practice (or suggest a duration based on their history). Duration can be anything from 30 seconds to hours — honor what they ask for. Once you have both — what and how long — move to ready.
 
 READY
-When they confirm NOW and you have a duration: call go_to_practice with practiceName and durationMins. Write nothing after calling this tool — the interface takes over.
+When they confirm NOW and you have a duration: call go_to_practice with practiceName and durationSecs. Write nothing after calling this tool — the interface takes over.
 
 When the conversation reaches a natural conclusion — the user says goodbye, chooses rest, or is clearly done — send your final message first, then call end_conversation. Do not call it mid-conversation or before your farewell.`;
 
@@ -120,12 +120,12 @@ When the conversation reaches a natural conclusion — the user says goodbye, ch
             type: 'string',
             description: '1-3 words from their own language describing what they will practice. Lowercase unless the user explicitly typed otherwise.',
           },
-          durationMins: {
+          durationSecs: {
             type: 'number',
-            description: 'How many minutes they want to practice',
+            description: 'Duration in seconds (e.g. 30 for 30 seconds, 300 for 5 minutes, 3600 for 1 hour). Honor exactly what the user asked for — do not round up to minutes.',
           },
         },
-        required: ['practiceName', 'durationMins'],
+        required: ['practiceName', 'durationSecs'],
       },
     },
   ];

@@ -27,10 +27,6 @@ bodyClass: scene-page
         <span class="settings-row-label">Duration</span>
         <span class="settings-row-value" id="duration-value">5m</span>
       </button>
-      <button class="settings-row" id="settings-ambient">
-        <span class="settings-row-label">Ambient sound</span>
-        <span class="settings-row-value">off</span>
-      </button>
       <button class="settings-row" id="settings-bell-start">
         <span class="settings-row-label">Starting bell</span>
         <span class="settings-row-value" id="bell-start-value">off</span>
@@ -47,28 +43,6 @@ bodyClass: scene-page
 
     <button class="pill" id="start-btn">begin</button>
 
-  </div>
-
-  <div class="timer-modal" id="timer-modal" hidden>
-    <button class="sound-toggle" id="sound-toggle">🔊</button>
-    <div class="practice-label" id="practice-label"></div>
-
-    <div id="timer-view">
-      <div class="timer-complete-label" id="complete-label" hidden>You completed</div>
-      <div class="timer" id="timer">00:00</div>
-      <button class="timer-icon-btn" id="pause-btn">⏸</button>
-      <div class="timer-finish-controls" id="finish-controls" hidden>
-        <button class="btn-finish" id="stop-btn">Finish</button>
-        <button class="btn-quiet" id="discard-btn">Discard session</button>
-      </div>
-    </div>
-
-    <div id="note-view" class="note-view" hidden>
-      <div class="note-label">Your reflection <span class="note-optional">(optional)</span></div>
-      <textarea id="note-input" class="note-input" placeholder="What came up?"></textarea>
-      <button class="btn-primary" id="save-btn">Save reflection</button>
-      <a href="/" class="btn-quiet" id="skip-btn">Skip</a>
-    </div>
   </div>
 
 </div>

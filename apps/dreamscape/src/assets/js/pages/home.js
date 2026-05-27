@@ -13,6 +13,7 @@ let _audioCtx = null;
 let _masterGain = null;
 let _chimeBuffer = null;
 let _currentSession = null;
+let _pendingChime   = null;   // chime to play when audio becomes available
 let _muted = getAudioPref() === 'off';
 let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 
@@ -24,6 +25,11 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
     _masterGain.connect(_audioCtx.destination);
     const arrayBuffer = await fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer());
     _chimeBuffer = await _audioCtx.decodeAudioData(arrayBuffer);
+    // If a chime was queued before the buffer finished loading, play it now
+    if (_pendingChime && !_muted && _audioCtx.state === 'running') {
+      playSignature(_pendingChime);
+      _pendingChime = null;
+    }
   } catch (err) { log('warn', 'Chime audio init failed:', err); }
 })();
 
@@ -73,7 +79,9 @@ function startChimeLoop() {
   log('debug', '[chime] startChimeLoop called, _loopStarted=', _loopStarted);
   if (_loopStarted || _isWelcome) return;
   _loopStarted = true;
-  playSignature(SELF_CHIME);
+  // Play pending chime (e.g. "just practiced") — intro path plays nothing automatically
+  // Only clear if it actually played; if buffer isn't loaded yet the IIFE will retry
+  if (_pendingChime && playSignature(_pendingChime) > 0) _pendingChime = null;
   maybeShowChimeHint();
   _introTimer = setTimeout(() => { _introTimer = null; runChimeLoop(); }, INTRO_MS);
 }
@@ -83,14 +91,13 @@ document.addEventListener('audioReady', async (e) => {
   _muted = !e.detail.enabled;
   setAmbientMuted(_muted);
   setAmbientVolume(_volume);
-  // Feed + swing don't need audio — start the loop regardless
-  startChimeLoop();
-  // Try to resume audio within this gesture context
+  // Resume audio first so the intro chime actually plays
   if (!_muted && _audioCtx && _audioCtx.state === 'suspended') {
     try { await _audioCtx.resume(); } catch (_) {}
     log('debug', '[chime] after resume attempt, ctx state=', _audioCtx?.state);
     if (_audioCtx.state === 'suspended') wireGestureResume();
   }
+  startChimeLoop();
   syncMuteBtn();
 });
 
@@ -100,7 +107,10 @@ function wireGestureResume() {
     if (wasSuspended) {
       try { await _audioCtx.resume(); } catch (_) {}
     }
-    if (wasSuspended && _currentSession && !_muted && !document.body.classList.contains('sidemenu-open')) playSignature(_currentSession.chime);
+    if (wasSuspended && !_muted && !document.body.classList.contains('sidemenu-open')) {
+      const chime = _pendingChime ?? _currentSession?.chime ?? null;
+      if (chime) { playSignature(chime); _pendingChime = null; }
+    }
     ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, handler));
   }
   ['click', 'touchstart', 'keydown'].forEach(e =>
@@ -222,6 +232,9 @@ function waitOrAdvance(ms) {
 async function runChimeLoop() {
   log('debug', '[chime] runChimeLoop started');
   _loopRunning = true;
+  // Revert any state-specific button overrides (e.g. 'history' from practiced-just-now)
+  const mainBtn = document.getElementById('main-action-btn');
+  if (mainBtn) { mainBtn.href = '/practice/'; mainBtn.textContent = 'practice'; }
   const sessions = MOCK_SESSIONS; // replace with Firestore fetch later
 
   if (sessions.length === 0) {
@@ -335,22 +348,29 @@ document.addEventListener('nav:close', resumeLoop);
 // ─── Intro tagline (applied before welcome state check so welcome can override)
 applyIntroTagline();
 
-// ─── Just practiced — return from timer
+// ─── Home state — set by timer on return (e.g. 'just-practiced')
 {
-  const justPracticed = localStorage.getItem('dp-just-practiced');
-  if (justPracticed) {
-    localStorage.removeItem('dp-just-practiced');
-    const feedEl = document.getElementById('feed-message');
-    if (feedEl) {
-      const nameEl = feedEl.querySelector('.feed-name');
-      const timeEl = feedEl.querySelector('.feed-time');
-      if (nameEl) nameEl.textContent = 'You';
-      if (timeEl) timeEl.textContent = 'practiced just now';
+  const homeState = localStorage.getItem('dp-home-state');
+  if (homeState) {
+    localStorage.removeItem('dp-home-state');
+
+    if (homeState === 'just-practiced') {
+      const feedEl = document.getElementById('feed-message');
+      if (feedEl) {
+        const nameEl = feedEl.querySelector('.feed-name');
+        const timeEl = feedEl.querySelector('.feed-time');
+        if (nameEl) nameEl.textContent = 'You';
+        if (timeEl) timeEl.textContent = 'practiced just now';
+      }
+      const mainBtn = document.getElementById('main-action-btn');
+      if (mainBtn) { mainBtn.href = '/history/'; mainBtn.textContent = 'history'; }
+      const reflectPill = document.getElementById('reflect-pill');
+      if (reflectPill) reflectPill.removeAttribute('hidden');
+
+      // Queue the self-chime — will fire in startChimeLoop() once audio is ready
+      _pendingChime = SELF_CHIME;
+      swingChime(); // visual sway happens immediately
     }
-    const mainBtn = document.getElementById('main-action-btn');
-    if (mainBtn) { mainBtn.href = '/history/'; mainBtn.textContent = 'history'; }
-    const reflectPill = document.getElementById('reflect-pill');
-    if (reflectPill) reflectPill.removeAttribute('hidden');
   }
 }
 

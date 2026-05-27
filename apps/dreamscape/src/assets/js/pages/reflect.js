@@ -190,12 +190,20 @@ function finalizeStreaming() {
   return text;
 }
 
-function showReadyOverlay(practiceName, durationMins) {
+function formatDuration(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  if (m > 0 && s > 0) return `${m}m ${s}s`;
+  if (m > 0) return `${m} minute${m !== 1 ? 's' : ''}`;
+  return `${s} second${s !== 1 ? 's' : ''}`;
+}
+
+function showReadyOverlay(practiceName, durationSecs) {
   document.getElementById('ready-practice-name').textContent = practiceName;
-  document.getElementById('ready-duration').textContent = `${durationMins} minute${durationMins !== 1 ? 's' : ''}`;
-  beginBtn.href = `/practice/timer/?practice=${encodeURIComponent(practiceName)}&duration=${durationMins}`;
+  document.getElementById('ready-duration').textContent = formatDuration(durationSecs);
+  beginBtn.href = `/practice/timer/?practice=${encodeURIComponent(practiceName)}&duration=${durationSecs}`;
   pendingPracticeName = practiceName;
-  pendingPracticeDuration = durationMins * 60;
+  pendingPracticeDuration = durationSecs;
   readyOverlay.hidden = false;
   sendButton.disabled = true;
 }
@@ -261,8 +269,8 @@ async function sendMessage(message) {
           } else if (data.type === 'tool_complete') {
             if (data.tool === 'go_to_practice') {
               if (streamingEl) streamingEl.classList.remove('is-loading');
-              const { practiceName, durationMins } = data.result;
-              showReadyOverlay(practiceName, durationMins);
+              const { practiceName, durationSecs } = data.result;
+              showReadyOverlay(practiceName, durationSecs);
             } else if (data.tool === 'end_conversation') {
               if (streamingEl) streamingEl.classList.remove('is-loading');
               if (chatHistory.some(m => m.role === 'user')) {
