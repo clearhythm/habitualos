@@ -150,7 +150,7 @@ if (muteBtn) {
 // TODO: load from user profile
 const SELF_CHIME      = { notes: [0, 7, 12], timing: [0, 0.25, 0.55] };
 // "all caught up" — 3 ascending bright notes, quick twinkle finish
-const CAUGHT_UP_CHIME = { notes: [9, 16, 12], timing: [0, 0.1, 0.2] };
+const CAUGHT_UP_CHIME = { notes: [9, 16, 12], timing: [0, 0.2, 0.3] };
 
 const MOCK_SESSIONS = [
   { name: "Ro'i",  lastPracticed: '2 hours ago',    chime: { notes: [-7,  0,  4], timing: [0, 0.35, 0.70] } },
