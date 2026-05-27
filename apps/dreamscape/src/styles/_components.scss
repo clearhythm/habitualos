@@ -119,9 +119,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(5, 3, 16, 0.75);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: #050310;
 }
 
 .audio-splash-inner {
@@ -599,7 +597,8 @@
   top: $space-2xl;
   left: 0;
   right: 0;
-  font-size: $font-size-base;
+  font-size: $font-size-lg;
+  font-family: 'Cormorant Garamond', serif;
   color: $color-text-muted;
   text-align: center;
 }
@@ -638,24 +637,15 @@
   animation: fadeIn 0.2s ease;
 }
 
-.btn-finish {
+.timer-finish-controls .btn {
   width: 100%;
-  padding: $space-md $space-lg;
-  background: white;
-  color: #111;
-  border: none;
-  border-radius: 50px;
-  font-size: $font-size-base;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s;
-
-  &:hover { opacity: 0.9; }
+  max-width: 280px;
 }
 
 .timer {
   font-size: clamp(4rem, 20vw, 8rem);
-  font-weight: 200;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   color: $color-text;
@@ -692,6 +682,11 @@
   &:focus { border-color: $color-primary; }
 }
 
+// Ambient player above timer modal when both present
+.blossom-scene + .ambient-player {
+  z-index: 2001;
+}
+
 // Timer modal
 .timer-modal {
   position: fixed;
@@ -704,22 +699,6 @@
   text-align: center;
 }
 
-.sound-toggle {
-  position: absolute;
-  top: $space-lg;
-  right: $space-lg;
-  background: transparent;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  opacity: 0.35;
-  padding: $space-sm;
-  line-height: 1;
-  transition: opacity 0.15s;
-  z-index: 1;
-
-  &:hover { opacity: 0.75; }
-}
 
 #timer-view {
   position: relative;
@@ -1529,7 +1508,7 @@
 .ready-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(13, 12, 26, 0.92);
+  background: rgba(13, 12, 26, 1);
   display: flex;
   align-items: center;
   justify-content: center;

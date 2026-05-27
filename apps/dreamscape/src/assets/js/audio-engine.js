@@ -61,6 +61,11 @@ export function setMuted(muted) {
 
 export function isPlaying() { return _playing; }
 
+// Close AudioContext on unload so it doesn't linger between reloads
+window.addEventListener('beforeunload', () => {
+  if (audioCtx) { try { audioCtx.close(); } catch (_) {} }
+});
+
 export async function acquireWakeLock() {
   if (!('wakeLock' in navigator)) return;
   try {
@@ -74,26 +79,17 @@ export function releaseWakeLock() {
   wakeLock = null;
 }
 
-export function playChime() {
-  const ctx = new AudioContext();
-  const now = ctx.currentTime;
-  const duration = 8;
-
-  // Tibetan singing bowl approximation — fundamental + two harmonics
-  [396, 792, 1188].forEach((freq, i) => {
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = freq;
-    gain.gain.setValueAtTime([0.5, 0.25, 0.12][i], now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + duration);
-  });
-
-  setTimeout(() => ctx.close(), (duration + 1) * 1000);
+export async function playChime() {
+  try {
+    const ctx = new AudioContext();
+    const ab  = await fetch('/assets/music/effects/singing-bowl.mp3').then(r => r.arrayBuffer());
+    const buf = await ctx.decodeAudioData(ab);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start();
+    src.onended = () => ctx.close();
+  } catch (_) {}
 }
 
 async function _onVisibilityChange() {

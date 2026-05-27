@@ -10,6 +10,7 @@ import { log } from '../utils/log.js';
 
 const PREF_KEY = 'dp-audio-pref';
 let _audioCtx = null;
+let _masterGain = null;
 let _chimeBuffer = null;
 let _currentSession = null;
 let _muted = getAudioPref() === 'off';
@@ -18,6 +19,9 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 (async () => {
   try {
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    _masterGain = _audioCtx.createGain();
+    _masterGain.gain.value = _muted ? 0 : _volume;
+    _masterGain.connect(_audioCtx.destination);
     const arrayBuffer = await fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer());
     _chimeBuffer = await _audioCtx.decodeAudioData(arrayBuffer);
   } catch (err) { log('warn', 'Chime audio init failed:', err); }
@@ -122,6 +126,7 @@ if (volumeSlider) {
     _volume = parseFloat(volumeSlider.value);
     localStorage.setItem('dp-volume', _volume);
     setAmbientVolume(_volume);
+    if (_masterGain && !_muted) _masterGain.gain.value = _volume;
   });
 }
 
@@ -133,6 +138,7 @@ if (muteBtn) {
     setAudioPref(_muted ? 'off' : 'on');
     setAmbientMuted(_muted);
     setAmbientVolume(_volume);
+    if (_masterGain) _masterGain.gain.value = _muted ? 0 : _volume;
     if (volumeSlider) volumeSlider.value = _volume;
     syncMuteBtn();
   });
@@ -156,7 +162,7 @@ const MOCK_SESSIONS = [
 function playSignature(sig) {
   if (_muted || !_chimeBuffer || !_audioCtx || _audioCtx.state !== 'running') return 0;
   const masterGain = _audioCtx.createGain();
-  masterGain.connect(_audioCtx.destination);
+  masterGain.connect(_masterGain ?? _audioCtx.destination);
 
   const now      = _audioCtx.currentTime;
   const maxDelay = Math.max(...sig.timing);
@@ -174,6 +180,10 @@ function playSignature(sig) {
     source.connect(masterGain);
     source.start(now + sig.timing[i]);
   });
+
+  // Disconnect the per-call gain node after fade completes — prevents dead node accumulation
+  const totalMs = (maxDelay + 3.5 + fadeTime + 0.1) * 1000;
+  setTimeout(() => masterGain.disconnect(), totalMs);
 
   return maxDelay + 3.5 + fadeTime; // total seconds from now
 }
@@ -342,6 +352,11 @@ applyIntroTagline();
     }
   }
 }
+
+// ─── Cleanup on unload — close AudioContext so it doesn't linger between reloads
+window.addEventListener('beforeunload', () => {
+  _audioCtx?.close();
+});
 
 // ─── Init
 setSkyGradient();

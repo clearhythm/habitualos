@@ -193,7 +193,7 @@ function finalizeStreaming() {
 function showReadyOverlay(practiceName, durationMins) {
   document.getElementById('ready-practice-name').textContent = practiceName;
   document.getElementById('ready-duration').textContent = `${durationMins} minute${durationMins !== 1 ? 's' : ''}`;
-  beginBtn.href = `/practice/?practice=${encodeURIComponent(practiceName)}&duration=${durationMins}`;
+  beginBtn.href = `/practice/timer/?practice=${encodeURIComponent(practiceName)}&duration=${durationMins}`;
   pendingPracticeName = practiceName;
   pendingPracticeDuration = durationMins * 60;
   readyOverlay.hidden = false;

@@ -1,0 +1,36 @@
+---
+layout: base.njk
+title: Practice — Daily Practice
+permalink: /practice/timer/
+pageScript: /assets/js/pages/practice-timer.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
+---
+
+<div class="blossom-scene">
+
+  <div class="timer-modal" id="timer-modal">
+    <div class="practice-label" id="practice-label"></div>
+
+    <div id="timer-view">
+      <div class="timer-complete-label" id="complete-label" hidden>You completed</div>
+      <div class="timer" id="timer">00:00</div>
+      <button class="timer-icon-btn" id="pause-btn">⏸</button>
+      <div class="timer-finish-controls" id="finish-controls" hidden>
+        <button class="btn btn-ghost" id="stop-btn">Finish</button>
+        <button class="btn-quiet" id="discard-btn">Discard session</button>
+      </div>
+    </div>
+
+    <div id="note-view" class="note-view" hidden>
+      <div class="note-label">Your reflection <span class="note-optional">(optional)</span></div>
+      <textarea id="note-input" class="note-input" placeholder="What came up?"></textarea>
+      <button class="btn btn-primary" id="save-btn">Save reflection</button>
+      <a href="/" class="btn-quiet" id="skip-btn">Skip</a>
+    </div>
+  </div>
+
+</div>
+
+{% include "ambient-player.njk" %}
