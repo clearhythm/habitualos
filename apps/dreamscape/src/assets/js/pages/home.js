@@ -35,7 +35,7 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 
 // ─── Chime signatures
 const SELF_CHIME      = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
-const CAUGHT_UP_CHIME = { notes: [9, 16, 12], timing: [0, 0.2,  0.3]  };
+const CAUGHT_UP_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
 
 // ─── Queue — each entry is a friend's most recent un-acted-upon practice
 // id field used to track celebrate actions in localStorage
@@ -231,9 +231,6 @@ function onChimeClick() {
     _queueCursor = 0;
     showSession(_queueList[0]);
   } else {
-    // No unseen queue — play self chime then caught-up
-    // Skip if _pendingChime is set (just-practiced landing already queued it)
-    if (!_pendingChime) playSignature(SELF_CHIME);
     showCaughtUp();
   }
 }
@@ -249,14 +246,46 @@ celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
   celebrateBtn.classList.add('btn-received');
   markActedOn(_currentSession.id);
-  playSceneSound('bird-call');
+  playWitnessEcho(_currentSession.chime);
+  swingChime();
   updateChimePulse();
   clearTimeout(_queueTimer);
-  setTimeout(() => { advanceQueue(); }, 1400);
+  _queueTimer = setTimeout(advanceQueue, 2500);
 });
 
 // ─── Continue (tour advance)
 continueBtn.addEventListener('click', advanceTour);
+
+// ─── Witness echo — plays the friend's own chime signature, lower register + longer decay
+// Their notes, their voice — just heard more deeply
+function playWitnessEcho(sig) {
+  if (_muted || !_chimeBuffer || !_audioCtx || _audioCtx.state !== 'running') return;
+  log('debug', '[witness] playWitnessEcho');
+  const gain = _audioCtx.createGain();
+  gain.connect(_masterGain ?? _audioCtx.destination);
+
+  const now      = _audioCtx.currentTime;
+  const maxDelay = Math.max(...sig.timing);
+  const peak     = 0.35 * _volume;  // softer than a full signature
+  const sustainEnd = now + maxDelay + 5.5;
+  const fadeTime   = 4.0;           // long tail — lingers behind the next session's chime
+
+  gain.gain.setValueAtTime(peak, now);
+  gain.gain.setValueAtTime(peak, sustainEnd);
+  gain.gain.exponentialRampToValueAtTime(0.001, sustainEnd + fadeTime);
+
+  sig.notes.forEach((semitones, i) => {
+    const src = _audioCtx.createBufferSource();
+    src.buffer = _chimeBuffer;
+    // Octave up — same notes, lighter overtone shimmer
+    src.playbackRate.value = Math.pow(2, (semitones + 12) / 12);
+    src.connect(gain);
+    src.start(now + sig.timing[i]);
+  });
+
+  const totalMs = (maxDelay + 5.5 + fadeTime + 0.2) * 1000;
+  setTimeout(() => gain.disconnect(), totalMs);
+}
 
 // ─── Scene sounds — bird chirp with pitch variation to simulate different birds
 // Uses same _audioCtx + _masterGain as chime engine
