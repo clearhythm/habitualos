@@ -2,6 +2,7 @@ import { setSkyGradient, lerpHex } from '../sky-gradient.js';
 import { getAudioPref, setAudioPref } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
 import { log } from '../utils/log.js';
+import { initScene, getStoredTier } from '../scene.js';
 
 // ─── Audio init — fetch + decode buffers immediately; resume on gesture
 let _audioCtx    = null;
@@ -377,7 +378,7 @@ function showFeedMessage(name, subtitle) {
   }, 400);
 }
 
-// ─── Intro tagline — alternates visit-to-visit
+// ─── Intro tagline — alternates visit-to-visit (idle state)
 const TAGLINES = [
   { name: 'Practice', sub: 'is only the beginning' },
   { name: 'Presence', sub: 'is the gift of you being here' },
@@ -393,6 +394,20 @@ function applyIntroTagline() {
   const timeEl = feedEl.querySelector('.feed-time');
   if (nameEl) nameEl.textContent = t.name;
   if (timeEl) timeEl.textContent = t.sub;
+}
+
+// ─── Practice return messages — celebration state, rotates each return
+const PRACTICE_RETURN_MESSAGES = [
+  { name: 'Listen',  sub: 'as your chime rings out' },
+  { name: 'Sound',   sub: 'helps inspire your circle' },
+];
+
+function applyPracticeReturnMessage() {
+  const raw  = localStorage.getItem('dp-practice-msg-index');
+  const idx  = parseInt(raw ?? '0', 10);
+  const next = (idx + 1) % PRACTICE_RETURN_MESSAGES.length;
+  localStorage.setItem('dp-practice-msg-index', String(next));
+  return PRACTICE_RETURN_MESSAGES[idx];
 }
 
 // ─── Nav pause / resume (nav open shouldn't change page state — just suppress display updates)
@@ -492,8 +507,8 @@ const ORB_PALETTE = [
   { h: 24, color: '#c8d0e8', glow: 'rgba(180,190,230,0.20)' },
 ];
 
-function setOrbColor() {
-  const hour = new Date().getHours() + new Date().getMinutes() / 60;
+function setOrbColor(overrideHour = null) {
+  const hour = overrideHour ?? (new Date().getHours() + new Date().getMinutes() / 60);
   let prev = ORB_PALETTE[0], next = ORB_PALETTE[1];
   for (let i = 0; i < ORB_PALETTE.length - 1; i++) {
     if (hour >= ORB_PALETTE[i].h && hour < ORB_PALETTE[i + 1].h) {
@@ -512,6 +527,11 @@ function setOrbColor() {
 // ─── Cleanup
 window.addEventListener('beforeunload', () => _audioCtx?.close());
 
+// ─── Dev API — exposed only on localhost for the dev toolbar
+if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+  window.__dpDev = { setSkyGradient, setOrbColor, initScene, getStoredTier };
+}
+
 // ─── Init — runs synchronously on module load (DOM is ready, JS deferred)
 
 // Intro tagline first (empty spans in HTML avoid FOUC)
@@ -524,10 +544,11 @@ showIdleActions();
   if (homeState) {
     localStorage.removeItem('dp-home-state');
     if (homeState === 'just-practiced') {
+      const msg    = applyPracticeReturnMessage();
       const nameEl = feedEl.querySelector('.feed-name');
       const timeEl = feedEl.querySelector('.feed-time');
-      if (nameEl) nameEl.textContent = 'You';
-      if (timeEl) timeEl.textContent = 'practiced just now';
+      if (nameEl) nameEl.textContent = msg.name;
+      if (timeEl) timeEl.textContent = msg.sub;
       showPracticedActions();
       _pendingChime = SELF_CHIME;
       swingChime();
@@ -551,7 +572,26 @@ showIdleActions();
   }
 }
 
-setSkyGradient();
-setOrbColor();
+// Dev override params — ?hour=14.5 for time-of-day, ?tier=3 to preview a scene tier,
+// ?tier=3&new=1 to also trigger the animate-in for that tier
+const _devParams    = new URLSearchParams(window.location.search);
+const _overrideHour = _devParams.has('hour')   ? parseFloat(_devParams.get('hour'))   : null;
+const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'),  10) : null;
+const _stonesParam  = _devParams.has('stones')  ? parseInt(_devParams.get('stones'), 10) : null;
+const _animateIn    = _devParams.has('new');
+
+setSkyGradient(_overrideHour);
+setOrbColor(_overrideHour);
+
+{
+  let _sceneTier   = _tierParam  ?? getStoredTier();
+  let _stoneLevel  = _stonesParam ?? 0;
+  const _preview   = _tierParam !== null && !_animateIn;
+  if (_tierParam !== null && _animateIn) {
+    localStorage.setItem('dp-scene-tier', String(Math.max(0, _sceneTier - 1)));
+  }
+  initScene({ tier: _sceneTier, stoneLevel: _stoneLevel, overrideHour: _overrideHour, preview: _preview });
+}
+
 _queueList = getUnseenQueue(); // snapshot for this page visit
 updateChimePulse(); // pulse on load if unseen queue items exist

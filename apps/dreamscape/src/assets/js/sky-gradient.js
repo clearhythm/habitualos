@@ -24,9 +24,9 @@ export function lerpHex(a, b, t) {
   return `rgb(${Math.round(ra[0]+(rb[0]-ra[0])*t)},${Math.round(ra[1]+(rb[1]-ra[1])*t)},${Math.round(ra[2]+(rb[2]-ra[2])*t)})`;
 }
 
-export function setSkyGradient() {
+export function setSkyGradient(overrideHour = null) {
   const now  = new Date();
-  const hour = now.getHours() + now.getMinutes() / 60;
+  const hour = overrideHour ?? (now.getHours() + now.getMinutes() / 60);
   let prev = SKY_PALETTE[0], next = SKY_PALETTE[1];
   for (let i = 0; i < SKY_PALETTE.length - 1; i++) {
     if (hour >= SKY_PALETTE[i].h && hour < SKY_PALETTE[i + 1].h) {

@@ -17,6 +17,237 @@
 }
 
 
+// ─── Scene Backdrop — living landscape (Witness-Scene-Tiers)
+
+.scene-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+
+  // All tier layers hidden by default; revealed by data-tier rules below
+  .scene-celestial,
+  .scene-mountains,
+  .scene-river,
+  .scene-tree,
+  .scene-birds {
+    opacity: 0;
+    position: absolute;
+  }
+}
+
+// Additive tier visibility: each element shows at its minimum tier and every tier above it
+// Tier 1 → celestial, Tier 3 → river, Tier 4 → tree, Tier 5 → birds
+// Mountains/stones are decoupled — controlled by data-stones (see below)
+@each $min-tier, $element in (1: 'scene-celestial', 3: 'scene-river', 4: 'scene-tree', 5: 'scene-birds') {
+  @for $t from $min-tier through 5 {
+    .scene-backdrop[data-tier="#{$t}"] .#{$element} { opacity: 1; }
+  }
+}
+
+// ─── Stones — graduated reveal, independent of tier system
+// Mountains emerge from darkness over multiple practices; never a binary "appear"
+.scene-mountains {
+  transition: opacity 1.8s ease;
+}
+
+.scene-backdrop[data-stones="1"] .scene-mountains { opacity: 0.15; }
+.scene-backdrop[data-stones="2"] .scene-mountains { opacity: 0.34; }
+.scene-backdrop[data-stones="3"] .scene-mountains { opacity: 0.56; }
+.scene-backdrop[data-stones="4"] .scene-mountains { opacity: 0.78; }
+.scene-backdrop[data-stones="5"] .scene-mountains { opacity: 1.00; }
+
+// Animate-in — plays when a new tier is unlocked after practice/witness
+@keyframes scene-element-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.scene-element--new {
+  animation: scene-element-appear 3.5s ease-out forwards;
+}
+
+// ─── Celestial layer (tier 1)
+.scene-celestial {
+  inset: 0;
+}
+
+.scene-sun {
+  position: absolute;
+  width: clamp(240px, 42vw, 420px);
+  height: clamp(240px, 42vw, 420px);
+  border-radius: 50%;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(50%);
+  background: radial-gradient(circle at center, #fae090 0%, #f0a830 45%, rgba(240,120,20,0.35) 70%, transparent 100%);
+  box-shadow:
+    0 0 60px 24px rgba(248,190,60,0.28),
+    0 0 120px 60px rgba(240,140,20,0.14),
+    0 0 200px 100px rgba(240,120,10,0.06);
+}
+
+.scene-moon {
+  position: absolute;
+  width: clamp(180px, 33vw, 330px);
+  height: clamp(180px, 33vw, 330px);
+  border-radius: 50%;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(50%);
+  background: radial-gradient(circle at center, #f0f0f8 0%, #c8d0e8 45%, rgba(160,180,220,0.30) 70%, transparent 100%);
+  box-shadow:
+    0 0 40px 16px rgba(200,210,240,0.22),
+    0 0 80px 40px rgba(180,195,230,0.10),
+    0 0 140px 80px rgba(160,180,220,0.05);
+}
+
+.scene-stars {
+  position: absolute;
+  inset: 0;
+
+  svg {
+    width: 100%;
+    height: 58%;
+    display: block;
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 0.20; }
+}
+
+@for $i from 1 through 16 {
+  .scene-stars circle:nth-child(#{$i}) {
+    animation: star-twinkle #{2.2 + ($i * 0.65)}s ease-in-out infinite;
+    animation-delay: #{($i - 1) * 0.38}s;
+  }
+}
+
+// ─── Mountains layer (tier 2)
+.scene-mountains {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56dvh;
+
+  svg { width: 100%; height: 100%; display: block; }
+}
+
+// ─── River / waterfall layer (tier 3) — full-width container holds both:
+// left-side waterfall cascade and center valley stream
+.scene-river {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70dvh;
+}
+
+.scene-river-static {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+// ─── Water flow animations
+// Conveyor-belt technique: two identical tiles stacked (inner = 200% height).
+// Wrapper translates from -50% → 0 (downward = flowing toward viewer).
+// GPU-composited: only transform is animated, zero paint cost.
+
+@keyframes water-flow-down {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0%); }
+}
+
+// Waterfall — narrow left-side cascade, fast
+// Positioned to match SVG waterfall shape: x 10–18%, y 20%–bottom
+.waterfall-flow {
+  position: absolute;
+  left:   9.5%;
+  width:  9%;
+  top:    20%;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.waterfall-flow-inner {
+  height: 200%;
+  will-change: transform;
+  animation: water-flow-down 2s linear infinite;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 50%;
+  }
+}
+
+// River near-section — center stream, slow
+// Only the bottom 38% of the river (near/foreground); gentle taper via clip-path
+.river-flow {
+  position: absolute;
+  left:   39%;
+  width:  22%;
+  bottom: 0;
+  height: 38%;
+  overflow: hidden;
+  pointer-events: none;
+  clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+  mix-blend-mode: screen;
+}
+
+.river-flow-inner {
+  height: 200%;
+  will-change: transform;
+  animation: water-flow-down 6.5s linear infinite;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: 50%;
+  }
+}
+
+// ─── Tree layer (tier 4) — right side, prominent Japanese pine
+.scene-tree {
+  bottom: 0;
+  right: 3%;
+  left: auto;
+  width: 30%;
+  max-width: 340px;
+  z-index: 1;
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  svg { width: 100%; height: auto; display: block; }
+
+  @media (max-width: 768px) {
+    width: 55%;
+    right: -4%;
+  }
+}
+
+// ─── Birds layer (tier 5) — scattered across upper sky
+.scene-birds {
+  top: 18%;
+  left: 0;
+  right: 0;
+  height: 30dvh;
+  z-index: 2;
+
+  svg { width: 100%; height: 100%; display: block; }
+}
+
 // Content — floating in the sky clearing above the canopy
 .blossom-content {
   position: absolute;
