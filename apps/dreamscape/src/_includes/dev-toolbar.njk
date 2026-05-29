@@ -1,33 +1,37 @@
 <div id="dev-toolbar">
-  <div class="dev-tb-row">
-    <span class="dev-tb-label">time</span>
-    <button data-hour="5">pre-dawn</button>
-    <button data-hour="7">dawn</button>
-    <button data-hour="10">morn</button>
-    <button data-hour="13">noon</button>
-    <button data-hour="18">dusk</button>
-    <button data-hour="20">eve</button>
-    <button data-hour="23">night</button>
-  </div>
-  <div class="dev-tb-row">
-    <span class="dev-tb-label">stones</span>
-    <button data-stones="0">0</button>
-    <button data-stones="1">1</button>
-    <button data-stones="2">2</button>
-    <button data-stones="3">3</button>
-    <button data-stones="4">4</button>
-    <button data-stones="5">5</button>
-  </div>
-  <div class="dev-tb-row">
-    <span class="dev-tb-label">tier</span>
-    <button data-tier="0">sky</button>
-    <button data-tier="1">celestial</button>
-    <button data-tier="3">river</button>
-    <button data-tier="4">tree</button>
-    <button data-tier="5">birds</button>
-  </div>
-  <div class="dev-tb-row dev-tb-row--actions">
-    <button id="dev-tb-animate">↓ animate in</button>
+  <button class="dev-tb-tab" id="dev-tb-toggle" aria-label="Toggle dev toolbar">
+    <span class="dev-tb-tab-bar"></span>
+    <span class="dev-tb-tab-label">dev</span>
+  </button>
+  <div class="dev-tb-body">
+    <div class="dev-tb-row dev-tb-time-row">
+      <span class="dev-tb-label">time</span>
+    </div>
+    <div class="dev-tb-row">
+      <span class="dev-tb-label">stones</span>
+      <button data-stones="0">0</button>
+      <button data-stones="1">1</button>
+      <button data-stones="2">2</button>
+      <button data-stones="3">3</button>
+      <button data-stones="4">4</button>
+      <button data-stones="5">5</button>
+    </div>
+    <div class="dev-tb-row">
+      <span class="dev-tb-label">tier</span>
+      <button data-tier="0">sky</button>
+      <button data-tier="1">celestial</button>
+      <button data-tier="3">river</button>
+      <button data-tier="4">tree</button>
+      <button data-tier="5">birds</button>
+    </div>
+    <div class="dev-tb-row">
+      <span class="dev-tb-label">orient</span>
+      <button id="dev-tb-portrait">portrait</button>
+      <button id="dev-tb-landscape">landscape</button>
+    </div>
+    <div class="dev-tb-row dev-tb-row--actions">
+      <button id="dev-tb-animate">↓ animate in</button>
+    </div>
   </div>
 </div>
 
@@ -35,21 +39,74 @@
 #dev-toolbar {
   display: none;
   position: fixed;
-  bottom: 1.2rem;
-  right: 1.2rem;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(calc(100% - 28px));
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 9999;
   flex-direction: column;
-  gap: 0.35rem;
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 10px;
-  padding: 0.65rem 0.85rem 0.7rem;
+  align-items: center;
   font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 10px;
   pointer-events: auto;
   user-select: none;
+}
+
+#dev-toolbar.is-open {
+  transform: translateX(-50%) translateY(0);
+}
+
+.dev-tb-tab {
+  width: 64px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.dev-tb-tab:hover {
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.dev-tb-tab-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.dev-tb-tab-label {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.dev-tb-body {
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 0 0 0 0;
+  padding: 0.65rem 0.85rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: max-content;
 }
 
 .dev-tb-row {
@@ -60,7 +117,7 @@
 
 .dev-tb-row--actions {
   justify-content: flex-end;
-  margin-top: 0.15rem;
+  margin-top: 0.1rem;
   padding-top: 0.35rem;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
@@ -72,7 +129,7 @@
   letter-spacing: 0.04em;
 }
 
-#dev-toolbar button {
+#dev-toolbar button:not(.dev-tb-tab) {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 4px;
@@ -85,13 +142,13 @@
   line-height: 1.4;
 }
 
-#dev-toolbar button:hover {
+#dev-toolbar button:not(.dev-tb-tab):hover {
   background: rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.80);
   border-color: rgba(255, 255, 255, 0.22);
 }
 
-#dev-toolbar button.active {
+#dev-toolbar button:not(.dev-tb-tab).active {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.38);
   color: rgba(255, 255, 255, 0.95);
@@ -114,34 +171,32 @@
   if (!['localhost', '127.0.0.1'].includes(window.location.hostname)) return;
 
   const toolbar = document.getElementById('dev-toolbar');
+  const toggle  = document.getElementById('dev-tb-toggle');
   toolbar.style.display = 'flex';
+
+  toggle.addEventListener('click', () => toolbar.classList.toggle('is-open'));
 
   // Init state from URL params
   const params = new URLSearchParams(window.location.search);
-  let _hour   = params.has('hour')   ? parseFloat(params.get('hour'))    : 13;
+  let _hour   = params.has('hour')   ? parseFloat(params.get('hour'))    : 12;
   let _stones = params.has('stones') ? parseInt(params.get('stones'), 10) : 0;
   let _tier   = params.has('tier')   ? parseInt(params.get('tier'),   10) : 0;
 
   function apply(animateIn) {
     const dev = window.__dpDev;
     if (!dev) return;
-
     if (animateIn) {
-      // drop stored tier by 1 so initScene treats this tier as newly unlocked
       localStorage.setItem('dp-scene-tier', String(Math.max(0, _tier - 1)));
     }
-
-    dev.setSkyGradient(_hour);
-    dev.setOrbColor(_hour);
+    const dp = dev.getDayPeriod(_hour);
+    dev.setSkyGradient(dp);
+    dev.setOrbColor(dp);
     dev.initScene({ tier: _tier, stoneLevel: _stones, overrideHour: _hour, preview: !animateIn });
-
-    // Keep URL in sync so reload restores state
     const p = new URLSearchParams();
     p.set('hour', _hour);
     if (_stones) p.set('stones', _stones);
     if (_tier)   p.set('tier', _tier);
     history.replaceState(null, '', '?' + p.toString());
-
     syncActive();
   }
 
@@ -154,8 +209,6 @@
       b.classList.toggle('active', parseInt(b.dataset.tier) === _tier));
   }
 
-  toolbar.querySelectorAll('[data-hour]').forEach(b =>
-    b.addEventListener('click', () => { _hour = parseFloat(b.dataset.hour); apply(false); }));
   toolbar.querySelectorAll('[data-stones]').forEach(b =>
     b.addEventListener('click', () => { _stones = parseInt(b.dataset.stones, 10); apply(false); }));
   toolbar.querySelectorAll('[data-tier]').forEach(b =>
@@ -163,7 +216,41 @@
 
   document.getElementById('dev-tb-animate').addEventListener('click', () => apply(true));
 
-  // Sync active states once home.js has initialised (modules are deferred)
-  window.addEventListener('load', syncActive);
+  // Orientation override — force portrait or landscape variant without rotating device
+  let _orientOverride = null;
+  function applyOrient() {
+    const p = document.querySelector('.mountains-portrait');
+    const l = document.querySelector('.mountains-landscape');
+    if (!p || !l) return;
+    if (_orientOverride === 'portrait') {
+      p.style.display = 'block'; l.style.display = 'none';
+    } else if (_orientOverride === 'landscape') {
+      p.style.display = 'none'; l.style.display = 'block';
+    } else {
+      p.style.display = ''; l.style.display = '';
+    }
+    document.getElementById('dev-tb-portrait').classList.toggle('active', _orientOverride === 'portrait');
+    document.getElementById('dev-tb-landscape').classList.toggle('active', _orientOverride === 'landscape');
+  }
+  document.getElementById('dev-tb-portrait').addEventListener('click', () => {
+    _orientOverride = _orientOverride === 'portrait' ? null : 'portrait'; applyOrient();
+  });
+  document.getElementById('dev-tb-landscape').addEventListener('click', () => {
+    _orientOverride = _orientOverride === 'landscape' ? null : 'landscape'; applyOrient();
+  });
+
+  window.addEventListener('load', () => {
+    // Build time buttons from DAY_PERIODS — one per period, uses each period's start hour.
+    // Single source of truth: toolbar stays in sync with sky-palette.js automatically.
+    const timeRow = toolbar.querySelector('.dev-tb-time-row');
+    (window.__dpDev?.dayPeriods ?? []).forEach(p => {
+      const btn = document.createElement('button');
+      btn.dataset.hour = String(p.start);
+      btn.textContent  = p.period;
+      timeRow.appendChild(btn);
+      btn.addEventListener('click', () => { _hour = parseFloat(btn.dataset.hour); apply(false); });
+    });
+    syncActive();
+  });
 })();
 </script>

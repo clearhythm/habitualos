@@ -37,18 +37,32 @@ bodyClass: scene-page
       </div>
     </div>
 
-    {# Tier 2: mountains — 4 receding ridges (far/pale to near/dark) #}
+    {# Tier 2: mountains — two SVG variants, CSS media query swaps on orientation change.
+       Rotating a phone instantly switches between them — no JS or reload needed. #}
     <div class="scene-mountains">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        {# Furthest ridge — very pale, barely visible #}
-        <polygon points="0,100 0,80 12,73 24,77 36,68 48,74 60,66 72,72 84,65 100,74 100,100" fill="#1e3040" opacity="0.35"/>
-        {# Far ridge #}
-        <polygon points="0,100 0,74 8,62 18,68 28,56 40,64 52,54 64,62 74,52 86,60 100,68 100,100" fill="#1c2e3a" opacity="0.55"/>
-        {# Mid ridge #}
-        <polygon points="0,100 0,66 10,52 22,60 34,46 46,56 58,42 70,54 82,44 94,56 100,62 100,100" fill="#1a2a34" opacity="0.80"/>
-        {# Near ridge — darkest, most detail #}
-        <polygon points="0,100 0,60 8,44 16,52 26,36 36,48 44,34 54,46 62,38 72,48 80,32 90,44 100,52 100,100" fill="#182430"/>
+
+      {# Portrait variant — primary (phone upright). viewBox ~4:3, peaks steep and centered. #}
+      <svg class="mountains-portrait" viewBox="0 0 100 75" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="0,75 0,60 25,54 50,58 75,54 100,60 100,75" fill="#1e3040" opacity="0.35"/>
+        <polygon points="0,75 0,54 15,44 30,32 45,42 50,48 55,42 70,32 85,44 100,54 100,75" fill="#1c2e3a" opacity="0.55"/>
+        <polygon points="0,75 0,50 10,40 22,26 30,36 38,46 50,52 62,46 70,36 78,26 90,40 100,50 100,75" fill="#1a2a34" opacity="0.80"/>
+        <polygon points="0,75 0,52 8,42 18,28 25,8 34,22 42,40 50,56 58,40 66,22 75,8 82,28 92,42 100,52 100,75" fill="#182430"/>
       </svg>
+
+      {# Landscape variant — 2000-unit wide elastic design.
+         Peaks at x≈700 and x≈1300 (center). Outer zones (0-500, 1500-2000) are
+         gentle slopes that absorb viewport cropping gracefully on any screen width. #}
+      <svg class="mountains-landscape" viewBox="0 0 2000 500" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        {# Furthest ridge — barely perceptible undulation #}
+        <polygon points="0,500 0,478 500,464 1000,472 1500,464 2000,478 2000,500" fill="#1e3040" opacity="0.35"/>
+        {# Far ridge #}
+        <polygon points="0,500 0,462 200,444 420,416 620,374 820,326 1000,432 1180,326 1380,374 1580,416 1800,444 2000,462 2000,500" fill="#1c2e3a" opacity="0.55"/>
+        {# Mid ridge #}
+        <polygon points="0,500 0,444 150,414 320,376 480,332 620,272 740,196 840,158 900,172 960,210 1000,382 1040,210 1100,172 1160,158 1260,196 1380,272 1520,332 1680,376 1850,414 2000,444 2000,500" fill="#1a2a34" opacity="0.80"/>
+        {# Near ridge — long gentle outer slopes, dramatic peaks at x≈700 and x≈1300 #}
+        <polygon points="0,500 0,424 100,396 220,362 340,322 460,274 560,218 630,158 680,100 700,62 726,96 760,132 820,98 880,66 940,128 1000,322 1060,128 1120,66 1180,98 1240,132 1274,96 1300,62 1320,100 1370,158 1440,218 1540,274 1660,322 1780,362 1900,396 2000,424 2000,500" fill="#182430"/>
+      </svg>
+
     </div>
 
     {# Tier 3: water — left-side waterfall + center valley stream (both appear at tier 3) #}
@@ -61,9 +75,9 @@ bodyClass: scene-page
         <polygon points="13,20 15,20 16,100 12,100" fill="#3a5a70" opacity="0.45"/>
         {# Mist pool at waterfall base #}
         <ellipse cx="14" cy="96" rx="8" ry="3" fill="#2a4055" opacity="0.30"/>
-        {# Valley stream — center, widens toward bottom (perspective) #}
-        <polygon points="47,42 53,42 58,100 42,100" fill="#1e3040" opacity="0.75"/>
-        <polygon points="49,42 51,42 53,100 47,100" fill="#2a4a60" opacity="0.45"/>
+        {# Valley stream — starts at center valley (~y58), widens toward viewer #}
+        <polygon points="47,58 53,58 60,100 40,100" fill="#1e3040" opacity="0.75"/>
+        <polygon points="49,58 51,58 54,100 46,100" fill="#2a4a60" opacity="0.45"/>
       </svg>
 
       {# Waterfall flow — two identical streak tiles; wrapper translates downward, loops seamlessly #}

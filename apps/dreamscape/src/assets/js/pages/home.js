@@ -1,4 +1,5 @@
-import { setSkyGradient, lerpHex } from '../sky-gradient.js';
+import { setSkyGradient, setOrbColor } from '../sky-gradient.js';
+import { getDayPeriod, DAY_PERIODS } from '../sky-palette.js';
 import { getAudioPref, setAudioPref } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
 import { log } from '../utils/log.js';
@@ -489,47 +490,12 @@ function wireGestureResume() {
   );
 }
 
-// ─── Sky + orb
-const ORB_PALETTE = [
-  { h:  0, color: '#c8d0e8', glow: 'rgba(180,190,230,0.20)' },
-  { h:  4, color: '#b0b8d0', glow: 'rgba(160,170,210,0.14)' },
-  { h:  5, color: '#c8907a', glow: 'rgba(200,140,100,0.20)' },
-  { h:  6, color: '#e07040', glow: 'rgba(224,112,64,0.32)'  },
-  { h:  7, color: '#f09030', glow: 'rgba(240,144,48,0.38)'  },
-  { h:  8, color: '#f5b828', glow: 'rgba(245,184,40,0.34)'  },
-  { h: 10, color: '#f8d050', glow: 'rgba(248,208,80,0.30)'  },
-  { h: 12, color: '#fae468', glow: 'rgba(250,228,104,0.32)' },
-  { h: 16, color: '#f5c030', glow: 'rgba(245,192,48,0.32)'  },
-  { h: 18, color: '#f08028', glow: 'rgba(240,128,40,0.38)'  },
-  { h: 19, color: '#d84820', glow: 'rgba(216,72,32,0.32)'   },
-  { h: 20, color: '#903058', glow: 'rgba(144,48,88,0.24)'   },
-  { h: 21, color: '#c8d0e8', glow: 'rgba(180,190,230,0.20)' },
-  { h: 24, color: '#c8d0e8', glow: 'rgba(180,190,230,0.20)' },
-];
-
-function setOrbColor(overrideHour = null) {
-  const hour = overrideHour ?? (new Date().getHours() + new Date().getMinutes() / 60);
-  let prev = ORB_PALETTE[0], next = ORB_PALETTE[1];
-  for (let i = 0; i < ORB_PALETTE.length - 1; i++) {
-    if (hour >= ORB_PALETTE[i].h && hour < ORB_PALETTE[i + 1].h) {
-      prev = ORB_PALETTE[i]; next = ORB_PALETTE[i + 1]; break;
-    }
-  }
-  const t     = (hour - prev.h) / (next.h - prev.h);
-  const color = lerpHex(prev.color, next.color, t);
-  const orb   = document.querySelector('.practice-orb');
-  if (orb) {
-    orb.style.setProperty('--orb-color', color);
-    orb.style.setProperty('--orb-glow',  prev.glow);
-  }
-}
-
 // ─── Cleanup
 window.addEventListener('beforeunload', () => _audioCtx?.close());
 
 // ─── Dev API — exposed only on localhost for the dev toolbar
 if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-  window.__dpDev = { setSkyGradient, setOrbColor, initScene, getStoredTier };
+  window.__dpDev = { setSkyGradient, setOrbColor, getDayPeriod, initScene, getStoredTier, dayPeriods: DAY_PERIODS };
 }
 
 // ─── Init — runs synchronously on module load (DOM is ready, JS deferred)
@@ -580,8 +546,9 @@ const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'
 const _stonesParam  = _devParams.has('stones')  ? parseInt(_devParams.get('stones'), 10) : null;
 const _animateIn    = _devParams.has('new');
 
-setSkyGradient(_overrideHour);
-setOrbColor(_overrideHour);
+const _dayPeriod = getDayPeriod(_overrideHour);
+setSkyGradient(_dayPeriod);
+setOrbColor(_dayPeriod);
 
 {
   let _sceneTier   = _tierParam  ?? getStoredTier();

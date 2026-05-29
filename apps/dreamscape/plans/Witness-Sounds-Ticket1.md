@@ -30,3 +30,4 @@ The original ticket also included **N bird calls on practice return** — playin
 This concept has been superseded by **Witness-Scene-Tiers.md**, which is a richer approach: instead of a transient N-call playback, your witness count over 30 days grows a persistent living scene (mountains, river, tree, birds, owl). The return experience is ambient rather than event-driven.
 
 See `plans/Witness-Scene-Tiers.md` for the full spec.
+hen 
