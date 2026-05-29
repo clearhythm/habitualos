@@ -11,6 +11,15 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap">
 </head>
 <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %}>
+  <div class="portrait-lock" aria-hidden="true">
+    <svg width="60" height="60" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="19" y="14" width="10" height="18" rx="2.5" transform="rotate(-25 24 23)"/>
+      <path d="M 24 5 A 19 19 0 1 1 5 24"/>
+      <path d="M 1.5 28.5 L 5 24 L 8.5 28.5"/>
+    </svg>
+    <span>please rotate your device</span>
+  </div>
+
   {% include "audio-splash.njk" %}
   <script>
     if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
