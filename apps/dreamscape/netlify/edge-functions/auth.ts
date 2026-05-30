@@ -30,5 +30,13 @@ export default async (request: Request, context: Context) => {
     return Response.redirect(new URL('/signin/', request.url), 302);
   }
 
+  const hasAudioPref = /(?:^|;\s*)dp-audio-pref=/.test(cookie);
+
+  if (!hasAudioPref && pathname !== '/audio-splash/') {
+    const dest = new URL('/audio-splash/', request.url);
+    dest.searchParams.set('next', pathname);
+    return Response.redirect(dest, 302);
+  }
+
   return context.next();
 };

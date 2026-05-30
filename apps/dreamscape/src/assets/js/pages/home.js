@@ -1,6 +1,6 @@
 import { setSkyGradient, setOrbColor } from '../sky-gradient.js';
 import { getDayPeriod, DAY_PERIODS } from '../sky-palette.js';
-import { getAudioPref } from '../audio-unlock.js';
+import { userRequestedAudio } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
@@ -12,7 +12,7 @@ let _masterGain  = null;
 let _chimeBuffer = null;
 let _birdBuffer  = null;
 let _pendingChime = null;   // chime to play once audio is ready
-let _muted  = getAudioPref() === 'off';
+let _muted  = !userRequestedAudio();
 let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 
 (async () => {
@@ -97,7 +97,7 @@ function showIdleActions() {
 function showPracticedActions() {
   mainActionBtn.hidden  = false;
   mainActionBtn.href    = '/history/';
-  mainActionBtn.textContent = 'more ago';
+  mainActionBtn.textContent = 'your story';
   celebrateBtn.hidden   = true;
   reflectPill.hidden    = false;
   continueBtn.hidden    = true;

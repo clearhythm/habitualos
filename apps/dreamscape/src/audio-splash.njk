@@ -1,11 +1,29 @@
 ---
 layout: base.njk
-title: Audio Splash
+title: Daily Practice
+permalink: /audio-splash/
+pageScript: /assets/js/pages/audio-splash.js
 noContainer: true
 noFooter: true
+noNav: true
+noAudioUnlock: true
+bodyClass: scene-page
 ---
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('audio-splash').removeAttribute('hidden');
-  });
-</script>
+
+<div class="audio-splash-page">
+  <svg class="audio-splash-icon" viewBox="0 0 96 96" fill="none" stroke="currentColor"
+       stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+    <circle class="icon-outer" cx="48" cy="48" r="42"/>
+    <circle class="icon-inner" cx="48" cy="48" r="14"/>
+  </svg>
+
+  <div class="feed-message feed-visible">
+    <span class="feed-name">Daily Practice</span>
+    <span class="feed-time">this is a sonic experience</span>
+  </div>
+
+  <div class="audio-splash-actions">
+    <button class="btn btn-primary" id="enable-btn">enable sound</button>
+    <button class="btn-quiet" id="skip-btn">no thanks</button>
+  </div>
+</div>

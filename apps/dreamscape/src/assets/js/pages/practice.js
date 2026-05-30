@@ -1,6 +1,7 @@
 import { log } from '../utils/log.js';
 import { loadSettings, saveSettings } from '../practice-settings.js';
 import { ensureAudioUnlocked } from '../audio-unlock.js';
+import { startTimer } from './practice-timer.js';
 
 // ─── DOM
 const nameInput      = document.getElementById('practice-name');
@@ -67,15 +68,21 @@ const _params   = new URLSearchParams(window.location.search);
 const _practice = _params.get('practice');
 if (_practice) nameInput.value = _practice;
 
-// ─── Begin — unlock audio if needed, then navigate to timer
-startBtn.addEventListener('click', async () => {
+// ─── Begin
+const practiceSetup = document.getElementById('practice-setup');
+
+startBtn.addEventListener('click', () => {
   const practice    = nameInput.value.trim();
   const durationSecs = DURATIONS[durationIndex] * 60;
   const current = loadSettings();
-  if (current.bellStart || current.bellEnd || current.friendChimes) {
-    await ensureAudioUnlocked();
-  }
-  const url = `/practice/timer/?practice=${encodeURIComponent(practice)}&duration=${durationSecs}`;
-  log('debug', '[practice] navigating to timer', url);
-  window.location.href = url;
+  if (current.bellStart || current.bellEnd || current.friendChimes) ensureAudioUnlocked();
+  practiceSetup.hidden = true;
+  startTimer(practice, durationSecs, {
+    source: 'practice',
+    onDiscard: () => {
+      document.getElementById('timer-modal').hidden = true;
+      practiceSetup.hidden = false;
+    },
+  });
+  log('debug', '[practice] started timer', practice, durationSecs);
 });

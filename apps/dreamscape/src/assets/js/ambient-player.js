@@ -32,21 +32,19 @@ export function initAmbientPlayer({ isMuted, getVolume, onVolumeChange, onMuteCh
   syncUI();
 
   if (slider) {
-    slider.addEventListener('input', async () => {
+    slider.addEventListener('input', () => {
       const vol = parseFloat(slider.value);
-      if (vol > 0 && isMuted()) {
-        await ensureAudioUnlocked();
-        onMuteChange(false);
-      }
+      if (vol > 0) ensureAudioUnlocked(); // gesture captured synchronously; no need to await
+      if (vol > 0 && isMuted()) onMuteChange(false);
       onVolumeChange(vol);
       syncUI();
     });
   }
 
   if (muteBtn) {
-    muteBtn.addEventListener('click', async () => {
+    muteBtn.addEventListener('click', () => {
       const wasMuted = isMuted();
-      if (wasMuted) await ensureAudioUnlocked();
+      if (wasMuted) ensureAudioUnlocked(); // gesture captured synchronously; no need to await
       onMuteChange(!wasMuted);
       syncUI();
     });

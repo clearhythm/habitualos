@@ -22,9 +22,6 @@ export async function consumeToken(token) {
   if (!data.ok) throw new Error(data.error || 'invalid token');
   const profile = data.profile || {};
   signIn({ userId: data.userId, name: profile._name || profile.displayName || profile.firstName || '' });
-  if (localStorage.getItem('dp-audio-pref') === null) {
-    document.cookie = 'dp-audio-check=1; path=/; samesite=lax; max-age=300';
-  }
 
   const pending = data.profile?.pendingRegistration;
   if (pending) {

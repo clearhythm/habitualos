@@ -359,50 +359,31 @@
 .practice-pill { @extend .pill; }
 
 // ─── Audio splash — shown only when autoplay is blocked
-.audio-splash {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: #050310;
-}
-
-.audio-splash-inner {
-  position: absolute;
-  top: 28%;
-  left: 0;
-  right: 0;
+.audio-splash-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  justify-content: center;
+  min-height: 100dvh;
+  gap: 2rem;
   text-align: center;
-
-  @media (max-width: 768px) {
-    top: 18%;
-  }
+  padding: $space-lg;
 }
 
 .audio-splash-icon {
-  width: 52px;
-  height: 52px;
-  color: rgba($color-text, 0.40);
+  width: 96px;
+  height: 96px;
+  color: rgba($color-text, 0.35);
+
+  .icon-outer { stroke: rgba($color-text, 0.25); }
+  .icon-inner { stroke: rgba($color-text, 0.55); }
 }
 
-.audio-splash-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 1.6rem;
-  font-weight: 400;
-  color: rgba($color-text, 0.70);
-  margin: 0;
-}
-
-.audio-splash-btn { @extend .pill; }
-
-.audio-splash-skip {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: $space-sm $space-md;
+.audio-splash-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 // ─── Invite pill — shown only in the empty/quiet state

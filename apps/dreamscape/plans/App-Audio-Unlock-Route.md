@@ -12,140 +12,140 @@ Dreamscape is a presence-based practice timer app (`apps/dreamscape`) within the
 
 ---
 
-## Architecture Note (updated after practice-bells work)
-
-`src/assets/js/audio-unlock.js` has been refactored into a **pure utility module** — no IIFE, no side effects on import. It now exports:
-
-- `getAudioPref()` / `setAudioPref(val)` — localStorage read/write (`'on'` / `'off'` / null). **This ticket changes these to cookies** — see the Modify section below.
-- `ensureAudioUnlocked()` — async, must be called inside a click/tap handler. Creates/resumes an AudioContext using the gesture, sets pref to `'on'`. The new `/audio-unlock/` page's "enable sound" button should call this.
-- `disableAudio()` — sets pref to `'off'`. The "no thanks" button should call this.
-- `isAutoplayBlocked()` — async check, used for return-visit pulse detection in home.js.
-
-The `audioReady` custom event no longer exists. Do not reference it anywhere.
-
-The `dp-audio-check` cookie and the `audio-splash.njk` overlay no longer exist.
-
----
-
-## Phase 0: Read These Files First
-
-Before implementing, read:
-
-1. `netlify/edge-functions/auth.ts` — full file. Understand: the cookie check pattern, the allowlist, how the redirect to `/signin/` works. This ticket mirrors that pattern exactly.
-
-2. `src/assets/js/auth/signin.js` — full file. Find `consumeToken()`. Understand how `dp-auth=1` is set as a cookie and how `window.location.replace(dest)` redirects after signin. The audio unlock page will follow the same pattern.
-
-3. `src/assets/js/audio-unlock.js` — full file. Read the current exports. This ticket changes `getAudioPref()` / `setAudioPref()` to use cookies instead of localStorage, and changes the value strings from `'on'`/`'off'` to `'enabled'`/`'skipped'`.
-
-4. `src/_includes/base.njk` — full file. The `{% include "audio-splash.njk" %}` block and associated inline script have already been removed in a prior step. Verify they are gone before making changes.
-
-5. `src/index.njk` — find `ambient-mute-btn`. This is the homepage sound control that will receive the pulse animation when AudioContext is suspended on return visits.
-
-6. `src/assets/js/pages/home.js` — find `muteBtn` and `wireGestureResume`. Understand how the homepage currently handles suspended AudioContext. The pulse logic will be added here using `isAutoplayBlocked()` from `audio-unlock.js`.
-
-After reading, proceed. Do not deviate from the patterns you observe.
-
----
-
 ## Problem
 
-The current audio unlock is an **overlay on top of a painted page** — the page renders first, then an inline script un-hides the splash div. This causes a visible flash of page content, which breaks the app's calm first impression. Additionally:
-
-- `dp-audio-pref` lives in **localStorage**, which the edge function cannot read — so audio state cannot be checked server-side
-- `dp-audio-check=1` is a short-lived cookie (5 min TTL) set at signin — on return visits hours later it has expired, so the splash never appears even though audio is blocked
+The previous audio unlock was an overlay on top of a painted page — the page rendered first, then an inline script un-hid the splash div. This caused a visible flash of page content. Additionally, `dp-audio-pref` lived in localStorage, which the edge function cannot read.
 
 ---
 
 ## Goal
 
-Replace the overlay with a dedicated `/audio-unlock/` route gated by the edge function — same pattern as `/signin/`. First visit: clean single-paint redirect. Return visits: no redirect, subtle inline affordance on the sound control if AudioContext is suspended.
+Replace the overlay with a dedicated `/audio-splash/` route gated by the edge function — same pattern as `/signin/`. First visit after signin: clean single-paint redirect. Subsequent visits: no redirect.
 
----
-
-## Edge Function Changes (`netlify/edge-functions/auth.ts`)
-
-Add `/audio-unlock/` to the allowlist (same as `/signin/`). Then extend the auth logic:
-
-```
-1. Not signed in → redirect to /signin/          (unchanged)
-2. Signed in + dp-audio-pref cookie not set → redirect to /audio-unlock/?next={original pathname}
-3. Signed in + dp-audio-pref cookie set → pass through
-```
-
-The check order matters: unauthenticated users go to signin, never to audio-unlock. The `next` param preserves the original destination.
-
----
-
-## New Route: `src/audio-unlock.njk`
-
-Standalone page — no nav, no footer, no content behind it. Use `noContainer: true`, `noFooter: true`, `bodyClass: scene-page`.
-
-**Visual:** centered layout. Reuse the radiating circle SVG from the header circle icon (same `<path>` elements, larger size). This is the app's visual language for "something alive here."
-
-**Copy:**
-- Name/title: `Daily Practice` (use `.feed-name` class — Cormorant Garamond, same as homepage)
-- Subhead: `this is a sonic experience` (use `.feed-time` class)
-- Primary button: `enable sound` (use `.btn.btn-primary`)
-- Secondary: `no thanks` (use `.btn-quiet`)
-
-**Page script** (`src/assets/js/pages/audio-unlock.js`):
-
-On load:
-1. Read `?next` from URL params (default `/`)
-2. On "enable sound" click:
-   - Set cookie: `dp-audio-pref=enabled; path=/; samesite=lax; max-age=31536000`
-   - `window.location.replace(next)`
-3. On "no thanks" click:
-   - Set cookie: `dp-audio-pref=skipped; path=/; samesite=lax; max-age=31536000`
-   - `window.location.replace(next)`
-
-No AudioContext interaction needed on this page — the user gesture is collected here, but audio is initialized on the destination page.
+Return-visit pulse affordance (for when AudioContext is suspended despite pref being set) is **deferred** — see `UX-Focus-Queue-Ticket1.md`.
 
 ---
 
 ## `src/assets/js/audio-unlock.js` (MODIFY)
 
-The file is already a pure utility module (no IIFE, no side effects). This ticket changes `getAudioPref()` / `setAudioPref()` to use **cookies** instead of localStorage, so the edge function can read the pref server-side.
+Pure utility module. Replaces the old `getAudioPref`/`setAudioPref` localStorage API with a cookie-based API using consistent naming. Callers never touch cookie strings directly.
 
-Value strings also change: `'on'` → `'enabled'`, `'off'` → `'skipped'`.
+**Exported API:**
 
 ```javascript
-export function getAudioPref() {
+// Raw preference value — 'enabled' | 'off' | null
+export function userAudioPreference() {
   const match = document.cookie.match(/(?:^|;\s*)dp-audio-pref=([^;]+)/);
-  return match ? match[1] : null; // 'enabled' | 'skipped' | null
+  return match ? match[1] : null;
 }
 
-export function setAudioPref(val) {
+// Boolean — true when user explicitly chose audio
+export function userRequestedAudio() {
+  return userAudioPreference() === 'enabled';
+}
+
+// Writes the preference cookie (1 year)
+export function setUserAudioPreference(val) {
   document.cookie = `dp-audio-pref=${val}; path=/; samesite=lax; max-age=31536000`;
 }
+
+// Async autoplay check — used by future return-visit pulse (UX-Focus-Queue-Ticket1)
+export async function isAutoplayBlocked() { ... } // unchanged
 ```
 
-`ensureAudioUnlocked()` already calls `setAudioPref('on')` — update that call to `setAudioPref('enabled')`.
-`disableAudio()` already calls `setAudioPref('off')` — update to `setAudioPref('skipped')`.
+**Deleted exports:** `getAudioPref`, `setAudioPref`, `disableAudio` — orphaned after this ticket.
 
-**After this change**, all callers that check `getAudioPref() === 'on'` must be updated to check `=== 'enabled'`. Files to update:
-- `src/assets/js/pages/practice-timer.js` — `_audioEnabled` check
-- `src/assets/js/pages/home.js` — `_muted = getAudioPref() === 'off'` becomes `=== 'skipped'`
+**Kept:** `ensureAudioUnlocked` — still called from `ambient-player.js`, `practice.js`, and `reflect.js` to capture user gestures and satisfy browser autoplay policy. Updated internally to use `setUserAudioPreference('enabled')`.
 
-`isAutoplayBlocked()` stays unchanged — it is used by `home.js` for return-visit pulse detection.
+Cookie values: `'enabled'` (user said yes) and `'off'` (user said no thanks). Both values signal "user has decided" to the edge function; only `'enabled'` makes `userRequestedAudio()` return true.
 
 ---
 
-## `src/_includes/base.njk` (ALREADY DONE — verify only)
+## Callers to update
 
-The `{% include "audio-splash.njk" %}` block and its associated inline script were removed in a prior step. Verify they are absent. The `audio-unlock.js` script tag was already gated by `{% if not noAudioUnlock %}` — leave this as-is; it controls which pages load the utility module.
+| File | Old | New |
+|---|---|---|
+| `src/assets/js/pages/home.js:15` | `getAudioPref() === 'off'` | `!userRequestedAudio()` |
+| `src/assets/js/pages/practice-timer.js:13` | `getAudioPref() === 'on'` | `userRequestedAudio()` |
+| `src/assets/js/pages/practice-timer.js:137` | `getAudioPref() === 'off'` | `!userRequestedAudio()` |
 
 ---
 
-## `src/_includes/audio-splash.njk`
+## Edge Function Changes (`netlify/edge-functions/auth.ts`)
 
-Delete this file.
+The gate works in three ordered steps. `/audio-splash/` is **not** added to the static allowlist — it still requires auth. It is excluded only from the audio-pref redirect (step 3) via a `pathname !==` guard.
+
+```
+Step 1: Static allowlist (skips all checks)
+  /signin/, /dev-signin/, /signup/, /about/, /assets/, /styles/, /api/, /.netlify/, /.11ty/
+  → unchanged
+
+Step 2: Auth check
+  !dp-auth=1 → redirect to /signin/
+  → unchanged
+
+Step 3: Audio pref check (NEW)
+  pathname !== '/audio-splash/' && dp-audio-pref cookie not set
+  → redirect to /audio-splash/?next={original pathname}
+
+Step 4: Pass through
+```
+
+Edge function reads the cookie as: `/(?:^|;\s*)dp-audio-pref=/.test(cookie)` — presence check only, value is not inspected.
+
+---
+
+## New Route: `src/audio-splash.njk`
+
+Standalone page — no nav, no footer. Front matter: `noContainer: true`, `noFooter: true`, `bodyClass: scene-page`, `noNav: true`, `pageScript: /assets/js/pages/audio-splash.js`.
+
+**Visual:** centered layout using existing feed-message classes. Radiating circle SVG from the header. Copy:
+- Title: `Daily Practice` (`.feed-name`)
+- Subhead: `this is a sonic experience` (`.feed-time`)
+- Primary button: `enable sound` (`.btn.btn-primary`)
+- Secondary: `no thanks` (`.btn-quiet`)
+
+---
+
+## New Page Script: `src/assets/js/pages/audio-splash.js`
+
+```javascript
+import { setUserAudioPreference } from '../audio-unlock.js';
+
+const params = new URLSearchParams(window.location.search);
+const next   = params.get('next') || '/';
+
+document.getElementById('enable-btn').addEventListener('click', () => {
+  setUserAudioPreference('enabled');
+  window.location.replace(next);
+});
+
+document.getElementById('skip-btn').addEventListener('click', () => {
+  setUserAudioPreference('off');
+  window.location.replace(next);
+});
+```
+
+No AudioContext interaction on this page. Audio initialises on the destination page.
+
+---
+
+## `src/_includes/base.njk` (MODIFY)
+
+Remove the `{% include "audio-splash.njk" %}` line and the associated inline `<script>` block that un-hides it. These are **not** pre-removed — do it as part of this ticket.
+
+---
+
+## `src/_includes/audio-splash.njk` (DELETE)
+
+Delete this file entirely.
 
 ---
 
 ## `src/assets/js/auth/signin.js` (MODIFY)
 
-Remove the `dp-audio-check` cookie from `consumeToken()`:
+Remove the `dp-audio-check` cookie block from `consumeToken()`:
+
 ```javascript
 // Remove this block entirely:
 if (localStorage.getItem('dp-audio-pref') === null) {
@@ -153,23 +153,15 @@ if (localStorage.getItem('dp-audio-pref') === null) {
 }
 ```
 
-The edge function now handles audio gating — the short-lived check cookie is no longer needed.
+The edge function now handles audio gating directly.
 
 ---
 
-## Return Visit: Pulse on Sound Control (`src/index.njk` + `src/assets/js/pages/home.js`)
+## `src/assets/js/pages/signup.js` — NO CHANGES
 
-On return visits, `dp-audio-pref=enabled` is set so no redirect occurs. But the browser may still suspend AudioContext (mobile, new tab, strict policy).
-
-**Detecting suspension:** `home.js` already calls `isAutoplayBlocked()` (imported from `audio-unlock.js`). If blocked and pref is `enabled`:
-- Render the button in its **muted/off state** — same visual as when the user has manually muted. This is the honest state: audio is not playing.
-- Add class `is-audio-blocked` to `#ambient-mute-btn` for the pulse animation
-- Show tooltip: `tap to enable sound` (use existing `data-tooltip` attribute pattern)
-- On button click: call `audioContext.resume()`, remove `is-audio-blocked` class, flip button to on state, start audio
-
-**CSS** (`src/styles/_components.scss`): add a subtle radiating pulse keyframe on `.ambient-mute-btn.is-audio-blocked` — same radiating outward circle pattern used in the header. Should feel alive, not alarming. Remove `.audio-splash` styles.
-
-**When NOT blocked** (most desktop return visits): no pulse, sound control renders normally.
+Signup plays audio (the chime assignment step) using its own `initChimeAudio()` from `chime.js`. We deliberately do not set `dp-audio-pref` during signup because:
+1. The magic link may be opened on a different device.
+2. The `/audio-splash/` page is intentional UX — it communicates that this is a sonic experience and lets the user consent on the device they'll actually use.
 
 ---
 
@@ -177,38 +169,18 @@ On return visits, `dp-audio-pref=enabled` is set so no redirect occurs. But the 
 
 | Cookie | Value | Meaning |
 |---|---|---|
-| `dp-audio-pref` | `enabled` | User said yes to sound — edge function passes through |
-| `dp-audio-pref` | `skipped` | User said no thanks — edge function passes through |
-| *(not set)* | — | First visit — edge function redirects to `/audio-unlock/` |
-
-Both `enabled` and `skipped` bypass the redirect. The pulse only appears when `enabled` AND AudioContext is suspended.
-
-Set with: `dp-audio-pref=enabled; path=/; samesite=lax; max-age=31536000`
-
----
-
-## What Does NOT Change
-
-- Signin flow — entirely unchanged
-- Audio engine internals (`audio-engine.js`) — only initialization trigger changes
-- The radiating circle SVG — reused as-is
-- All other page routes and templates
-- `isAutoplayBlocked()` — stays in `audio-unlock.js`, imported by pages that need it
+| `dp-audio-pref` | `enabled` | User said yes — edge function passes through; `userRequestedAudio()` returns true |
+| `dp-audio-pref` | `off` | User said no thanks — edge function passes through; `userRequestedAudio()` returns false |
+| *(not set)* | — | First visit after signin — edge function redirects to `/audio-splash/` |
 
 ---
 
 ## Verification
 
-1. **First visit (no cookie):** clear all `dp-*` cookies. Sign in. Should redirect to `/audio-unlock/` before homepage loads. No flash of homepage content.
-
+1. **First visit (no cookie):** clear all `dp-*` cookies. Sign in. Should redirect to `/audio-splash/` before homepage loads. No flash of homepage content.
 2. **Enable path:** click "enable sound" → `dp-audio-pref=enabled` cookie set → redirected to `/` → audio plays normally.
-
-3. **Skip path:** click "no thanks" → `dp-audio-pref=skipped` cookie set → redirected to `/` → no audio, no prompt.
-
-4. **Return visit (desktop):** `dp-audio-pref=enabled` set → no redirect → homepage loads directly → audio plays if AudioContext not suspended.
-
-5. **Return visit (blocked AudioContext):** simulate by opening in a new tab with no prior interaction. Sound control should show in muted/off state with pulse. Tapping it resumes audio, removes pulse, flips button to on state.
-
-6. **`?next` param:** navigate directly to `/reflect/` with no audio pref → should redirect to `/audio-unlock/?next=/reflect/` → after enabling, should land on `/reflect/`, not `/`.
-
-7. **Signin regression:** sign in fresh → no `dp-audio-check` cookie set → no overlay on homepage → clean redirect to `/audio-unlock/` via edge function instead.
+3. **Skip path:** click "no thanks" → `dp-audio-pref=off` cookie set → redirected to `/` → no audio, no prompt.
+4. **Return visit:** `dp-audio-pref` set → no redirect → homepage loads directly.
+5. **`?next` param:** navigate directly to `/reflect/` with no audio pref → redirect to `/audio-splash/?next=/reflect/` → after choosing, land on `/reflect/`.
+6. **Signin regression:** sign in fresh → no `dp-audio-check` cookie → no overlay → clean redirect to `/audio-splash/` via edge function.
+7. **Unauthenticated direct hit:** navigate to `/audio-splash/` without `dp-auth` cookie → redirected to `/signin/` (not served directly).

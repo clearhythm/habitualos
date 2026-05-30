@@ -5,6 +5,7 @@ import { saveReflectChatBeacon, saveReflectChat, getReflectChat } from '../colle
 import { generateReflectChatId } from '../utils/id.js';
 import { loadSettings } from '../practice-settings.js';
 import { ensureAudioUnlocked } from '../audio-unlock.js';
+import { startTimer } from './practice-timer.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
   window.location.replace('/signin/');
@@ -204,7 +205,6 @@ function formatDuration(secs) {
 function showReadyOverlay(practiceName, durationSecs) {
   document.getElementById('ready-practice-name').textContent = practiceName;
   document.getElementById('ready-duration').textContent = formatDuration(durationSecs);
-  beginBtn.href = `/practice/timer/?practice=${encodeURIComponent(practiceName)}&duration=${durationSecs}`;
   pendingPracticeName = practiceName;
   pendingPracticeDuration = durationSecs;
   readyOverlay.hidden = false;
@@ -352,7 +352,7 @@ messageInput.addEventListener('input', function () {
   updateSendButton();
 });
 
-beginBtn.addEventListener('click', async (e) => {
+beginBtn.addEventListener('click', (e) => {
   e.preventDefault();
   if (chatHistory.some(m => m.role === 'user')) {
     persistChat({
@@ -366,8 +366,19 @@ beginBtn.addEventListener('click', async (e) => {
     });
   }
   const { bellStart, bellEnd, friendChimes } = loadSettings();
-  if (bellStart || bellEnd || friendChimes) await ensureAudioUnlocked();
-  window.location.href = beginBtn.href;
+  if (bellStart || bellEnd || friendChimes) ensureAudioUnlocked();
+  const reflectPage  = document.querySelector('.reflect-page');
+  const readyOverlay = document.getElementById('ready-overlay');
+  reflectPage.hidden  = true;
+  readyOverlay.hidden = true;
+  startTimer(pendingPracticeName, pendingPracticeDuration, {
+    source: 'reflect',
+    onDiscard: () => {
+      document.getElementById('timer-modal').hidden = true;
+      reflectPage.hidden  = false;
+      readyOverlay.hidden = true;
+    },
+  });
 });
 
 keepChatBtn.addEventListener('click', () => {

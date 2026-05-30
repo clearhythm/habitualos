@@ -1,39 +1,41 @@
 import { log } from './utils/log.js';
 
 // ─── Pure utility module — no side effects on import.
-// Consumers (Begin buttons, audio overlay) import what they need.
 
-const PREF_KEY = 'dp-audio-pref';
-
-export function getAudioPref() {
-  return localStorage.getItem(PREF_KEY); // 'on' | 'off' | null
+// Raw preference value from cookie.
+export function userAudioPreference() {
+  const match = document.cookie.match(/(?:^|;\s*)dp-audio-pref=([^;]+)/);
+  return match ? match[1] : null; // 'enabled' | 'off' | null
 }
 
-export function setAudioPref(val) {
-  localStorage.setItem(PREF_KEY, val);
+// True when the user explicitly chose to enable audio.
+export function userRequestedAudio() {
+  return userAudioPreference() === 'enabled';
 }
 
-// Must be called inside a user gesture (click/tap) handler.
-// Creates and immediately closes an AudioContext to satisfy browser autoplay policy.
-// Sets dp-audio-pref = 'on' on success. Safe to call if already unlocked.
-export async function ensureAudioUnlocked() {
-  if (getAudioPref() === 'on') return;
+// Writes the preference cookie (1 year). Only place dp-audio-pref is written.
+export function setUserAudioPreference(val) {
+  document.cookie = `dp-audio-pref=${val}; path=/; samesite=lax; max-age=31536000`;
+}
+
+// Must be called inside a user gesture handler. Creates a temporary AudioContext
+// to satisfy browser autoplay policy, and records the preference as 'enabled'.
+// Used by ambient-player, practice, and reflect when audio controls are engaged.
+export function ensureAudioUnlocked() {
+  if (userAudioPreference() === 'enabled') return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    await ctx.resume();
-    log('debug', '[audio-unlock] unlocked via gesture, state=', ctx.state);
-    await ctx.close();
-    setAudioPref('on');
+    setUserAudioPreference('enabled');
+    ctx.resume()
+      .then(() => { log('debug', '[audio-unlock] unlocked, state=', ctx.state); return ctx.close(); })
+      .catch(err => log('warn', '[audio-unlock] resume failed:', err));
   } catch (err) {
-    log('warn', '[audio-unlock] ensureAudioUnlocked failed:', err);
+    log('warn', '[audio-unlock] AudioContext creation failed:', err);
   }
 }
 
-export function disableAudio() {
-  setAudioPref('off');
-}
-
-// Used by home.js return-visit pulse detection (App-Audio-Unlock-Route ticket).
+// Async check for whether the browser is blocking autoplay.
+// Used by the return-visit pulse affordance (UX-Focus-Queue-Ticket1).
 export async function isAutoplayBlocked() {
   if (navigator.getAutoplayPolicy) {
     return navigator.getAutoplayPolicy('audiocontext') !== 'allowed';
@@ -44,5 +46,6 @@ export async function isAutoplayBlocked() {
   } catch (_) {}
   const blocked = ctx.state !== 'running';
   ctx.close();
+  log('debug', '[audio-unlock] isAutoplayBlocked:', blocked);
   return blocked;
 }

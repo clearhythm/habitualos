@@ -20,14 +20,7 @@
     <span>please rotate your device</span>
   </div>
 
-  {% include "audio-splash.njk" %}
-  <script>
-    if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
-      document.getElementById('audio-splash').removeAttribute('hidden');
-    }
-  </script>
-
-  {% include "nav.njk" %}
+  {% if not noNav %}{% include "nav.njk" %}{% endif %}
 
   <main class="main">
     {% if noContainer %}
