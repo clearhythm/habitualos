@@ -12,6 +12,21 @@ Dreamscape is a presence-based practice timer app (`apps/dreamscape`) within the
 
 ---
 
+## Architecture Note (updated after practice-bells work)
+
+`src/assets/js/audio-unlock.js` has been refactored into a **pure utility module** — no IIFE, no side effects on import. It now exports:
+
+- `getAudioPref()` / `setAudioPref(val)` — localStorage read/write (`'on'` / `'off'` / null). **This ticket changes these to cookies** — see the Modify section below.
+- `ensureAudioUnlocked()` — async, must be called inside a click/tap handler. Creates/resumes an AudioContext using the gesture, sets pref to `'on'`. The new `/audio-unlock/` page's "enable sound" button should call this.
+- `disableAudio()` — sets pref to `'off'`. The "no thanks" button should call this.
+- `isAutoplayBlocked()` — async check, used for return-visit pulse detection in home.js.
+
+The `audioReady` custom event no longer exists. Do not reference it anywhere.
+
+The `dp-audio-check` cookie and the `audio-splash.njk` overlay no longer exist.
+
+---
+
 ## Phase 0: Read These Files First
 
 Before implementing, read:
@@ -20,15 +35,13 @@ Before implementing, read:
 
 2. `src/assets/js/auth/signin.js` — full file. Find `consumeToken()`. Understand how `dp-auth=1` is set as a cookie and how `window.location.replace(dest)` redirects after signin. The audio unlock page will follow the same pattern.
 
-3. `src/assets/js/audio-unlock.js` — full file. This is the existing audio unlock logic. Understand: `getAudioPref()` / `setAudioPref()` (currently localStorage), `isAutoplayBlocked()`, the `audioReady` custom event, the `dp-audio-check` cookie, and how it currently gates on `dp-auth=1`. Much of this logic moves to the new page.
+3. `src/assets/js/audio-unlock.js` — full file. Read the current exports. This ticket changes `getAudioPref()` / `setAudioPref()` to use cookies instead of localStorage, and changes the value strings from `'on'`/`'off'` to `'enabled'`/`'skipped'`.
 
-4. `src/_includes/base.njk` — full file. Find the `{% include "audio-splash.njk" %}` block and the inline `<script>` that shows it. Both are being removed.
+4. `src/_includes/base.njk` — full file. The `{% include "audio-splash.njk" %}` block and associated inline script have already been removed in a prior step. Verify they are gone before making changes.
 
-5. `src/_includes/audio-splash.njk` — full file (short). This is the overlay being replaced. The new `/audio-unlock/` page renders equivalent UI as a standalone route.
+5. `src/index.njk` — find `ambient-mute-btn`. This is the homepage sound control that will receive the pulse animation when AudioContext is suspended on return visits.
 
-6. `src/index.njk` — find `ambient-mute-btn`. This is the homepage sound control that will receive the pulse animation when AudioContext is suspended on return visits.
-
-7. `src/assets/js/pages/home.js` — find `muteBtn`, the `audioReady` event listener, and `isAutoplayBlocked`. Understand how the homepage currently responds to audio state. The pulse logic will be added here.
+6. `src/assets/js/pages/home.js` — find `muteBtn` and `wireGestureResume`. Understand how the homepage currently handles suspended AudioContext. The pulse logic will be added here using `isAutoplayBlocked()` from `audio-unlock.js`.
 
 After reading, proceed. Do not deviate from the patterns you observe.
 
@@ -92,42 +105,35 @@ No AudioContext interaction needed on this page — the user gesture is collecte
 
 ## `src/assets/js/audio-unlock.js` (MODIFY)
 
-This file currently reads `dp-audio-pref` from **localStorage**. Change `getAudioPref()` and `setAudioPref()` to read/write a **cookie** instead, to match what the edge function now checks.
+The file is already a pure utility module (no IIFE, no side effects). This ticket changes `getAudioPref()` / `setAudioPref()` to use **cookies** instead of localStorage, so the edge function can read the pref server-side.
+
+Value strings also change: `'on'` → `'enabled'`, `'off'` → `'skipped'`.
 
 ```javascript
-const PREF_COOKIE = 'dp-audio-pref';
-
 export function getAudioPref() {
   const match = document.cookie.match(/(?:^|;\s*)dp-audio-pref=([^;]+)/);
   return match ? match[1] : null; // 'enabled' | 'skipped' | null
 }
+
+export function setAudioPref(val) {
+  document.cookie = `dp-audio-pref=${val}; path=/; samesite=lax; max-age=31536000`;
+}
 ```
 
-`setAudioPref()` is no longer called from this file (the new page script sets cookies directly). Remove it or keep as a no-op — do not leave it writing to localStorage.
+`ensureAudioUnlocked()` already calls `setAudioPref('on')` — update that call to `setAudioPref('enabled')`.
+`disableAudio()` already calls `setAudioPref('off')` — update to `setAudioPref('skipped')`.
 
-The `isAutoplayBlocked()` function stays unchanged — it is used by `home.js` on return visits.
+**After this change**, all callers that check `getAudioPref() === 'on'` must be updated to check `=== 'enabled'`. Files to update:
+- `src/assets/js/pages/practice-timer.js` — `_audioEnabled` check
+- `src/assets/js/pages/home.js` — `_muted = getAudioPref() === 'off'` becomes `=== 'skipped'`
 
-The splash interaction handlers (`audio-splash-enable`, `audio-splash-skip`) are removed since the overlay no longer exists.
-
-The `dp-audio-check` cookie and all references to it are removed from this file.
+`isAutoplayBlocked()` stays unchanged — it is used by `home.js` for return-visit pulse detection.
 
 ---
 
-## `src/_includes/base.njk` (MODIFY)
+## `src/_includes/base.njk` (ALREADY DONE — verify only)
 
-Remove:
-```njk
-{% include "audio-splash.njk" %}
-<script>
-  if (/(?:^|;\s*)dp-audio-check=1/.test(document.cookie) && !localStorage.getItem('dp-audio-pref')) {
-    document.getElementById('audio-splash').removeAttribute('hidden');
-  }
-</script>
-```
-
-Remove the `<script type="module" src="/assets/js/audio-unlock.js"></script>` line if it exists in base — `audio-unlock.js` is now only loaded by pages that need it (homepage, practice, reflect — anywhere `audioReady` is consumed).
-
-**Do not remove** any other script tags or layout structure.
+The `{% include "audio-splash.njk" %}` block and its associated inline script were removed in a prior step. Verify they are absent. The `audio-unlock.js` script tag was already gated by `{% if not noAudioUnlock %}` — leave this as-is; it controls which pages load the utility module.
 
 ---
 

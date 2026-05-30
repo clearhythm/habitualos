@@ -2,9 +2,15 @@ import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
 import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
-import { getAudioPref, setAudioPref } from '../audio-unlock.js';
+import { getAudioPref } from '../audio-unlock.js';
+import { loadSettings } from '../practice-settings.js';
+import { initAmbientPlayer } from '../ambient-player.js';
 import { saveAbandonedIfPending } from '../collections/reflect-chats.js';
 import { log } from '../utils/log.js';
+
+// ─── Settings + audio state
+const _settings     = loadSettings();
+const _audioEnabled = getAudioPref() === 'on';
 
 // ─── Params — redirect back to setup if missing
 const _params       = new URLSearchParams(window.location.search);
@@ -84,7 +90,7 @@ function tick() {
 }
 
 async function onComplete() {
-  playChime();
+  if (_settings.bellEnd && _audioEnabled) playChime();
   releaseWakeLock();
   pauseBtn.hidden      = true;
   stopBtn.hidden       = true;
@@ -138,48 +144,25 @@ async function save() {
   window.location.href = '/';
 }
 
-// ─── Ambient player (shared with homepage)
-const muteBtn      = document.getElementById('ambient-mute-btn');
-const volumeSlider = document.getElementById('ambient-volume');
-const iconOn       = document.getElementById('icon-sound-on');
-const iconOff      = document.getElementById('icon-sound-off');
-
+// ─── Ambient player
 let _isMuted = getAudioPref() === 'off';
 let _volume  = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 
-function syncMuteBtn() {
-  if (iconOn)  iconOn.style.display  = _isMuted ? 'none' : '';
-  if (iconOff) iconOff.style.display = _isMuted ? '' : 'none';
-  if (volumeSlider) volumeSlider.value = _isMuted ? 0 : _volume;
-}
-
-if (volumeSlider) {
-  volumeSlider.value = _isMuted ? 0 : _volume;
-  volumeSlider.addEventListener('input', () => {
-    _volume = parseFloat(volumeSlider.value);
-    localStorage.setItem('dp-volume', _volume);
+initAmbientPlayer({
+  isMuted:        () => _isMuted,
+  getVolume:      () => _volume,
+  onVolumeChange: (vol) => {
+    _volume = vol;
+    localStorage.setItem('dp-volume', vol);
+    setVolume(vol);
+  },
+  onMuteChange: (muted) => {
+    _isMuted = muted;
+    _volume  = muted ? 0 : 1;
+    setMuted(muted);
     setVolume(_volume);
-    if (_volume > 0 && _isMuted) {
-      _isMuted = false;
-      setAudioPref('on');
-      setMuted(false);
-      syncMuteBtn();
-    }
-  });
-}
-
-if (muteBtn) {
-  syncMuteBtn();
-  muteBtn.addEventListener('click', () => {
-    _isMuted = !_isMuted;
-    _volume = _isMuted ? 0 : 1;
-    setAudioPref(_isMuted ? 'off' : 'on');
-    setMuted(_isMuted);
-    setVolume(_volume);
-    if (volumeSlider) volumeSlider.value = _volume;
-    syncMuteBtn();
-  });
-}
+  },
+});
 
 // ─── Button handlers
 pauseBtn.addEventListener('click', togglePause);
@@ -201,4 +184,5 @@ tick();
 
 startSession(_practice);
 acquireWakeLock();
+if (_settings.bellStart && _audioEnabled) playChime();
 log('debug', '[practice-timer] started', _practice, _durationSecs, 'secs');

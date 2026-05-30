@@ -1,5 +1,8 @@
 import { log } from './utils/log.js';
 
+// ─── Pure utility module — no side effects on import.
+// Consumers (Begin buttons, audio overlay) import what they need.
+
 const PREF_KEY = 'dp-audio-pref';
 
 export function getAudioPref() {
@@ -10,6 +13,27 @@ export function setAudioPref(val) {
   localStorage.setItem(PREF_KEY, val);
 }
 
+// Must be called inside a user gesture (click/tap) handler.
+// Creates and immediately closes an AudioContext to satisfy browser autoplay policy.
+// Sets dp-audio-pref = 'on' on success. Safe to call if already unlocked.
+export async function ensureAudioUnlocked() {
+  if (getAudioPref() === 'on') return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await ctx.resume();
+    log('debug', '[audio-unlock] unlocked via gesture, state=', ctx.state);
+    await ctx.close();
+    setAudioPref('on');
+  } catch (err) {
+    log('warn', '[audio-unlock] ensureAudioUnlocked failed:', err);
+  }
+}
+
+export function disableAudio() {
+  setAudioPref('off');
+}
+
+// Used by home.js return-visit pulse detection (App-Audio-Unlock-Route ticket).
 export async function isAutoplayBlocked() {
   if (navigator.getAutoplayPolicy) {
     return navigator.getAutoplayPolicy('audiocontext') !== 'allowed';
@@ -22,54 +46,3 @@ export async function isAutoplayBlocked() {
   ctx.close();
   return blocked;
 }
-
-function clearAudioCheckCookie() {
-  document.cookie = 'dp-audio-check=; path=/; samesite=lax; max-age=0';
-}
-
-function dispatch(enabled) {
-  log('debug', '[audio-unlock] dispatching audioReady, enabled=', enabled);
-  setTimeout(() => document.dispatchEvent(new CustomEvent('audioReady', { detail: { enabled } })), 0);
-}
-
-(async () => {
-  const splash = document.getElementById('audio-splash');
-  if (!splash) return;
-
-  if (!/(?:^|;\s*)dp-auth=1/.test(document.cookie)) return;
-
-  // User explicitly opted out — never show again
-  if (getAudioPref() === 'off') {
-    clearAudioCheckCookie();
-    dispatch(false);
-    return;
-  }
-
-  // Check if browser blocks autoplay
-  const blocked = await isAutoplayBlocked();
-  log('debug', '[audio-unlock] blocked=', blocked);
-
-  if (!blocked) {
-    clearAudioCheckCookie();
-    dispatch(true);
-    return;
-  }
-
-  // Blocked — show splash to collect user gesture (builds browser MEI over time)
-  // Inline script may have already shown it on first sign-in; this is idempotent
-  splash.removeAttribute('hidden');
-
-  document.getElementById('audio-splash-enable').addEventListener('click', () => {
-    setAudioPref('on');
-    clearAudioCheckCookie();
-    splash.setAttribute('hidden', '');
-    dispatch(true);
-  }, { once: true });
-
-  document.getElementById('audio-splash-skip').addEventListener('click', () => {
-    setAudioPref('off');
-    clearAudioCheckCookie();
-    splash.setAttribute('hidden', '');
-    dispatch(false);
-  }, { once: true });
-})();

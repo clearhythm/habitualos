@@ -3,6 +3,8 @@ import { getTimeOfDayGreeting } from '@habitualos/frontend-utils/utils.js';
 import { log } from '../utils/log.js';
 import { saveReflectChatBeacon, saveReflectChat, getReflectChat } from '../collections/reflect-chats.js';
 import { generateReflectChatId } from '../utils/id.js';
+import { loadSettings } from '../practice-settings.js';
+import { ensureAudioUnlocked } from '../audio-unlock.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
   window.location.replace('/signin/');
@@ -350,17 +352,22 @@ messageInput.addEventListener('input', function () {
   updateSendButton();
 });
 
-beginBtn.addEventListener('click', () => {
-  if (!chatHistory.some(m => m.role === 'user')) return;
-  persistChat({
-    messages: chatHistory,
-    action: 'practice',
-    conversationStart: chatHistory[0]?.timestamp || null,
-    conversationEnd: new Date().toISOString(),
-    practiceName: pendingPracticeName,
-    practiceDuration: pendingPracticeDuration,
-    useBeacon: true,
-  });
+beginBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  if (chatHistory.some(m => m.role === 'user')) {
+    persistChat({
+      messages: chatHistory,
+      action: 'practice',
+      conversationStart: chatHistory[0]?.timestamp || null,
+      conversationEnd: new Date().toISOString(),
+      practiceName: pendingPracticeName,
+      practiceDuration: pendingPracticeDuration,
+      useBeacon: true,
+    });
+  }
+  const { bellStart, bellEnd, friendChimes } = loadSettings();
+  if (bellStart || bellEnd || friendChimes) await ensureAudioUnlocked();
+  window.location.href = beginBtn.href;
 });
 
 keepChatBtn.addEventListener('click', () => {

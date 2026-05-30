@@ -1,7 +1,8 @@
 import { setSkyGradient, setOrbColor } from '../sky-gradient.js';
 import { getDayPeriod, DAY_PERIODS } from '../sky-palette.js';
-import { getAudioPref, setAudioPref } from '../audio-unlock.js';
+import { getAudioPref } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
+import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
 
@@ -32,6 +33,7 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
       _pendingChime = null;
     }
     log('debug', '[audio] buffers ready');
+    if (!_muted && _audioCtx.state === 'suspended') wireGestureResume();
   } catch (err) { log('warn', '[audio] init failed:', err); }
 })();
 
@@ -416,64 +418,25 @@ let _navOpen = false;
 document.addEventListener('nav:open',  () => { _navOpen = true; });
 document.addEventListener('nav:close', () => { _navOpen = false; });
 
-// ─── Master volume + mute controls
-const muteBtn      = document.getElementById('ambient-mute-btn');
-const volumeSlider = document.getElementById('ambient-volume');
-
-function syncMuteBtn() {
-  const iconOn  = document.getElementById('icon-sound-on');
-  const iconOff = document.getElementById('icon-sound-off');
-  if (iconOn)  iconOn.style.display  = _muted ? 'none' : '';
-  if (iconOff) iconOff.style.display = _muted ? '' : 'none';
-  if (volumeSlider) volumeSlider.value = _muted ? 0 : _volume;
-}
-
-if (volumeSlider) {
-  volumeSlider.value = _volume;
-  volumeSlider.addEventListener('input', () => {
-    _volume = parseFloat(volumeSlider.value);
-    localStorage.setItem('dp-volume', _volume);
+// ─── Ambient player controls
+initAmbientPlayer({
+  isMuted:        () => _muted,
+  getVolume:      () => _volume,
+  onVolumeChange: (vol) => {
+    _volume = vol;
+    localStorage.setItem('dp-volume', vol);
+    setAmbientVolume(vol);
+    if (_masterGain && !_muted) _masterGain.gain.value = vol;
+  },
+  onMuteChange: (muted) => {
+    _muted  = muted;
+    _volume = muted ? 0 : 1;
+    setAmbientMuted(muted);
     setAmbientVolume(_volume);
-    if (_masterGain && !_muted) _masterGain.gain.value = _volume;
-  });
-}
-
-if (muteBtn) {
-  syncMuteBtn();
-  muteBtn.addEventListener('click', () => {
-    _muted  = !_muted;
-    _volume = _muted ? 0 : 1;
-    setAudioPref(_muted ? 'off' : 'on');
-    setAmbientMuted(_muted);
-    setAmbientVolume(_volume);
-    if (_masterGain) _masterGain.gain.value = _muted ? 0 : _volume;
-    if (volumeSlider) volumeSlider.value = _volume;
-    syncMuteBtn();
-  });
-}
-
-// ─── audioReady — fired by audio-unlock.js after pref is determined
-document.addEventListener('audioReady', async (e) => {
-  log('debug', '[chime] audioReady, enabled=', e.detail.enabled, 'ctx state=', _audioCtx?.state);
-  _muted = !e.detail.enabled;
-  setAmbientMuted(_muted);
-  setAmbientVolume(_volume);
-
-  if (!_muted && _audioCtx && _audioCtx.state === 'suspended') {
-    try { await _audioCtx.resume(); } catch (_) {}
-    log('debug', '[chime] after resume, ctx state=', _audioCtx?.state);
-    if (_audioCtx.state === 'suspended') wireGestureResume();
-  }
-
-  // Play pending chime (e.g. SELF_CHIME from just-practiced) — only if buffer is ready
-  if (_pendingChime && !_muted && _audioCtx?.state === 'running' && _chimeBuffer) {
-    playSignature(_pendingChime);
-    _pendingChime = null;
-  }
-
-  updateChimePulse();
-  syncMuteBtn();
+    if (_masterGain) _masterGain.gain.value = muted ? 0 : _volume;
+  },
 });
+
 
 function wireGestureResume() {
   async function handler() {
