@@ -363,20 +363,23 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 100dvh;
-  gap: 2rem;
+  padding-top: 28dvh;
+  gap: 1.5rem;
   text-align: center;
-  padding: $space-lg;
+  padding-left: $space-lg;
+  padding-right: $space-lg;
+
+  @media (max-width: #{$breakpoint-md}) {
+    padding-top: 18dvh;
+  }
 }
 
 .audio-splash-icon {
-  width: 96px;
-  height: 96px;
-  color: rgba($color-text, 0.35);
-
-  .icon-outer { stroke: rgba($color-text, 0.25); }
-  .icon-inner { stroke: rgba($color-text, 0.55); }
+  width: 52px;
+  height: 52px;
+  color: rgba($color-text, 0.40);
 }
 
 .audio-splash-actions {
@@ -384,6 +387,20 @@
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+}
+
+.audio-splash-btn { @extend .pill; }
+
+.audio-splash-skip {
+  background: none;
+  border: none;
+  color: rgba($color-text, 0.30);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+
+  &:hover { color: rgba($color-text, 0.55); }
 }
 
 // ─── Invite pill — shown only in the empty/quiet state

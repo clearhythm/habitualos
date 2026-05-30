@@ -13,7 +13,8 @@ export default async (request: Request, context: Context) => {
     pathname.startsWith('/styles')    ||
     pathname.startsWith('/api')       ||
     pathname.startsWith('/.netlify')  ||
-    pathname.startsWith('/.11ty')
+    pathname.startsWith('/.11ty')  ||
+    pathname.startsWith('/@')
   ) {
     return context.next();
   }

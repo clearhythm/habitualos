@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Daily Practice Admin" }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/css/tabler.min.css">
+</head>
+<body>
+  <div class="page">
+    {{ content | safe }}
+  </div>
+  {% for script in adminScripts %}
+  <script src="{{ script }}"></script>
+  {% endfor %}
+</body>
+</html>

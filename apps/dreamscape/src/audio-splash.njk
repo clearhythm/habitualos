@@ -5,25 +5,26 @@ permalink: /audio-splash/
 pageScript: /assets/js/pages/audio-splash.js
 noContainer: true
 noFooter: true
-noNav: true
+noNav: false
 noAudioUnlock: true
 bodyClass: scene-page
 ---
 
 <div class="audio-splash-page">
-  <svg class="audio-splash-icon" viewBox="0 0 96 96" fill="none" stroke="currentColor"
-       stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-    <circle class="icon-outer" cx="48" cy="48" r="42"/>
-    <circle class="icon-inner" cx="48" cy="48" r="14"/>
+  <svg class="audio-splash-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+       stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M8 28v-6a16 16 0 0 1 32 0v6"/>
+    <rect x="4" y="28" width="8" height="12" rx="4"/>
+    <rect x="36" y="28" width="8" height="12" rx="4"/>
   </svg>
 
   <div class="feed-message feed-visible">
-    <span class="feed-name">Daily Practice</span>
-    <span class="feed-time">this is a sonic experience</span>
+    <span class="feed-name">Sound</span>
+    <span class="feed-time">Enjoy the full experience</span>
   </div>
 
   <div class="audio-splash-actions">
-    <button class="btn btn-primary" id="enable-btn">enable sound</button>
-    <button class="btn-quiet" id="skip-btn">no thanks</button>
+    <button class="audio-splash-btn" id="enable-btn">enable</button>
+    <button class="audio-splash-skip" id="skip-btn">no thanks</button>
   </div>
 </div>

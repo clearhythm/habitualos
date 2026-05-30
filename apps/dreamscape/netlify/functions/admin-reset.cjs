@@ -1,12 +1,13 @@
 const { deleteConnectionsForUser } = require('./collections/connections.cjs');
 const { deleteNotesForUser } = require('./collections/notes.cjs');
 const { deleteSessionsForUser } = require('./collections/sessions.cjs');
-const { deleteUser } = require('./collections/users.cjs');
+const { getAllUsers, deleteUser } = require('./collections/users.cjs');
 const { handle } = require('./_utils/api.cjs');
-const { TEST_USER_IDS } = require('./_utils/test-users.cjs');
 
 exports.handler = handle('admin.reset', 'POST', async () => {
-  await Promise.all(TEST_USER_IDS.map(async (userId) => {
+  const all = await getAllUsers();
+  const testUserIds = all.filter(u => u._userId?.startsWith('tu-')).map(u => u._userId);
+  await Promise.all(testUserIds.map(async (userId) => {
     await Promise.all([
       deleteConnectionsForUser(userId),
       deleteNotesForUser(userId),
@@ -14,5 +15,5 @@ exports.handler = handle('admin.reset', 'POST', async () => {
       deleteUser(userId),
     ]);
   }));
-  return { ok: true, deletedFor: TEST_USER_IDS };
+  return { ok: true, deletedFor: testUserIds };
 });
