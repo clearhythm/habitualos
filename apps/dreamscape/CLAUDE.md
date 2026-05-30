@@ -15,7 +15,7 @@ No feed, no kudos, no performance. Just presence. Real-time Firestore presence (
 
 ## Tech Stack
 
-- **Frontend**: 11ty + Nunjucks, vanilla JS modules
+- **Frontend**: 11ty + Nunjucks + Vite (`@11ty/eleventy-plugin-vite`), vanilla JS modules
 - **Real-time**: Firebase Firestore `onSnapshot` (push only, no polling)
 - **Auth**: Firebase Anonymous Auth tied to invite token
 - **Audio**: Web Audio API (`src/assets/js/audio-engine.js`) + Wake Lock API
