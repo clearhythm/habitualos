@@ -5,6 +5,8 @@ import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../a
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
+import { get } from '../api.js';
+import { getUserId } from '../auth/auth.js';
 
 // ─── Audio init — fetch + decode buffers immediately; resume on gesture
 let _audioCtx    = null;
@@ -39,7 +41,7 @@ let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
 
 // ─── Chime signatures
 const SELF_CHIME      = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
-const CAUGHT_UP_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
+let   CAUGHT_UP_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
 
 // ─── Queue — each entry is a friend's most recent un-acted-upon practice
 // id field used to track celebrate actions in localStorage
@@ -525,3 +527,8 @@ setOrbColor(_dayPeriod);
 
 _queueList = getUnseenQueue(); // snapshot for this page visit
 updateChimePulse(); // pulse on load if unseen queue items exist
+
+// Reassign CAUGHT_UP_CHIME to the user's personal chime if available
+get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`)
+  .then(({ chime }) => { if (chime) CAUGHT_UP_CHIME = chime; })
+  .catch(() => {});
