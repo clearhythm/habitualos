@@ -6,8 +6,9 @@ function render({ appName, verifyUrl, primaryColor, buttonColor = primaryColor }
 
     <p style="font-size: 0.9375rem; color: rgba(229,227,245,0.75); margin: 0 0 1.75rem; line-height: 1.6;">Click the button below to sign in. This link expires in 15 minutes and can only be used once.</p>
 
-    <a href="${verifyUrl}"
-       style="display: inline-block; padding: 0.6em 2.6em 0.8em; background: transparent; color: ${buttonColor}; text-decoration: none; border-radius: 999px; border: 1px solid rgba(255,255,255,0.75); font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1rem; font-weight: 400; letter-spacing: 0.08em;">
+    <style>.email-btn:hover, .email-btn:active { border-color: rgba(255,255,255,0.85) !important; }</style>
+    <a href="${verifyUrl}" class="email-btn"
+       style="display: inline-block; padding: 0.6em 2.6em 0.8em; background: transparent; color: ${buttonColor}; text-decoration: none; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1rem; font-weight: 400; letter-spacing: 0.08em;">
       sign in
     </a>
 
