@@ -1,7 +1,7 @@
 import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startPractice, endPractice, cancelPractice, saveReflection } from '../practice-logs.js';
-import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
+import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playBowl } from '../audio-engine.js';
 import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { loadSettings } from '../practice-settings.js';
 import { initAmbientPlayer } from '../ambient-player.js';
@@ -10,7 +10,6 @@ import { log } from '../utils/log.js';
 
 export function startTimer(practiceName, durationSecs, { onDiscard, source } = {}) {
   const settings     = loadSettings();
-  const audioEnabled = userRequestedAudio();
 
   // ─── DOM
   const timerModal   = document.getElementById('timer-modal');
@@ -79,7 +78,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   }
 
   function onComplete() {
-    if (settings.bellEnd && audioEnabled) playChime();
+    if (settings.bellEnd) playBowl();
     releaseWakeLock();
     pauseBtn.hidden      = true;
     stopBtn.hidden       = true;
@@ -136,6 +135,8 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   // ─── Ambient player
   let _isMuted = getAudioMuted();
   let _volume  = getAudioVolume();
+  setMuted(_isMuted);
+  setVolume(_volume);
 
   initAmbientPlayer({
     isMuted:        () => _isMuted,
@@ -175,6 +176,6 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   initPresence();
   startPractice(practiceName);
   acquireWakeLock();
-  if (settings.bellStart && audioEnabled) playChime();
+  if (settings.bellStart) playBowl();
   log('debug', '[practice-timer] started', practiceName, durationSecs, 'secs', 'source=', source);
 }

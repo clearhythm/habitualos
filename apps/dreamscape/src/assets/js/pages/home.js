@@ -1,7 +1,7 @@
 import { setSkyGradient, setOrbColor } from '../sky-gradient.js';
 import { getDayPeriod, DAY_PERIODS } from '../sky-palette.js';
 import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
-import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
+import { initAudio, getCtx, getGain, getMuted, getVolume, setMuted, setVolume } from '../audio-engine.js';
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
@@ -9,34 +9,29 @@ import { get } from '../api.js';
 import { getUserId } from '../auth/auth.js';
 import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
 
-// ─── Audio init — fetch + decode buffers immediately; resume on gesture
-let _audioCtx    = null;
-let _masterGain  = null;
+// ─── Audio init — shared context from audio-engine; fetch + decode buffers
 let _chimeBuffer = null;
 let _birdBuffer  = null;
 let _pendingChime = null;   // chime to play once audio is ready
-let _muted  = getAudioMuted();
-let _volume = getAudioVolume();
 
 (async () => {
   try {
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    _masterGain = _audioCtx.createGain();
-    _masterGain.gain.value = _muted ? 0 : _volume;
-    _masterGain.connect(_audioCtx.destination);
+    setMuted(getAudioMuted());
+    setVolume(getAudioVolume());
+    await initAudio();
+    const ctx = getCtx();
     const [chimeAb, birdAb] = await Promise.all([
       fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer()),
       fetch('/assets/music/effects/bird-chirp.mp3').then(r => r.arrayBuffer()),
     ]);
-    _chimeBuffer = await _audioCtx.decodeAudioData(chimeAb);
-    _birdBuffer  = await _audioCtx.decodeAudioData(birdAb);
-    // Play any chime that was queued before the buffer loaded
-    if (_pendingChime && !_muted && _audioCtx.state === 'running') {
-      playSignature(_pendingChime);
+    _chimeBuffer = await ctx.decodeAudioData(chimeAb);
+    _birdBuffer  = await ctx.decodeAudioData(birdAb);
+    if (_pendingChime && ctx.state === 'running') {
+      playChime(_pendingChime);
       _pendingChime = null;
     }
     log('debug', '[audio] buffers ready');
-    if (!_muted && _audioCtx.state === 'suspended') wireGestureResume();
+    if (ctx.state === 'suspended') wireGestureResume();
   } catch (err) { log('warn', '[audio] init failed:', err); }
 })();
 
@@ -55,7 +50,7 @@ const TOUR_SLIDES = [
 ];
 
 // ─── Page state
-// 'idle' | 'queue' | 'caught-up' | 'touring'
+// 'idle' | 'just-practiced' | 'queue' | 'caught-up' | 'touring'
 let _pageState      = 'idle';
 let _currentSession = null;
 let _queueList      = [];   // snapshot of unseen sessions, set at init
@@ -142,7 +137,7 @@ function showSession(session) {
   if (_pulseSwayInterval) { clearInterval(_pulseSwayInterval); _pulseSwayInterval = null; }
   showFeedMessage(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`);
   swingChime();
-  playSignature(session.chime);
+  playChime(session.chime);
   showQueueActions();
 }
 
@@ -159,7 +154,7 @@ function showCaughtUp() {
   clearTimeout(_queueTimer);
   swingChime();
   showFeedMessage('You', 'are all caught up');
-  if (_userChime) playSignature(_userChime);
+  playChime(_userChime ?? SELF_CHIME);
   showCaughtUpActions();
 }
 
@@ -186,7 +181,7 @@ function showTourSlide({ immediate = false } = {}) {
   const slide = TOUR_SLIDES[_tourIndex];
   showFeedMessage(slide.name, slide.sub, { immediate });
   swingChime();
-  playSignature(SYSTEM_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
+  playChime(SYSTEM_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
   showTourActions(slide);
 }
 
@@ -195,7 +190,7 @@ function advanceTour() {
   _tourIndex++;
   if (_tourIndex >= TOUR_SLIDES.length) {
     swingChime();
-    playSignature(SYSTEM_CHIME);
+    playChime(SYSTEM_CHIME);
     showIdleState();
     return;
   }
@@ -225,11 +220,12 @@ function updateChimePulse() {
 // ─── Main click dispatch
 
 function onChimeClick() {
-  if (_pageState === 'touring')   { advanceTour();  return; }
-  if (_pageState === 'caught-up') { return; }
-  if (_pageState === 'queue')     { advanceQueue(); return; }
+  if (_pageState === 'touring')        { advanceTour();  return; }
+  if (_pageState === 'caught-up')      { return; }
+  if (_pageState === 'queue')          { advanceQueue(); return; }
+  if (_pageState === 'just-practiced') { return; }
 
-  // idle or just-practiced — start queue from beginning
+  // idle — start queue from beginning
   if (_queueList.length > 0) {
     _queueCursor = 0;
     showSession(_queueList[0]);
@@ -249,7 +245,7 @@ celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
   celebrateBtn.classList.add('btn-confirmed');
   markWitnessed({ userId: getUserId(), witnessedUserId: _currentSession.userId, witnessedPracticeId: _currentSession.practiceId }).catch(() => {});
-  playWitnessEcho(_currentSession.chime);
+  playChimeEcho(_currentSession.chime);
   swingChime();
   updateChimePulse();
   _queueTimer = setTimeout(advanceQueue, 2500);
@@ -263,15 +259,16 @@ continueBtn.addEventListener('click', advanceTour);
 
 // ─── Witness echo — plays the friend's own chime signature, lower register + longer decay
 // Their notes, their voice — just heard more deeply
-function playWitnessEcho(sig) {
-  if (_muted || !_chimeBuffer || !_audioCtx || _audioCtx.state !== 'running') return;
+function playChimeEcho(sig) {
+  const ctx = getCtx();
+  if (!_chimeBuffer || !ctx || ctx.state !== 'running') return;
   log('debug', '[witness] playWitnessEcho');
-  const gain = _audioCtx.createGain();
-  gain.connect(_masterGain ?? _audioCtx.destination);
+  const gain = ctx.createGain();
+  gain.connect(getGain());
 
-  const now      = _audioCtx.currentTime;
+  const now      = ctx.currentTime;
   const maxDelay = Math.max(...sig.timing);
-  const peak     = 0.35 * _volume;  // softer than a full signature
+  const peak     = 0.35;  // softer than a full signature; master gain handles user volume
   const sustainEnd = now + maxDelay + 5.5;
   const fadeTime   = 4.0;           // long tail — lingers behind the next session's chime
 
@@ -280,7 +277,7 @@ function playWitnessEcho(sig) {
   gain.gain.exponentialRampToValueAtTime(0.001, sustainEnd + fadeTime);
 
   sig.notes.forEach((semitones, i) => {
-    const src = _audioCtx.createBufferSource();
+    const src = ctx.createBufferSource();
     src.buffer = _chimeBuffer;
     // Octave up — same notes, lighter overtone shimmer
     src.playbackRate.value = Math.pow(2, (semitones + 12) / 12);
@@ -296,59 +293,61 @@ function playWitnessEcho(sig) {
 // Uses same _audioCtx + _masterGain as chime engine
 // TODO Tour-Scene-Sounds-Ticket1: swap _birdBuffer for time-of-day file selection
 function playSceneSound(type) {
-  if (_muted || !_birdBuffer || !_audioCtx || _audioCtx.state !== 'running') return;
+  const ctx = getCtx();
+  if (!_birdBuffer || !ctx || ctx.state !== 'running') return;
   log('debug', '[scene] playSceneSound:', type);
 
   // 1–3 chirps, randomised timing + slight pitch shift per hit = different bird feel
   const count = Math.floor(Math.random() * 3) + 1;
-  const gain  = _audioCtx.createGain();
-  gain.gain.value = 0.55 * _volume;
-  gain.connect(_masterGain);
+  const gain  = ctx.createGain();
+  gain.gain.value = 0.55;
+  gain.connect(getGain());
 
   let offset = 0;
   for (let i = 0; i < count; i++) {
-    const src = _audioCtx.createBufferSource();
+    const src = ctx.createBufferSource();
     src.buffer = _birdBuffer;
     // ±6 semitones of pitch variation — distinct birds, not mechanical repeats
     const semitones = (Math.random() - 0.5) * 12;
     src.playbackRate.value = Math.pow(2, semitones / 12);
     src.connect(gain);
-    src.start(_audioCtx.currentTime + offset);
+    src.start(ctx.currentTime + offset);
     offset += 0.15 + Math.random() * 0.25; // 150–400ms between chirps
   }
 
   // Fade gain out after chirps finish
-  const fadeAt = _audioCtx.currentTime + offset + 1.5;
-  gain.gain.setValueAtTime(0.55 * _volume, fadeAt);
+  const fadeAt = ctx.currentTime + offset + 1.5;
+  gain.gain.setValueAtTime(0.55, fadeAt);
   gain.gain.linearRampToValueAtTime(0, fadeAt + 0.8);
   setTimeout(() => gain.disconnect(), (offset + 2.5) * 1000);
 }
 
 // ─── Play a chime signature
-function playSignature(sig) {
-  if (_muted || !_chimeBuffer || !_audioCtx || _audioCtx.state !== 'running') return 0;
-  const masterGain = _audioCtx.createGain();
-  masterGain.connect(_masterGain ?? _audioCtx.destination);
+function playChime(sig) {
+  const ctx = getCtx();
+  if (!_chimeBuffer || !ctx || ctx.state !== 'running') return 0;
+  const sigGain = ctx.createGain();
+  sigGain.connect(getGain());
 
-  const now      = _audioCtx.currentTime;
+  const now      = ctx.currentTime;
   const maxDelay = Math.max(...sig.timing);
   const fadeAt   = now + maxDelay + 3.5;
   const fadeTime = 2.0;
-  const peak     = 0.65 * _volume;
-  masterGain.gain.setValueAtTime(peak, now);
-  masterGain.gain.setValueAtTime(peak, fadeAt);
-  masterGain.gain.exponentialRampToValueAtTime(0.001, fadeAt + fadeTime);
+  const peak     = 0.65;
+  sigGain.gain.setValueAtTime(peak, now);
+  sigGain.gain.setValueAtTime(peak, fadeAt);
+  sigGain.gain.exponentialRampToValueAtTime(0.001, fadeAt + fadeTime);
 
   sig.notes.forEach((semitones, i) => {
-    const src = _audioCtx.createBufferSource();
+    const src = ctx.createBufferSource();
     src.buffer = _chimeBuffer;
     src.playbackRate.value = Math.pow(2, semitones / 12);
-    src.connect(masterGain);
+    src.connect(sigGain);
     src.start(now + sig.timing[i]);
   });
 
   const totalMs = (maxDelay + 3.5 + fadeTime + 0.1) * 1000;
-  setTimeout(() => masterGain.disconnect(), totalMs);
+  setTimeout(() => sigGain.disconnect(), totalMs);
   return maxDelay + 3.5 + fadeTime;
 }
 
@@ -408,8 +407,8 @@ function applyIntroTagline() {
 
 // ─── Practice return messages — celebration state, rotates each return
 const PRACTICE_RETURN_MESSAGES = [
-  { name: 'Listen',  sub: 'as your chime rings out' },
-  { name: 'Sound',   sub: 'helps inspire your circle' },
+  { name: 'You',  sub: 'completed your practice' },
+  { name: 'You',   sub: 'completed your practice' },
 ];
 
 function applyPracticeReturnMessage() {
@@ -427,42 +426,32 @@ document.addEventListener('nav:close', () => { _navOpen = false; });
 
 // ─── Ambient player controls
 initAmbientPlayer({
-  isMuted:        () => _muted,
-  getVolume:      () => _volume,
+  isMuted:        getMuted,
+  getVolume:      getVolume,
   onVolumeChange: (vol) => {
-    _volume = vol;
+    setVolume(vol);
     setAudioVolume(vol);
-    setAmbientVolume(vol);
-    if (_masterGain && !_muted) _masterGain.gain.value = vol;
   },
   onMuteChange: (muted) => {
-    _muted = muted;
+    setMuted(muted);
     setAudioMuted(muted);
-    if (!muted) _volume = getAudioVolume();
-    setAmbientMuted(muted);
-    setAmbientVolume(muted ? 0 : _volume);
-    if (_masterGain) _masterGain.gain.value = muted ? 0 : _volume;
+    if (!muted) setVolume(getAudioVolume());
   },
 });
 
 
 function wireGestureResume() {
   async function handler() {
-    const wasSuspended = _audioCtx && _audioCtx.state === 'suspended';
-    if (wasSuspended) { try { await _audioCtx.resume(); } catch (_) {} }
-    if (wasSuspended && !_muted) {
-      const chime = _pendingChime ?? null;
-      if (chime) { playSignature(chime); _pendingChime = null; }
-    }
+    const ctx = getCtx();
+    const wasSuspended = ctx && ctx.state === 'suspended';
+    if (wasSuspended) { try { await ctx.resume(); } catch (_) {} }
+    if (wasSuspended && _pendingChime) { playChime(_pendingChime); _pendingChime = null; }
     ['click', 'touchstart', 'keydown'].forEach(ev => document.removeEventListener(ev, handler));
   }
   ['click', 'touchstart', 'keydown'].forEach(ev =>
     document.addEventListener(ev, handler, { passive: true })
   );
 }
-
-// ─── Cleanup
-window.addEventListener('beforeunload', () => _audioCtx?.close());
 
 // ─── Dev API — exposed only on localhost for the dev toolbar
 if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
@@ -486,6 +475,7 @@ if (!_devParams.has('tour')) {
     if (homeState) {
       localStorage.removeItem('dp-home-state');
       if (homeState === 'just-practiced') {
+        _pageState   = 'just-practiced';
         const msg    = applyPracticeReturnMessage();
         const nameEl = feedEl.querySelector('.feed-name');
         const timeEl = feedEl.querySelector('.feed-time');
