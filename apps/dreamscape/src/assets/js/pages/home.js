@@ -63,8 +63,6 @@ const TOUR_SLIDES = [
   { name: 'Witness',    sub: 'and share voice chimes',   action: { text: 'invite',   href: '/invite/'   } },
   { name: 'Reflect',  sub: 'and get personal support',   action: { text: 'reflect',  href: '/reflect/'  } },
 ];
-const QUEUE_MS   = 8000;  // auto-advance queue after 8s of inaction
-const TOUR_MS    = 8000;
 
 // ─── Page state
 // 'idle' | 'queue' | 'caught-up' | 'touring'
@@ -77,33 +75,39 @@ let _tourIndex      = 0;
 let _tourTimer      = null;
 
 // ─── DOM
-const feedEl        = document.getElementById('feed-message');
-const mainActionBtn = document.getElementById('main-action-btn');
-const celebrateBtn  = document.getElementById('celebrate-btn');
-const reflectPill   = document.getElementById('reflect-pill');
-const continueBtn   = document.getElementById('continue-btn');
-const voiceChimeBtn = document.getElementById('voice-chime-btn');
+const feedEl           = document.getElementById('feed-message');
+const mainActionBtn    = document.getElementById('main-action-btn');
+const celebrateBtn     = document.getElementById('celebrate-btn');
+const reflectPill      = document.getElementById('reflect-pill');
+const continueBtn      = document.getElementById('continue-btn');
+const voiceChimeBtn    = document.getElementById('voice-chime-btn');
+const practiceActionsEl = document.querySelector('.practice-actions');
+
+function revealActions() { practiceActionsEl.style.visibility = ''; }
 
 // ─── Action helpers — each hides everything then shows only what's needed
 
 function showIdleActions() {
-  mainActionBtn.hidden  = false;
-  mainActionBtn.href    = '/practice/';
+  mainActionBtn.className   = 'practice-pill';
+  mainActionBtn.hidden      = false;
+  mainActionBtn.href        = '/practice/';
   mainActionBtn.textContent = 'practice';
-  celebrateBtn.hidden   = true;
-  reflectPill.hidden    = false;
-  continueBtn.hidden    = true;
-  voiceChimeBtn.hidden  = true;
+  continueBtn.className     = 'btn-quiet';
+  continueBtn.hidden        = true;
+  celebrateBtn.hidden       = true;
+  reflectPill.hidden        = false;
+  voiceChimeBtn.hidden      = true;
 }
 
 function showPracticedActions() {
-  mainActionBtn.hidden  = false;
-  mainActionBtn.href    = '/history/';
+  mainActionBtn.className   = 'practice-pill';
+  mainActionBtn.hidden      = false;
+  mainActionBtn.href        = '/history/';
   mainActionBtn.textContent = 'your story';
-  celebrateBtn.hidden   = true;
-  reflectPill.hidden    = false;
-  continueBtn.hidden    = true;
-  voiceChimeBtn.hidden  = true;
+  celebrateBtn.hidden       = true;
+  reflectPill.hidden        = false;
+  continueBtn.hidden        = true;
+  voiceChimeBtn.hidden      = true;
 }
 
 function showQueueActions() {
@@ -116,23 +120,26 @@ function showQueueActions() {
 }
 
 function showCaughtUpActions() {
-  mainActionBtn.hidden  = false;
-  mainActionBtn.href    = '/practice/';
+  mainActionBtn.className   = 'practice-pill';
+  mainActionBtn.hidden      = false;
+  mainActionBtn.href        = '/practice/';
   mainActionBtn.textContent = 'practice';
-  celebrateBtn.hidden   = true;
-  reflectPill.hidden    = false;
-  continueBtn.hidden    = true;
-  voiceChimeBtn.hidden  = true;
+  celebrateBtn.hidden       = true;
+  reflectPill.hidden        = false;
+  continueBtn.hidden        = true;
+  voiceChimeBtn.hidden      = true;
 }
 
 function showTourActions(slide) {
-  mainActionBtn.hidden  = false;
-  mainActionBtn.href    = slide.action.href;
+  continueBtn.className     = 'practice-pill';
+  continueBtn.hidden        = false;
+  mainActionBtn.className   = 'btn-quiet';
+  mainActionBtn.href        = slide.action.href;
   mainActionBtn.textContent = slide.action.text;
-  celebrateBtn.hidden   = true;
-  reflectPill.hidden    = true;
-  continueBtn.hidden    = false;
-  voiceChimeBtn.hidden  = true;
+  mainActionBtn.hidden      = false;
+  celebrateBtn.hidden       = true;
+  reflectPill.hidden        = true;
+  voiceChimeBtn.hidden      = true;
 }
 
 // ─── State transitions
@@ -147,8 +154,6 @@ function showSession(session) {
   swingChime();
   playSignature(session.chime);
   showQueueActions();
-  clearTimeout(_queueTimer);
-  _queueTimer = setTimeout(advanceQueue, QUEUE_MS);
 }
 
 function advanceQueue() {
@@ -175,22 +180,24 @@ function showIdleState() {
   clearTimeout(_queueTimer);
   applyIntroTagline();
   showIdleActions();
+  updateChimePulse();
 }
 
-function startTour() {
+function startTour({ immediate = false } = {}) {
   _pageState  = 'touring';
   _tourIndex  = 0;
-  showTourSlide();
+  showTourSlide({ immediate });
+  revealActions();
+  updateChimePulse();
 }
 
-function showTourSlide() {
+function showTourSlide({ immediate = false } = {}) {
   clearTimeout(_tourTimer);
   const slide = TOUR_SLIDES[_tourIndex];
-  showFeedMessage(slide.name, slide.sub);
+  showFeedMessage(slide.name, slide.sub, { immediate });
   swingChime();
   playSignature(CAUGHT_UP_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
   showTourActions(slide);
-  _tourTimer = setTimeout(advanceTour, TOUR_MS);
 }
 
 function advanceTour() {
@@ -229,7 +236,7 @@ function updateChimePulse() {
 
 function onChimeClick() {
   if (_pageState === 'touring')   { advanceTour();  return; }
-  if (_pageState === 'caught-up') { startTour();    return; }
+  if (_pageState === 'caught-up') { return; }
   if (_pageState === 'queue')     { advanceQueue(); return; }
 
   // idle or just-practiced — start queue from beginning
@@ -255,9 +262,10 @@ celebrateBtn.addEventListener('click', () => {
   playWitnessEcho(_currentSession.chime);
   swingChime();
   updateChimePulse();
-  clearTimeout(_queueTimer);
-  _queueTimer = setTimeout(advanceQueue, 2500);
 });
+
+// ─── Skip (queue advance)
+voiceChimeBtn.addEventListener('click', advanceQueue);
 
 // ─── Continue (tour advance)
 continueBtn.addEventListener('click', advanceTour);
@@ -373,12 +381,18 @@ function swingChime() {
 }
 
 // ─── Feed message
-function showFeedMessage(name, subtitle) {
+function showFeedMessage(name, subtitle, { immediate = false } = {}) {
+  const html = subtitle
+    ? `<span class="feed-name">${name}</span><span class="feed-time">${subtitle}</span>`
+    : `<span class="feed-name feed-name--quiet">${name}</span>`;
+  if (immediate) {
+    feedEl.innerHTML = html;
+    feedEl.classList.add('feed-visible');
+    return;
+  }
   feedEl.classList.remove('feed-visible');
   setTimeout(() => {
-    feedEl.innerHTML = subtitle
-      ? `<span class="feed-name">${name}</span><span class="feed-time">${subtitle}</span>`
-      : `<span class="feed-name feed-name--quiet">${name}</span>`;
+    feedEl.innerHTML = html;
     feedEl.classList.add('feed-visible');
   }, 400);
 }
@@ -466,47 +480,51 @@ if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
 
 // ─── Init — runs synchronously on module load (DOM is ready, JS deferred)
 
-// Intro tagline first (empty spans in HTML avoid FOUC)
-applyIntroTagline();
-showIdleActions();
-
-// Home state — set by practice timer on navigate home
-{
-  const homeState = localStorage.getItem('dp-home-state');
-  if (homeState) {
-    localStorage.removeItem('dp-home-state');
-    if (homeState === 'just-practiced') {
-      const msg    = applyPracticeReturnMessage();
-      const nameEl = feedEl.querySelector('.feed-name');
-      const timeEl = feedEl.querySelector('.feed-time');
-      if (nameEl) nameEl.textContent = msg.name;
-      if (timeEl) timeEl.textContent = msg.sub;
-      showPracticedActions();
-      _pendingChime = SELF_CHIME;
-      swingChime();
-    }
-  }
-}
-
-// Welcome state — first-time / invite join
-{
-  const welcomeFrom = localStorage.getItem('dp-welcome-from');
-  const firstVisit  = localStorage.getItem('dp-first-visit');
-  localStorage.removeItem('dp-welcome-from');
-  localStorage.removeItem('dp-first-visit');
-  if (welcomeFrom || firstVisit) {
-    const nameEl = feedEl.querySelector('.feed-name');
-    const timeEl = feedEl.querySelector('.feed-time');
-    if (nameEl) nameEl.textContent = 'Welcome';
-    if (timeEl) timeEl.textContent = welcomeFrom
-      ? `You are now connected to ${welcomeFrom}, for support in your practice.`
-      : 'You can start a practice now, or reflect for help getting started.';
-  }
-}
-
 // Dev override params — ?hour=14.5 for time-of-day, ?tier=3 to preview a scene tier,
 // ?tier=3&new=1 to also trigger the animate-in for that tier
 const _devParams    = new URLSearchParams(window.location.search);
+
+if (!_devParams.has('tour')) {
+  // Intro tagline first (empty spans in HTML avoid FOUC)
+  applyIntroTagline();
+  showIdleActions();
+
+  // Home state — set by practice timer on navigate home
+  {
+    const homeState = localStorage.getItem('dp-home-state');
+    if (homeState) {
+      localStorage.removeItem('dp-home-state');
+      if (homeState === 'just-practiced') {
+        const msg    = applyPracticeReturnMessage();
+        const nameEl = feedEl.querySelector('.feed-name');
+        const timeEl = feedEl.querySelector('.feed-time');
+        if (nameEl) nameEl.textContent = msg.name;
+        if (timeEl) timeEl.textContent = msg.sub;
+        showPracticedActions();
+        _pendingChime = SELF_CHIME;
+        swingChime();
+      }
+    }
+  }
+
+  // Welcome state — first-time / invite join
+  {
+    const welcomeFrom = localStorage.getItem('dp-welcome-from');
+    const firstVisit  = localStorage.getItem('dp-first-visit');
+    localStorage.removeItem('dp-welcome-from');
+    localStorage.removeItem('dp-first-visit');
+    if (welcomeFrom || firstVisit) {
+      const nameEl = feedEl.querySelector('.feed-name');
+      const timeEl = feedEl.querySelector('.feed-time');
+      if (nameEl) nameEl.textContent = 'Welcome';
+      if (timeEl) timeEl.textContent = welcomeFrom
+        ? `You are now connected to ${welcomeFrom}, for support in your practice.`
+        : 'You can start a practice now, or reflect for help getting started.';
+    }
+  }
+
+  revealActions();
+}
 const _overrideHour = _devParams.has('hour')   ? parseFloat(_devParams.get('hour'))   : null;
 const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'),  10) : null;
 const _stonesParam  = _devParams.has('stones')  ? parseInt(_devParams.get('stones'), 10) : null;
@@ -528,6 +546,8 @@ setOrbColor(_dayPeriod);
 
 _queueList = getUnseenQueue(); // snapshot for this page visit
 updateChimePulse(); // pulse on load if unseen queue items exist
+
+if (_devParams.has('tour')) document.addEventListener('DOMContentLoaded', () => startTour({ immediate: true }));
 
 // Reassign CAUGHT_UP_CHIME to the user's personal chime if available
 get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`)
