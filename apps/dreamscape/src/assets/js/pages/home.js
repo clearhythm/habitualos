@@ -235,8 +235,10 @@ function onChimeClick() {
 }
 
 // ─── Wind chime click
-document.getElementById('wind-chime')?.addEventListener('click', () => {
+document.getElementById('wind-chime')?.addEventListener('click', async () => {
   swingChime();
+  const ctx = getCtx();
+  if (ctx && ctx.state === 'suspended') { try { await ctx.resume(); } catch (_) {} }
   onChimeClick();
 });
 
