@@ -13,20 +13,17 @@ export function show(id) {
   if (title) title.textContent = STEP_TITLES[id] ?? 'Welcome,';
 }
 
-// ─── Register + connect after magic link return (same-device fallback only)
-async function registerAndConnect() {
+// ─── Register + connect for already-signed-in users hitting a join link
+async function registerAndConnect({ connectUserId } = {}) {
   show('step-connecting');
-  const userId    = getUserId();
-  const name      = localStorage.getItem('dp-pending-name') || '';
-  let chime = null;
-  try { chime = JSON.parse(localStorage.getItem('dp-pending-chime') || 'null'); } catch (_) {}
-
+  const userId = getUserId();
   try {
-    await fetch('/api/user-register', {
+    const res = await fetch('/api/user-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, name, chime }),
+      body: JSON.stringify({ userId, connectUserId: connectUserId || undefined }),
     });
+    if (!res.ok) log('warn', '[signup] register failed:', res.status);
   } catch (err) { log('warn', '[signup] register failed:', err); }
 
   localStorage.removeItem('dp-pending-name');
@@ -38,7 +35,7 @@ async function registerAndConnect() {
 // ─── Entry point — called by signup.njk directly, or by join.js with sharer context
 export async function startSignupFlow({ sharerName = null, connectUserId = null, connectName = null } = {}) {
   if (isSignedIn()) {
-    await registerAndConnect();
+    await registerAndConnect({ connectUserId });
     return;
   }
 

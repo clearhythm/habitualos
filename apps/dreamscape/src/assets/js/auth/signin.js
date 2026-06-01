@@ -22,11 +22,10 @@ export async function consumeToken(token) {
   const profile = data.profile || {};
   signIn({ userId: data.userId, name: profile._name || profile.displayName || profile.firstName || '' });
 
-  const pending = data.profile?.pendingRegistration;
-  if (pending) {
-    await completePendingRegistration(data.userId, pending);
-    if (pending.connectName) {
-      localStorage.setItem('dp-welcome-from', pending.connectName);
+  if (data.inviteId) {
+    const result = await completeInviteRegistration(data.userId, data.inviteId);
+    if (result?.connectName) {
+      localStorage.setItem('dp-welcome-from', result.connectName);
     } else {
       localStorage.setItem('dp-first-visit', '1');
     }
@@ -37,17 +36,25 @@ export async function consumeToken(token) {
   window.location.replace(dest);
 }
 
-async function completePendingRegistration(userId, pending) {
-  const { name, chime, connectUserId, connectName } = pending;
+async function completeInviteRegistration(userId, inviteId) {
   try {
-    await fetch('/api/user-register', {
+    const res = await fetch('/api/user-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, name: name || '', chime: chime || null, connectUserId: connectUserId || undefined }),
+      body: JSON.stringify({ userId, inviteId }),
     });
-    log('debug', '[signin] registration complete, connectName:', connectName);
-  } catch (err) { log('warn', '[signin] register failed:', err); }
-  localStorage.removeItem('dp-pending-email');
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      log('warn', '[signin] user-register (invite) failed:', res.status, body);
+      return null;
+    }
+    const result = await res.json();
+    log('debug', '[signin] invite registration complete');
+    return result;
+  } catch (err) {
+    log('warn', '[signin] invite registration failed:', err);
+    return null;
+  }
 }
 
 export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {

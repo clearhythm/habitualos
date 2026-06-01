@@ -12,9 +12,9 @@ export async function initChimeAudio() {
   } catch (err) { log('warn', '[chime] audio init failed:', err); }
 }
 
-export function playChime(sig) {
+export async function playChime(sig) {
   if (!_chimeBuffer || !_audioCtx) return;
-  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  if (_audioCtx.state === 'suspended') await _audioCtx.resume();
   const master = _audioCtx.createGain();
   master.connect(_audioCtx.destination);
   const now   = _audioCtx.currentTime;

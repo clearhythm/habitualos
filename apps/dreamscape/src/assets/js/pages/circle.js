@@ -122,7 +122,7 @@ function renderCircle() {
     const subtitle2 = document.getElementById('circle-subtitle-2');
     if (icon)      icon.classList.remove('has-notes');
     if (subtitle)  subtitle.textContent  = 'invite your friends';
-    if (subtitle2) subtitle2.textContent = 'share and witness progress';
+    if (subtitle2) subtitle2.textContent = 'support your daily practices';
     if (circleListHeader) circleListHeader.hidden = true;
     if (page) page.classList.add('circle-page--empty');
     circleList.innerHTML = '';
