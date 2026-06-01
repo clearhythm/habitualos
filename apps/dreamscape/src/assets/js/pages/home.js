@@ -59,9 +59,9 @@ function getUnseenQueue(){ const acted = getActedOn(); return QUEUE_SESSIONS.fil
 
 // ─── Tour slides
 const TOUR_SLIDES = [
-  { name: 'Practice', sub: 'your friends see it',  action: { text: 'practice', href: '/practice/' } },
-  { name: 'Witness',    sub: 'and share voice chimes',   action: { text: 'invite',   href: '/invite/'   } },
-  { name: 'Reflect',  sub: 'and get personal support',   action: { text: 'reflect',  href: '/reflect/'  } },
+  { name: 'Practice', sub: 'awaken a beautiful world',  action: { text: 'practice', href: '/practice/' } },
+  { name: 'Reflect', sub: 'discover what works best',   action: { text: 'reflect',  href: '/reflect/'  } },
+  { name: 'Chime', sub: 'share support with friends',   action: { text: 'invite',   href: '/invite/'   } },
 ];
 
 // ─── Page state
@@ -262,6 +262,7 @@ celebrateBtn.addEventListener('click', () => {
   playWitnessEcho(_currentSession.chime);
   swingChime();
   updateChimePulse();
+  _queueTimer = setTimeout(advanceQueue, 2500);
 });
 
 // ─── Skip (queue advance)
