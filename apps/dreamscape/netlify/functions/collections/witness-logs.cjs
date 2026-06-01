@@ -1,5 +1,5 @@
 const { create, query, remove, uniqueId } = require('@habitualos/db-core');
-const { getConnectionsForUser } = require('./connections.cjs');
+const { getConnectionsForUser, otherId } = require('./connections.cjs');
 const { getLatestPracticeLog } = require('./practice-logs.cjs');
 const { getUser } = require('./users.cjs');
 
@@ -27,7 +27,7 @@ async function getWitnessedPracticeIds(userId) {
 
 async function getActiveWitnessQueue(userId) {
   const connections = await getConnectionsForUser(userId);
-  const connUserIds = connections.map(c => c._userAId === userId ? c._userBId : c._userAId);
+  const connUserIds = connections.map(c => otherId(c, userId));
 
   if (!connUserIds.length) return [];
 

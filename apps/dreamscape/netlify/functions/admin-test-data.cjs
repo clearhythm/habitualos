@@ -66,7 +66,7 @@ exports.handler = async (event) => {
 
     if (action === 'connect') {
       if (!userId || !targetUserId) return { statusCode: 400, body: JSON.stringify({ error: 'userId and targetUserId required' }) };
-      await ensureConnection({ userAId: userId, userBId: targetUserId, initiatedBy: 'admin' });
+      await ensureConnection({ initiatedBy: userId, receivedBy: targetUserId });
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 

@@ -1,4 +1,4 @@
-const { getConnectionsForUser } = require('./collections/connections.cjs');
+const { getConnectionsForUser, otherId } = require('./collections/connections.cjs');
 const { getUser }               = require('./collections/users.cjs');
 const { getReceivedNotes, getSentNotes } = require('./collections/notes.cjs');
 const { handle } = require('./_utils/api.cjs');
@@ -12,7 +12,7 @@ exports.handler = handle('circle.load', 'GET', async (event, { userId }) => {
     getSentNotes(userId),
   ]);
 
-  const memberIds = connections.map(c => c._userAId === userId ? c._userBId : c._userAId);
+  const memberIds = connections.map(c => otherId(c, userId));
   const members = await Promise.all(memberIds.map(getUser));
 
   const circle = members.filter(Boolean).map(m => ({

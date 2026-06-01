@@ -27,7 +27,7 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
   if (Object.keys(updates).length) await updateUser(userId, updates);
 
   if (connectUserId && connectUserId !== userId) {
-    await ensureConnection({ userAId: userId, userBId: connectUserId, initiatedBy: userId });
+    await ensureConnection({ initiatedBy: userId, receivedBy: connectUserId });
     log('debug', '[user-register] connected', userId, '↔', connectUserId);
   }
 

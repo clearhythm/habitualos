@@ -51,8 +51,8 @@ async function createAuthToken({ email, guestId, pendingUserId, pendingRegistrat
   if (pendingRegistration?.connectUserId) {
     const { connectUserId, connectName, name } = pendingRegistration;
     connId = await createPendingConnection({
-      userAId:      connectUserId,
-      userBId:      userId,
+      initiatedBy:  connectUserId,
+      receivedBy:   userId,
       inviterName:  connectName || null,
       inviteeName:  name        || null,
       inviteeEmail: normalizedEmail,

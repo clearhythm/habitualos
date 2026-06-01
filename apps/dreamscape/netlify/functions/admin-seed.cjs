@@ -18,7 +18,7 @@ exports.handler = handle('admin.seed', 'POST', async (event, { scenario }) => {
   ));
 
   await Promise.all([SARAH, FRANK, ROI].map(memberId =>
-    ensureConnection({ userAId: ERIK, userBId: memberId, initiatedBy: ERIK })
+    ensureConnection({ initiatedBy: ERIK, receivedBy: memberId })
   ));
 
   await deleteNotesForUser(ERIK);

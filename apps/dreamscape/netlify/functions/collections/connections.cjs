@@ -2,82 +2,85 @@ const { create, patch, query, remove, uniqueId } = require('@habitualos/db-core'
 
 const COL = 'connections';
 
-// Create a pending connection (invite sent, not yet accepted).
-// Returns connId — passed through the magic link URL so sign-in can activate it.
-// No-ops if an active connection already exists between the pair.
-// Returns the existing connId if already pending.
-async function createPendingConnection({ userAId, userBId, inviterName, inviteeName, inviteeEmail, _source }) {
-  const [a, b] = [userAId, userBId].sort();
-  const existing = await query({ collection: COL, where: [`_userAId::eq::${a}`] });
-  const match = (existing || []).find(c => c._userBId === b);
-  if (match) return match._connId; // already pending or active — reuse connId
+function otherId(conn, userId) {
+  return conn.initiatedBy === userId ? conn.receivedBy : conn.initiatedBy;
+}
 
-  const connId = uniqueId('conn');
+async function _findExisting(userIdA, userIdB) {
+  const [asInit, asRecv] = await Promise.all([
+    query({ collection: COL, where: [`initiatedBy::eq::${userIdA}`] }),
+    query({ collection: COL, where: [`receivedBy::eq::${userIdA}`] }),
+  ]);
+  return [...(asInit || []), ...(asRecv || [])].find(
+    c => c.initiatedBy === userIdB || c.receivedBy === userIdB
+  ) || null;
+}
+
+// Create a pending connection (invite sent, not yet accepted).
+// Returns _connectionId — passed through the magic link URL so sign-in can activate it.
+// No-ops and returns existing id if a connection already exists between the pair.
+async function createPendingConnection({ initiatedBy, receivedBy, inviterName, inviteeName, inviteeEmail, _source }) {
+  const existing = await _findExisting(initiatedBy, receivedBy);
+  if (existing) return existing._connectionId;
+
+  const _connectionId = uniqueId('c');
   await create({
     collection: COL,
-    id: connId,
+    id: _connectionId,
     data: {
-      _connId:      connId,
-      _userAId:     a,
-      _userBId:     b,
-      _initiatedBy: userAId,
-      _state:       'pending',
+      _connectionId,
+      status:       'pending',
       _source:      _source || 'link',
+      initiatedBy,
+      receivedBy,
       inviterName:  inviterName  || null,
       inviteeName:  inviteeName  || null,
       inviteeEmail: inviteeEmail || null,
-      createdAt:    Date.now(),
-      acceptedAt:   null,
-    },
+          },
   });
-  return connId;
+  return _connectionId;
 }
 
-// Activate a pending connection by connId.
-async function activateConnection(connId) {
-  await patch({ collection: COL, id: connId, data: { _state: 'active', acceptedAt: Date.now() } });
+// Activate a pending connection.
+async function activateConnection(_connectionId) {
+  await patch({ collection: COL, id: _connectionId, data: { status: 'active' } });
 }
 
 // Get a single connection by id.
-async function getConnection(connId) {
-  const rows = await query({ collection: COL, where: [`_connId::eq::${connId}`] });
+async function getConnection(_connectionId) {
+  const rows = await query({ collection: COL, where: [`_connectionId::eq::${_connectionId}`] });
   return (rows || [])[0] || null;
 }
 
-// Ensure an active connection exists between two users (direct path, no pending step).
-// Activates any existing pending connection rather than creating a duplicate.
-async function ensureConnection({ userAId, userBId, initiatedBy }) {
-  const [a, b] = [userAId, userBId].sort();
-  const existing = await query({ collection: COL, where: [`_userAId::eq::${a}`] });
-  const match = (existing || []).find(c => c._userBId === b);
-
-  if (match) {
-    if (match._state !== 'active') {
-      await patch({ collection: COL, id: match._connId, data: { _state: 'active', acceptedAt: Date.now() } });
+// Ensure an active connection exists (direct path — no pending step).
+async function ensureConnection({ initiatedBy, receivedBy }) {
+  const existing = await _findExisting(initiatedBy, receivedBy);
+  if (existing) {
+    if (existing.status !== 'active') {
+      await patch({ collection: COL, id: existing._connectionId, data: { status: 'active' } });
     }
     return;
   }
-
-  const connId = uniqueId('conn');
+  const _connectionId = uniqueId('c');
   await create({
     collection: COL,
-    id: connId,
-    data: { _connId: connId, _userAId: a, _userBId: b, _initiatedBy: initiatedBy, _state: 'active' },
+    id: _connectionId,
+    data: { _connectionId, status: 'active', initiatedBy, receivedBy },
   });
 }
 
-// Returns active connections only. Treats missing _state as active for backwards compat.
+// Returns active connections only. Treats missing status as active for backwards compat.
 async function getConnectionsForUser(userId) {
-  const [asA, asB] = await Promise.all([
-    query({ collection: COL, where: [`_userAId::eq::${userId}`] }),
-    query({ collection: COL, where: [`_userBId::eq::${userId}`] }),
+  const [asInit, asRecv] = await Promise.all([
+    query({ collection: COL, where: [`initiatedBy::eq::${userId}`] }),
+    query({ collection: COL, where: [`receivedBy::eq::${userId}`] }),
   ]);
-  return [...(asA || []), ...(asB || [])].filter(c => c._state !== 'pending');
+  return [...(asInit || []), ...(asRecv || [])].filter(c => c.status !== 'pending');
 }
 
 async function deleteConnectionsForUser(userId) {
   const connections = await getConnectionsForUser(userId);
-  await Promise.all(connections.map(c => remove({ collection: COL, id: c._connId })));
+  await Promise.all(connections.map(c => remove({ collection: COL, id: c._connectionId })));
 }
 
-module.exports = { createPendingConnection, activateConnection, getConnection, ensureConnection, getConnectionsForUser, deleteConnectionsForUser };
+module.exports = { createPendingConnection, activateConnection, getConnection, ensureConnection, getConnectionsForUser, otherId, deleteConnectionsForUser };
