@@ -7,6 +7,7 @@ import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
 import { get } from '../api.js';
 import { getUserId } from '../auth/auth.js';
+import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
 
 // ─── Audio init — fetch + decode buffers immediately; resume on gesture
 let _audioCtx    = null;
@@ -40,22 +41,11 @@ let _volume = getAudioVolume();
 })();
 
 // ─── Chime signatures
-const SELF_CHIME      = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
-let   CAUGHT_UP_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
+const SELF_CHIME   = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
+const SYSTEM_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
+let   _userChime   = null;
 
-// ─── Queue — each entry is a friend's most recent un-acted-upon practice
-// id field used to track celebrate actions in localStorage
-// TODO: replace QUEUE_SESSIONS with Firestore fetch (most recent practice per friend, unseen only)
-const QUEUE_SESSIONS = [
-  { id: 'roi-001',   name: "Ro'i",  lastPracticed: '2 hours ago',  chime: { notes: [-7,  0,  4], timing: [0, 0.35, 0.70] } },
-  { id: 'yuki-001',  name: 'Yuki',  lastPracticed: 'this morning', chime: { notes: [0,   5, 12], timing: [0, 0.18, 0.62] } },
-  { id: 'frank-001', name: 'Frank', lastPracticed: 'yesterday',    chime: { notes: [-12, 2,  9], timing: [0, 0.08, 0.24] } },
-  { id: 'sarah-001', name: 'Sarah', lastPracticed: '3 days ago',   chime: { notes: [-5,  4,  7], timing: [0, 0.52, 0.74] } },
-];
-
-function getActedOn()   { try { return new Set(JSON.parse(localStorage.getItem('dp-acted-on') ?? '[]')); } catch { return new Set(); } }
-function markActedOn(id){ const s = getActedOn(); s.add(id); localStorage.setItem('dp-acted-on', JSON.stringify([...s])); }
-function getUnseenQueue(){ const acted = getActedOn(); return QUEUE_SESSIONS.filter(s => !acted.has(s.id)); }
+// ─── Queue — populated async at init from witness-queue.js (real or mock mode)
 
 // ─── Tour slides
 const TOUR_SLIDES = [
@@ -150,7 +140,7 @@ function showSession(session) {
   // Stop pulse ring once user is actively in the queue — invitation fulfilled
   document.getElementById('wind-chime')?.classList.remove('chime-hint-pulse');
   if (_pulseSwayInterval) { clearInterval(_pulseSwayInterval); _pulseSwayInterval = null; }
-  showFeedMessage(session.name, `practiced ${session.lastPracticed}`);
+  showFeedMessage(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`);
   swingChime();
   playSignature(session.chime);
   showQueueActions();
@@ -169,7 +159,7 @@ function showCaughtUp() {
   clearTimeout(_queueTimer);
   swingChime();
   showFeedMessage('You', 'are all caught up');
-  playSignature(CAUGHT_UP_CHIME);
+  if (_userChime) playSignature(_userChime);
   showCaughtUpActions();
 }
 
@@ -196,7 +186,7 @@ function showTourSlide({ immediate = false } = {}) {
   const slide = TOUR_SLIDES[_tourIndex];
   showFeedMessage(slide.name, slide.sub, { immediate });
   swingChime();
-  playSignature(CAUGHT_UP_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
+  playSignature(SYSTEM_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
   showTourActions(slide);
 }
 
@@ -205,7 +195,7 @@ function advanceTour() {
   _tourIndex++;
   if (_tourIndex >= TOUR_SLIDES.length) {
     swingChime();
-    playSignature(CAUGHT_UP_CHIME);
+    playSignature(SYSTEM_CHIME);
     showIdleState();
     return;
   }
@@ -218,7 +208,7 @@ function advanceTour() {
 let _pulseSwayInterval = null;
 
 function updateChimePulse() {
-  const hasUnseen = getUnseenQueue().length > 0;
+  const hasUnseen = _queueList.length > 0;
   // Pulse ring is only an idle-state invitation — never reactivates mid-queue
   const showPulse = hasUnseen && _pageState === 'idle';
   document.getElementById('wind-chime')?.classList.toggle('chime-hint-pulse', showPulse);
@@ -258,7 +248,7 @@ document.getElementById('wind-chime')?.addEventListener('click', () => {
 celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
   celebrateBtn.classList.add('btn-received');
-  markActedOn(_currentSession.id);
+  markWitnessed({ userId: getUserId(), witnessedUserId: _currentSession.userId, witnessedPracticeId: _currentSession.practiceId }).catch(() => {});
   playWitnessEcho(_currentSession.chime);
   swingChime();
   updateChimePulse();
@@ -545,12 +535,13 @@ setOrbColor(_dayPeriod);
   initScene({ tier: _sceneTier, stoneLevel: _stoneLevel, overrideHour: _overrideHour, preview: _preview });
 }
 
-_queueList = getUnseenQueue(); // snapshot for this page visit
-updateChimePulse(); // pulse on load if unseen queue items exist
+Promise.all([
+  fetchWitnessQueue(getUserId()),
+  get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`).then(p => p.chime || null).catch(() => null),
+]).then(([queue, chime]) => {
+  _queueList = queue;
+  _userChime = chime;
+  updateChimePulse();
+}).catch(() => {});
 
 if (_devParams.has('tour')) document.addEventListener('DOMContentLoaded', () => startTour({ immediate: true }));
-
-// Reassign CAUGHT_UP_CHIME to the user's personal chime if available
-get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`)
-  .then(({ chime }) => { if (chime) CAUGHT_UP_CHIME = chime; })
-  .catch(() => {});

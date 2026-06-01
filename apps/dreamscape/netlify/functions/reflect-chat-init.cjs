@@ -1,5 +1,5 @@
 const { getUser } = require('./collections/users.cjs');
-const { getSessionsForUser } = require('./collections/sessions.cjs');
+const { getPracticeLogsForUser } = require('./collections/practice-logs.cjs');
 const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
@@ -8,12 +8,12 @@ exports.handler = handle('reflect.chat.init', 'POST', async (event, { userId, ti
 
   const [user, sessions] = await Promise.all([
     getUser(userId),
-    getSessionsForUser(userId),
+    getPracticeLogsForUser(userId),
   ]);
 
   const name = user?._name || 'friend';
 
-  // Sort descending by start time before slicing — getSessionsForUser has no orderBy
+  // Sort descending by start time before slicing — getPracticeLogsForUser has no orderBy
   const sorted = (sessions || []).sort((a, b) => {
     const at = a._startedAt?.seconds ?? (typeof a._startedAt === 'number' ? a._startedAt : 0);
     const bt = b._startedAt?.seconds ?? (typeof b._startedAt === 'number' ? b._startedAt : 0);

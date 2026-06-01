@@ -1,6 +1,6 @@
 import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
-import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
+import { startPractice, endPractice, cancelPractice, saveReflection } from '../practice-logs.js';
 import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
 import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { loadSettings } from '../practice-settings.js';
@@ -107,7 +107,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
     clearInterval(timerInterval);
     timerInterval = null;
     const practiced = totalSeconds - remainingSeconds;
-    await endSession(practiced);
+    await endPractice(practiced);
     saveAbandonedIfPending(getUserId());
     releaseWakeLock();
     isPaused = false;
@@ -120,7 +120,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   function discardSession() {
     clearInterval(timerInterval);
     timerInterval = null;
-    cancelSession();
+    cancelPractice();
     releaseWakeLock();
     timerModal.hidden = true;
     onDiscard?.();
@@ -173,7 +173,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   tick();
 
   initPresence();
-  startSession(practiceName);
+  startPractice(practiceName);
   acquireWakeLock();
   if (settings.bellStart && audioEnabled) playChime();
   log('debug', '[practice-timer] started', practiceName, durationSecs, 'secs', 'source=', source);

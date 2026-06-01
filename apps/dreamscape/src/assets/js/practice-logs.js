@@ -10,14 +10,14 @@ let _lastPracticeLogId = null;
 let practiceName = null;
 let startedAt = null;
 
-export function startSession(name) {
+export function startPractice(name) {
   practiceLogId = generatePracticeLogId();
   practiceName = name || null;
   startedAt = new Date();
   setPresenceState('practicing');
 }
 
-export async function endSession(durationSeconds) {
+export async function endPractice(durationSeconds) {
   if (!practiceLogId) return;
   const userId = getUserId();
   await setDoc(doc(db, 'practice-logs', practiceLogId), {
@@ -38,7 +38,7 @@ export async function endSession(durationSeconds) {
   startedAt = null;
 }
 
-export function cancelSession() {
+export function cancelPractice() {
   practiceLogId = null;
   _lastPracticeLogId = null;
   practiceName = null;

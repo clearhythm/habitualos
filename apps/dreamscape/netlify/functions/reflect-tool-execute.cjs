@@ -1,4 +1,4 @@
-const { getSessionsForUser } = require('./collections/sessions.cjs');
+const { getPracticeLogsForUser } = require('./collections/practice-logs.cjs');
 const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
@@ -11,7 +11,7 @@ exports.handler = handle('reflect.tool.execute', 'POST', async (event, { userId,
   log('debug', '[reflect-tool-execute] tool:', tool, 'input:', input);
 
   if (tool === 'get_session_history') {
-    const sessions = await getSessionsForUser(userId);
+    const sessions = await getPracticeLogsForUser(userId);
 
     // Sort descending by start time
     let results = (sessions || []).sort((a, b) => {

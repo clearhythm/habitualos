@@ -1,6 +1,7 @@
 const { deleteConnectionsForUser } = require('./collections/connections.cjs');
 const { deleteNotesForUser } = require('./collections/notes.cjs');
-const { deleteSessionsForUser } = require('./collections/sessions.cjs');
+const { deletePracticeLogsForUser } = require('./collections/practice-logs.cjs');
+const { deleteWitnessLogsForUser } = require('./collections/witness-logs.cjs');
 const { getAllUsers, deleteUser } = require('./collections/users.cjs');
 const { handle } = require('./_utils/api.cjs');
 
@@ -11,7 +12,8 @@ exports.handler = handle('admin.reset', 'POST', async () => {
     await Promise.all([
       deleteConnectionsForUser(userId),
       deleteNotesForUser(userId),
-      deleteSessionsForUser(userId),
+      deletePracticeLogsForUser(userId),
+      deleteWitnessLogsForUser(userId),
       deleteUser(userId),
     ]);
   }));

@@ -1,6 +1,6 @@
 const { upsertUser, deleteUser, updateLastPracticed } = require('./collections/users.cjs');
 const { ensureConnection, deleteConnectionsForUser } = require('./collections/connections.cjs');
-const { deleteSessionsForUser } = require('./collections/sessions.cjs');
+const { deletePracticeLogsForUser } = require('./collections/practice-logs.cjs');
 const { create } = require('@habitualos/db-core');
 const { log } = require('./_utils/log.cjs');
 
@@ -72,7 +72,7 @@ exports.handler = async (event) => {
 
     if (action === 'delete-practices') {
       if (!userId) return { statusCode: 400, body: JSON.stringify({ error: 'userId required' }) };
-      await deleteSessionsForUser(userId);
+      await deletePracticeLogsForUser(userId);
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };
     }
 
@@ -81,7 +81,7 @@ exports.handler = async (event) => {
       if (!userId.startsWith('tu-')) return { statusCode: 400, body: JSON.stringify({ error: 'can only delete tu-* test users' }) };
       await Promise.all([
         deleteConnectionsForUser(userId),
-        deleteSessionsForUser(userId),
+        deletePracticeLogsForUser(userId),
         deleteUser(userId),
       ]);
       return { statusCode: 200, body: JSON.stringify({ ok: true }) };

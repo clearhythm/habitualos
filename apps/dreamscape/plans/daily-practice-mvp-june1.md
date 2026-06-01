@@ -3,12 +3,11 @@
 Core scope for Frank + Ro'i invite launch:
 
 TEST 1. Core practice experience working reliably
-2. Witness mechanic wired to backend so you can see each other's practice
-   - Change voice note sublink to "skip" since voice note is non-functional
+TEST 2. Witness mechanic wired to backend so you can see each other's practice
+   DONE - Change voice note sublink to "skip" since voice note is non-functional
 3. Invite flow functional so Frank and Ro'i can actually join
-4. Add `VITE_USE_MOCK_WITNESS` env variable toggle in `.env.local` for safe local testing of witness mechanic without losing mock data capability
+TEST 4. Add ?mockWitness param to homepage to allow system to witness using the mock data and LS (for front-end testing)
 5. Confirm unlock/lock deploy shell command is working before June 1 push
-6. Drift off mode: toggle in practice settings (defaults to off), auto-saves on timer end, bypasses post-practice screen, returns to homepage with quiet "your practice was saved" confirmation
 
 That's it. Everything else waits.
 
@@ -17,9 +16,10 @@ That's it. Everything else waits.
 ## Stretch (if time allows)
 
 TEST 1. Fix broken audio check on splash (existing ticket)
-2. Remove "tap for tour" — revert to chime swaying on "all caught up"
-3. Tour refinement: Ditch all auto advance (skip exists for a reason), remove annoying system chime on advance — applies to tour and witness loop
-4. Wire start chime toggle in practice flow (pairs naturally with stop chime)
+DONE 2. Remove "tap for tour" — revert to chime swaying on "all caught up"
+DONE 3. Tour refinement: Ditch all auto advance (skip exists for a reason), remove annoying system chime on advance — applies to tour and witness loop
+DONE 4. Wire start chime toggle in practice flow (pairs naturally with stop chime)
+5. Drift off mode: toggle in practice settings (defaults to off), auto-saves on timer end, bypasses post-practice screen, returns to homepage with quiet "your practice was saved" confirmation
 
 ---
 
