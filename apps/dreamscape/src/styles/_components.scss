@@ -330,7 +330,7 @@
   justify-content: center;
   line-height: 1;
   padding: 0.6em 2.6em .8em;
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 999px;
   background: none;
   font-family: 'Cormorant Garamond', serif;
@@ -344,7 +344,7 @@
 
   &:hover {
     color: rgba($color-text, 1);
-    border-color: rgba(255, 255, 255, 0.90);
+    border-color: rgba(255, 255, 255, 0.60);
     text-decoration: none;
   }
 
