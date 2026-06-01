@@ -1,5 +1,4 @@
 const { createAuthToken } = require('./_utils/create-auth-token.cjs');
-const { sendMagicLink } = require('./_utils/email.cjs');
 const { log } = require('./_utils/log.cjs');
 
 exports.handler = async function handler(event) {
@@ -7,9 +6,14 @@ exports.handler = async function handler(event) {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  let email, guestId, pendingRegistration;
+  const host = event.headers?.host || '';
+  if (!host.includes('localhost')) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Dev sign-in only available locally' }) };
+  }
+
+  let email, guestId;
   try {
-    ({ email, guestId, pendingRegistration } = JSON.parse(event.body || '{}'));
+    ({ email, guestId } = JSON.parse(event.body || '{}'));
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
@@ -19,16 +23,16 @@ exports.handler = async function handler(event) {
   }
 
   try {
-    const { verifyUrl } = await createAuthToken({ email, guestId, pendingRegistration, host: event.headers?.host });
-    await sendMagicLink({ to: email.toLowerCase().trim(), verifyUrl });
+    const { tokenId, verifyUrl } = await createAuthToken({ email, guestId, host });
+    log('debug', '[dev-signin] verifyUrl:', verifyUrl);
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ok: true }),
+      body: JSON.stringify({ ok: true, token: tokenId, verifyUrl }),
     };
   } catch (err) {
-    log('error', '[auth-magic-link-send] error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to send magic link' }) };
+    log('error', '[dev-signin] error:', err);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Dev sign-in failed' }) };
   }
 };

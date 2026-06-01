@@ -26,6 +26,7 @@ export function initAmbientPlayer({ isMuted, getVolume, onVolumeChange, onMuteCh
     if (iconOn)  iconOn.style.display  = muted ? 'none' : '';
     if (iconOff) iconOff.style.display = muted ? '' : 'none';
     if (slider)  slider.value = muted ? 0 : getVolume();
+    if (muteBtn) muteBtn.closest('#ambient-player').style.visibility = '';
     log('debug', '[ambient-player] syncUI muted=', muted, 'vol=', getVolume());
   }
 

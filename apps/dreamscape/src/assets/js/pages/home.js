@@ -1,6 +1,6 @@
 import { setSkyGradient, setOrbColor } from '../sky-gradient.js';
 import { getDayPeriod, DAY_PERIODS } from '../sky-palette.js';
-import { userRequestedAudio } from '../audio-unlock.js';
+import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { setMuted as setAmbientMuted, setVolume as setAmbientVolume } from '../audio-engine.js';
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
@@ -14,8 +14,8 @@ let _masterGain  = null;
 let _chimeBuffer = null;
 let _birdBuffer  = null;
 let _pendingChime = null;   // chime to play once audio is ready
-let _muted  = !userRequestedAudio();
-let _volume = parseFloat(localStorage.getItem('dp-volume') ?? '1');
+let _muted  = getAudioMuted();
+let _volume = getAudioVolume();
 
 (async () => {
   try {
@@ -426,15 +426,16 @@ initAmbientPlayer({
   getVolume:      () => _volume,
   onVolumeChange: (vol) => {
     _volume = vol;
-    localStorage.setItem('dp-volume', vol);
+    setAudioVolume(vol);
     setAmbientVolume(vol);
     if (_masterGain && !_muted) _masterGain.gain.value = vol;
   },
   onMuteChange: (muted) => {
-    _muted  = muted;
-    _volume = muted ? 0 : 1;
+    _muted = muted;
+    setAudioMuted(muted);
+    if (!muted) _volume = getAudioVolume();
     setAmbientMuted(muted);
-    setAmbientVolume(_volume);
+    setAmbientVolume(muted ? 0 : _volume);
     if (_masterGain) _masterGain.gain.value = muted ? 0 : _volume;
   },
 });

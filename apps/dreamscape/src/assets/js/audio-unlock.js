@@ -22,10 +22,8 @@ export function setUserAudioPreference(val) {
 // to satisfy browser autoplay policy, and records the preference as 'enabled'.
 // Used by ambient-player, practice, and reflect when audio controls are engaged.
 export function ensureAudioUnlocked() {
-  if (userAudioPreference() === 'enabled') return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    setUserAudioPreference('enabled');
     ctx.resume()
       .then(() => { log('debug', '[audio-unlock] unlocked, state=', ctx.state); return ctx.close(); })
       .catch(err => log('warn', '[audio-unlock] resume failed:', err));
@@ -33,6 +31,11 @@ export function ensureAudioUnlocked() {
     log('warn', '[audio-unlock] AudioContext creation failed:', err);
   }
 }
+
+export function getAudioMuted()        { return localStorage.getItem('dp-audio-muted') === 'true'; }
+export function setAudioMuted(muted)   { localStorage.setItem('dp-audio-muted', String(muted)); }
+export function getAudioVolume()       { return parseFloat(localStorage.getItem('dp-audio-volume') ?? '1'); }
+export function setAudioVolume(vol)    { localStorage.setItem('dp-audio-volume', String(vol)); }
 
 // Async check for whether the browser is blocking autoplay.
 // Used by the return-visit pulse affordance (UX-Focus-Queue-Ticket1).

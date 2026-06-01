@@ -2,16 +2,15 @@ import { log } from '../utils/log.js';
 import { signIn } from './auth.js';
 import { readIntendedPath, clearIntendedPath } from './auth-intent.js';
 
-export async function sendLink(email, { noEmail = false } = {}) {
+export async function sendLink(email) {
   const guestId = localStorage.getItem('dp-userId');
   const res = await fetch('/api/auth-magic-link-send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, guestId, ...(noEmail && { noEmail: true }) }),
+    body: JSON.stringify({ email, guestId }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'send failed');
-  if (data.verifyUrl) log('debug', '[signin] dev verifyUrl:', data.verifyUrl);
   return data;
 }
 
@@ -26,7 +25,6 @@ export async function consumeToken(token) {
   const pending = data.profile?.pendingRegistration;
   if (pending) {
     await completePendingRegistration(data.userId, pending);
-    // Set welcome flag before redirecting
     if (pending.connectName) {
       localStorage.setItem('dp-welcome-from', pending.connectName);
     } else {
@@ -52,7 +50,7 @@ async function completePendingRegistration(userId, pending) {
   localStorage.removeItem('dp-pending-email');
 }
 
-export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn, noEmail = false }) {
+export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, formStep, sentStep, tryAnotherBtn }) {
   submitBtn.addEventListener('click', async () => {
     const email = emailInput.value.trim();
     if (!email || !email.includes('@')) {
@@ -64,8 +62,7 @@ export function initSigninForm({ emailInput, submitBtn, errorEl, sentEmailEl, fo
     submitBtn.disabled = true;
     submitBtn.textContent = 'sending…';
     try {
-      const data = await sendLink(email, { noEmail });
-      if (data.verifyUrl) { window.location.href = data.verifyUrl; return; }
+      await sendLink(email);
       sentEmailEl.textContent = email;
       formStep.hidden = true;
       sentStep.hidden = false;

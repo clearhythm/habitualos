@@ -2,7 +2,7 @@ import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startSession, endSession, cancelSession, saveReflection } from '../sessions.js';
 import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playChime } from '../audio-engine.js';
-import { userRequestedAudio } from '../audio-unlock.js';
+import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { loadSettings } from '../practice-settings.js';
 import { initAmbientPlayer } from '../ambient-player.js';
 import { saveAbandonedIfPending } from '../collections/reflect-chats.js';
@@ -134,22 +134,23 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   }
 
   // ─── Ambient player
-  let _isMuted = !userRequestedAudio();
-  let _volume  = parseFloat(localStorage.getItem('dp-volume') ?? '1');
+  let _isMuted = getAudioMuted();
+  let _volume  = getAudioVolume();
 
   initAmbientPlayer({
     isMuted:        () => _isMuted,
     getVolume:      () => _volume,
     onVolumeChange: (vol) => {
       _volume = vol;
-      localStorage.setItem('dp-volume', vol);
+      setAudioVolume(vol);
       setVolume(vol);
     },
     onMuteChange: (muted) => {
       _isMuted = muted;
-      _volume  = muted ? 0 : 1;
+      setAudioMuted(muted);
+      if (!muted) _volume = getAudioVolume();
       setMuted(muted);
-      setVolume(_volume);
+      setVolume(muted ? 0 : _volume);
     },
   });
 
