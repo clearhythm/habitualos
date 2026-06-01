@@ -1,3 +1,13 @@
+function renderButton(url, label, color) {
+  return `
+    <style>.email-btn:hover, .email-btn:active { border-color: rgba(255,255,255,0.85) !important; }</style>
+    <a href="${url}" class="email-btn"
+       style="display: inline-block; padding: 0.6em 2.6em 0.8em; background: transparent; color: ${color}; text-decoration: none; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1rem; font-weight: 400; letter-spacing: 0.08em;">
+      ${label}
+    </a>
+  `;
+}
+
 function render({ appName, content, address = '114 Cress Road, Santa Cruz, CA 95060, USA' }) {
   return `
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
@@ -37,4 +47,4 @@ function render({ appName, content, address = '114 Cress Road, Santa Cruz, CA 95
   `;
 }
 
-module.exports = { render };
+module.exports = { render, renderButton };
