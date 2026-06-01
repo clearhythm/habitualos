@@ -11,5 +11,6 @@ exports.handler = handle('user.profile.get', 'GET', async (event, { userId }) =>
     name:  user._name  || '',
     email: user._email || '',
     chime: user.chime  || null,
+    slug:  user.slug   || null,
   };
 });

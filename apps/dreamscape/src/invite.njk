@@ -1,0 +1,46 @@
+---
+layout: base.njk
+title: Invite — Daily Practice
+permalink: /invite/
+pageScript: /assets/js/pages/invite.js
+noContainer: true
+noFooter: true
+bodyClass: scene-page
+---
+
+<div class="blossom-scene">
+  <div class="circle-page">
+
+    <div class="circle-header">
+      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" class="circle-icon" aria-hidden="true">
+        <circle cx="24" cy="24" r="20"/>
+        <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
+      </svg>
+      <div class="feed-message feed-visible">
+        <span class="feed-name">Invite</span>
+        <span class="feed-time">share your link to grow the circle</span>
+      </div>
+    </div>
+
+    <div class="circle-section">
+
+      <div id="invite-loading" class="auth-step">
+        <p class="feed-time auth-step-label">…</p>
+      </div>
+
+      <div id="invite-error" class="auth-step" hidden>
+        <p class="auth-subtext">couldn't load your invite link — try refreshing</p>
+      </div>
+
+      <div id="invite-content" class="auth-step" hidden>
+        <p class="auth-subtext">Anyone with this link can join your circle.<br>They'll be connected to you when they sign in.</p>
+        <div class="invite-url-wrap">
+          <span id="invite-url" class="invite-url-text"></span>
+        </div>
+        <button class="pill" id="copy-btn">copy link</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -1300,6 +1300,22 @@
   letter-spacing: 0.03em;
 }
 
+.invite-url-wrap {
+  border: 1px solid $color-border-hover;
+  border-radius: 12px;
+  padding: $space-sm $space-md;
+  width: 100%;
+  max-width: 320px;
+}
+
+.invite-url-text {
+  font-size: $font-size-sm;
+  color: rgba($color-text-muted, 0.8);
+  word-break: break-all;
+  display: block;
+  text-align: center;
+}
+
 .btn-invite {
   display: inline-block;
   background: transparent;

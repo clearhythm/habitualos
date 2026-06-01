@@ -121,8 +121,8 @@ function renderCircle() {
     const subtitle  = document.getElementById('circle-subtitle');
     const subtitle2 = document.getElementById('circle-subtitle-2');
     if (icon)      icon.classList.remove('has-notes');
-    if (subtitle)  subtitle.textContent  = 'share support with friends';
-    if (subtitle2) subtitle2.textContent = 'send and receive voice chimes';
+    if (subtitle)  subtitle.textContent  = 'invite your friends';
+    if (subtitle2) subtitle2.textContent = 'share and witness progress';
     if (circleListHeader) circleListHeader.hidden = true;
     if (page) page.classList.add('circle-page--empty');
     circleList.innerHTML = '';
