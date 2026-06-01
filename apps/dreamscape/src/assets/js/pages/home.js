@@ -103,7 +103,7 @@ function showPracticedActions() {
 function showQueueActions() {
   mainActionBtn.hidden  = true;
   celebrateBtn.hidden   = false;
-  celebrateBtn.classList.remove('btn-received');
+  celebrateBtn.classList.remove('btn-confirmed');
   reflectPill.hidden    = true;
   continueBtn.hidden    = true;
   voiceChimeBtn.hidden  = false;
@@ -247,7 +247,7 @@ document.getElementById('wind-chime')?.addEventListener('click', () => {
 // ─── Witness
 celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
-  celebrateBtn.classList.add('btn-received');
+  celebrateBtn.classList.add('btn-confirmed');
   markWitnessed({ userId: getUserId(), witnessedUserId: _currentSession.userId, witnessedPracticeId: _currentSession.practiceId }).catch(() => {});
   playWitnessEcho(_currentSession.chime);
   swingChime();

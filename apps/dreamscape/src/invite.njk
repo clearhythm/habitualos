@@ -18,14 +18,14 @@ bodyClass: scene-page
       </svg>
       <div class="feed-message feed-visible">
         <span class="feed-name">Invite</span>
-        <span class="feed-time">share your link to grow the circle</span>
+        <span class="feed-time">share your link to grow your circle</span>
       </div>
     </div>
 
     <div class="circle-section">
 
       <div id="invite-loading" class="auth-step">
-        <p class="feed-time auth-step-label">…</p>
+        <p class="feed-time auth-step-label">Loading…</p>
       </div>
 
       <div id="invite-error" class="auth-step" hidden>
@@ -37,7 +37,10 @@ bodyClass: scene-page
         <div class="invite-url-wrap">
           <span id="invite-url" class="invite-url-text"></span>
         </div>
-        <button class="pill" id="copy-btn">copy link</button>
+        <button class="pill btn-confirmable" id="copy-btn">
+          <span class="btn-label">copy link</span>
+          <span class="btn-label-done" aria-hidden="true">copied</span>
+        </button>
       </div>
 
     </div>

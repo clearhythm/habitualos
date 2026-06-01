@@ -1889,26 +1889,26 @@
 
 
 
-// ─── Witness button — both labels overlay in same grid cell so width never changes
-// opacity cross-fade keeps size stable while transitioning smoothly in both directions
-#celebrate-btn {
+// ─── Confirmable button — two labels in same grid cell, cross-fade on confirm
+// Width stays stable; apply .btn-confirmed to trigger the transition
+.btn-confirmable {
   display: inline-grid;
 
-  .witness-label,
-  .witness-label-done {
+  .btn-label,
+  .btn-label-done {
     grid-area: 1 / 1;
     transition: opacity 0.25s ease;
   }
 
-  .witness-label-done { opacity: 0; }
+  .btn-label-done { opacity: 0; }
 
-  &.btn-received {
+  &.btn-confirmed {
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.65);
     pointer-events: none;
     transition: background 0.2s ease, border-color 0.2s ease;
 
-    .witness-label      { opacity: 0; }
-    .witness-label-done { opacity: 1; }
+    .btn-label      { opacity: 0; }
+    .btn-label-done { opacity: 1; }
   }
 }

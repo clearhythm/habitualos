@@ -42,8 +42,8 @@ copyBtn?.addEventListener('click', async () => {
   if (!url) return;
   try {
     await navigator.clipboard.writeText(url);
-    copyBtn.textContent = 'copied';
-    setTimeout(() => { copyBtn.textContent = 'copy link'; }, 2000);
+    copyBtn.classList.add('btn-confirmed');
+    setTimeout(() => { copyBtn.classList.remove('btn-confirmed'); }, 2000);
   } catch (_) {
     const range = document.createRange();
     range.selectNode(urlEl);
