@@ -118,23 +118,23 @@ export async function startSignupFlow({ sharerName = null, connectUserId = null,
     emailBtn.disabled = true;
     emailBtn.textContent = 'sending…';
     try {
-      const guestId = getUserId();
       const name  = localStorage.getItem('dp-pending-name') || '';
       let chime = null;
       try { chime = JSON.parse(localStorage.getItem('dp-pending-chime') || 'null'); } catch (_) {}
 
       const pendingRegistration = { name, chime, connectUserId: connectUserId || null, connectName: connectName || null };
+      const pendingUserId = localStorage.getItem('dp-pending-userId') || undefined;
 
       const res = await fetch('/api/auth-magic-link-send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, guestId, pendingRegistration }),
+        body: JSON.stringify({ email, pendingUserId, pendingRegistration }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'send failed');
-      if (data.verifyUrl) log('debug', '[signup] dev verifyUrl:', data.verifyUrl);
 
-      // Data is now in Firestore — clean up localStorage
+      // Store server-assigned userId for "change email" reuse
+      if (data.userId) localStorage.setItem('dp-pending-userId', data.userId);
       localStorage.removeItem('dp-pending-name');
       localStorage.removeItem('dp-pending-chime');
       localStorage.setItem('dp-pending-email', email);

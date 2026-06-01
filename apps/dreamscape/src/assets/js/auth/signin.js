@@ -22,8 +22,10 @@ export async function consumeToken(token) {
   const profile = data.profile || {};
   signIn({ userId: data.userId, name: profile._name || profile.displayName || profile.firstName || '' });
 
-  if (data.inviteId) {
-    const result = await completeInviteRegistration(data.userId, data.inviteId);
+  localStorage.removeItem('dp-pending-userId');
+
+  if (data.connId) {
+    const result = await completeInviteRegistration(data.userId, data.connId);
     if (result?.connectName) {
       localStorage.setItem('dp-welcome-from', result.connectName);
     } else {
@@ -36,12 +38,12 @@ export async function consumeToken(token) {
   window.location.replace(dest);
 }
 
-async function completeInviteRegistration(userId, inviteId) {
+async function completeInviteRegistration(userId, connId) {
   try {
     const res = await fetch('/api/user-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, inviteId }),
+      body: JSON.stringify({ userId, connId }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');

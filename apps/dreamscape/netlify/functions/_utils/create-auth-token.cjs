@@ -1,5 +1,7 @@
 const { getUserByEmail, ensureUserEmail, createMagicLinkToken } = require('@habitualos/auth-server');
-const { createInvitation } = require('../collections/invitations.cjs');
+const { updateUser } = require('../collections/users.cjs');
+const { assignSlug } = require('../collections/slugs.cjs');
+const { createPendingConnection } = require('../collections/connections.cjs');
 const { log } = require('./log.cjs');
 
 const PROD_URL    = process.env.BASE_URL || 'https://daily.habitualos.com';
@@ -12,44 +14,59 @@ function generateUserId() {
 }
 
 // Resolves or creates a user, creates a magic link token, and returns the verifyUrl.
-// host: the request Host header value (used to build the correct base URL locally).
-// pendingRegistration: invite context { name, chime, connectUserId, connectName } — present
-//   when the user came through a join link. Stored as an invitation record; inviteId is
-//   appended to the verifyUrl so the consume step can complete registration.
-async function createAuthToken({ email, guestId, pendingRegistration, host }) {
+// pendingRegistration: join-flow context { name, chime, connectUserId, connectName }.
+//   For new users, name/chime are saved to the user record immediately (not deferred to sign-in).
+//   A pending connection is created and its connId is appended to the verifyUrl so sign-in
+//   can activate it.
+// pendingUserId: if the client already has a userId from a prior email submission (e.g. "change
+//   email" flow), reuse it rather than generating a new one.
+async function createAuthToken({ email, guestId, pendingUserId, pendingRegistration, host }) {
   const normalizedEmail = email.toLowerCase().trim();
   const isLocal = (host || '').includes('localhost');
 
   let userId;
+  let isNewUser = false;
   const existingUser = await getUserByEmail(normalizedEmail);
 
   if (existingUser) {
     userId = existingUser.id;
   } else {
-    userId = guestId || generateUserId();
+    userId = pendingUserId || guestId || generateUserId();
     await ensureUserEmail(userId, normalizedEmail);
+    isNewUser = true;
+
+    // Save name/chime immediately — don't defer to sign-in
+    if (pendingRegistration) {
+      const { name, chime } = pendingRegistration;
+      const updates = {};
+      if (name)  { updates._name = name; updates.slug = await assignSlug(userId, name); }
+      if (chime) { updates.chime = chime; }
+      if (Object.keys(updates).length) await updateUser(userId, updates);
+      log('debug', '[create-auth-token] saved profile for new user', userId);
+    }
   }
 
-  let inviteId = null;
-  if (pendingRegistration && typeof pendingRegistration === 'object') {
-    const { name, chime, connectUserId, connectName } = pendingRegistration;
-    inviteId = await createInvitation({
-      _source:       'link',
-      inviterUserId: connectUserId || null,
-      inviterName:   connectName   || null,
-      inviteeName:   name          || null,
-      inviteeEmail:  normalizedEmail,
-      chime:         chime         || null,
+  // Create a pending connection regardless of new/existing — connection always runs on join
+  let connId = null;
+  if (pendingRegistration?.connectUserId) {
+    const { connectUserId, connectName, name } = pendingRegistration;
+    connId = await createPendingConnection({
+      userAId:      connectUserId,
+      userBId:      userId,
+      inviterName:  connectName || null,
+      inviteeName:  name        || null,
+      inviteeEmail: normalizedEmail,
+      _source:      'link',
     });
-    log('debug', '[create-auth-token] created invitation', inviteId, 'for', userId);
+    log('debug', '[create-auth-token] pending connection', connId, 'for', userId);
   }
 
-  const tokenId     = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
-  const baseUrl     = isLocal ? `http://${host}` : PROD_URL;
-  const inviteParam = inviteId ? `&inviteId=${inviteId}` : '';
-  const verifyUrl   = `${baseUrl}${VERIFY_PATH}?token=${tokenId}${inviteParam}`;
+  const tokenId   = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
+  const baseUrl   = isLocal ? `http://${host}` : PROD_URL;
+  const connParam = connId ? `&connId=${connId}` : '';
+  const verifyUrl = `${baseUrl}${VERIFY_PATH}?token=${tokenId}${connParam}`;
 
-  return { userId, tokenId, verifyUrl, inviteId };
+  return { userId, tokenId, verifyUrl, connId, isNewUser };
 }
 
 module.exports = { createAuthToken };
