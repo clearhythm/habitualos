@@ -1,4 +1,12 @@
-function render({ appName, content, address = '114 Cress Road, Santa Cruz, CA 95060, USA' }) {
+function render({ appName, body, button, address = '114 Cress Road, Santa Cruz, CA 95060, USA' }) {
+  const buttonHtml = button ? `
+    <style>.email-btn:hover, .email-btn:active { border-color: rgba(255,255,255,0.85) !important; }</style>
+    <a href="${button.url}" class="email-btn"
+       style="display: inline-block; padding: 0.6em 2.6em 0.8em; background: transparent; color: ${button.color}; text-decoration: none; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1rem; font-weight: 400; letter-spacing: 0.08em;">
+      ${button.label}
+    </a>
+  ` : '';
+  const content = `${body}${buttonHtml}`;
   return `
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
     <div style="background: #0d0c1a; padding: 3rem 1.5rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
