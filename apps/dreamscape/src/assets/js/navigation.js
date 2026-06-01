@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   if (toggle) {
-    if (!localStorage.getItem('dp-nav-seen')) addRipple('first-time');
+    if (isSignedIn() && !localStorage.getItem('dp-nav-seen')) addRipple('first-time');
 
     toggle.addEventListener('click', function() {
       if (!localStorage.getItem('dp-nav-seen')) {
