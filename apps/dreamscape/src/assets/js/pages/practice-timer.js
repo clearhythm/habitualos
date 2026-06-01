@@ -1,7 +1,7 @@
 import { getUserId } from '../auth/auth.js';
 import { initPresence, setPresenceState } from '../presence.js';
 import { startPractice, endPractice, cancelPractice, saveReflection } from '../practice-logs.js';
-import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playBowl } from '../audio-engine.js';
+import { setMuted, setVolume, acquireWakeLock, releaseWakeLock, playBowl, fadeOutBowl } from '../audio-engine.js';
 import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { loadSettings } from '../practice-settings.js';
 import { initAmbientPlayer } from '../ambient-player.js';
@@ -121,6 +121,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
     timerInterval = null;
     cancelPractice();
     releaseWakeLock();
+    fadeOutBowl();
     timerModal.hidden = true;
     onDiscard?.();
   }

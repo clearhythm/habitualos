@@ -69,6 +69,15 @@ export function stop() {
 export function isPlaying() { return _playing; }
 
 // ─── Singing bowl (practice bell) — routes through shared gainNode
+let _bowlGain = null;
+
+export async function preloadBowl() {
+  await initAudio();
+  if (_bowlBuf) return;
+  const ab = await fetch('/assets/music/effects/singing-bowl.mp3').then(r => r.arrayBuffer());
+  _bowlBuf = await audioCtx.decodeAudioData(ab);
+}
+
 export async function playBowl() {
   try {
     await initAudio();
@@ -88,7 +97,17 @@ export async function playBowl() {
     src.playbackRate.value = Math.pow(2, 2 / 12); // +2 semitones
     src.connect(scale);
     src.start();
+    _bowlGain = scale;
   } catch (_) {}
+}
+
+export function fadeOutBowl(duration = 1.5) {
+  if (!_bowlGain || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  _bowlGain.gain.cancelScheduledValues(now);
+  _bowlGain.gain.setValueAtTime(0.65, now);
+  _bowlGain.gain.linearRampToValueAtTime(0, now + duration);
+  _bowlGain = null;
 }
 
 // ─── Wake lock

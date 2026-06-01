@@ -2,6 +2,9 @@ import { log } from '../utils/log.js';
 import { loadSettings, saveSettings } from '../practice-settings.js';
 import { ensureAudioUnlocked } from '../audio-unlock.js';
 import { startTimer } from './practice-timer.js';
+import { preloadBowl } from '../audio-engine.js';
+
+preloadBowl().catch(() => {});
 
 // ─── DOM
 const nameInput      = document.getElementById('practice-name');

@@ -453,6 +453,26 @@ function wireGestureResume() {
   );
 }
 
+function refreshSky() {
+  const period = getDayPeriod(_overrideHour);
+  setSkyGradient(period);
+  setOrbColor(period);
+}
+
+// ─── Tab refocus — update sky gradient always; reset post-practice state after 10 min
+let _hiddenAt = null;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _hiddenAt = Date.now();
+  } else {
+    refreshSky();
+    if (_hiddenAt && _pageState === 'just-practiced' && Date.now() - _hiddenAt > 10 * 60 * 1000) {
+      showIdleState();
+    }
+    _hiddenAt = null;
+  }
+});
+
 // ─── Dev API — exposed only on localhost for the dev toolbar
 if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
   window.__dpDev = { setSkyGradient, setOrbColor, getDayPeriod, initScene, getStoredTier, dayPeriods: DAY_PERIODS };
@@ -511,9 +531,7 @@ const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'
 const _stonesParam  = _devParams.has('stones')  ? parseInt(_devParams.get('stones'), 10) : null;
 const _animateIn    = _devParams.has('new');
 
-const _dayPeriod = getDayPeriod(_overrideHour);
-setSkyGradient(_dayPeriod);
-setOrbColor(_dayPeriod);
+refreshSky();
 
 {
   let _sceneTier   = _tierParam  ?? getStoredTier();

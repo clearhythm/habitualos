@@ -6,6 +6,7 @@ import { generateReflectChatId } from '../utils/id.js';
 import { loadSettings } from '../practice-settings.js';
 import { ensureAudioUnlocked } from '../audio-unlock.js';
 import { startTimer } from './practice-timer.js';
+import { preloadBowl } from '../audio-engine.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
   window.location.replace('/signin/');
@@ -209,6 +210,7 @@ function showReadyOverlay(practiceName, durationSecs) {
   pendingPracticeDuration = durationSecs;
   readyOverlay.hidden = false;
   sendButton.disabled = true;
+  preloadBowl().catch(() => {});
 }
 
 function updateSendButton() {
