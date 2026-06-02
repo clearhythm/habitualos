@@ -32,5 +32,5 @@ module.exports = {
   },
 
   // Wind chime — base64 PNG renders in all email clients (SVGs are stripped)
-  logoHtml: `<img src="https://daily.habitualos.com/assets/images/wind-chime.png" width="40" height="57" alt="" style="display:block;border:0;margin:0 auto;">`,
+  logoHtml: `<img src="https://daily.habitualos.com/assets/images/wind-chime-dk.png" width="40" height="57" alt="" style="display:block;border:0;margin:0 auto;">`,
 };
