@@ -1,7 +1,7 @@
 module.exports = {
   appName:   'Daily Practice',
   address:   '114 Cress Road, Santa Cruz, CA 95060, USA',
-  fromEmail: 'Daily Practice <noreply@practice.habitualos.com>',
+  fromEmail: process.env.RESEND_FROM_EMAIL || 'Daily Practice <hello@habitualos.com>',
 
   primaryFont: {
     url:    null,
