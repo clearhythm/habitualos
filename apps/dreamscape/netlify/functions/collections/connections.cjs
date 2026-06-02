@@ -16,10 +16,7 @@ async function _findExisting(userIdA, userIdB) {
   ) || null;
 }
 
-// Create a pending connection (invite sent, not yet accepted).
-// Returns _connectionId — passed through the magic link URL so sign-in can activate it.
-// No-ops and returns existing id if a connection already exists between the pair.
-async function createPendingConnection({ initiatedBy, receivedBy, inviterName, inviteeName, inviteeEmail, _source }) {
+async function createPendingConnection({ initiatedBy, receivedBy, _source }) {
   const existing = await _findExisting(initiatedBy, receivedBy);
   if (existing) return existing._connectionId;
 
@@ -27,32 +24,20 @@ async function createPendingConnection({ initiatedBy, receivedBy, inviterName, i
   await create({
     collection: COL,
     id: _connectionId,
-    data: {
-      _connectionId,
-      status:       'pending',
-      _source:      _source || 'link',
-      initiatedBy,
-      receivedBy,
-      inviterName:  inviterName  || null,
-      inviteeName:  inviteeName  || null,
-      inviteeEmail: inviteeEmail || null,
-          },
+    data: { _connectionId, status: 'pending', _source: _source || 'link', initiatedBy, receivedBy },
   });
   return _connectionId;
 }
 
-// Activate a pending connection.
 async function activateConnection(_connectionId) {
   await patch({ collection: COL, id: _connectionId, data: { status: 'active' } });
 }
 
-// Get a single connection by id.
 async function getConnection(_connectionId) {
   const rows = await query({ collection: COL, where: [`_connectionId::eq::${_connectionId}`] });
   return (rows || [])[0] || null;
 }
 
-// Ensure an active connection exists (direct path — no pending step).
 async function ensureConnection({ initiatedBy, receivedBy }) {
   const existing = await _findExisting(initiatedBy, receivedBy);
   if (existing) {

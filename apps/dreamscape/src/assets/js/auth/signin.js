@@ -16,7 +16,9 @@ export async function sendLink(email) {
 
 export async function consumeToken(token) {
   log('debug', '[signin] consuming token');
-  const res  = await fetch(`/api/auth-magic-link-consume?token=${encodeURIComponent(token)}`);
+  const connId = new URLSearchParams(window.location.search).get('connId');
+  const connParam = connId ? `&connId=${encodeURIComponent(connId)}` : '';
+  const res  = await fetch(`/api/auth-magic-link-consume?token=${encodeURIComponent(token)}${connParam}`);
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'invalid token');
   const profile = data.profile || {};

@@ -4,7 +4,11 @@ let _audioCtx    = null;
 let _chimeBuffer = null;
 
 export async function initChimeAudio() {
-  if (_audioCtx) return;
+  if (_audioCtx) {
+    // Fire resume synchronously — Safari requires this happen before any awaits
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    return;
+  }
   try {
     _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const buf = await fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer());

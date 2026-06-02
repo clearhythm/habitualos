@@ -50,14 +50,7 @@ async function createAuthToken({ email, guestId, pendingUserId, pendingRegistrat
   let connId = null;
   if (pendingRegistration?.connectUserId) {
     const { connectUserId, connectName, name } = pendingRegistration;
-    connId = await createPendingConnection({
-      initiatedBy:  connectUserId,
-      receivedBy:   userId,
-      inviterName:  connectName || null,
-      inviteeName:  name        || null,
-      inviteeEmail: normalizedEmail,
-      _source:      'link',
-    });
+    connId = await createPendingConnection({ initiatedBy: connectUserId, receivedBy: userId, _source: 'link' });
     log('debug', '[create-auth-token] pending connection', connId, 'for', userId);
   }
 

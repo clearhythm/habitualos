@@ -13,9 +13,10 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
     const conn = await getConnection(connId);
     if (!conn) throw new Error('connection not found: ' + connId);
 
+    const inviter = await getUser(conn.initiatedBy);
     await activateConnection(connId);
     log('debug', '[user-register] activated connection', connId);
-    return { ok: true, connectName: conn.inviterName };
+    return { ok: true, connectName: inviter?._name || null };
   }
 
   // Direct path: settings saves + already-signed-in join
