@@ -1,5 +1,5 @@
 const { createAuthToken } = require('./_utils/create-auth-token.cjs');
-const { sendMagicLink } = require('./_utils/email.cjs');
+const { sendMagicLink } = require('./_email/email.cjs');
 const { log } = require('./_utils/log.cjs');
 
 exports.handler = async function handler(event) {

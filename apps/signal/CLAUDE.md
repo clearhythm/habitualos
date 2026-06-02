@@ -37,6 +37,18 @@ See `docs/design.md` for the full framework.
 
 See `docs/architecture.md` for the full reference: all 9 Firestore collections, all endpoints, streaming chat flow, RAG pipeline, and env vars.
 
+## Email
+
+Signal currently has two email systems — this is intentional debt, not an accident.
+
+**Active system:** `netlify/functions/_services/email.cjs` — 6 custom send functions using Resend directly. This is what's deployed and working.
+
+**Target system:** `netlify/functions/_email/theme.cjs` — the new monorepo pattern introduced in June 2026. Apps define a `theme.cjs` (colors, fonts, logo) and call shared transactional templates from `@habitualos/email-service/transactionals/`. Dreamscape and obi-wai-web are already migrated.
+
+**When next touching email:** migrate the relevant function(s) from `_services/email.cjs` to `_email/`. Each function becomes its own file (`_email/verification-code.cjs`, etc.) that calls `base.render(theme, slots)` directly. The `theme.cjs` is already written — no design work needed.
+
+Do not add new send functions to `_services/email.cjs`. Add them to `_email/` using the new pattern.
+
 ## Key Patterns
 
 See root `CLAUDE.md` for shared patterns (auth, data layer, endpoint structure).

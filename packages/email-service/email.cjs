@@ -1,5 +1,4 @@
 const { Resend } = require('resend');
-const magicLinkTemplate = require('./templates/magic-link.cjs');
 
 let resendClient = null;
 
@@ -12,15 +11,19 @@ function getClient() {
   return resendClient;
 }
 
-async function sendMagicLink({ to, verifyUrl, appName = 'HabitualOS', primaryColor = '#3a7a10', buttonColor, fromEmail }) {
+async function sendEmail({ from, to, subject, text, html }) {
   const client = getClient();
-  const from = fromEmail || process.env.RESEND_FROM_EMAIL || `${appName} <noreply@habitualos.com>`;
-  const { subject, text, html } = magicLinkTemplate.render({ appName, verifyUrl, primaryColor, buttonColor });
-
   const { data, error } = await client.emails.send({ from, to, subject, text, html });
-
   if (error) throw new Error(`Email send failed: ${error.message}`);
   return data;
 }
 
-module.exports = { sendMagicLink };
+module.exports = {
+  sendEmail,
+  transactionals: {
+    magicLinkAuth: require('./transactionals/magic-link-auth.cjs'),
+  },
+  templates: {
+    base: require('./templates/base.cjs'),
+  },
+};

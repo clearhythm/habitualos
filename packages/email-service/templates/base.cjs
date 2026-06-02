@@ -1,48 +1,87 @@
-function render({ appName, body, button, address = '114 Cress Road, Santa Cruz, CA 95060, USA' }) {
-  const buttonHtml = button ? `
-    <style>.email-btn:hover, .email-btn:active { border-color: rgba(255,255,255,0.85) !important; }</style>
-    <a href="${button.url}" class="email-btn"
-       style="display: inline-block; padding: 0.6em 2.6em 0.8em; background: transparent; color: ${button.color}; text-decoration: none; border-radius: 999px; border: 1px solid rgba(255,255,255,0.65); font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1rem; font-weight: 400; letter-spacing: 0.08em;">
-      ${button.label}
-    </a>
-  ` : '';
-  const content = `${body}${buttonHtml}`;
+// Structural HTML email renderer — no hard-coded styles or branding.
+// All visual identity comes from the `theme` object; all content from `slots`.
+
+function buildPreheaderHtml(text) {
+  const spacer = '&#8199;&#847; '.repeat(60) + '&shy; '.repeat(80) + '&nbsp;';
   return `
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
-    <div style="background: #0d0c1a; padding: 3rem 1.5rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-      <div style="max-width: 440px; margin: 0 auto;">
-
-        <div style="text-align: center; margin-bottom: 2rem;">
-          <svg width="40" height="57" viewBox="0 0 56 80" aria-hidden="true" style="display:inline-block;">
-            <circle cx="28" cy="3" r="2.5" fill="#e5e3f5" fill-opacity="0.45"/>
-            <line x1="5" y1="10" x2="51" y2="10" stroke="#e5e3f5" stroke-opacity="0.40" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="10" y1="10" x2="10" y2="24" stroke="#e5e3f5" stroke-opacity="0.25" stroke-width="0.8"/>
-            <line x1="20" y1="10" x2="20" y2="18" stroke="#e5e3f5" stroke-opacity="0.25" stroke-width="0.8"/>
-            <line x1="30" y1="10" x2="30" y2="22" stroke="#e5e3f5" stroke-opacity="0.25" stroke-width="0.8"/>
-            <line x1="40" y1="10" x2="40" y2="16" stroke="#e5e3f5" stroke-opacity="0.25" stroke-width="0.8"/>
-            <line x1="50" y1="10" x2="50" y2="20" stroke="#e5e3f5" stroke-opacity="0.25" stroke-width="0.8"/>
-            <rect x="8"  y="24" width="4" height="22" rx="2" fill="#e5e3f5" fill-opacity="0.52"/>
-            <rect x="18" y="18" width="4" height="16" rx="2" fill="#e5e3f5" fill-opacity="0.45"/>
-            <rect x="28" y="22" width="4" height="30" rx="2" fill="#e5e3f5" fill-opacity="0.60"/>
-            <rect x="38" y="16" width="4" height="18" rx="2" fill="#e5e3f5" fill-opacity="0.45"/>
-            <rect x="48" y="20" width="4" height="24" rx="2" fill="#e5e3f5" fill-opacity="0.50"/>
-            <circle cx="28" cy="60" r="3.5" fill="#e5e3f5" fill-opacity="0.35"/>
-            <line x1="30" y1="52" x2="28" y2="57" stroke="#e5e3f5" stroke-opacity="0.20" stroke-width="0.8"/>
-          </svg>
-        </div>
-
-        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem 1.75rem; text-align: left;">
-          <p style="font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif; font-size: 1.625rem; font-weight: 300; color: #e5e3f5; margin: 0 0 0.25rem; letter-spacing: 0.02em;">${appName}</p>
-          ${content}
-        </div>
-
-        <p style="font-size: 0.7rem; color: rgba(156,163,175,0.3); text-align: center; margin: 1.5rem 0 0; line-height: 1.6;">
-          ${appName} · ${address}
-        </p>
-
-      </div>
-    </div>
+    <div style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;max-height:0;max-width:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;">${text}</div>
+    <div style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;max-height:0;max-width:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;">${spacer}</div>
   `;
+}
+
+// theme shape:
+// {
+//   appName:        string
+//   address:        string
+//   primaryFont:    { url: string|null, family: string }   body/UI text
+//   secondaryFont:  { url: string|null, family: string }   titles, buttons, display
+//   bg:             string   outer background
+//   cardBg:         string
+//   cardBorder:     string
+//   cardBorderRadius: string
+//   titleColor:     string
+//   subtitleColor:  string
+//   bodyColor:      string
+//   disclaimerColor: string
+//   footerColor:    string
+//   logoHtml:       string|null   raw HTML (inline SVG or <img>)
+//   button: { color, bgColor, borderColor, borderRadius, fontStack }
+// }
+
+// slots shape:
+// {
+//   preheader:   string|null
+//   subtitle:    string|null
+//   body:        string|null   plain text (no HTML tags)
+//   button:      { url, label } | null   visual props come from theme.button
+//   disclaimer:  string|null
+// }
+
+function render(theme, slots = {}) {
+  const { preheader, subtitle, body, button, disclaimer } = slots;
+
+  const fontLinks = [theme.primaryFont, theme.secondaryFont]
+    .filter((f, i, arr) => f?.url && arr.findIndex(x => x?.url === f.url) === i)
+    .map(f => `<link href="${f.url}" rel="stylesheet">`)
+    .join('\n    ');
+
+  const preheaderHtml  = preheader  ? buildPreheaderHtml(preheader) : '';
+  const logoHtml       = theme.logoHtml ? `<div style="text-align:center;margin-bottom:2rem;">${theme.logoHtml}</div>` : '';
+  const subtitleHtml   = subtitle   ? `<p style="font-size:0.875rem;color:${theme.subtitleColor};margin:0 0 1.75rem;font-family:${theme.primaryFont.family};">${subtitle}</p>` : '';
+  const bodyHtml       = body       ? `<p style="font-size:0.9375rem;color:${theme.bodyColor};margin:0 0 1.75rem;line-height:1.6;font-family:${theme.primaryFont.family};">${body}</p>` : '';
+  const disclaimerHtml = disclaimer ? `<p style="font-size:0.8125rem;color:${theme.disclaimerColor};margin:1.75rem 0 0;line-height:1.5;font-family:${theme.primaryFont.family};">${disclaimer}</p>` : '';
+
+  const buttonHtml = button ? `
+    <style>.email-btn:hover,.email-btn:active{border-color:${theme.button.hoverBorderColor || theme.button.borderColor}!important;}</style>
+    <a href="${button.url}" class="email-btn" style="display:inline-block;padding:0.6em 2.6em 0.8em;background:${theme.button.bgColor};color:${theme.button.color};text-decoration:none;border-radius:${theme.button.borderRadius};border:1px solid ${theme.button.borderColor};font-family:${theme.button.fontStack};font-size:1rem;font-weight:400;letter-spacing:0.08em;">${button.label}</a>
+  ` : '';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  ${fontLinks}
+</head>
+<body style="margin:0;padding:0;background:${theme.bg};">
+  ${preheaderHtml}
+  <div style="background:${theme.bg};padding:3rem 1.5rem;font-family:${theme.primaryFont.family};">
+    <div style="max-width:440px;margin:0 auto;">
+      ${logoHtml}
+      <div style="background:${theme.cardBg};border:1px solid ${theme.cardBorder};border-radius:${theme.cardBorderRadius};padding:2rem 1.75rem;text-align:left;">
+        <p style="font-family:${theme.secondaryFont.family};font-size:1.625rem;font-weight:300;color:${theme.titleColor};margin:0 0 0.25rem;letter-spacing:0.02em;">${theme.appName}</p>
+        ${subtitleHtml}
+        ${bodyHtml}
+        ${buttonHtml}
+        ${disclaimerHtml}
+      </div>
+      <p style="font-size:0.7rem;color:${theme.footerColor};text-align:center;margin:1.5rem 0 0;line-height:1.6;font-family:${theme.primaryFont.family};">
+        ${theme.appName} · ${theme.address}
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
 }
 
 module.exports = { render };
