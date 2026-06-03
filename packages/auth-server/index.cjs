@@ -8,7 +8,7 @@
 
 const { authenticate } = require('./middleware/api-auth.cjs');
 const { requireAuth } = require('./middleware/api-security.cjs');
-const { getUserById, getUserByEmail, updateUser, ensureUserEmail } = require('./services/db-users.cjs');
+const { getUserById, getUserByEmail, updateUser, createUser, setUserEmail, ensureUserEmail } = require('./services/db-users.cjs');
 const { createToken, validateToken, recordConsumption, createMagicLinkToken } = require('./tokens.cjs');
 const { createMagicLinkSendHandler } = require('./handlers/magic-link-send.cjs');
 const { createMagicLinkConsumeHandler } = require('./handlers/magic-link-consume.cjs');
@@ -23,7 +23,9 @@ module.exports = {
   getUserById,
   getUserByEmail,
   updateUser,
-  ensureUserEmail,
+  createUser,
+  setUserEmail,
+  ensureUserEmail, // backwards-compat alias for createUser
 
   // Token management
   createToken,

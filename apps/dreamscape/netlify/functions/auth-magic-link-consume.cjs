@@ -6,9 +6,9 @@ exports.handler = async (event) => {
   const result = await baseHandler(event);
   if (result.statusCode !== 200) return result;
 
-  const connId = event.queryStringParameters?.connId || null;
-  if (!connId) return result;
+  const connectionId = event.queryStringParameters?.connectionId || null;
+  if (!connectionId) return result;
 
   const body = JSON.parse(result.body);
-  return { ...result, body: JSON.stringify({ ...body, connId }) };
+  return { ...result, body: JSON.stringify({ ...body, connectionId }) };
 };

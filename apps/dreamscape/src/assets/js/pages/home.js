@@ -38,7 +38,8 @@ let _pendingChime = null;   // chime to play once audio is ready
 // ─── Chime signatures
 const SELF_CHIME   = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
 const SYSTEM_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
-let   _userChime   = null;
+let   _userChime      = null;
+let   _profileLoaded  = false;
 
 // ─── Queue — populated async at init from witness-queue.js (real or mock mode)
 
@@ -154,7 +155,7 @@ function showCaughtUp() {
   clearTimeout(_queueTimer);
   swingChime();
   showFeedMessage('You', 'are all caught up');
-  playChime(_userChime ?? SELF_CHIME);
+  if (_profileLoaded) playChime(_userChime ?? SELF_CHIME);
   showCaughtUpActions();
 }
 
@@ -246,7 +247,7 @@ document.getElementById('wind-chime')?.addEventListener('click', async () => {
 celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
   celebrateBtn.classList.add('btn-confirmed');
-  markWitnessed({ userId: getUserId(), witnessedUserId: _currentSession.userId, witnessedPracticeId: _currentSession.practiceId }).catch(() => {});
+  markWitnessed({ witnessId: getUserId(), practicerId: _currentSession.userId, practiceLogId: _currentSession.practiceLogId }).catch(() => {});
   playChimeEcho(_currentSession.chime);
   swingChime();
   updateChimePulse();
@@ -549,9 +550,11 @@ Promise.all([
   fetchWitnessQueue(getUserId()),
   get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`).then(p => p.chime || null).catch(() => null),
 ]).then(([queue, chime]) => {
-  _queueList = queue;
-  _userChime = chime;
+  _queueList     = queue;
+  _userChime     = chime;
+  _profileLoaded = true;
   updateChimePulse();
+  if (_pageState === 'caught-up') playChime(_userChime ?? SELF_CHIME);
 }).catch(() => {});
 
 if (_devParams.has('tour')) document.addEventListener('DOMContentLoaded', () => startTour({ immediate: true }));

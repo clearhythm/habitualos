@@ -32,11 +32,10 @@ async function updateUser(id, patch) {
  * Ensure user document exists with email.
  * Creates user if doesn't exist, updates email if it does.
  */
-async function ensureUserEmail(userId, email) {
+async function createUser(userId, email) {
   const normalizedEmail = email.toLowerCase().trim();
   const userRef = db.collection('users').doc(userId);
   const userSnap = await userRef.get();
-
   if (!userSnap.exists) {
     await userRef.set({
       _userId: userId,
@@ -44,22 +43,32 @@ async function ensureUserEmail(userId, email) {
       _createdAt: admin.firestore.FieldValue.serverTimestamp(),
       _updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
-  } else {
-    await userRef.set(
-      {
-        _email: normalizedEmail,
-        _updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
   }
-
   return true;
+}
+
+async function setUserEmail(userId, email) {
+  const normalizedEmail = email.toLowerCase().trim();
+  await db.collection('users').doc(userId).set(
+    { _email: normalizedEmail, _updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+  return true;
+}
+
+// Backwards-compat for non-Vite apps (signal). Supports "wrong email" re-submission flow.
+// TODO: remove once signal migrates to Vite and uses createUser/setUserEmail directly.
+async function ensureUserEmail(userId, email) {
+  const userRef = db.collection('users').doc(userId);
+  const userSnap = await userRef.get();
+  return userSnap.exists ? setUserEmail(userId, email) : createUser(userId, email);
 }
 
 module.exports = {
   getUserById,
   getUserByEmail,
   updateUser,
-  ensureUserEmail
+  createUser,
+  setUserEmail,
+  ensureUserEmail,
 };

@@ -1,4 +1,4 @@
-const { getUserByEmail, ensureUserEmail, createMagicLinkToken } = require('@habitualos/auth-server');
+const { getUserByEmail, getUserById, createUser, setUserEmail, createMagicLinkToken } = require('@habitualos/auth-server');
 const { updateUser } = require('../collections/users.cjs');
 const { assignSlug } = require('../collections/slugs.cjs');
 const { createPendingConnection } = require('../collections/connections.cjs');
@@ -32,34 +32,41 @@ async function createAuthToken({ email, guestId, pendingUserId, pendingRegistrat
     userId = existingUser.id;
   } else {
     userId = pendingUserId || guestId || generateUserId();
-    await ensureUserEmail(userId, normalizedEmail);
-    isNewUser = true;
 
-    // Save name/chime immediately — don't defer to sign-in
-    if (pendingRegistration) {
-      const { name, chime } = pendingRegistration;
-      const updates = {};
-      if (name)  { updates._name = name; updates.slug = await assignSlug(userId, name); }
-      if (chime) { updates.chime = chime; }
-      if (Object.keys(updates).length) await updateUser(userId, updates);
-      log('debug', '[create-auth-token] saved profile for new user', userId);
+    if (pendingUserId && await getUserById(pendingUserId)) {
+      // Change-email flow: doc already exists, just update the email
+      await setUserEmail(userId, normalizedEmail);
+    } else {
+      // New user: create the record
+      await createUser(userId, normalizedEmail);
+      isNewUser = true;
+
+      // Save name/chime immediately — don't defer to sign-in
+      if (pendingRegistration) {
+        const { name, chime } = pendingRegistration;
+        const updates = {};
+        if (name)  { updates._name = name; updates.slug = await assignSlug(userId, name); }
+        if (chime) { updates.chime = chime; }
+        if (Object.keys(updates).length) await updateUser(userId, updates);
+        log('debug', '[create-auth-token] saved profile for new user', userId);
+      }
     }
   }
 
   // Create a pending connection regardless of new/existing — connection always runs on join
-  let connId = null;
+  let connectionId = null;
   if (pendingRegistration?.connectUserId) {
-    const { connectUserId, connectName, name } = pendingRegistration;
-    connId = await createPendingConnection({ initiatedBy: connectUserId, receivedBy: userId, _source: 'link' });
-    log('debug', '[create-auth-token] pending connection', connId, 'for', userId);
+    const { connectUserId } = pendingRegistration;
+    connectionId = await createPendingConnection({ initiatedBy: connectUserId, receivedBy: userId, _source: 'link' });
+    log('debug', '[create-auth-token] pending connection', connectionId, 'for', userId);
   }
 
-  const tokenId   = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
-  const baseUrl   = isLocal ? `http://${host}` : PROD_URL;
-  const connParam = connId ? `&connId=${connId}` : '';
-  const verifyUrl = `${baseUrl}${VERIFY_PATH}?token=${tokenId}${connParam}`;
+  const tokenId        = await createMagicLinkToken(userId, normalizedEmail, guestId || null);
+  const baseUrl        = isLocal ? `http://${host}` : PROD_URL;
+  const connParam      = connectionId ? `&connectionId=${connectionId}` : '';
+  const verifyUrl      = `${baseUrl}${VERIFY_PATH}?token=${tokenId}${connParam}`;
 
-  return { userId, tokenId, verifyUrl, connId, isNewUser };
+  return { userId, tokenId, verifyUrl, connectionId, isNewUser };
 }
 
 module.exports = { createAuthToken };

@@ -8,7 +8,7 @@
  * POST body: { email, guestId? }
  */
 
-const { getUserByEmail, ensureUserEmail } = require('../services/db-users.cjs');
+const { getUserByEmail, createUser } = require('../services/db-users.cjs');
 const { createMagicLinkToken } = require('../tokens.cjs');
 
 function generateUserId() {
@@ -53,7 +53,7 @@ function createMagicLinkSendHandler({ getBaseUrl, sendEmail, verifyPath = '/sign
       } else {
         // New user: preserve guest data by using guestId as userId
         userId = guestId || generateUserId();
-        await ensureUserEmail(userId, normalizedEmail);
+        await createUser(userId, normalizedEmail);
       }
 
       // Create magic link token

@@ -1,10 +1,10 @@
 const { createWitnessLog } = require('./collections/witness-logs.cjs');
 const { handle } = require('./_utils/api.cjs');
 
-exports.handler = handle('witness.log.create', 'POST', async (event, { userId, witnessedUserId, witnessedPracticeId }) => {
-  if (!userId) throw new Error('userId required');
-  if (!witnessedUserId) throw new Error('witnessedUserId required');
-  if (!witnessedPracticeId) throw new Error('witnessedPracticeId required');
-  await createWitnessLog({ userId, witnessedUserId, witnessedPracticeId });
+exports.handler = handle('witness.log.create', 'POST', async (event, { witnessId, practicerId, practiceLogId }) => {
+  if (!witnessId) throw new Error('witnessId required');
+  if (!practicerId) throw new Error('practicerId required');
+  if (!practiceLogId) throw new Error('practiceLogId required');
+  await createWitnessLog({ witnessId, practicerId, practiceLogId });
   return { ok: true };
 });

@@ -4,18 +4,18 @@ const { assignSlug } = require('./collections/slugs.cjs');
 const { handle } = require('./_utils/api.cjs');
 const { log } = require('./_utils/log.cjs');
 
-exports.handler = handle('user.register', 'POST', async (event, { userId, name, chime, connectUserId, connId }) => {
+exports.handler = handle('user.register', 'POST', async (event, { userId, name, chime, connectUserId, connectionId }) => {
   if (!userId || !userId.startsWith('u-')) throw new Error('invalid userId');
-  log('debug', '[user-register] userId:', userId, 'connId:', connId, 'name:', name);
+  log('debug', '[user-register] userId:', userId, 'connectionId:', connectionId, 'name:', name);
 
-  if (connId) {
+  if (connectionId) {
     // Join flow: name/chime already saved at email submission — just activate the connection
-    const conn = await getConnection(connId);
-    if (!conn) throw new Error('connection not found: ' + connId);
+    const conn = await getConnection(connectionId);
+    if (!conn) throw new Error('connection not found: ' + connectionId);
 
     const inviter = await getUser(conn.initiatedBy);
-    await activateConnection(connId);
-    log('debug', '[user-register] activated connection', connId);
+    await activateConnection(connectionId);
+    log('debug', '[user-register] activated connection', connectionId);
     return { ok: true, connectName: inviter?._name || null };
   }
 
@@ -28,7 +28,7 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
   if (Object.keys(updates).length) await updateUser(userId, updates);
 
   if (connectUserId && connectUserId !== userId) {
-    await ensureConnection({ initiatedBy: userId, receivedBy: connectUserId });
+    await ensureConnection({ initiatedBy: connectUserId, receivedBy: userId });
     log('debug', '[user-register] connected', userId, '↔', connectUserId);
   }
 

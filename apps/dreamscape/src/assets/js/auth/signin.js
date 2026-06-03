@@ -16,8 +16,8 @@ export async function sendLink(email) {
 
 export async function consumeToken(token) {
   log('debug', '[signin] consuming token');
-  const connId = new URLSearchParams(window.location.search).get('connId');
-  const connParam = connId ? `&connId=${encodeURIComponent(connId)}` : '';
+  const connectionId = new URLSearchParams(window.location.search).get('connectionId');
+  const connParam = connectionId ? `&connectionId=${encodeURIComponent(connectionId)}` : '';
   const res  = await fetch(`/api/auth-magic-link-consume?token=${encodeURIComponent(token)}${connParam}`);
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || 'invalid token');
@@ -26,8 +26,8 @@ export async function consumeToken(token) {
 
   localStorage.removeItem('dp-pending-userId');
 
-  if (data.connId) {
-    const result = await completeInviteRegistration(data.userId, data.connId);
+  if (data.connectionId) {
+    const result = await completeInviteRegistration(data.userId, data.connectionId);
     if (result?.connectName) {
       localStorage.setItem('dp-welcome-from', result.connectName);
     } else {
@@ -40,12 +40,12 @@ export async function consumeToken(token) {
   window.location.replace(dest);
 }
 
-async function completeInviteRegistration(userId, connId) {
+async function completeInviteRegistration(userId, connectionId) {
   try {
     const res = await fetch('/api/user-register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, connId }),
+      body: JSON.stringify({ userId, connectionId }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
