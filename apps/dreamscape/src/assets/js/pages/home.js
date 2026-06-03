@@ -315,8 +315,10 @@ function showFeedMessage(name, subtitle, { immediate = false } = {}) {
   feedEl.classList.remove('feed-visible');
   setTimeout(() => {
     feedEl.innerHTML = html;
-    feedEl.classList.add('feed-visible');
-  }, 400);
+    // RAF ensures new content is committed before the fade-in transition starts;
+    // without it Safari composites the old painted layer with new innerHTML mid-transition.
+    requestAnimationFrame(() => feedEl.classList.add('feed-visible'));
+  }, 420);
 }
 
 // ─── Intro tagline — alternates visit-to-visit (idle state)

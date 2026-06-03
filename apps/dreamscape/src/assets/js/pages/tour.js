@@ -168,7 +168,7 @@ function fadeToSlide(nextScreen) {
 
 // ─── Events
 
-iconEl.addEventListener('click', () => {
+iconEl.addEventListener('click', async () => {
   if (screenNum !== 0 && screenNum !== 1) return;
   const chimeEl = iconEl.querySelector('.wind-chime');
   if (!chimeEl) return;
@@ -178,10 +178,18 @@ iconEl.addEventListener('click', () => {
   chimeEl.addEventListener('animationend', (e) => {
     if (e.animationName === 'chime-sway') chimeEl.classList.add('chime-at-rest');
   }, { once: true });
+  // Unlock audio on gesture; chime.js resume() call must precede any awaits
+  await initChimeAudio();
+  if (userChimeSig) playChime(userChimeSig).catch(() => {});
 });
 
-continueBtn.addEventListener('click', (e) => {
+continueBtn.addEventListener('click', async (e) => {
   e.preventDefault();
+  // Screen 0 → 1: first gesture — unlock audio and play welcome chime
+  if (screenNum === 0) {
+    await initChimeAudio();
+    if (userChimeSig) playChime(userChimeSig).catch(() => {});
+  }
   if (screenNum < SLIDES.length - 1) {
     fadeToSlide(screenNum + 1);
   } else {

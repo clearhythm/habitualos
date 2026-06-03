@@ -15,7 +15,7 @@ async function createWitnessLog({ witnessId, practicerId, practiceLogId }) {
       witnessId,
       practicerId,
       practiceLogId,
-      _createdAt: Date.now(),
+      _createdAt: new Date(),
     },
   });
 }
@@ -28,7 +28,7 @@ async function getWitnessedPracticeLogIds(witnessId) {
 async function getLastWitnessedAt(userId) {
   const rows = await query({ collection: COL, where: [`practicerId::eq::${userId}`] }) || [];
   if (!rows.length) return null;
-  return Math.max(...rows.map(r => r._createdAt));
+  return Math.max(...rows.map(r => r._createdAt.toMillis()));
 }
 
 async function getWitnessedStatus(userId) {
@@ -54,12 +54,16 @@ async function getActiveWitnessQueue(userId) {
   const queue = [];
   for (const [user, session] of connData) {
     if (!user || !session) continue;
-    if (witnessedIds.has(session._practiceLogId)) continue;
+    if (!session._practiceId) continue;
+    if (witnessedIds.has(session._practiceId)) continue;
+    const ts = session._startedAt;
+    const lastPracticedAt = typeof ts === 'number' ? ts
+      : ts?.toMillis?.() ?? (ts?.seconds ? ts.seconds * 1000 : null);
     queue.push({
-      practiceLogId: session._practiceLogId,
+      practiceLogId: session._practiceId,
       userId: user._userId,
       name: user._name,
-      lastPracticedAt: session._startedAt,
+      lastPracticedAt,
       chime: user.chime ?? null,
     });
   }

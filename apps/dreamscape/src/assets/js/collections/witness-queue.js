@@ -13,16 +13,40 @@ function isMockMode() {
   return new URLSearchParams(window.location.search).has('mockWitness');
 }
 
+function sameCalendarDay(a, b) {
+  return a.getFullYear() === b.getFullYear()
+      && a.getMonth()    === b.getMonth()
+      && a.getDate()     === b.getDate();
+}
+
+function dayPeriod(date) {
+  const h = date.getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  return 'evening';
+}
+
 export function timeAgo(ms) {
   if (!ms) return null;
-  const diff = Date.now() - ms;
-  const mins = Math.floor(diff / 60000);
+  const diff  = Date.now() - ms;
+  const mins  = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
   if (mins < 60) return mins <= 1 ? 'just now' : `${mins} minutes ago`;
-  if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
-  if (days === 1) return 'yesterday';
-  return `${days} days ago`;
+
+  const practiceDate = new Date(ms);
+  const now          = new Date();
+  const yesterday    = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (sameCalendarDay(practiceDate, now)) {
+    const period = dayPeriod(practiceDate);
+    if (period !== dayPeriod(now)) return `this ${period}`;
+    return `${hours} hours ago`;
+  }
+  if (sameCalendarDay(practiceDate, yesterday)) {
+    return dayPeriod(practiceDate) === 'evening' ? 'last night' : 'yesterday';
+  }
+  return `${Math.floor(diff / 86400000)} days ago`;
 }
 
 export async function fetchWitnessQueue(userId) {
