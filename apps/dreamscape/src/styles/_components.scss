@@ -688,6 +688,12 @@
   gap: $space-2xl;
   height: 100%;
   text-align: center;
+
+  &--tour {
+    justify-content: flex-start;
+    padding-top: $space-lg;
+    gap: $space-md;
+  }
 }
 
 .practice-field {
@@ -842,6 +848,11 @@
   &:hover {
     color: rgba($color-text, 0.70);
     border-color: rgba(255, 255, 255, 0.28);
+  }
+
+  &.selected {
+    color: rgba($color-text, 0.85);
+    border-color: rgba(255, 255, 255, 0.50);
   }
 }
 
@@ -1961,13 +1972,13 @@
   }
 }
 
-// Widget area: sits below blossom-content (which is at top: 28%)
+// Widget area: top set dynamically by tour.js to sit right below blossom-content
 #tour-widget {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  top: 60%;
+  top: 60%; // fallback; JS overrides this on each slide
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 

@@ -111,10 +111,10 @@
 
         a {
           text-decoration: none;
-          color: #c8c5e8;
-          transition: opacity 0.2s;
+          color: rgba(255, 255, 255, 0.7);
+          transition: color 0.2s;
 
-          &:hover { opacity: 0.8; }
+          &:hover { color: rgba(255, 255, 255, 0.9); }
         }
       }
     }
@@ -136,13 +136,13 @@
     padding: 0.3rem 0;
     font-family: inherit;
     font-size: 1.2rem;
-    color: rgba(#c8c5e8, 0.5);
+    color: rgba(255, 255, 255, 0.4);
     text-decoration: none;
     cursor: pointer;
     text-align: left;
     transition: color 0.2s;
 
-    &:hover { color: rgba(#c8c5e8, 0.85); }
+    &:hover { color: rgba(255, 255, 255, 0.7); }
   }
 }
 

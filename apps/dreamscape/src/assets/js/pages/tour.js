@@ -1,5 +1,6 @@
-import { renderCircleList }   from '../components/circle-list.js';
+import { renderCircleList }    from '../components/circle-list.js';
 import { renderReflectInput }  from '../components/reflect-input.js';
+import { renderPracticeSetup } from '../components/practice-setup.js';
 import { getConnections }      from '../collections/connections.js';
 import { getUserProfile }      from '../collections/users.js';
 import { getUserId, getName }  from '../auth/auth.js';
@@ -42,27 +43,27 @@ const SLIDES = [
     widget:   null,
   },
   {
-    bg:       skyBg,
+    bg:       'linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)',
     iconSrc:  '/assets/images/chime.svg',
     title:    'Practice',
-    subtitle: 'awaken a beautiful world',
-    sublink:  { text: 'practice', href: '/practice/' },
-    widget:   null,
+    subtitle: 'anything you want to do daily',
+    sublink:  { text: 'done', href: '/' },
+    widget:   'practice',
   },
   {
     bg:       'linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)',
     iconSrc:  '/assets/images/reflect.svg',
     title:    'Reflect',
-    subtitle: 'shine a little light on your path',
-    sublink:  { text: 'reflect', href: '/reflect/' },
+    subtitle: 'get support anytime you need',
+    sublink:  { text: 'done', href: '/' },
     widget:   'reflect',
   },
   {
     bg:       '#0d0c1a',
     iconSrc:  '/assets/images/circle.svg',
     title:    'Circle',
-    subtitle: 'share support with friends',
-    sublink:  { text: 'invite', href: '/invite/' },
+    subtitle: 'witness each other\'s growth',
+    sublink:  { text: 'done', href: '/' },
     widget:   'circle',
   },
 ];
@@ -84,6 +85,12 @@ let userChimeSig = null;
 
 // ─── Render
 
+function positionWidget() {
+  const sceneTop     = sceneEl.getBoundingClientRect().top;
+  const headerBottom = blossomEl.getBoundingClientRect().bottom;
+  widgetEl.style.top = `${headerBottom - sceneTop}px`;
+}
+
 function applySlide() {
   const slide = SLIDES[screenNum];
   const bg    = typeof slide.bg === 'function' ? slide.bg() : slide.bg;
@@ -95,14 +102,16 @@ function applySlide() {
   sublinkEl.textContent    = slide.sublink.text;
   sublinkEl.href           = slide.sublink.href;
   continueBtn.textContent  = screenNum === 0              ? 'let\'s begin'
-                           : screenNum === SLIDES.length - 1 ? 'begin'
+                           : screenNum === SLIDES.length - 1 ? 'i\'m ready'
                            : 'continue';
 
   widgetEl.innerHTML = '';
-  if (slide.widget === 'reflect') {
+  if (slide.widget === 'practice') {
+    renderPracticeSetup(widgetEl, { tourMode: true });
+  } else if (slide.widget === 'reflect') {
     renderReflectInput(widgetEl, {
       placeholder: reflectPlaceholder(),
-      onTap: () => { window.location.href = slide.sublink.href; },
+      onTap: () => { window.location.href = '/reflect/'; },
     });
   } else if (slide.widget === 'circle') {
     if (circleData.circle.length) {
@@ -117,6 +126,11 @@ function applySlide() {
   }
 
   actionsEl.style.visibility = '';
+
+  const ambientPlayer = document.getElementById('ambient-player');
+  if (ambientPlayer) ambientPlayer.style.visibility = screenNum === 0 ? '' : 'hidden';
+
+  requestAnimationFrame(positionWidget);
 
   if (screenNum === 0) playWelcomeChime();
 
@@ -153,7 +167,6 @@ iconEl.addEventListener('click', () => {
 
 continueBtn.addEventListener('click', (e) => {
   e.preventDefault();
-  if (screenNum === 0) playWelcomeChime();
   if (screenNum < SLIDES.length - 1) {
     fadeToSlide(screenNum + 1);
   } else {
@@ -198,6 +211,8 @@ async function init() {
 
   applySlide();
 }
+
+window.addEventListener('resize', positionWidget);
 
 initAmbientPlayer({
   isMuted:        () => getAudioMuted(),
