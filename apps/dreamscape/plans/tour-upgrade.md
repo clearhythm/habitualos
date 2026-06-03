@@ -1,69 +1,123 @@
-# Tour Upgrade Design Spec
+# Tour Upgrade
 
-## Concept
-Tour mode shows each section in its real UI — actual icons, backgrounds, and layouts — but with a conditional tour header that appears when `?tour=true` is set in the URL. The tour feels like a real walkthrough of the app, not a simplified overlay.
-
-## How It Works
-
-### Tour Param
-- Tour context is carried via URL param: `?tour=true`
-- All sections check for this param and conditionally render the tour header
-- Autofocus is disabled globally on all inputs/textareas when tour param is set
-
-### Tour Header (conditional)
-- Shown only when `?tour=true`
-- Follows the same design pattern as the homepage: icon + title + subtitle + `[ continue ]` button + sublink
-
-### Slide Structure
-Each tour slide = real section UI + tour header overlay at top:
+## Status
+Largely complete. One remaining ticket: Practice slide composable (see below).
 
 ---
 
-**Slide 1 — Home**
-Route: `/`
-Icon: chime
-Title: Practice
-Subtitle: awaken a beautiful world
-Action: `[ continue ]`
-Sublink: `practice` → enters practice flow, exits tour
+## What Was Built
+
+### Architecture
+The tour is a dedicated route (`/tour/`) — not an overlay, not page params. Each slide is a screen within that route, driven by `?screen=N` in the URL. Browser back button works naturally via `history.pushState` + `popstate`.
+
+### Routes
+| URL | Screen | Description |
+|---|---|---|
+| `/tour/` | 0 — Welcome | Entry point for new users |
+| `/tour/?screen=1` | 1 — Practice | Practice page preview |
+| `/tour/?screen=2` | 2 — Reflect | Reflect page preview |
+| `/tour/?screen=3` | 3 — Circle | Circle page preview |
+
+### New User Flow
+- `signup.js` and `signin.js` (invite flow) redirect to `/tour/` directly
+- Edge function (`auth.ts`) intercepts, routes through `/audio-splash/?next=/tour/` if no audio pref cookie
+- After audio choice → lands on `/tour/` (Welcome slide)
+- User's chime plays on welcome slide load
+
+### Sidemenu "Tour" link → `/tour/` (returns to welcome slide for returning users)
+
+### Composable Widgets (DRY pattern)
+Each page's content is extracted into a composable module used by both the real page AND the tour slide.
+
+| Module | Used by | What it renders |
+|---|---|---|
+| `src/assets/js/components/circle-list.js` | `circle.js` + tour slide 3 | Full widget: header (Name / Celebrate ▾ sort), sortable rows, thread interaction, send note, mark read |
+| `src/assets/js/components/reflect-input.js` | `reflect.njk` + tour slide 2 | Chat footer: textarea + send button; `onTap` exits tour to `/reflect/` |
+
+### Icon System
+- SVGs extracted to `src/assets/images/` (chime, reflect, circle, ago)
+- 11ty `svgIcon` shortcode added to `eleventy.config.js` — templates use `{% svgIcon "name" %}`
+- Tour fetches SVGs at runtime via `fetch('/assets/images/name.svg')`
+
+### Chime Behavior
+- `swingChime(wrapEl)` shared from `chime.js` — used by home.js and tour.js
+- Tour welcome + practice slides: tapping the chime icon swings it; after swing it rests (`.chime-at-rest`)
+- Home page: chime swings on state transitions (queue, caught-up, click)
+
+### Home Page
+- Welcome state removed entirely — home is idle-only
+- `showWelcomeActions`, `launchTour`, LS flag (`dp-welcome-from`, `dp-first-visit`) all gone
+
+### Slide Details
+
+**Screen 0 — Welcome**
+- Background: time-of-day sky gradient
+- Icon: chime (with idle sway, swings on tap)
+- Title: "Welcome" / "a beautiful journey awaits you"
+- CTA: "let's begin" → screen 1
+- Sublink: "skip" → `/`
+- User's chime plays on load
+
+**Screen 1 — Practice**
+- Background: dark (matching real practice page)
+- Icon: chime
+- Title: "Practice" / "awaken a beautiful world"
+- CTA: "continue" → screen 2
+- Sublink: "practice" → `/practice/`
+- Widget: **PENDING** — see remaining work below
+
+**Screen 2 — Reflect**
+- Background: `linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)`
+- Icon: reflect leaf
+- Title: "Reflect" / "shine a little light on your path"
+- CTA: "continue" → screen 3
+- Sublink: "reflect" → `/reflect/`
+- Widget: reflect input (from `reflect-input.js`) — time-of-day placeholder, tap exits to `/reflect/`
+
+**Screen 3 — Circle**
+- Background: `#0d0c1a`
+- Icon: circle
+- Title: "Circle" / "share support with friends"
+- CTA: "begin" → `/` (home)
+- Sublink: "invite" → `/invite/`
+- Widget: full circle list (from `circle-list.js`) — sortable, interactive, real data
 
 ---
 
-**Slide 2 — Reflect**
-Route: `/reflect`
-Icon: reflect leaf
-Title: Reflect
-Subtitle: shine a little light on your path
-Action: `[ continue ]`
-Sublink: `reflect` → exits tour, reloads reflect fully with name in bubble and autofocus on reply field
+## Remaining Work — Practice Slide Composable
 
-- AI prompt bubble is hidden in tour mode
-- Placeholder text on reply field: "What's present for you tonight?" (no name personalization in tour)
-- Autofocus disabled so keyboard doesn't hijack on load
-- Tapping the textarea exits tour and reloads reflect fully — name in bubble, autofocus on reply field
+### Goal
+Screen 1 (Practice) should look like the actual practice page — not the sky bg welcome variant. Currently it shares the sky bg and chime icon with the Welcome slide, making the two look identical. The practice slide should show the real practice UI below the tour header.
 
----
+### Design
+- **Background**: dark (same as real practice page: `linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)`)
+- **Icon**: chime (small, header-style)
+- **Below tour header**: practice page content — input field, example tags, settings rows
+- **No "begin" button** in tour mode (that's the offramp to the real page)
+- Settings rows **should be interactive** — they save to localStorage and carry over when the user actually starts their first practice. Nice UX: they configure their practice during the tour.
 
-**Slide 3 — Circle**
-Route: `/circle`
-Icon: circle icon
-Title: Circle
-Subtitle: share support with friends
-Action: `[ continue ]`
-Sublink: `invite` → goes to invite flow, exits tour
+### Implementation — same DRY pattern as circle and reflect
 
-- Real sortable members list shown
-- Bottom invite button hidden in tour mode — invite lives as sublink only
+**New file: `src/assets/js/components/practice-setup.js`**
 
----
+```js
+export function renderPracticeSetup(container, { interactive = true } = {}) {
+  // Renders the practice field (input + examples) and settings rows
+  // Same HTML/CSS as practice.njk's .practice-setup content
+  // No begin button
+  // If interactive: settings rows save to localStorage via practice-settings.js
+  // Returns teardown fn
+}
+```
 
-### Offramp Behavior
-- Each section's sublink is the feature itself (`practice`, `reflect`, `invite`)
-- Tapping a sublink exits tour (clears `?tour=true`) and enters that section for real
-- No explicit "skip tour" needed — the offramps ARE the skip
+**`practice.njk`**: Replace inline `.practice-setup` content with `renderPracticeSetup()` call from `practice.js` (or keep static HTML and have composable render an equivalent for tour — same CSS classes ensure styling is always in sync).
 
-### Tour End
-- Last slide's `[ continue ]` navigates to homepage
-- Tour param cleared
-- Scene returns to idle state
-- User has arrived — ready to begin
+**`tour.js` slide 1**: `widget: 'practice'`, calls `renderPracticeSetup(widgetEl)`.
+
+### Note on DRY strategy
+Same principle as `circle-list.js`:
+- The composable owns the rendering of the practice content
+- `practice.js` uses it for the real page
+- `tour.js` uses it for the slide widget
+- CSS classes are the single source for styling — any visual change to the practice UI propagates automatically to the tour
+- The "begin" button is excluded from the composable (it's page-specific behavior, not part of the reusable widget)
