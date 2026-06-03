@@ -5,9 +5,9 @@ import { initAudio, getCtx, getGain, getMuted, getVolume, setMuted, setVolume } 
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
-import { get } from '../api.js';
 import { getUserId } from '../auth/auth.js';
 import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
+import { getUserProfile } from '../collections/users.js';
 
 // ─── Audio init — shared context from audio-engine; fetch + decode buffers
 let _chimeBuffer = null;
@@ -39,7 +39,6 @@ let _pendingChime = null;   // chime to play once audio is ready
 const SELF_CHIME   = { notes: [0, 7, 12],  timing: [0, 0.25, 0.55] };
 const SYSTEM_CHIME = { notes: [12, 16, 24], timing: [0, 0.2,  0.3]  };
 let   _userChime      = null;
-let   _profileLoaded  = false;
 
 // ─── Queue — populated async at init from witness-queue.js (real or mock mode)
 
@@ -155,7 +154,8 @@ function showCaughtUp() {
   clearTimeout(_queueTimer);
   swingChime();
   showFeedMessage('You', 'are all caught up');
-  if (_profileLoaded) playChime(_userChime ?? SELF_CHIME);
+  const sig = _userChime ?? SELF_CHIME;
+  if (!playChime(sig)) _pendingChime = sig;
   showCaughtUpActions();
 }
 
@@ -546,15 +546,18 @@ refreshSky();
   initScene({ tier: _sceneTier, stoneLevel: _stoneLevel, overrideHour: _overrideHour, preview: _preview });
 }
 
-Promise.all([
-  fetchWitnessQueue(getUserId()),
-  get(`/api/user-profile-get?userId=${encodeURIComponent(getUserId())}`).then(p => p.chime || null).catch(() => null),
-]).then(([queue, chime]) => {
-  _queueList     = queue;
-  _userChime     = chime;
-  _profileLoaded = true;
+fetchWitnessQueue(getUserId()).then(queue => {
+  _queueList = queue;
   updateChimePulse();
-  if (_pageState === 'caught-up') playChime(_userChime ?? SELF_CHIME);
+}).catch(() => {});
+
+getUserProfile().then(p => {
+  _userChime = p.chime || null;
+  updateChimePulse();
+  if (_pageState === 'caught-up') {
+    const sig = _userChime ?? SELF_CHIME;
+    if (!playChime(sig)) _pendingChime = sig;
+  }
 }).catch(() => {});
 
 if (_devParams.has('tour')) document.addEventListener('DOMContentLoaded', () => startTour({ immediate: true }));

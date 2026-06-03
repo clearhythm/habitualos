@@ -1,6 +1,6 @@
 import { isSignedIn, getUserId } from '../auth/auth.js';
 import { initChimeAudio, playChime, generateChime, swingChime } from '../chime.js';
-import { fetchProfile, saveProfile } from '../collections/users.js';
+import { getUserProfile, setUserProfile } from '../collections/users.js';
 import { log } from '../utils/log.js';
 
 if (!isSignedIn() || !getUserId()?.startsWith('u-')) {
@@ -41,7 +41,7 @@ async function save() {
   saveBtn.disabled = true;
   saveBtn.textContent = 'saving…';
   try {
-    await saveProfile({ name, chime: _pendingChime });
+    await setUserProfile({ name, chime: _pendingChime });
     _originalName  = name;
     _originalChime = _pendingChime;
     saveBtn.disabled = false;
@@ -66,7 +66,7 @@ nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') save(); });
 // ─── Init
 (async () => {
   try {
-    const profile = await fetchProfile();
+    const profile = await getUserProfile();
     nameInput.value = profile.name || '';
     if (headerEmail) headerEmail.textContent = profile.email ? `for ${profile.email}` : '';
     _pendingChime = profile.chime || generateChime();

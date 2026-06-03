@@ -30,6 +30,8 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
   if (connectUserId && connectUserId !== userId) {
     await ensureConnection({ initiatedBy: connectUserId, receivedBy: userId });
     log('debug', '[user-register] connected', userId, '↔', connectUserId);
+    const inviter = await getUser(connectUserId);
+    return { ok: true, connectName: inviter?._name || null };
   }
 
   return { ok: true };

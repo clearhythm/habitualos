@@ -23,7 +23,12 @@ async function registerAndConnect({ connectUserId } = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, connectUserId: connectUserId || undefined }),
     });
-    if (!res.ok) log('warn', '[signup] register failed:', res.status);
+    if (!res.ok) {
+      log('warn', '[signup] register failed:', res.status);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      if (data.connectName) localStorage.setItem('dp-welcome-from', data.connectName);
+    }
   } catch (err) { log('warn', '[signup] register failed:', err); }
 
   localStorage.removeItem('dp-pending-name');
