@@ -1,4 +1,4 @@
-import { getCircleData, invalidateCircleCache } from '../collections/circle.js';
+import { getConnections } from '../collections/connections.js';
 import { sendNote as apiSendNote, markRead as apiMarkRead } from '../collections/notes.js';
 import { getUserId, getName } from '../auth/auth.js';
 
@@ -23,7 +23,7 @@ async function loadCircleData() {
   if (!userId) { renderCircle(); return; }
 
   try {
-    const data = await getCircleData();
+    const data = await getConnections();
     circle        = data.circle        || [];
     receivedNotes = data.receivedNotes || [];
     sentNotes     = data.sentNotes     || [];
@@ -42,8 +42,8 @@ function renderNotesSection() {
   const subtitle2 = document.getElementById('circle-subtitle-2');
   if (allCaughtUp()) {
     if (icon) icon.classList.remove('has-notes');
-    if (subtitle)  subtitle.textContent  = 'send notes to support friends';
-    if (subtitle2) subtitle2.textContent = 'they can read them when they practice';
+    if (subtitle)  subtitle.textContent  = 'practice with friends';
+    if (subtitle2) subtitle2.textContent = 'witness, celebrate, send chimes';
   } else if (hasLocked()) {
     if (icon) icon.classList.add('has-notes');
     if (subtitle)  subtitle.textContent  = 'you have unread notes';
@@ -177,9 +177,7 @@ circleList.addEventListener('click', (e) => {
     textarea.value = '';
     thread.hidden  = true;
     showSentConfirmation(toUserId);
-    apiSendNote({ fromUserId: userId, fromName: userName, toUserId, text })
-      .then(() => invalidateCircleCache())
-      .catch(() => {});
+    apiSendNote({ fromUserId: userId, fromName: userName, toUserId, text }).catch(() => {});
     return;
   }
 
@@ -209,7 +207,6 @@ circleList.addEventListener('click', (e) => {
             receivedNotes.forEach(n => {
               if (n._fromUserId === fromUserId && n.unlockedAt) n.readAt = Date.now();
             });
-            invalidateCircleCache();
             const stillUnread = receivedNotes.some(n => n.unlockedAt && !n.readAt);
             localStorage.setItem('dp-has-unread', stillUnread ? 'true' : 'false');
             const badge = document.getElementById('nav-circle-badge');

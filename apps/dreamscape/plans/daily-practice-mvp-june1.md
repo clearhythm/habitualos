@@ -25,9 +25,17 @@ DONE 4. Wire start chime toggle in practice flow (pairs naturally with stop chim
 
 ## V2 Ideas
 
+### Cache & API Calls
+- **API logging**: Fix duplicate writes (~3x per API call) in the logging utility — reduces noise before adding more listeners
+- **User doc onSnapshot**: Add `connections: [userId]` array to user doc. Single `onSnapshot` on `/users/{userId}` covers profile changes + connection list changes in one listener. On change → invalidate `dp-connections-cache` → re-fetch. Write-side: `user-register.cjs` updates both users' arrays on activation. Replaces current 30-min TTL.
+- **Witness queue onSnapshot**: Rebuild witness queue with Firestore `onSnapshot` instead of fetch-on-load. Naturally eliminates the `dp-has-unread` LS flag (live data replaces it).
+- **JS architecture**: Move `src/assets/js/collections/*.js` → `src/assets/js/api/*.js`; `api.js` → `api/api.js`. No `collections/` on the client.
+
+### Cross-device sync
+- **Storage to Firestore**: Move `dp-scene-tier`, `dp-nav-seen`, `dp-witness-witnessed` from localStorage to Firestore for true cross-device sync.
+
+### Features
 - **Drift off mode**: Toggle in practice settings (defaults to off), auto-saves on timer end, bypasses post-practice screen, returns to homepage with quiet "your practice was saved" confirmation
-- **API logging**: Fix duplicate logs (writing ~3x per API call) for cleaner usage data
-- **Storage cleanup**: Move `dp-cache-circle` and `dp-has-unread` to sessionStorage (resolved naturally when witness queue is rebuilt with Firestore onSnapshot). Move `dp-scene-tier`, `dp-nav-seen`, `dp-witness-witnessed` to Firestore for true cross-device sync.
 - **Friends Chimes during live practice**: Use existing RTDB to notify friends when you're actively practicing — leave toggle visible as curiosity starter for now
 - **AI story note**: Brief AI-generated summary at top of Ago/Story page that turns the history feed into an actual narrative "Story"
 - **Chime swap**: Reduce chime frequency on homepage or replace with simpler sound — test whether annoyance persists with real usage before building

@@ -1,4 +1,5 @@
 const { create, uniqueId } = require('@habitualos/db-core');
+const { log } = require('./log.cjs');
 
 async function logRequest(action, userId, result, error) {
   await create({
@@ -22,6 +23,7 @@ function handle(action, method, fn) {
       statusCode = err.statusCode || 500;
       error = err.message || String(err);
       body = { error };
+      log('error', `[${action}] error:`, err);
     }
     await logRequest(action, userId, statusCode, error);
     return { statusCode, body: JSON.stringify(body) };

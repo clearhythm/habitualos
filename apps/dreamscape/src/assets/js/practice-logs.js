@@ -3,7 +3,6 @@ import { setPresenceState } from './presence.js';
 import { post } from './api.js';
 import { getUserId } from './auth/auth.js';
 import { generatePracticeLogId } from './utils.js';
-import { invalidateCircleCache } from './collections/circle.js';
 
 let practiceLogId = null;
 let _lastPracticeLogId = null;
@@ -31,7 +30,6 @@ export async function endPractice(durationSeconds) {
   });
   setPresenceState('witnessing');
   post('/api/session-complete', { userId }).catch(() => {});
-  invalidateCircleCache();
   _lastPracticeLogId = practiceLogId;
   practiceLogId = null;
   practiceName = null;

@@ -3,8 +3,9 @@ const { query, remove } = require('@habitualos/db-core');
 const COL = 'practice-logs';
 
 async function getLatestPracticeLog(userId) {
-  const rows = await query({ collection: COL, where: [`_userId::eq::${userId}`], orderBy: '_startedAt::desc', limit: 1 });
-  return rows?.[0] || null;
+  const rows = await query({ collection: COL, where: [`_userId::eq::${userId}`] });
+  if (!rows?.length) return null;
+  return rows.reduce((latest, row) => (row._startedAt > (latest?._startedAt ?? 0) ? row : latest), null);
 }
 
 async function getRecentPracticeLogs(limit = 20) {
