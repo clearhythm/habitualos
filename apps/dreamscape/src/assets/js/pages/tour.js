@@ -43,7 +43,7 @@ const SLIDES = [
     widget:   null,
   },
   {
-    bg:       'linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)',
+    bg:       'linear-gradient(to bottom, #050310, #0a0617)',
     iconSrc:  '/assets/images/chime.svg',
     title:    'Practice',
     subtitle: 'anything you want to do daily',
@@ -54,12 +54,12 @@ const SLIDES = [
     bg:       'linear-gradient(to bottom, #0d0c1a, #13121f 70%, #0a0917)',
     iconSrc:  '/assets/images/reflect.svg',
     title:    'Reflect',
-    subtitle: 'get support anytime you need',
+    subtitle: 'get support anytime you like',
     sublink:  { text: 'done', href: '/' },
     widget:   'reflect',
   },
   {
-    bg:       '#0d0c1a',
+    bg:       'linear-gradient(to bottom, #050310, #0a0617)',
     iconSrc:  '/assets/images/circle.svg',
     title:    'Circle',
     subtitle: 'witness each other\'s growth',
@@ -70,6 +70,11 @@ const SLIDES = [
 
 // ─── DOM
 const sceneEl      = document.getElementById('tour-scene');
+
+// Overlay element for bg cross-fades (CSS can't interpolate gradients)
+const bgOverlayEl = document.createElement('div');
+bgOverlayEl.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity 0.35s ease;pointer-events:none;z-index:0';
+sceneEl.prepend(bgOverlayEl);
 const blossomEl    = document.getElementById('blossom-content');
 const iconEl       = document.getElementById('tour-icon');
 const titleEl      = document.getElementById('tour-title');
@@ -142,13 +147,23 @@ function slideUrl(n) {
 }
 
 function fadeToSlide(nextScreen) {
+  const nextSlide = SLIDES[nextScreen];
+  const nextBg    = typeof nextSlide.bg === 'function' ? nextSlide.bg() : nextSlide.bg;
+
   blossomEl.classList.add('tour-fading');
+  bgOverlayEl.style.background = nextBg;
+  bgOverlayEl.style.opacity    = '1';
+
   setTimeout(() => {
     screenNum = nextScreen;
     history.pushState({ screen: screenNum }, '', slideUrl(screenNum));
     applySlide();
     blossomEl.classList.remove('tour-fading');
-  }, 150);
+    // Snap overlay away now that scene bg matches
+    bgOverlayEl.style.transition = 'none';
+    bgOverlayEl.style.opacity    = '0';
+    requestAnimationFrame(() => { bgOverlayEl.style.transition = 'opacity 0.35s ease'; });
+  }, 350);
 }
 
 // ─── Events
