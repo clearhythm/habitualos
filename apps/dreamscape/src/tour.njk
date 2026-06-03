@@ -1,0 +1,27 @@
+---
+layout: base.njk
+title: Tour — Daily Practice
+permalink: /tour/
+pageScript: /assets/js/pages/tour.js
+noContainer: true
+noFooter: true
+bodyClass: tour-page
+---
+
+<div class="blossom-scene tour-scene" id="tour-scene">
+
+  <div class="blossom-content" id="blossom-content">
+    <div class="tour-icon" id="tour-icon"></div>
+    <div class="feed-message feed-visible" id="feed-message">
+      <span class="feed-name" id="tour-title"></span>
+      <span class="feed-time" id="tour-subtitle"></span>
+    </div>
+    <div class="practice-actions" style="visibility:hidden" id="tour-actions">
+      <a href="#" id="tour-continue" class="practice-pill">continue</a>
+      <a href="#" id="tour-sublink" class="btn-quiet"></a>
+    </div>
+  </div>
+
+  <div id="tour-widget"></div>
+
+</div>

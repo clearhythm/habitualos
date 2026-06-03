@@ -8,6 +8,7 @@ import { initScene, getStoredTier } from '../scene.js';
 import { getUserId } from '../auth/auth.js';
 import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
 import { getUserProfile } from '../collections/users.js';
+import { swingChime } from '../chime.js';
 
 // ─── Audio init — shared context from audio-engine; fetch + decode buffers
 let _chimeBuffer = null;
@@ -42,22 +43,13 @@ let   _userChime      = null;
 
 // ─── Queue — populated async at init from witness-queue.js (real or mock mode)
 
-// ─── Tour slides
-const TOUR_SLIDES = [
-  { name: 'Practice', sub: 'awaken a beautiful world',  action: { text: 'practice', href: '/practice/' } },
-  { name: 'Reflect', sub: 'discover what works best',   action: { text: 'reflect',  href: '/reflect/'  } },
-  { name: 'Chime', sub: 'share support with friends',   action: { text: 'invite',   href: '/invite/'   } },
-];
-
 // ─── Page state
-// 'idle' | 'just-practiced' | 'queue' | 'caught-up' | 'touring'
+// 'idle' | 'just-practiced' | 'queue' | 'caught-up' | 'welcome'
 let _pageState      = 'idle';
 let _currentSession = null;
 let _queueList      = [];   // snapshot of unseen sessions, set at init
 let _queueCursor    = 0;
 let _queueTimer     = null;
-let _tourIndex      = 0;
-let _tourTimer      = null;
 
 // ─── DOM
 const feedEl           = document.getElementById('feed-message');
@@ -115,12 +107,13 @@ function showCaughtUpActions() {
   voiceChimeBtn.hidden      = true;
 }
 
-function showTourActions(slide) {
+function showWelcomeActions() {
   continueBtn.className     = 'practice-pill';
   continueBtn.hidden        = false;
+  continueBtn.textContent   = 'yes, begin';
   mainActionBtn.className   = 'btn-quiet';
-  mainActionBtn.href        = slide.action.href;
-  mainActionBtn.textContent = slide.action.text;
+  mainActionBtn.href        = '#';
+  mainActionBtn.textContent = 'no thanks';
   mainActionBtn.hidden      = false;
   celebrateBtn.hidden       = true;
   reflectPill.hidden        = true;
@@ -136,7 +129,7 @@ function showSession(session) {
   document.getElementById('wind-chime')?.classList.remove('chime-hint-pulse');
   if (_pulseSwayInterval) { clearInterval(_pulseSwayInterval); _pulseSwayInterval = null; }
   showFeedMessage(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`);
-  swingChime();
+  swingChime(windChimeEl);
   playChime(session.chime);
   showQueueActions();
 }
@@ -152,7 +145,7 @@ function showCaughtUp() {
   _pageState      = 'caught-up';
   _currentSession = null;
   clearTimeout(_queueTimer);
-  swingChime();
+  swingChime(windChimeEl);
   showFeedMessage('You', 'are all caught up');
   const sig = _userChime ?? SELF_CHIME;
   if (!playChime(sig)) _pendingChime = sig;
@@ -162,40 +155,14 @@ function showCaughtUp() {
 function showIdleState() {
   _pageState      = 'idle';
   _currentSession = null;
-  clearTimeout(_tourTimer);
   clearTimeout(_queueTimer);
   applyIntroTagline();
   showIdleActions();
   updateChimePulse();
 }
 
-function startTour({ immediate = false } = {}) {
-  _pageState  = 'touring';
-  _tourIndex  = 0;
-  showTourSlide({ immediate });
-  revealActions();
-  updateChimePulse();
-}
-
-function showTourSlide({ immediate = false } = {}) {
-  clearTimeout(_tourTimer);
-  const slide = TOUR_SLIDES[_tourIndex];
-  showFeedMessage(slide.name, slide.sub, { immediate });
-  swingChime();
-  playChime(SYSTEM_CHIME); // stub — Tour-Scene-Sounds-Ticket1 replaces with playSceneSound()
-  showTourActions(slide);
-}
-
-function advanceTour() {
-  clearTimeout(_tourTimer);
-  _tourIndex++;
-  if (_tourIndex >= TOUR_SLIDES.length) {
-    swingChime();
-    playChime(SYSTEM_CHIME);
-    showIdleState();
-    return;
-  }
-  showTourSlide();
+function launchTour() {
+  window.location.href = '/tour/';
 }
 
 // ─── Chime pulse — dynamic, reflects unseen queue state
@@ -210,8 +177,8 @@ function updateChimePulse() {
   document.getElementById('wind-chime')?.classList.toggle('chime-hint-pulse', showPulse);
 
   if (showPulse && !_pulseSwayInterval) {
-    swingChime();
-    _pulseSwayInterval = setInterval(swingChime, 10000);
+    swingChime(windChimeEl);
+    _pulseSwayInterval = setInterval(() => swingChime(windChimeEl), 10000);
   } else if (!showPulse && _pulseSwayInterval) {
     clearInterval(_pulseSwayInterval);
     _pulseSwayInterval = null;
@@ -221,7 +188,7 @@ function updateChimePulse() {
 // ─── Main click dispatch
 
 function onChimeClick() {
-  if (_pageState === 'touring')        { advanceTour();  return; }
+  if (_pageState === 'welcome')        { return; }
   if (_pageState === 'caught-up')      { return; }
   if (_pageState === 'queue')          { advanceQueue(); return; }
   if (_pageState === 'just-practiced') { return; }
@@ -237,7 +204,7 @@ function onChimeClick() {
 
 // ─── Wind chime click
 document.getElementById('wind-chime')?.addEventListener('click', async () => {
-  swingChime();
+  swingChime(windChimeEl);
   const ctx = getCtx();
   if (ctx && ctx.state === 'suspended') { try { await ctx.resume(); } catch (_) {} }
   onChimeClick();
@@ -249,7 +216,7 @@ celebrateBtn.addEventListener('click', () => {
   celebrateBtn.classList.add('btn-confirmed');
   markWitnessed({ witnessId: getUserId(), practicerId: _currentSession.userId, practiceLogId: _currentSession.practiceLogId }).catch(() => {});
   playChimeEcho(_currentSession.chime);
-  swingChime();
+  swingChime(windChimeEl);
   updateChimePulse();
   _queueTimer = setTimeout(advanceQueue, 2500);
 });
@@ -257,8 +224,16 @@ celebrateBtn.addEventListener('click', () => {
 // ─── Skip (queue advance)
 voiceChimeBtn.addEventListener('click', advanceQueue);
 
-// ─── Continue (tour advance)
-continueBtn.addEventListener('click', advanceTour);
+// ─── Continue (welcome: launch tour)
+continueBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (_pageState === 'welcome') launchTour();
+});
+
+// ─── Main action (welcome: dismiss tour offer)
+mainActionBtn.addEventListener('click', (e) => {
+  if (_pageState === 'welcome') { e.preventDefault(); showIdleState(); }
+});
 
 // ─── Witness echo — plays the friend's own chime signature, lower register + longer decay
 // Their notes, their voice — just heard more deeply
@@ -354,24 +329,7 @@ function playChime(sig) {
   return maxDelay + 3.5 + fadeTime;
 }
 
-// ─── Wind chime sway
-let _swayEndCb = null;
-function swingChime() {
-  const chime = document.querySelector('#wind-chime .wind-chime');
-  if (!chime) return;
-  if (_swayEndCb) { chime.removeEventListener('animationend', _swayEndCb); _swayEndCb = null; }
-  chime.classList.remove('chime-swaying');
-  void window.getComputedStyle(chime).animationName;
-  chime.classList.add('chime-swaying');
-  _swayEndCb = (e) => {
-    if (e.animationName === 'chime-sway') {
-      chime.classList.remove('chime-swaying');
-      chime.removeEventListener('animationend', _swayEndCb);
-      _swayEndCb = null;
-    }
-  };
-  chime.addEventListener('animationend', _swayEndCb);
-}
+const windChimeEl = document.getElementById('wind-chime');
 
 // ─── Feed message
 function showFeedMessage(name, subtitle, { immediate = false } = {}) {
@@ -487,48 +445,45 @@ if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
 // ?tier=3&new=1 to also trigger the animate-in for that tier
 const _devParams    = new URLSearchParams(window.location.search);
 
-if (!_devParams.has('tour')) {
-  // Intro tagline first (empty spans in HTML avoid FOUC)
-  applyIntroTagline();
-  showIdleActions();
+// Intro tagline first (empty spans in HTML avoid FOUC)
+applyIntroTagline();
+showIdleActions();
 
-  // Home state — set by practice timer on navigate home
-  {
-    const homeState = localStorage.getItem('dp-home-state');
-    if (homeState) {
-      localStorage.removeItem('dp-home-state');
-      if (homeState === 'just-practiced') {
-        _pageState   = 'just-practiced';
-        const msg    = applyPracticeReturnMessage();
-        const nameEl = feedEl.querySelector('.feed-name');
-        const timeEl = feedEl.querySelector('.feed-time');
-        if (nameEl) nameEl.textContent = msg.name;
-        if (timeEl) timeEl.textContent = msg.sub;
-        showPracticedActions();
-        _pendingChime = SELF_CHIME;
-        swingChime();
-      }
-    }
-  }
-
-  // Welcome state — first-time / invite join
-  {
-    const welcomeFrom = localStorage.getItem('dp-welcome-from');
-    const firstVisit  = localStorage.getItem('dp-first-visit');
-    localStorage.removeItem('dp-welcome-from');
-    localStorage.removeItem('dp-first-visit');
-    if (welcomeFrom || firstVisit) {
+// Home state — set by practice timer on navigate home
+{
+  const homeState = localStorage.getItem('dp-home-state');
+  if (homeState) {
+    localStorage.removeItem('dp-home-state');
+    if (homeState === 'just-practiced') {
+      _pageState   = 'just-practiced';
+      const msg    = applyPracticeReturnMessage();
       const nameEl = feedEl.querySelector('.feed-name');
       const timeEl = feedEl.querySelector('.feed-time');
-      if (nameEl) nameEl.textContent = 'Welcome';
-      if (timeEl) timeEl.textContent = welcomeFrom
-        ? `You are now connected to ${welcomeFrom}, for support in your practice.`
-        : 'You can start a practice now, or reflect for help getting started.';
+      if (nameEl) nameEl.textContent = msg.name;
+      if (timeEl) timeEl.textContent = msg.sub;
+      showPracticedActions();
+      _pendingChime = SELF_CHIME;
+      swingChime(windChimeEl);
     }
   }
-
-  revealActions();
 }
+
+// Welcome state — first-time / invite join
+{
+  const welcomeFrom = localStorage.getItem('dp-welcome-from');
+  const firstVisit  = localStorage.getItem('dp-first-visit');
+  localStorage.removeItem('dp-welcome-from');
+  localStorage.removeItem('dp-first-visit');
+  if (welcomeFrom || firstVisit) {
+    _pageState = 'welcome';
+    showFeedMessage('Welcome', 'a beautiful journey awaits', { immediate: true });
+    const feedTime2 = document.getElementById('feed-time-2');
+    if (feedTime2) feedTime2.textContent = 'can we help you get oriented?';
+    showWelcomeActions();
+  }
+}
+
+revealActions();
 const _overrideHour = _devParams.has('hour')   ? parseFloat(_devParams.get('hour'))   : null;
 const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'),  10) : null;
 const _stonesParam  = _devParams.has('stones')  ? parseInt(_devParams.get('stones'), 10) : null;
@@ -554,10 +509,9 @@ fetchWitnessQueue(getUserId()).then(queue => {
 getUserProfile().then(p => {
   _userChime = p.chime || null;
   updateChimePulse();
-  if (_pageState === 'caught-up') {
+  if (_pageState === 'caught-up' || _pageState === 'welcome') {
     const sig = _userChime ?? SELF_CHIME;
     if (!playChime(sig)) _pendingChime = sig;
   }
 }).catch(() => {});
 
-if (_devParams.has('tour')) document.addEventListener('DOMContentLoaded', () => startTour({ immediate: true }));

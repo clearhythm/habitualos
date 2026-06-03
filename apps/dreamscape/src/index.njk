@@ -139,10 +139,11 @@ bodyClass: scene-page
   </div>
 
   <div class="blossom-content">
-    <div id="wind-chime">{% include "wind-chime.njk" %}</div>
+    <div id="wind-chime">{% svgIcon "chime" %}</div>
     <div class="feed-message feed-visible" id="feed-message">
       <span class="feed-name"></span>
       <span class="feed-time"></span>
+      <span class="feed-time" id="feed-time-2"></span>
     </div>
     <div class="practice-actions" style="visibility:hidden">
       <button class="practice-pill btn-confirmable" id="celebrate-btn" hidden>
@@ -151,7 +152,7 @@ bodyClass: scene-page
       </button>
       <button class="btn-quiet" id="continue-btn" hidden>continue</button>
       <a href="/practice/" class="practice-pill" id="main-action-btn">practice</a>
-      <a href="/reflect/" class="btn-quiet reflect-pill" id="reflect-pill" data-auth-only hidden>reflect</a>
+      <a href="/reflect/" class="btn-quiet reflect-pill" id="reflect-pill" hidden>reflect</a>
       <button class="btn-quiet voice-chime-btn" id="voice-chime-btn" hidden>skip</button>
     </div>
   </div>

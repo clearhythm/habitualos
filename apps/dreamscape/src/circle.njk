@@ -12,10 +12,7 @@ bodyClass: scene-page
   <div class="circle-page">
 
     <div class="circle-header">
-      <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.2" class="circle-icon" id="circle-icon" aria-hidden="true">
-        <circle cx="24" cy="24" r="20"/>
-        <circle cx="24" cy="24" r="7" class="circle-icon-center"/>
-      </svg>
+      {% svgIcon "circle" %}
       <div class="feed-message feed-visible">
         <span class="feed-name">Circle</span>
         <span class="feed-time" id="circle-subtitle"></span>
@@ -24,10 +21,6 @@ bodyClass: scene-page
     </div>
 
     <div class="circle-section" hidden>
-      <div class="circle-list-header">
-        <span class="circle-list-header-label">Name</span>
-        <button class="circle-list-header-sort" id="circle-mode-btn">Celebrate ▾</button>
-      </div>
       <div id="circle-list"></div>
       <div class="circle-invite">
         <a href="/invite/" class="pill">invite</a>

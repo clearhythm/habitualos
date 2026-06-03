@@ -1,4 +1,5 @@
 import path from "path";
+import { readFileSync } from "fs";
 import * as sass from "sass";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -36,6 +37,11 @@ export default async function(eleventyConfig) {
         },
       ],
     },
+  });
+
+  // Inline SVG icons from src/assets/images/ by name
+  eleventyConfig.addShortcode('svgIcon', function(name) {
+    return readFileSync(path.resolve(__dirname, `src/assets/images/${name}.svg`), 'utf8');
   });
 
   // SCSS: keep 11ty's native compiler. HTML references /styles/main.css,

@@ -321,6 +321,7 @@
   line-height: 1.2;
 
   & + & { margin-top: -0.1em; }
+  &:empty { display: none; }
 }
 
 // Practice orb — straddles scene/footer boundary, half in sky half in ground
@@ -1081,6 +1082,15 @@
   flex-direction: column;
   align-items: center;
   gap: $space-lg;
+
+  // Wind chime used as a static page icon (e.g. practice page header)
+  .wind-chime {
+    opacity: 1;
+    cursor: default;
+    animation: chime-idle-gentle 5s ease-in-out infinite;
+    width: 44px;
+    height: 63px;
+  }
 
   #header-chime-wrap .wind-chime {
     opacity: 1;
@@ -1911,4 +1921,70 @@
     .btn-label      { opacity: 0; }
     .btn-label-done { opacity: 1; }
   }
+}
+
+// ─── Tour page (/tour/?screen=1|2|3)
+.tour-page {
+  .tour-scene {
+    overflow: visible;  // allow widget to extend below blossom-scene boundary
+    transition: background 0.6s ease;
+    background: linear-gradient(to bottom, #1a5276, #2980b9);  // fallback; JS sets per slide
+  }
+
+  // Reuse blossom-content for the centered icon+title+buttons area
+  .blossom-content {
+    transition: opacity 0.15s ease;
+    &.tour-fading { opacity: 0; }
+  }
+
+  // Wind chime icon in tour: visible + gentle idle sway, tappable on screen 1
+  .wind-chime {
+    opacity: 1 !important;
+    cursor: pointer;
+    animation: chime-idle-gentle 5s ease-in-out infinite;
+    width: 44px;
+    height: 63px;
+  }
+
+  .wind-chime.chime-swaying {
+    animation: chime-sway 4s ease-out forwards;
+  }
+
+  .wind-chime.chime-at-rest {
+    animation: none;
+  }
+
+  .tour-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+// Widget area: sits below blossom-content (which is at top: 28%)
+#tour-widget {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 60%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  // Reflect input: fixed to bottom, transparent shell (slide bg shows through)
+  .chat-input-shell {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: transparent;
+  }
+}
+
+// Circle list in tour: constrained width + header row matching real circle page
+.tour-circle-list-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 $space-lg;
+  width: 100%;
 }
