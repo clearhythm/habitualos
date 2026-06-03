@@ -27,14 +27,13 @@ async function registerAndConnect({ connectUserId } = {}) {
       log('warn', '[signup] register failed:', res.status);
     } else {
       const data = await res.json().catch(() => ({}));
-      if (data.connectName) localStorage.setItem('dp-welcome-from', data.connectName);
     }
   } catch (err) { log('warn', '[signup] register failed:', err); }
 
   localStorage.removeItem('dp-pending-name');
   localStorage.removeItem('dp-pending-chime');
   localStorage.removeItem('dp-pending-email');
-  window.location.replace('/');
+  window.location.replace('/tour/');
 }
 
 // ─── Entry point — called by signup.njk directly, or by join.js with sharer context

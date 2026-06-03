@@ -44,7 +44,7 @@ let   _userChime      = null;
 // ─── Queue — populated async at init from witness-queue.js (real or mock mode)
 
 // ─── Page state
-// 'idle' | 'just-practiced' | 'queue' | 'caught-up' | 'welcome'
+// 'idle' | 'just-practiced' | 'queue' | 'caught-up'
 let _pageState      = 'idle';
 let _currentSession = null;
 let _queueList      = [];   // snapshot of unseen sessions, set at init
@@ -107,19 +107,6 @@ function showCaughtUpActions() {
   voiceChimeBtn.hidden      = true;
 }
 
-function showWelcomeActions() {
-  continueBtn.className     = 'practice-pill';
-  continueBtn.hidden        = false;
-  continueBtn.textContent   = 'yes, begin';
-  mainActionBtn.className   = 'btn-quiet';
-  mainActionBtn.href        = '#';
-  mainActionBtn.textContent = 'no thanks';
-  mainActionBtn.hidden      = false;
-  celebrateBtn.hidden       = true;
-  reflectPill.hidden        = true;
-  voiceChimeBtn.hidden      = true;
-}
-
 // ─── State transitions
 
 function showSession(session) {
@@ -161,10 +148,6 @@ function showIdleState() {
   updateChimePulse();
 }
 
-function launchTour() {
-  window.location.href = '/tour/';
-}
-
 // ─── Chime pulse — dynamic, reflects unseen queue state
 // Sway interval kept in sync with the 10s CSS ring animation
 
@@ -188,7 +171,6 @@ function updateChimePulse() {
 // ─── Main click dispatch
 
 function onChimeClick() {
-  if (_pageState === 'welcome')        { return; }
   if (_pageState === 'caught-up')      { return; }
   if (_pageState === 'queue')          { advanceQueue(); return; }
   if (_pageState === 'just-practiced') { return; }
@@ -223,17 +205,6 @@ celebrateBtn.addEventListener('click', () => {
 
 // ─── Skip (queue advance)
 voiceChimeBtn.addEventListener('click', advanceQueue);
-
-// ─── Continue (welcome: launch tour)
-continueBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  if (_pageState === 'welcome') launchTour();
-});
-
-// ─── Main action (welcome: dismiss tour offer)
-mainActionBtn.addEventListener('click', (e) => {
-  if (_pageState === 'welcome') { e.preventDefault(); showIdleState(); }
-});
 
 // ─── Witness echo — plays the friend's own chime signature, lower register + longer decay
 // Their notes, their voice — just heard more deeply
@@ -468,21 +439,6 @@ showIdleActions();
   }
 }
 
-// Welcome state — first-time / invite join
-{
-  const welcomeFrom = localStorage.getItem('dp-welcome-from');
-  const firstVisit  = localStorage.getItem('dp-first-visit');
-  localStorage.removeItem('dp-welcome-from');
-  localStorage.removeItem('dp-first-visit');
-  if (welcomeFrom || firstVisit) {
-    _pageState = 'welcome';
-    showFeedMessage('Welcome', 'a beautiful journey awaits', { immediate: true });
-    const feedTime2 = document.getElementById('feed-time-2');
-    if (feedTime2) feedTime2.textContent = 'can we help you get oriented?';
-    showWelcomeActions();
-  }
-}
-
 revealActions();
 const _overrideHour = _devParams.has('hour')   ? parseFloat(_devParams.get('hour'))   : null;
 const _tierParam    = _devParams.has('tier')    ? parseInt(_devParams.get('tier'),  10) : null;
@@ -509,7 +465,7 @@ fetchWitnessQueue(getUserId()).then(queue => {
 getUserProfile().then(p => {
   _userChime = p.chime || null;
   updateChimePulse();
-  if (_pageState === 'caught-up' || _pageState === 'welcome') {
+  if (_pageState === 'caught-up') {
     const sig = _userChime ?? SELF_CHIME;
     if (!playChime(sig)) _pendingChime = sig;
   }

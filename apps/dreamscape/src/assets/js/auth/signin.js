@@ -27,12 +27,10 @@ export async function consumeToken(token) {
   localStorage.removeItem('dp-pending-userId');
 
   if (data.connectionId) {
-    const result = await completeInviteRegistration(data.userId, data.connectionId);
-    if (result?.connectName) {
-      localStorage.setItem('dp-welcome-from', result.connectName);
-    } else {
-      localStorage.setItem('dp-first-visit', '1');
-    }
+    await completeInviteRegistration(data.userId, data.connectionId);
+    clearIntendedPath();
+    window.location.replace('/tour/');
+    return;
   }
 
   const dest = readIntendedPath();

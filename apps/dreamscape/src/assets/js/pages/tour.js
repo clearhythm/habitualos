@@ -1,17 +1,19 @@
 import { renderCircleList }   from '../components/circle-list.js';
 import { renderReflectInput }  from '../components/reflect-input.js';
 import { getConnections }      from '../collections/connections.js';
+import { getUserProfile }      from '../collections/users.js';
 import { getUserId, getName }  from '../auth/auth.js';
-import { swingChime }          from '../chime.js';
+import { swingChime, initChimeAudio, playChime } from '../chime.js';
 import { SKY_COLORS, getDayPeriod } from '../sky-palette.js';
+import { initAmbientPlayer }   from '../ambient-player.js';
+import { getAudioMuted, setAudioMuted, getAudioVolume, setAudioVolume } from '../audio-unlock.js';
 import { log } from '../utils/log.js';
 
-// ─── URL param: ?screen=1|2|3
+// ─── URL scheme: /tour/ = welcome (screen 0), /tour/?screen=1|2|3 = slides
 const params = new URLSearchParams(window.location.search);
-if (!params.has('screen')) {
-  history.replaceState(null, '', '/tour/?screen=1');
-}
-let screenNum = Math.max(1, Math.min(3, parseInt(params.get('screen'), 10) || 1));
+let screenNum = params.has('screen')
+  ? Math.max(1, Math.min(3, parseInt(params.get('screen'), 10) || 1))
+  : 0;
 
 // ─── Time-of-day placeholder for reflect slide
 function reflectPlaceholder() {
@@ -29,7 +31,16 @@ function skyBg() {
   return `linear-gradient(to bottom, ${c.top}, ${c.bot})`;
 }
 
+// Screen 0 = Welcome, screens 1–3 = Practice / Reflect / Circle
 const SLIDES = [
+  {
+    bg:       skyBg,
+    iconSrc:  '/assets/images/chime.svg',
+    title:    'Welcome',
+    subtitle: 'a beautiful journey awaits you',
+    sublink:  { text: 'skip', href: '/' },
+    widget:   null,
+  },
   {
     bg:       skyBg,
     iconSrc:  '/assets/images/chime.svg',
@@ -69,21 +80,23 @@ const widgetEl     = document.getElementById('tour-widget');
 
 let icons = [];
 let circleData = { circle: [], receivedNotes: [] };
+let userChimeSig = null;
 
 // ─── Render
 
 function applySlide() {
-  const idx   = screenNum - 1;
-  const slide = SLIDES[idx];
+  const slide = SLIDES[screenNum];
   const bg    = typeof slide.bg === 'function' ? slide.bg() : slide.bg;
 
-  sceneEl.style.background    = bg;
-  iconEl.innerHTML             = icons[idx] || '';
-  titleEl.textContent          = slide.title;
-  subtitleEl.textContent       = slide.subtitle;
-  sublinkEl.textContent        = slide.sublink.text;
-  sublinkEl.href               = slide.sublink.href;
-  continueBtn.textContent      = screenNum === SLIDES.length ? "i'm ready" : 'continue';
+  sceneEl.style.background = bg;
+  iconEl.innerHTML         = icons[screenNum] || '';
+  titleEl.textContent      = slide.title;
+  subtitleEl.textContent   = slide.subtitle;
+  sublinkEl.textContent    = slide.sublink.text;
+  sublinkEl.href           = slide.sublink.href;
+  continueBtn.textContent  = screenNum === 0              ? 'let\'s begin'
+                           : screenNum === SLIDES.length - 1 ? 'begin'
+                           : 'continue';
 
   widgetEl.innerHTML = '';
   if (slide.widget === 'reflect') {
@@ -104,15 +117,21 @@ function applySlide() {
   }
 
   actionsEl.style.visibility = '';
+
+  if (screenNum === 0) playWelcomeChime();
+
   log('debug', '[tour] screen', screenNum);
+}
+
+function slideUrl(n) {
+  return n === 0 ? '/tour/' : `/tour/?screen=${n}`;
 }
 
 function fadeToSlide(nextScreen) {
   blossomEl.classList.add('tour-fading');
   setTimeout(() => {
     screenNum = nextScreen;
-    const url = `/tour/?screen=${screenNum}`;
-    history.pushState({ screen: screenNum }, '', url);
+    history.pushState({ screen: screenNum }, '', slideUrl(screenNum));
     applySlide();
     blossomEl.classList.remove('tour-fading');
   }, 150);
@@ -121,11 +140,11 @@ function fadeToSlide(nextScreen) {
 // ─── Events
 
 iconEl.addEventListener('click', () => {
-  if (screenNum !== 1) return;
+  if (screenNum !== 0 && screenNum !== 1) return;
   const chimeEl = iconEl.querySelector('.wind-chime');
   if (!chimeEl) return;
   chimeEl.classList.remove('chime-at-rest');
-  void chimeEl.offsetWidth; // force reflow before re-adding swaying
+  void chimeEl.offsetWidth;
   swingChime(iconEl);
   chimeEl.addEventListener('animationend', (e) => {
     if (e.animationName === 'chime-sway') chimeEl.classList.add('chime-at-rest');
@@ -134,7 +153,8 @@ iconEl.addEventListener('click', () => {
 
 continueBtn.addEventListener('click', (e) => {
   e.preventDefault();
-  if (screenNum < SLIDES.length) {
+  if (screenNum === 0) playWelcomeChime();
+  if (screenNum < SLIDES.length - 1) {
     fadeToSlide(screenNum + 1);
   } else {
     window.location.href = '/';
@@ -147,16 +167,24 @@ sublinkEl.addEventListener('click', (e) => {
 });
 
 window.addEventListener('popstate', (e) => {
-  screenNum = e.state?.screen ?? 1;
+  screenNum = e.state?.screen ?? 0;
   applySlide();
 });
 
 // ─── Init
 
+async function playWelcomeChime() {
+  await initChimeAudio();
+  if (userChimeSig) playChime(userChimeSig).catch(() => {});
+}
+
 async function init() {
-  icons = await Promise.all(
-    SLIDES.map(s => fetch(s.iconSrc).then(r => r.text()).catch(() => ''))
-  );
+  const [fetchedIcons] = await Promise.all([
+    Promise.all(SLIDES.map(s => fetch(s.iconSrc).then(r => r.text()).catch(() => ''))),
+    getUserProfile(getUserId()).then(p => { userChimeSig = p.chime || null; }).catch(() => {}),
+    initChimeAudio(),
+  ]);
+  icons = fetchedIcons;
 
   getConnections()
     .then(data => {
@@ -170,5 +198,12 @@ async function init() {
 
   applySlide();
 }
+
+initAmbientPlayer({
+  isMuted:        () => getAudioMuted(),
+  getVolume:      () => getAudioVolume(),
+  onVolumeChange: (vol) => setAudioVolume(vol),
+  onMuteChange:   (muted) => setAudioMuted(muted),
+});
 
 init();
