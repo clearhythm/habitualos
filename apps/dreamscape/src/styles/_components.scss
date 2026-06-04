@@ -480,6 +480,37 @@
   }
 }
 
+// ─── Witness notification — drifts up above the ambient player ─────────────
+
+.witness-notif {
+  position: fixed;
+  bottom: calc(#{$space-xl} + 56px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.witness-notif-text {
+  display: inline-block;
+  font-size: $font-size-sm;
+  color: rgba($color-text, 0.50);
+  letter-spacing: 0.03em;
+  opacity: 0;
+}
+
+@keyframes witness-float {
+  0%   { opacity: 0;    transform: translateY(10px);  }
+  22%  { opacity: 1;    transform: translateY(0);      }
+  72%  { opacity: 0.85; transform: translateY(-10px);  }
+  100% { opacity: 0;    transform: translateY(-22px);  }
+}
+
+.witness-notif-text--visible {
+  animation: witness-float 3.2s ease-in-out forwards;
+}
+
 // ─── Ambient Player ────────────────────────────────────────────────────────
 
 .ambient-player {

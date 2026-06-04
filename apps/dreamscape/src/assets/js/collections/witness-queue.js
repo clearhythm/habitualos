@@ -9,7 +9,7 @@ const MOCK_QUEUE = [
 
 const MOCK_LS_KEY = 'dp-witness-witnessed';
 
-function isMockMode() {
+export function isMockMode() {
   return new URLSearchParams(window.location.search).has('mockWitness');
 }
 

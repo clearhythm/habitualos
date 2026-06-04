@@ -6,7 +6,7 @@ import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
 import { getUserId } from '../auth/auth.js';
-import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
+import { fetchWitnessQueue, markWitnessed, isMockMode } from '../collections/witness-queue.js';
 import { getUserProfile } from '../collections/users.js';
 import { swingChime } from '../chime.js';
 
@@ -463,6 +463,33 @@ fetchWitnessQueue(getUserId()).then(queue => {
   _queueList = queue;
   updateChimePulse();
 }).catch(() => {});
+
+// ─── Witnessed notifications
+const MOCK_WITNESSED = [{ name: "Ro'i" }, { name: 'Frank' }];
+
+function showWitnessedNotifications(witnesses) {
+  if (!witnesses.length) return;
+  const notifEl = document.getElementById('witness-notif');
+  if (!notifEl) return;
+  let i = 0;
+  function next() {
+    if (i >= witnesses.length) return;
+    const textEl = document.createElement('span');
+    textEl.className = 'witness-notif-text';
+    textEl.textContent = `${witnesses[i++].name} witnessed you`;
+    notifEl.innerHTML = '';
+    notifEl.appendChild(textEl);
+    void textEl.offsetWidth;
+    textEl.classList.add('witness-notif-text--visible');
+    textEl.addEventListener('animationend', () => setTimeout(next, 500), { once: true });
+  }
+  // Small delay so the page is settled before the first notification drifts in
+  setTimeout(next, 1500);
+}
+
+if (isMockMode()) {
+  showWitnessedNotifications(MOCK_WITNESSED);
+}
 
 getUserProfile().then(p => {
   _userChime = p.chime || null;
