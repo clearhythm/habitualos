@@ -5,6 +5,7 @@ pageScript: /assets/js/pages/home.js
 noContainer: true
 noFooter: true
 bodyClass: scene-page
+permalink: /
 ---
 
 <div class="blossom-scene">
@@ -160,8 +161,6 @@ bodyClass: scene-page
 
 </div>
 
-<div id="witness-glow"></div>
-<div id="witness-notif" class="witness-notif"></div>
-
+{% include "celebration-overlay.njk" %}
 {% include "ambient-player.njk" %}
 {% include "dev-toolbar.njk" %}

@@ -480,56 +480,164 @@
   }
 }
 
-// ─── Witness glow — warm sky bloom when you've been witnessed ──────────────
+// ─── Celebration overlay — witnessed-by cutscene ───────────────────────────
 
-#witness-glow {
+#celebration-view {
   position: fixed;
+  inset: 0;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  overflow: hidden;
+}
+
+#celebration-view.celebration-view--active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#celebration-glow {
+  position: absolute;
   inset: 0;
   pointer-events: none;
   background: radial-gradient(ellipse 120% 80% at 50% 110%, rgba(255, 210, 100, 0.35) 0%, transparent 60%);
   opacity: 0;
-  z-index: 80;
+  z-index: 1;
   transition: opacity 1.4s ease;
 }
 
-#witness-glow.witness-glow--active {
+#celebration-glow.celebration-glow--active {
   opacity: 1;
 }
 
-#witness-glow.witness-glow--fade {
+#celebration-glow.celebration-glow--fade {
   opacity: 0;
   transition: opacity 4s ease;
 }
 
-// ─── Witness notification — drifts up above the ambient player ─────────────
+// ─── Bird layers ───────────────────────────────────────────────────────────
 
-.witness-notif {
-  position: fixed;
-  bottom: calc(#{$space-xl} + 56px);
+.birds-bg,
+.birds-mid,
+.birds-fg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.bird {
+  position: absolute;
+  left: 0;
+  fill: none;
+}
+
+.birds-bg .bird {
+  width: 14px;
+  height: 9px;
+
+  &:nth-child(1) { top: 12%; }
+  &:nth-child(2) { top: 18%; }
+  &:nth-child(3) { top: 23%; }
+  &:nth-child(4) { top: 15%; }
+  &:nth-child(5) { top: 27%; }
+}
+
+.birds-mid .bird {
+  width: 22px;
+  height: 13px;
+
+  &:nth-child(1) { top: 32%; }
+  &:nth-child(2) { top: 38%; }
+  &:nth-child(3) { top: 29%; }
+  &:nth-child(4) { top: 42%; }
+}
+
+.birds-fg .bird {
+  width: 32px;
+  height: 19px;
+
+  &:nth-child(1) { top: 48%; }
+  &:nth-child(2) { top: 55%; }
+  &:nth-child(3) { top: 44%; }
+}
+
+// ─── Bird flight keyframes — three speeds create parallax depth
+
+@keyframes bird-fly-bg {
+  0%   { transform: translateX(110vw); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(-20vw) translateY(-20px); opacity: 0; }
+}
+
+@keyframes bird-fly-mid {
+  0%   { transform: translateX(110vw) translateY(10px); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(-20vw) translateY(-40px); opacity: 0; }
+}
+
+@keyframes bird-fly-fg {
+  0%   { transform: translateX(110vw) translateY(20px); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(-20vw) translateY(-65px); opacity: 0; }
+}
+
+// Birds animate only when .birds-flying is active
+
+.birds-flying .birds-bg .bird {
+  &:nth-child(1) { animation: bird-fly-bg 18s ease-in-out infinite; animation-delay: -2s; }
+  &:nth-child(2) { animation: bird-fly-bg 20s ease-in-out infinite; animation-delay: -8s; }
+  &:nth-child(3) { animation: bird-fly-bg 16s ease-in-out infinite; animation-delay: -14s; }
+  &:nth-child(4) { animation: bird-fly-bg 19s ease-in-out infinite; animation-delay: -5s; }
+  &:nth-child(5) { animation: bird-fly-bg 17s ease-in-out infinite; animation-delay: -11s; }
+}
+
+.birds-flying .birds-mid .bird {
+  &:nth-child(1) { animation: bird-fly-mid 12s ease-in-out infinite; animation-delay: -3s; }
+  &:nth-child(2) { animation: bird-fly-mid 11s ease-in-out infinite; animation-delay: -7s; }
+  &:nth-child(3) { animation: bird-fly-mid 13s ease-in-out infinite; animation-delay: -1s; }
+  &:nth-child(4) { animation: bird-fly-mid 10s ease-in-out infinite; animation-delay: -9s; }
+}
+
+.birds-flying .birds-fg .bird {
+  &:nth-child(1) { animation: bird-fly-fg 8s ease-in-out infinite; animation-delay: -2s; }
+  &:nth-child(2) { animation: bird-fly-fg 9s ease-in-out infinite; animation-delay: -5s; }
+  &:nth-child(3) { animation: bird-fly-fg 7s ease-in-out infinite; animation-delay: -1s; }
+}
+
+// ─── Celebration names — drift right to left like flying past them
+
+#celebration-names {
+  position: absolute;
+  top: 50%;
   left: 0;
   right: 0;
   text-align: center;
-  z-index: 90;
   pointer-events: none;
+  z-index: 3;
 }
 
-.witness-notif-text {
+.celebration-name {
   display: inline-block;
   font-size: $font-size-sm;
-  color: rgba($color-text, 0.50);
-  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 0.04em;
   opacity: 0;
 }
 
-@keyframes witness-float {
-  0%   { opacity: 0;    transform: translateY(10px);  }
-  22%  { opacity: 1;    transform: translateY(0);      }
-  72%  { opacity: 0.85; transform: translateY(-10px);  }
-  100% { opacity: 0;    transform: translateY(-22px);  }
+@keyframes celebration-name-drift {
+  0%   { transform: translateX(40px); opacity: 0; }
+  18%  { opacity: 1;    transform: translateX(0); }
+  80%  { opacity: 0.85; transform: translateX(-30px); }
+  100% { opacity: 0;    transform: translateX(-60px); }
 }
 
-.witness-notif-text--visible {
-  animation: witness-float 3.2s ease-in-out forwards;
+.celebration-name--visible {
+  animation: celebration-name-drift 3.5s ease-in-out forwards;
 }
 
 // ─── Ambient Player ────────────────────────────────────────────────────────
