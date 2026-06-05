@@ -55,7 +55,9 @@ async function loadAudio() {
 }
 
 function applySkyToView(el) {
-  const { period, next, t } = getDayPeriod();
+  const params       = new URLSearchParams(window.location.search);
+  const overrideHour = params.has('hour') ? parseFloat(params.get('hour')) : null;
+  const { period, next, t } = getDayPeriod(overrideHour);
   const curr = SKY_COLORS[period];
   const nx   = SKY_COLORS[next];
   el.style.background = `linear-gradient(to bottom, ${lerpHex(curr.top, nx.top, t)}, ${lerpHex(curr.bot, nx.bot, t)})`;
@@ -116,20 +118,27 @@ function playBirdSounds(ctx) {
 
 function showCelebrationNames(witnesses) {
   const container = document.getElementById('celebration-names');
-  if (!container) return;
-  let i = 0;
-  function next() {
-    if (i >= witnesses.length) return;
-    const el = document.createElement('span');
-    el.className  = 'celebration-name';
-    el.textContent = `${witnesses[i++].name} witnessed you`;
-    container.innerHTML = '';
-    container.appendChild(el);
-    void el.offsetWidth;
-    el.classList.add('celebration-name--visible');
-    el.addEventListener('animationend', () => setTimeout(next, 400), { once: true });
-  }
-  next();
+  if (!container) return Promise.resolve();
+  const cards = [
+    { name: 'You', sub: 'were witnessed today' },
+    ...witnesses.map(w => ({ name: w.name, sub: 'witnessed your practice' })),
+  ];
+  return new Promise(resolve => {
+    let i = 0;
+    function next() {
+      if (i >= cards.length) { resolve(); return; }
+      const { name, sub } = cards[i++];
+      const card = document.createElement('div');
+      card.className = 'celebration-card';
+      card.innerHTML = `<span class="feed-name">${name}</span><span class="feed-time">${sub}</span>`;
+      container.innerHTML = '';
+      container.appendChild(card);
+      void card.offsetWidth;
+      card.classList.add('celebration-card--visible');
+      card.addEventListener('animationend', () => setTimeout(next, 400), { once: true });
+    }
+    next();
+  });
 }
 
 export async function runCelebration(userId) {
@@ -161,12 +170,10 @@ export async function runCelebration(userId) {
     playBirdSounds(ctx);
   }
 
-  showCelebrationNames(witnesses);
+  await showCelebrationNames(witnesses);
 
-  const duration = Math.min(5 + (witnesses.length - 1) * 2, 10);
-  await new Promise(resolve => setTimeout(resolve, (duration + 1) * 1000));
-
-  // Fade out overlay
+  // Fade out overlay slowly — matches the 3s strings fade so birds linger with the music
+  view.classList.add('celebration-view--fading');
   view.classList.remove('celebration-view--active');
   if (glowEl) {
     glowEl.classList.remove('celebration-glow--active');
@@ -176,7 +183,7 @@ export async function runCelebration(userId) {
 
   if (!isMockCelebration()) markWitnessedSeen(userId).catch(() => {});
 
-  // Wait for fade transition to finish before resolving
-  await new Promise(resolve => setTimeout(resolve, 700));
+  // Resolve mid-fade so the chime fires while the overlay is still dissolving
+  await new Promise(resolve => setTimeout(resolve, 1500));
   log('debug', '[celebration] complete');
 }

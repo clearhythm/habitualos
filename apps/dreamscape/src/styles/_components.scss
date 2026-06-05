@@ -497,6 +497,10 @@
   pointer-events: auto;
 }
 
+#celebration-view.celebration-view--fading {
+  transition: opacity 3s ease;
+}
+
 #celebration-glow {
   position: absolute;
   inset: 0;
@@ -537,31 +541,50 @@
   width: 14px;
   height: 9px;
 
-  &:nth-child(1) { top: 12%; }
-  &:nth-child(2) { top: 18%; }
-  &:nth-child(3) { top: 23%; }
-  &:nth-child(4) { top: 15%; }
-  &:nth-child(5) { top: 27%; }
+  &:nth-child(1) { top: 8%;  }
+  &:nth-child(2) { top: 14%; }
+  &:nth-child(3) { top: 20%; }
+  &:nth-child(4) { top: 11%; }
+  &:nth-child(5) { top: 25%; }
 }
 
 .birds-mid .bird {
   width: 22px;
   height: 13px;
 
-  &:nth-child(1) { top: 32%; }
-  &:nth-child(2) { top: 38%; }
-  &:nth-child(3) { top: 29%; }
-  &:nth-child(4) { top: 42%; }
+  // two in upper sky, two below the name zone (36–46%)
+  &:nth-child(1) { top: 17%; }
+  &:nth-child(2) { top: 23%; }
+  &:nth-child(3) { top: 58%; }
+  &:nth-child(4) { top: 65%; }
 }
 
 .birds-fg .bird {
   width: 32px;
   height: 19px;
 
-  &:nth-child(1) { top: 48%; }
-  &:nth-child(2) { top: 55%; }
-  &:nth-child(3) { top: 44%; }
+  &:nth-child(1) { top: 56%; }
+  &:nth-child(2) { top: 63%; }
+  &:nth-child(3) { top: 70%; }
 }
+
+// ─── Bird flap — animates the SVG path d attribute between wings-up and wings-down
+
+@keyframes bird-flap {
+  0%, 100% { d: path('M 0,5 Q 2.5,1 5,5 Q 7.5,1 10,5'); }
+  50%       { d: path('M 0,5 Q 2.5,5.5 5,5 Q 7.5,5.5 10,5'); }
+}
+
+// Distant birds flap slowly, foreground birds flap quickly (parallax feel)
+.birds-flying .birds-bg .bird path  { animation: bird-flap 1.2s ease-in-out infinite; }
+.birds-flying .birds-mid .bird path { animation: bird-flap 0.9s ease-in-out infinite; }
+.birds-flying .birds-fg .bird path  { animation: bird-flap 0.65s ease-in-out infinite; }
+
+// Stagger phases so birds aren't synchronized
+.birds-flying .bird:nth-child(2) path { animation-delay: -0.25s; }
+.birds-flying .bird:nth-child(3) path { animation-delay: -0.55s; }
+.birds-flying .bird:nth-child(4) path { animation-delay: -0.15s; }
+.birds-flying .bird:nth-child(5) path { animation-delay: -0.40s; }
 
 // ─── Bird flight keyframes — three speeds create parallax depth
 
@@ -609,23 +632,26 @@
   &:nth-child(3) { animation: bird-fly-fg 7s ease-in-out infinite; animation-delay: -1s; }
 }
 
-// ─── Celebration names — drift right to left like flying past them
+// ─── Celebration names — two-line card matching home feed, drifts right to left
 
 #celebration-names {
   position: absolute;
-  top: 50%;
+  top: 36%;
   left: 0;
   right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   pointer-events: none;
   z-index: 3;
 }
 
-.celebration-name {
-  display: inline-block;
-  font-size: $font-size-sm;
-  color: rgba(255, 255, 255, 0.78);
-  letter-spacing: 0.04em;
+.celebration-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2em;
   opacity: 0;
 }
 
@@ -636,7 +662,7 @@
   100% { opacity: 0;    transform: translateX(-60px); }
 }
 
-.celebration-name--visible {
+.celebration-card--visible {
   animation: celebration-name-drift 3.5s ease-in-out forwards;
 }
 

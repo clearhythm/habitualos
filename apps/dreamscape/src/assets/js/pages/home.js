@@ -438,15 +438,27 @@ showIdleActions();
     if (nameEl) nameEl.textContent = msg.name;
     if (timeEl) timeEl.textContent = msg.sub;
     showPracticedActions();
+    // Hide feed so it can fade in properly after the cutscene dissolves
+    feedEl.style.opacity = '0';
     // Lazy-load celebration module — plays cutscene (if witnessed), then resolves
     import('../celebration.js').then(({ runCelebration }) => runCelebration(getUserId()))
       .then(() => {
+        const sig = _userChime ?? SELF_CHIME;
         swingChime(windChimeEl);
-        if (!playChime(SELF_CHIME)) _pendingChime = SELF_CHIME;
+        if (!playChime(sig)) _pendingChime = sig;
+        // Fade feed in quickly as the overlay finishes dissolving
+        feedEl.style.transition = 'opacity 0.2s ease';
+        requestAnimationFrame(() => {
+          feedEl.style.opacity = '';
+          setTimeout(() => { feedEl.style.transition = ''; }, 300);
+        });
       })
       .catch(() => {
+        const sig = _userChime ?? SELF_CHIME;
         swingChime(windChimeEl);
-        if (!playChime(SELF_CHIME)) _pendingChime = SELF_CHIME;
+        if (!playChime(sig)) _pendingChime = sig;
+        feedEl.style.transition = '';
+        feedEl.style.opacity = '';
       });
   }
 }
