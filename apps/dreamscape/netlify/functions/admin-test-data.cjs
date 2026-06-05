@@ -39,7 +39,7 @@ exports.handler = async (event) => {
     if (action === 'create-user') {
       if (!name) return { statusCode: 400, body: JSON.stringify({ error: 'name required' }) };
       const newUserId = `tu-${name.toLowerCase().replace(/\s+/g, '-')}`;
-      await upsertUser({ userId: newUserId, name, joinedAt: Date.now(), inviteToken: 'test' });
+      await upsertUser({ userId: newUserId, name, joinedAt: new Date(), inviteToken: 'test' });
       return { statusCode: 200, body: JSON.stringify({ ok: true, userId: newUserId }) };
     }
 

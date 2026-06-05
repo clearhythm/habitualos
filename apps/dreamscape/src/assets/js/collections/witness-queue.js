@@ -61,6 +61,11 @@ export async function fetchWitnessQueue(userId) {
   }));
 }
 
+export async function markWitnessedSeen(userId) {
+  if (isMockMode()) return;
+  await post('/api/witnessed-by-mark-seen', { userId });
+}
+
 export async function markWitnessed({ witnessId, practicerId, practiceLogId }) {
   if (isMockMode()) {
     const witnessed = new Set(JSON.parse(localStorage.getItem(MOCK_LS_KEY) ?? '[]'));

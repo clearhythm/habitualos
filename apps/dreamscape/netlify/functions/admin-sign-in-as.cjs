@@ -11,7 +11,7 @@ exports.handler = async (event) => {
   await create({
     collection: 'adminTokens',
     id: token,
-    data: { token, targetUserId, expiresAt: Date.now() + 5 * 60 * 1000 },
+    data: { token, targetUserId, expiresAt: new Date(Date.now() + 5 * 60 * 1000) },
   });
 
   return { statusCode: 200, body: JSON.stringify({ token }) };

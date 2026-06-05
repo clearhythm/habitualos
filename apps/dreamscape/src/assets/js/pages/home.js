@@ -6,13 +6,14 @@ import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
 import { getUserId } from '../auth/auth.js';
-import { fetchWitnessQueue, markWitnessed, isMockMode } from '../collections/witness-queue.js';
+import { fetchWitnessQueue, markWitnessed, markWitnessedSeen, isMockMode } from '../collections/witness-queue.js';
 import { getUserProfile } from '../collections/users.js';
 import { swingChime } from '../chime.js';
 
 // ─── Audio init — shared context from audio-engine; fetch + decode buffers
-let _chimeBuffer = null;
-let _birdBuffer  = null;
+let _chimeBuffer    = null;
+let _birdBuffer     = null;
+let _panFluteBuffer = null;
 let _pendingChime = null;   // chime to play once audio is ready
 
 (async () => {
@@ -21,12 +22,14 @@ let _pendingChime = null;   // chime to play once audio is ready
     setVolume(getAudioVolume());
     await initAudio();
     const ctx = getCtx();
-    const [chimeAb, birdAb] = await Promise.all([
+    const [chimeAb, birdAb, panFluteAb] = await Promise.all([
       fetch('/assets/music/effects/windchime.mp3').then(r => r.arrayBuffer()),
       fetch('/assets/music/effects/bird-chirp.mp3').then(r => r.arrayBuffer()),
+      fetch('/assets/music/effects/pan-flute.mp3').then(r => r.arrayBuffer()),
     ]);
-    _chimeBuffer = await ctx.decodeAudioData(chimeAb);
-    _birdBuffer  = await ctx.decodeAudioData(birdAb);
+    _chimeBuffer    = await ctx.decodeAudioData(chimeAb);
+    _birdBuffer     = await ctx.decodeAudioData(birdAb);
+    _panFluteBuffer = await ctx.decodeAudioData(panFluteAb);
     if (_pendingChime && ctx.state === 'running') {
       playChime(_pendingChime);
       _pendingChime = null;
@@ -88,12 +91,23 @@ function showPracticedActions() {
 }
 
 function showQueueActions() {
-  mainActionBtn.hidden  = true;
-  celebrateBtn.hidden   = false;
+  mainActionBtn.hidden      = true;
+  celebrateBtn.hidden       = false;
   celebrateBtn.classList.remove('btn-confirmed');
-  reflectPill.hidden    = true;
-  continueBtn.hidden    = true;
-  voiceChimeBtn.hidden  = false;
+  celebrateBtn.textContent  = 'witness';
+  reflectPill.hidden        = true;
+  continueBtn.hidden        = true;
+  voiceChimeBtn.hidden      = false;
+}
+
+function showWitnessedByActions() {
+  mainActionBtn.hidden      = true;
+  celebrateBtn.hidden       = false;
+  celebrateBtn.classList.remove('btn-confirmed');
+  celebrateBtn.textContent  = 'play';
+  reflectPill.hidden        = true;
+  continueBtn.hidden        = true;
+  voiceChimeBtn.hidden      = false;
 }
 
 function showCaughtUpActions() {
@@ -112,9 +126,18 @@ function showCaughtUpActions() {
 function showSession(session) {
   _currentSession = session;
   _pageState      = 'queue';
-  // Stop pulse ring once user is actively in the queue — invitation fulfilled
   document.getElementById('wind-chime')?.classList.remove('chime-hint-pulse');
   if (_pulseSwayInterval) { clearInterval(_pulseSwayInterval); _pulseSwayInterval = null; }
+
+  if (session.type === 'witnessed-by') {
+    showFeedMessage('You', 'were witnessed');
+    swingChime(windChimeEl);
+    playPanFluteChime(_userChime ?? SELF_CHIME);
+    showWitnessedByActions();
+    loadWitnessedMusic();
+    return;
+  }
+
   showFeedMessage(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`);
   swingChime(windChimeEl);
   playChime(session.chime);
@@ -123,6 +146,9 @@ function showSession(session) {
 
 function advanceQueue() {
   clearTimeout(_queueTimer);
+  if (_currentSession?.type === 'witnessed-by') {
+    markWitnessedSeen(getUserId()).catch(() => {});
+  }
   _queueCursor++;
   if (_queueCursor >= _queueList.length) { showCaughtUp(); return; }
   showSession(_queueList[_queueCursor]);
@@ -192,9 +218,32 @@ document.getElementById('wind-chime')?.addEventListener('click', async () => {
   onChimeClick();
 });
 
-// ─── Witness
+// ─── Witness / Play
 celebrateBtn.addEventListener('click', () => {
   if (!_currentSession) return;
+
+  if (_currentSession.type === 'witnessed-by') {
+    celebrateBtn.classList.add('btn-confirmed');
+    celebrateBtn.textContent = 'playing';
+    startGlow();
+    loadWitnessedMusic().then(buf => {
+      const witnesses = _currentSession.witnesses;
+      if (buf) {
+        const handle = playWitnessedMusic(witnesses.length);
+        const duration = Math.min(5 + (witnesses.length - 1) * 2, 10);
+        showWitnessNames(witnesses);
+        _queueTimer = setTimeout(() => {
+          stopGlow();
+          stopWitnessedMusic(handle);
+          advanceQueue();
+        }, (duration + 1) * 1000);
+      } else {
+        advanceQueue();
+      }
+    });
+    return;
+  }
+
   celebrateBtn.classList.add('btn-confirmed');
   markWitnessed({ witnessId: getUserId(), practicerId: _currentSession.userId, practiceLogId: _currentSession.practiceLogId }).catch(() => {});
   playChimeEcho(_currentSession.chime);
@@ -269,6 +318,34 @@ function playSceneSound(type) {
   gain.gain.setValueAtTime(0.55, fadeAt);
   gain.gain.linearRampToValueAtTime(0, fadeAt + 0.8);
   setTimeout(() => gain.disconnect(), (offset + 2.5) * 1000);
+}
+
+// ─── Pan flute version of a chime signature — same notes/timing, different instrument
+function playPanFluteChime(sig) {
+  const ctx = getCtx();
+  if (!_panFluteBuffer || !ctx || ctx.state !== 'running') return;
+  const sigGain = ctx.createGain();
+  sigGain.connect(getGain());
+
+  const now      = ctx.currentTime;
+  const maxDelay = Math.max(...sig.timing);
+  const fadeAt   = now + maxDelay + 4.0;
+  const fadeTime = 2.5;
+  const peak     = 0.55;
+  sigGain.gain.setValueAtTime(peak, now);
+  sigGain.gain.setValueAtTime(peak, fadeAt);
+  sigGain.gain.exponentialRampToValueAtTime(0.001, fadeAt + fadeTime);
+
+  sig.notes.forEach((semitones, i) => {
+    const src = ctx.createBufferSource();
+    src.buffer = _panFluteBuffer;
+    src.playbackRate.value = Math.pow(2, semitones / 12);
+    src.connect(sigGain);
+    src.start(now + sig.timing[i]);
+  });
+
+  const totalMs = (maxDelay + 4.0 + fadeTime + 0.1) * 1000;
+  setTimeout(() => sigGain.disconnect(), totalMs);
 }
 
 // ─── Play a chime signature
@@ -464,11 +541,74 @@ fetchWitnessQueue(getUserId()).then(queue => {
   updateChimePulse();
 }).catch(() => {});
 
-// ─── Witnessed notifications
-const MOCK_WITNESSED = [{ name: "Ro'i" }, { name: 'Frank' }];
+// ─── Witnessed music + glow — triggered by [Play] in the witness queue
 
-function showWitnessedNotifications(witnesses) {
-  if (!witnesses.length) return;
+// Lazy-loaded witnessed audio — only fetched when the witnessed-by entry is shown
+let _witnessedBuffer = null;
+
+async function loadWitnessedMusic() {
+  if (_witnessedBuffer) return _witnessedBuffer;
+  const ctx = getCtx();
+  if (!ctx) return null;
+  try {
+    const ab = await fetch('/assets/music/ambient/witnessed.mp3').then(r => r.arrayBuffer());
+    _witnessedBuffer = await ctx.decodeAudioData(ab);
+    log('info', '[witnessed] music buffer ready, duration:', _witnessedBuffer.duration);
+  } catch (err) {
+    log('warn', '[witnessed] music load failed:', err);
+  }
+  return _witnessedBuffer;
+}
+
+function playWitnessedMusic(witnessCount) {
+  const ctx = getCtx();
+  if (!_witnessedBuffer || !ctx || ctx.state !== 'running') return null;
+
+  const duration    = Math.min(5 + (witnessCount - 1) * 2, 10);
+  const maxOffset   = Math.max(0, _witnessedBuffer.duration - duration - 1);
+  const startOffset = Math.random() * maxOffset;
+
+  const gain = ctx.createGain();
+  gain.connect(getGain());
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 1.2);
+
+  const src = ctx.createBufferSource();
+  src.buffer = _witnessedBuffer;
+  src.connect(gain);
+  src.start(0, startOffset);  // no hard stop — gain fade handles the ending
+
+  log('info', '[witnessed] playing music at offset', startOffset.toFixed(1), 's');
+  return { gain, src };
+}
+
+function stopWitnessedMusic(handle) {
+  const ctx = getCtx();
+  if (!handle || !ctx) return;
+  const { gain, src } = handle;
+  const now = ctx.currentTime;
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setValueAtTime(0.55, now);
+  gain.gain.linearRampToValueAtTime(0, now + 4);
+  setTimeout(() => { try { src.stop(); gain.disconnect(); } catch (_) {} }, 4500);
+}
+
+const _glowEl = document.getElementById('witness-glow');
+
+function startGlow() {
+  if (!_glowEl) return;
+  _glowEl.classList.remove('witness-glow--fade');
+  void _glowEl.offsetWidth;
+  _glowEl.classList.add('witness-glow--active');
+}
+
+function stopGlow() {
+  if (!_glowEl) return;
+  _glowEl.classList.remove('witness-glow--active');
+  _glowEl.classList.add('witness-glow--fade');
+}
+
+function showWitnessNames(witnesses) {
   const notifEl = document.getElementById('witness-notif');
   if (!notifEl) return;
   let i = 0;
@@ -481,14 +621,9 @@ function showWitnessedNotifications(witnesses) {
     notifEl.appendChild(textEl);
     void textEl.offsetWidth;
     textEl.classList.add('witness-notif-text--visible');
-    textEl.addEventListener('animationend', () => setTimeout(next, 500), { once: true });
+    textEl.addEventListener('animationend', () => setTimeout(next, 400), { once: true });
   }
-  // Small delay so the page is settled before the first notification drifts in
-  setTimeout(next, 1500);
-}
-
-if (isMockMode()) {
-  showWitnessedNotifications(MOCK_WITNESSED);
+  next();
 }
 
 getUserProfile().then(p => {

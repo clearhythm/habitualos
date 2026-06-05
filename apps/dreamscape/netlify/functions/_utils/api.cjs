@@ -5,7 +5,7 @@ async function logRequest(action, userId, result, error) {
   await create({
     collection: 'api-logs',
     id: uniqueId('log'),
-    data: { action, userId: userId || null, result, ...(error ? { error } : {}), createdAt: Date.now() },
+    data: { action, userId: userId || null, result, ...(error ? { error } : {}) },
   });
 }
 

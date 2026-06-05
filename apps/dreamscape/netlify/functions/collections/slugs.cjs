@@ -18,7 +18,7 @@ async function assignSlug(userId, name) {
   while (true) {
     const existing = await getSlug(candidate);
     if (!existing) {
-      await create({ collection: COL, id: candidate, data: { userId, name, createdAt: Date.now() } });
+      await create({ collection: COL, id: candidate, data: { userId, name } });
       log('debug', '[slugs] assigned slug', candidate, 'to', userId);
       return candidate;
     }

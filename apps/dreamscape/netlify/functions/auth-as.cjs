@@ -8,7 +8,7 @@ exports.handler = async (event) => {
 
   const doc = await get({ collection: 'adminTokens', id: token });
   if (!doc) return { statusCode: 404, body: JSON.stringify({ error: 'Invalid token' }) };
-  if (doc.expiresAt < Date.now()) {
+  if (doc.expiresAt.toMillis() < Date.now()) {
     await remove({ collection: 'adminTokens', id: token });
     return { statusCode: 401, body: JSON.stringify({ error: 'Token expired' }) };
   }

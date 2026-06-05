@@ -2,8 +2,11 @@ const { create, query, remove, uniqueId } = require('@habitualos/db-core');
 const { getConnectionsForUser, otherId } = require('./connections.cjs');
 const { getLatestPracticeLog } = require('./practice-logs.cjs');
 const { getUser } = require('./users.cjs');
+const { log } = require('../_utils/log.cjs');
 
 const COL = 'witness-logs';
+
+const tsToMs = (ts) => ts?.toMillis() ?? 0;
 
 async function createWitnessLog({ witnessId, practicerId, practiceLogId }) {
   const id = uniqueId('wl');
@@ -15,7 +18,6 @@ async function createWitnessLog({ witnessId, practicerId, practiceLogId }) {
       witnessId,
       practicerId,
       practiceLogId,
-      _createdAt: new Date(),
     },
   });
 }
@@ -28,7 +30,7 @@ async function getWitnessedPracticeLogIds(witnessId) {
 async function getLastWitnessedAt(userId) {
   const rows = await query({ collection: COL, where: [`practicerId::eq::${userId}`] }) || [];
   if (!rows.length) return null;
-  return Math.max(...rows.map(r => r._createdAt.toMillis()));
+  return Math.max(...rows.map(r => tsToMs(r._createdAt)));
 }
 
 async function getWitnessedStatus(userId) {
@@ -36,7 +38,7 @@ async function getWitnessedStatus(userId) {
     getLastWitnessedAt(userId),
     getUser(userId),
   ]);
-  const hasUnseen = !!lastWitnessedAt && lastWitnessedAt > (user?.lastWitnessSeen || 0);
+  const hasUnseen = !!lastWitnessedAt && lastWitnessedAt > tsToMs(user?.lastWitnessSeen);
   return { hasUnseen, lastWitnessedAt };
 }
 
@@ -70,9 +72,26 @@ async function getActiveWitnessQueue(userId) {
   return queue;
 }
 
+async function getUnseenWitnesses(userId) {
+  const [rows, user] = await Promise.all([
+    query({ collection: COL, where: [`practicerId::eq::${userId}`] }),
+    getUser(userId),
+  ]);
+  const lastSeen = tsToMs(user?.lastWitnessSeen);
+  const unseen = (rows || []).filter(r => tsToMs(r._createdAt) > lastSeen);
+  const seen = new Set();
+  const unique = unseen.filter(r => {
+    if (seen.has(r.witnessId)) return false;
+    seen.add(r.witnessId);
+    return true;
+  });
+  const witnesses = await Promise.all(unique.map(r => getUser(r.witnessId)));
+  return witnesses.filter(Boolean).map(w => ({ name: w._name }));
+}
+
 async function deleteWitnessLogsForUser(witnessId) {
   const rows = await query({ collection: COL, where: [`witnessId::eq::${witnessId}`] }) || [];
   await Promise.all(rows.map(r => remove({ collection: COL, id: r._witnessLogId })));
 }
 
-module.exports = { createWitnessLog, getActiveWitnessQueue, getWitnessedStatus, deleteWitnessLogsForUser };
+module.exports = { createWitnessLog, getActiveWitnessQueue, getWitnessedStatus, getUnseenWitnesses, deleteWitnessLogsForUser };

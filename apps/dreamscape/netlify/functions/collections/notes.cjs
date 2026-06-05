@@ -13,7 +13,7 @@ async function createNote({ fromUserId, fromName, toUserId, text }) {
       _fromName: fromName || '',
       _toUserId: toUserId,
       text: text.trim(),
-      sentAt: Date.now(),
+      sentAt: new Date(),
       unlockedAt: null,
       readAt: null,
     },
@@ -32,14 +32,14 @@ async function getSentNotes(userId) {
 async function unlockNotes(userId) {
   const notes = await getReceivedNotes(userId);
   const locked = notes.filter(n => !n.unlockedAt);
-  await Promise.all(locked.map(n => patch({ collection: COL, id: n._noteId, data: { unlockedAt: Date.now() } })));
+  await Promise.all(locked.map(n => patch({ collection: COL, id: n._noteId, data: { unlockedAt: new Date() } })));
   return locked.length;
 }
 
 async function markNotesRead({ userId, fromUserId }) {
   const notes = await getReceivedNotes(userId);
   const unread = notes.filter(n => n._fromUserId === fromUserId && n.unlockedAt && !n.readAt);
-  await Promise.all(unread.map(n => patch({ collection: COL, id: n._noteId, data: { readAt: Date.now() } })));
+  await Promise.all(unread.map(n => patch({ collection: COL, id: n._noteId, data: { readAt: new Date() } })));
   return unread.length;
 }
 

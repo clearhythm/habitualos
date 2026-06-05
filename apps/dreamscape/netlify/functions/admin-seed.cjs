@@ -14,7 +14,7 @@ exports.handler = handle('admin.seed', 'POST', async (event, { scenario }) => {
   if (!validScenarios.includes(scenario)) throw new Error('Invalid scenario');
 
   await Promise.all(TEST_USERS.map(u =>
-    upsertUser({ userId: u.userId, name: u.name, joinedAt: Date.now(), inviteToken: 'test' })
+    upsertUser({ userId: u.userId, name: u.name, joinedAt: new Date(), inviteToken: 'test' })
   ));
 
   await Promise.all([SARAH, FRANK, ROI].map(memberId =>

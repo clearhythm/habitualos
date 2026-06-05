@@ -8,7 +8,7 @@ async function upsertUser({ userId, name, joinedAt, inviteToken }) {
     await create({
       collection: COL,
       id: userId,
-      data: { _userId: userId, _name: name, joinedAt: joinedAt ?? Date.now(), inviteToken: inviteToken ?? null },
+      data: { _userId: userId, _name: name, joinedAt: joinedAt ?? new Date(), inviteToken: inviteToken ?? null },
     });
   }
 }
@@ -22,7 +22,7 @@ async function updateUser(userId, data) {
 }
 
 async function updateLastPracticed(userId) {
-  await patch({ collection: COL, id: userId, data: { lastPracticedAt: Date.now() } });
+  await patch({ collection: COL, id: userId, data: { lastPracticedAt: new Date() } });
 }
 
 async function getAllUsers() {

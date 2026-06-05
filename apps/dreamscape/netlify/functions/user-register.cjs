@@ -20,7 +20,7 @@ exports.handler = handle('user.register', 'POST', async (event, { userId, name, 
   }
 
   // Direct path: settings saves + already-signed-in join
-  await upsertUser({ userId, name: name || '', joinedAt: Date.now() });
+  await upsertUser({ userId, name: name || '', joinedAt: new Date() });
 
   const updates = {};
   if (name)  { updates._name = name; updates.slug = await assignSlug(userId, name); }

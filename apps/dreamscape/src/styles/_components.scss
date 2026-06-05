@@ -480,6 +480,27 @@
   }
 }
 
+// ─── Witness glow — warm sky bloom when you've been witnessed ──────────────
+
+#witness-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 120% 80% at 50% 110%, rgba(255, 210, 100, 0.35) 0%, transparent 60%);
+  opacity: 0;
+  z-index: 80;
+  transition: opacity 1.4s ease;
+}
+
+#witness-glow.witness-glow--active {
+  opacity: 1;
+}
+
+#witness-glow.witness-glow--fade {
+  opacity: 0;
+  transition: opacity 4s ease;
+}
+
 // ─── Witness notification — drifts up above the ambient player ─────────────
 
 .witness-notif {
