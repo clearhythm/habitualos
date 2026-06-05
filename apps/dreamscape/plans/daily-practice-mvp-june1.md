@@ -2,10 +2,10 @@
 
 Core scope for Frank + Ro'i invite launch:
 
-TEST 3. Invite flow functional so Frank and Ro'i can actually join
-TEST 2. Witness mechanic wired to backend so you can see each other's practice
+DONE 3. Invite flow functional so Frank and Ro'i can actually join
+DONE 2. Witness mechanic wired to backend so you can see each other's practice
    DONE - Change voice note sublink to "skip" since voice note is non-functional
-TEST 1. Core practice experience working reliably
+DONE 1. Core practice experience working reliably
 DONE 4. Add ?mockWitness param to homepage to allow system to witness using the mock data and LS (for front-end testing)
 
 That's it. Everything else waits.
