@@ -7,6 +7,7 @@ import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
 import { getUserId } from '../auth/auth.js';
 import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
+import { ifPlayCutscene } from '../celebration.js';
 import { getUserProfile } from '../collections/users.js';
 import { swingChime } from '../chime.js';
 
@@ -82,8 +83,8 @@ function showPracticedActions() {
   mainActionBtn.href        = '/history/';
   mainActionBtn.textContent = 'your story';
   celebrateBtn.hidden       = true;
-  reflectPill.hidden        = false;
-  continueBtn.hidden        = true;
+  reflectPill.hidden        = true;
+  continueBtn.hidden        = false;
   voiceChimeBtn.hidden      = true;
 }
 
@@ -116,7 +117,7 @@ function showSession(session) {
   document.getElementById('wind-chime')?.classList.remove('chime-hint-pulse');
   if (_pulseSwayInterval) { clearInterval(_pulseSwayInterval); _pulseSwayInterval = null; }
 
-  showFeedMessage(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`);
+  showPrimaryBlock(session.name, `practiced ${session.lastPracticedLabel ?? 'recently'}`, { fade: true });
   swingChime(windChimeEl);
   playChime(session.chime);
   showQueueActions();
@@ -134,7 +135,7 @@ function showCaughtUp() {
   _currentSession = null;
   clearTimeout(_queueTimer);
   swingChime(windChimeEl);
-  showFeedMessage('You', 'are all caught up');
+  showPrimaryBlock('You', 'are all caught up', { fade: true });
   const sig = _userChime ?? SELF_CHIME;
   if (!playChime(sig)) _pendingChime = sig;
   showCaughtUpActions();
@@ -144,7 +145,8 @@ function showIdleState() {
   _pageState      = 'idle';
   _currentSession = null;
   clearTimeout(_queueTimer);
-  applyIntroTagline();
+  const t = nextTagline();
+  showPrimaryBlock(t.name, t.sub);
   showIdleActions();
   updateChimePulse();
 }
@@ -203,6 +205,20 @@ celebrateBtn.addEventListener('click', () => {
   swingChime(windChimeEl);
   updateChimePulse();
   _queueTimer = setTimeout(advanceQueue, 2500);
+});
+
+// ─── Continue (dismiss just-practiced state)
+continueBtn.addEventListener('click', () => {
+  hidePrimaryBlock({ fade: true });
+  setTimeout(() => {
+    _pageState      = 'idle';
+    _currentSession = null;
+    clearTimeout(_queueTimer);
+    const t = nextTagline();
+    showPrimaryBlock(t.name, t.sub);
+    showIdleActions();
+    updateChimePulse();
+  }, FEED_FADE_MS);
 });
 
 // ─── Skip (queue advance)
@@ -304,41 +320,47 @@ function playChime(sig) {
 
 const windChimeEl = document.getElementById('wind-chime');
 
-// ─── Feed message
-function showFeedMessage(name, subtitle, { immediate = false } = {}) {
-  const html = subtitle
-    ? `<span class="feed-name">${name}</span><span class="feed-time">${subtitle}</span>`
-    : `<span class="feed-name feed-name--quiet">${name}</span>`;
-  if (immediate) {
-    feedEl.innerHTML = html;
-    feedEl.classList.add('feed-visible');
-    return;
+// ─── Feed (primary block) — two operations: hide and show
+const FEED_FADE_MS = 420;
+
+function hidePrimaryBlock({ fade = false } = {}) {
+  if (fade) {
+    feedEl.classList.remove('feed-visible');
+  } else {
+    feedEl.style.transition = 'none';
+    feedEl.classList.remove('feed-visible');
+    void feedEl.offsetHeight;
+    feedEl.style.transition = '';
   }
-  feedEl.classList.remove('feed-visible');
-  setTimeout(() => {
-    feedEl.innerHTML = html;
-    // RAF ensures new content is committed before the fade-in transition starts;
-    // without it Safari composites the old painted layer with new innerHTML mid-transition.
-    requestAnimationFrame(() => feedEl.classList.add('feed-visible'));
-  }, 420);
 }
 
-// ─── Intro tagline — alternates visit-to-visit (idle state)
+function showPrimaryBlock(name, sub, { fade = false } = {}) {
+  const html = sub
+    ? `<span class="feed-name">${name}</span><span class="feed-time">${sub}</span>`
+    : `<span class="feed-name feed-name--quiet">${name}</span>`;
+  if (fade) {
+    hidePrimaryBlock({ fade: true });
+    setTimeout(() => {
+      feedEl.innerHTML = html;
+      // RAF ensures new content is committed before the fade-in transition starts
+      requestAnimationFrame(() => feedEl.classList.add('feed-visible'));
+    }, FEED_FADE_MS);
+  } else {
+    feedEl.innerHTML = html;
+    feedEl.classList.add('feed-visible');
+  }
+}
+
+// ─── Taglines — rotate visit-to-visit (idle state)
 const TAGLINES = [
   { name: 'Practice', sub: 'is only the beginning' },
   { name: 'Presence', sub: 'is the gift of you being here' },
 ];
 
-function applyIntroTagline() {
-  const raw  = localStorage.getItem('dp-tagline-index');
-  const idx  = parseInt(raw ?? '0', 10);
-  const next = (idx + 1) % TAGLINES.length;
-  localStorage.setItem('dp-tagline-index', String(next));
-  const t      = TAGLINES[idx];
-  const nameEl = feedEl.querySelector('.feed-name');
-  const timeEl = feedEl.querySelector('.feed-time');
-  if (nameEl) nameEl.textContent = t.name;
-  if (timeEl) timeEl.textContent = t.sub;
+function nextTagline() {
+  const idx = parseInt(localStorage.getItem('dp-tagline-index') ?? '0', 10);
+  localStorage.setItem('dp-tagline-index', String((idx + 1) % TAGLINES.length));
+  return TAGLINES[idx];
 }
 
 // ─── Practice return messages — celebration state, rotates each return
@@ -421,7 +443,7 @@ if (['localhost', '127.0.0.1'].includes(window.location.hostname)) {
 const _devParams    = new URLSearchParams(window.location.search);
 
 // Intro tagline first (empty spans in HTML avoid FOUC)
-applyIntroTagline();
+{ const t = nextTagline(); showPrimaryBlock(t.name, t.sub); }
 showIdleActions();
 
 // Home state — set by practice timer on navigate home
@@ -431,34 +453,22 @@ showIdleActions();
   if (homeState === 'just-practiced' || mockCelebration) {
     if (homeState) localStorage.removeItem('dp-home-state');
     _pageState = 'just-practiced';
-    // Set final message now (under the overlay during cutscene, revealed after)
-    const msg    = applyPracticeReturnMessage();
-    const nameEl = feedEl.querySelector('.feed-name');
-    const timeEl = feedEl.querySelector('.feed-time');
-    if (nameEl) nameEl.textContent = msg.name;
-    if (timeEl) timeEl.textContent = msg.sub;
     showPracticedActions();
-    // Hide feed so it can fade in properly after the cutscene dissolves
-    feedEl.style.opacity = '0';
-    // Lazy-load celebration module — plays cutscene (if witnessed), then resolves
-    import('../celebration.js').then(({ runCelebration }) => runCelebration(getUserId()))
+    hidePrimaryBlock();
+    ifPlayCutscene(getUserId())
       .then(() => {
+        const { name, sub } = applyPracticeReturnMessage();
+        showPrimaryBlock(name, sub);
         const sig = _userChime ?? SELF_CHIME;
         swingChime(windChimeEl);
         if (!playChime(sig)) _pendingChime = sig;
-        // Fade feed in quickly as the overlay finishes dissolving
-        feedEl.style.transition = 'opacity 0.2s ease';
-        requestAnimationFrame(() => {
-          feedEl.style.opacity = '';
-          setTimeout(() => { feedEl.style.transition = ''; }, 300);
-        });
       })
       .catch(() => {
+        const { name, sub } = applyPracticeReturnMessage();
+        showPrimaryBlock(name, sub);
         const sig = _userChime ?? SELF_CHIME;
         swingChime(windChimeEl);
         if (!playChime(sig)) _pendingChime = sig;
-        feedEl.style.transition = '';
-        feedEl.style.opacity = '';
       });
   }
 }

@@ -488,8 +488,9 @@
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.6s ease;
   overflow: hidden;
+  background: linear-gradient(to bottom, #050310, #0a0617); // night fallback; JS updates to current sky
+  // No transition here — overlay appears instantly to prevent home screen bleed-through
 }
 
 #celebration-view.celebration-view--active {
@@ -529,6 +530,13 @@
   inset: 0;
   pointer-events: none;
   z-index: 2;
+  opacity: 0;
+}
+
+.birds-flying .birds-bg,
+.birds-flying .birds-mid,
+.birds-flying .birds-fg {
+  opacity: 1;
 }
 
 .bird {

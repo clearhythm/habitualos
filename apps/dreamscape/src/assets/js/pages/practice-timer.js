@@ -7,6 +7,7 @@ import { loadSettings } from '../practice-settings.js';
 import { initAmbientPlayer } from '../ambient-player.js';
 import { saveAbandonedIfPending } from '../collections/reflect-chats.js';
 import { log } from '../utils/log.js';
+import { prefetchCelebration } from '../celebration.js';
 
 export function startTimer(practiceName, durationSecs, { onDiscard, source } = {}) {
   const settings     = loadSettings();
@@ -44,6 +45,7 @@ export function startTimer(practiceName, durationSecs, { onDiscard, source } = {
   function showNoteView() {
     timerView.hidden = true;
     noteView.hidden  = false;
+    prefetchCelebration(getUserId());
   }
 
   function setRunningState() {

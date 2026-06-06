@@ -9,10 +9,27 @@ function isMockCelebration() {
   return new URLSearchParams(window.location.search).has('mockCelebration');
 }
 
+export function prefetchCelebration(userId) {
+  fetch('/assets/music/ambient/witnessed.mp3');
+  fetch('/assets/music/effects/bird-chirp.mp3');
+  fetch(`/api/witness-queue-get?userId=${encodeURIComponent(userId)}`)
+    .then(r => r.json())
+    .then(({ queue }) => {
+      const entry = (queue || []).find(item => item.type === 'witnessed-by');
+      sessionStorage.setItem('dp-witnessed-pending', JSON.stringify(entry ? entry.witnesses : []));
+    })
+    .catch(() => sessionStorage.setItem('dp-witnessed-pending', JSON.stringify([])));
+}
+
 async function fetchWitnessedByStatus(userId) {
   if (isMockCelebration()) return MOCK_WITNESSES;
+  const cached = sessionStorage.getItem('dp-witnessed-pending');
+  if (cached !== null) {
+    sessionStorage.removeItem('dp-witnessed-pending');
+    return JSON.parse(cached);
+  }
   try {
-    const res   = await fetch(`/api/witness-queue-get?userId=${encodeURIComponent(userId)}`);
+    const res = await fetch(`/api/witness-queue-get?userId=${encodeURIComponent(userId)}`);
     const { queue } = await res.json();
     const entry = (queue || []).find(item => item.type === 'witnessed-by');
     return entry ? entry.witnesses : [];
@@ -141,20 +158,38 @@ function showCelebrationNames(witnesses) {
   });
 }
 
-export async function runCelebration(userId) {
-  const witnesses = await fetchWitnessedByStatus(userId);
-  if (!witnesses.length) return;
+function activateOverlay() {
+  const view = document.getElementById('celebration-view');
+  if (!view) return;
+  applySkyToView(view);
+  view.classList.add('celebration-view--active');
+}
 
+export async function ifPlayCutscene(userId) {
+  const pending = sessionStorage.getItem('dp-witnessed-pending');
+  const isMock  = isMockCelebration();
+  const willCutscene = isMock || (pending !== null && JSON.parse(pending).length > 0);
+  if (willCutscene) activateOverlay();
+  await runCelebration(userId);
+}
+
+async function runCelebration(userId) {
   const view = document.getElementById('celebration-view');
   if (!view) return;
 
-  await loadAudio();
+  await initAudio();
   const ctx = getCtx();
   if (ctx?.state === 'suspended') { try { await ctx.resume(); } catch (_) {} }
 
-  applySkyToView(view);
-  view.classList.add('celebration-view--active');
+  // Witnesses pre-fetched on reflect screen — reads from sessionStorage (instant)
+  const witnesses = await fetchWitnessedByStatus(userId);
 
+  if (!witnesses.length) {
+    view.classList.remove('celebration-view--active');
+    return;
+  }
+
+  // Start visual immediately — no waiting for audio
   const glowEl = document.getElementById('celebration-glow');
   if (glowEl) {
     glowEl.classList.remove('celebration-glow--fade');
@@ -164,15 +199,19 @@ export async function runCelebration(userId) {
 
   view.classList.add('birds-flying');
 
+  // Fire audio load in background — plays as soon as ready, no delay to visual
   let stringsHandle = null;
-  if (ctx) {
-    stringsHandle = playStrings(ctx);
-    playBirdSounds(ctx);
-  }
+  loadAudio().then(() => {
+    const ctx = getCtx();
+    if (ctx) {
+      stringsHandle = playStrings(ctx);
+      playBirdSounds(ctx);
+    }
+  });
 
   await showCelebrationNames(witnesses);
 
-  // Fade out overlay slowly — matches the 3s strings fade so birds linger with the music
+  // Slow fade — birds and music dissolve together
   view.classList.add('celebration-view--fading');
   view.classList.remove('celebration-view--active');
   if (glowEl) {
@@ -183,7 +222,7 @@ export async function runCelebration(userId) {
 
   if (!isMockCelebration()) markWitnessedSeen(userId).catch(() => {});
 
-  // Resolve mid-fade so the chime fires while the overlay is still dissolving
+  // Resolve mid-fade so chime fires while overlay is still dissolving
   await new Promise(resolve => setTimeout(resolve, 1500));
   log('debug', '[celebration] complete');
 }
