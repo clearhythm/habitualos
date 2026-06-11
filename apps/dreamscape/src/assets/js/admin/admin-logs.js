@@ -1,9 +1,5 @@
-function formatDate(ts) {
-  if (!ts) return '—';
-  return new Date(ts).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit',
-  });
-}
+import { AdminAPI } from './admin-api.js';
+import { formatDateTime } from './admin-utils.js';
 
 async function loadLogs() {
   const tbody = document.getElementById('logs-table');
@@ -16,7 +12,7 @@ async function loadLogs() {
     }
     tbody.innerHTML = logs.map(l => `
       <tr class="${l.error ? 'table-danger' : ''}">
-        <td class="text-muted small">${formatDate(l.createdAt)}</td>
+        <td class="text-muted small">${formatDateTime(l.createdAt)}</td>
         <td><code>${l.action}</code></td>
         <td><span class="badge ${l.result === 200 ? 'bg-green-lt' : 'bg-red-lt'}">${l.result}</span></td>
         <td class="text-muted small">${l.error ? `<span class="text-danger">${l.error}</span>` : JSON.stringify(l.params || {})}</td>
@@ -27,4 +23,6 @@ async function loadLogs() {
   }
 }
 
-document.getElementById('refresh-logs').addEventListener('click', loadLogs);
+export function initLogsView() {
+  document.getElementById('refresh-logs').addEventListener('click', loadLogs);
+}

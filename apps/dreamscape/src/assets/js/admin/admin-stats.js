@@ -1,11 +1,7 @@
-const MAIN_APP_URL = 'https://daily.habitualos.com';
+import { AdminAPI } from './admin-api.js';
+import { formatDate } from './admin-utils.js';
 
-function formatDate(ts) {
-  if (!ts) return '—';
-  return new Date(ts).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  });
-}
+const MAIN_APP_URL = 'https://daily.habitualos.com';
 
 function formatDuration(seconds) {
   if (!seconds) return '—';
@@ -73,27 +69,29 @@ async function loadSessions() {
   }
 }
 
-document.getElementById('refresh-stats').addEventListener('click', () => {
+export function initUsageView() {
+  document.getElementById('refresh-stats').addEventListener('click', () => {
+    loadUsers();
+    loadSessions();
+  });
+
+  document.getElementById('users-table').addEventListener('click', async (e) => {
+    const btn = e.target.closest('.sign-in-as-btn');
+    if (!btn) return;
+    const targetUserId = btn.dataset.userid;
+    btn.disabled = true;
+    btn.textContent = 'Opening…';
+    try {
+      const { token } = await AdminAPI.signInAs(targetUserId);
+      window.open(`${MAIN_APP_URL}/?su=${token}`, '_blank');
+    } catch (err) {
+      alert(`Sign in failed: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in as…';
+    }
+  });
+
   loadUsers();
   loadSessions();
-});
-
-document.getElementById('users-table').addEventListener('click', async (e) => {
-  const btn = e.target.closest('.sign-in-as-btn');
-  if (!btn) return;
-  const targetUserId = btn.dataset.userid;
-  btn.disabled = true;
-  btn.textContent = 'Opening…';
-  try {
-    const { token } = await AdminAPI.signInAs(targetUserId);
-    window.open(`${MAIN_APP_URL}/?su=${token}`, '_blank');
-  } catch (err) {
-    alert(`Sign in failed: ${err.message}`);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign in as…';
-  }
-});
-
-loadUsers();
-loadSessions();
+}

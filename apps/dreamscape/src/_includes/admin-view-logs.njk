@@ -1,0 +1,34 @@
+<div id="view-logs" class="admin-view" hidden>
+  <div class="row row-deck row-cards">
+    <div class="col-12">
+      <h2 class="mb-3">API Logs</h2>
+    </div>
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Recent activity</h3>
+          <div class="card-options">
+            <button class="btn btn-sm btn-outline-secondary" id="refresh-logs">Refresh</button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Result</th>
+                  <th>Params / Error</th>
+                </tr>
+              </thead>
+              <tbody id="logs-table">
+                <tr><td colspan="4" class="text-center text-muted py-3">Load logs to begin</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
