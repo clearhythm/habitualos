@@ -651,6 +651,7 @@ section.section:nth-of-type(even) {
 
 .app-card--link {
   display: block;
+  position: relative;
   text-decoration: none;
   color: inherit;
   transition: border-color 0.2s, transform 0.2s;
@@ -664,6 +665,20 @@ section.section:nth-of-type(even) {
     html[data-theme="dark"] & {
       border-color: rgba(167, 139, 250, 0.4);
     }
+  }
+
+  .app-card-ext-icon {
+    position: absolute;
+    top: $space-md;
+    right: $space-md;
+    width: 16px;
+    height: 16px;
+    color: rgba(167, 139, 250, 0.5);
+    transition: color 0.2s;
+  }
+
+  &:hover .app-card-ext-icon {
+    color: rgba(167, 139, 250, 0.9);
   }
 }
 

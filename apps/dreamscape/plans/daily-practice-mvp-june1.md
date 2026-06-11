@@ -14,7 +14,7 @@ That's it. Everything else waits.
 
 ## Stretch (if time allows)
 
-1. Confirm unlock/lock deploy shell command is working before June 1 push
+DONE 1. Confirm unlock/lock deploy shell command is working before June 1 push
 2. Profile cache in sessionStorage — one API call per tab session instead of per page load; reduces API log noise; write-through on settings save fixes dp-name going stale after name change. Profile values migrate to sessionStorage with `dp-profile-` prefix (`dp-name` → `dp-profile-name`, chime → `dp-profile-chime`).
 DONE 1. Fix broken audio check on splash (existing ticket)
 DONE 2. Remove "tap for tour" — revert to chime swaying on "all caught up"

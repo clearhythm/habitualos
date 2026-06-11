@@ -10,7 +10,8 @@ description: An agentic AI platform built and used daily to explore how AI agent
     <img src="/assets/images/habitualos_vortex2.png" alt="" class="hero-ring">
     <h1 class="hero-title">HabitualOS</h1>
     <p class="hero-tagline">
-      The open-source, modular prototyping kit for agentic apps,<br class="d-sm-block d-none"> featuring wiser agents, saner humans, and faster ships.
+      An open-source framework for agentic prototyping,<br class="d-sm-block d-none"> and a proprietary suite of daily workflow apps.
+      <br class="d-sm-block d-none"> Wiser agents, saner humans, faster ships.
     </p>
     <div class="hero-cta">
       <a href="#toolkit" class="btn btn-primary">Explore the Work</a>
@@ -23,7 +24,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
 <section class="section" id="toolkit">
   <div class="container">
     <h2 class="section-title">The Toolkit</h2>
-    <p class="section-intro">Every agentic app needs the same foundation: auth, streaming chat, data access, session management. Instead of rebuilding them each time, I extracted them. These are the core functional modules of HabitualOS.</p>
+    <p class="section-intro">Every agentic app needs the same foundation: auth, streaming chat, data access, and session management. HabitualOS abstracts those patterns into open-source packages so any developer can skip the plumbing and start creating agentic apps in a fraction of the usual time.</p>
 
     <div class="packages-grid">
       <div class="package-item">
@@ -82,7 +83,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
         <p class="pullquote-attribution">— Dario Amodei, CEO, Anthropic</p>
       </blockquote>
       <div>
-        <p class="section-intro">The people who figure out how to work with agents now are building intuition that can't be shortcut later. HabitualOS exists to collapse that iteration cost: <strong>prototype any human-agent interaction pattern imaginable, at a fraction of the usual time</strong>.</p>
+        <p class="section-intro">The people who figure out how to work with agents now are building intuition that can't be shortcut later. HabitualOS exists to collapse that learning curve, <strong>helping developers prototpye agentic experiences faster, and cultivate design intuition along the way</strong>.</p>
       </div>
     </div>
 
@@ -96,7 +97,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
 <section class="section" id="systems">
   <div class="container">
     <h2 class="section-title">Production Apps</h2>
-    <p class="section-intro">These apps were created using HabitualOS. Each explores a different application of agentic AI in daily life. Each helped evolve the toolkit.</p>
+    <p class="section-intro">A proprietary suite of agentic apps built on HabitualOS infrastructure, designed and built by <a href="https://erikburns.com">Erik Burns</a>. Each explores a different application of AI in daily life, and each is used daily.</p>
 
     {# Toolkit package icons — reused across app cards #}
     {% macro pkgIcon(name) %}
@@ -122,16 +123,43 @@ description: An agentic AI platform built and used daily to explore how AI agent
 
     <div class="app-cards">
 
+      <div class="app-card">
+        <div class="app-card-header">
+          <div class="app-card-icon"><img src="/assets/images/apps/habitual.png" alt="Habitual"></div>
+          <div>
+            <p class="app-card-label">Habitual</p>
+            <p class="app-card-category">Agentic Productivity</p>
+          </div>
+        </div>
+        <div class="app-card-body">
+          <p class="app-card-desc">Habitual is the flagship app, focused on delivering significant productivity gains for end users. Users can identify north star goals and create agents that drive autonomous workflows, schedule tasks dynamically, and orchestrate work across priorities. Persistence and progress are handled through structured tool use and reporting.</p>
+          <ul class="app-card-features">
+            <li><em>Proprietary flagship — please contact founder for a demo</em></li>
+            <li>Long-context memory and session continuity across agents</li>
+            <li>Structured tool use for reliable agent communication</li>
+            <li>AI-generated progress insights and pattern recognition</li>
+          </ul>
+          <div class="app-card-toolkit">
+            {{ pkgIcon("db-core") }}
+            {{ pkgIcon("auth-server") }}
+            {{ pkgIcon("edge-functions") }}
+            {{ pkgIcon("chat-storage") }}
+            {{ pkgIcon("frontend-utils") }}
+          </div>
+        </div>
+      </div>
+
       <a href="https://signal.habitualos.com" class="app-card app-card--link">
+        <svg class="app-card-ext-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
         <div class="app-card-header">
           <div class="app-card-icon"><img src="/assets/images/apps/signal.png" alt="Signal"></div>
           <div>
             <p class="app-card-label">Signal</p>
-            <p class="app-card-category">Career intelligence</p>
+            <p class="app-card-category">Agentic Candidacy</p>
           </div>
         </div>
         <div class="app-card-body">
-          <p class="app-card-desc">You've been shipping real things with AI. Your resume doesn't show that. Signal does: through conversation, not claims. <strong>Built in a day using HabitualOS infrastructure.</strong></p>
+          <p class="app-card-desc">Signal replaces the resume with a dynamic AI interview. Signal is built using a semantic RAG pipeline and structured work history, with role-adaptive conversation and live fit scoring. The kind of tool that used to take months to build was built in under two weeks on HabitualOS.</strong></p>
           <ul class="app-card-features">
             <li>Dynamic RAG pipeline over structured work history</li>
             <li>Role-adaptive conversation (recruiter, founder, colleague)</li>
@@ -148,79 +176,54 @@ description: An agentic AI platform built and used daily to explore how AI agent
         </div>
       </a>
 
-      <div class="app-card">
+      <a href="https://daily.habitualos.com" class="app-card app-card--link">
+        <svg class="app-card-ext-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
         <div class="app-card-header">
-          <div class="app-card-icon"><img src="/assets/images/apps/habitual.png" alt="Habitual"></div>
+          <div class="app-card-icon"><img src="/assets/images/apps/daily-practice.svg" alt="Daily Practice"></div>
           <div>
-            <p class="app-card-label">Habitual</p>
-            <p class="app-card-category">Agentic productivity</p>
+            <p class="app-card-label">Daily Practice</p>
+            <p class="app-card-category">Agentic Wellness</p>
           </div>
         </div>
         <div class="app-card-body">
-          <p class="app-card-desc">A personal operating system for daily life. Specialized agents handle scheduling, practice tracking, and check-ins through a typed signal protocol rather than freeform text.</p>
+          <p class="app-card-desc">A meditative practice app driven by sound and collective presence. Daily rituals are marked by ambient audio, an animated world that responds to community activity, and a social witnessing layer that makes solitary practice feel shared.</p>
           <ul class="app-card-features">
-            <li>Multi-agent orchestration with typed signal protocol</li>
-            <li>Conversational UX for scheduling and task creation</li>
-            <li>Long-context memory for session continuity</li>
-            <li>Practice tracking with AI-generated pattern insights</li>
+            <li>Daily practice timer with AI-generated pattern insights</li>
+            <li>Sound-driven ritual with personalized ambient audio</li>
+            <li>Animated world that responds to collective practice activity</li>
+            <li>Social witnessing layer for shared accountability</li>
           </ul>
           <div class="app-card-toolkit">
             {{ pkgIcon("db-core") }}
             {{ pkgIcon("auth-server") }}
             {{ pkgIcon("edge-functions") }}
-            {{ pkgIcon("chat-storage") }}
+            {{ pkgIcon("survey-engine") }}
             {{ pkgIcon("frontend-utils") }}
           </div>
         </div>
-      </div>
+      </a>
 
       <div class="app-card">
         <div class="app-card-header">
           <div class="app-card-icon"><img src="/assets/images/apps/pidgerton.png" alt="Pidgerton"></div>
           <div>
             <p class="app-card-label">Pidgerton</p>
-            <p class="app-card-category">Relationship support</p>
+            <p class="app-card-category">Agentic Connectedness</p>
           </div>
         </div>
         <div class="app-card-body">
-          <p class="app-card-desc">Built for my wife and me during the fog of new parenthood. Log moments through chat, get emotional support, find patterns over time.</p>
+          <p class="app-card-desc">A whimsical little experiment in agent-powered human connection. Built for my wife and me during the fog of new parenthood, Pidgerton allows us to log moments through chat, get emotional support, and find patterns over time that build stronger connection.</p>
           <ul class="app-card-features">
-            <li>Conversation-driven moment capture (no structured forms)</li>
+            <li>Conversation-driven moment capture without structured forms</li>
             <li>Temporal pattern recognition across relationship history</li>
+            <li>High-stakes conversational AI in an emotional context</li>
             <li>Privacy-first, fully user-partitioned data architecture</li>
-            <li>High-stakes conversational AI in emotional context</li>
           </ul>
           <div class="app-card-toolkit">
             {{ pkgIcon("db-core") }}
             {{ pkgIcon("auth-server") }}
             {{ pkgIcon("edge-functions") }}
             {{ pkgIcon("chat-storage") }}
-            {{ pkgIcon("survey-engine") }}
-            {{ pkgIcon("frontend-utils") }}
-          </div>
-        </div>
-      </div>
-
-      <div class="app-card">
-        <div class="app-card-header">
-          <div class="app-card-icon"><img src="/assets/images/apps/daily-practice.svg" alt="Daily Practice"></div>
-          <div>
-            <p class="app-card-label">Daily Practice</p>
-            <p class="app-card-category">Habit tracking</p>
-          </div>
-        </div>
-        <div class="app-card-body">
-          <p class="app-card-desc">Built in a day, used every day. Daily self-care, wellness tracking, and real-time support with AI-generated pattern insights. Currently driving a 30-day wellness challenge.</p>
-          <ul class="app-card-features">
-            <li>Daily check-in via chat or SMS</li>
-            <li>AI-generated pattern insights over time</li>
-            <li>Twilio SMS coaching with scheduled reminders</li>
-            <li>30-day challenge tracking with calendar view</li>
-          </ul>
-          <div class="app-card-toolkit">
-            {{ pkgIcon("db-core") }}
-            {{ pkgIcon("auth-server") }}
-            {{ pkgIcon("edge-functions") }}
             {{ pkgIcon("survey-engine") }}
             {{ pkgIcon("frontend-utils") }}
           </div>
@@ -235,13 +238,13 @@ description: An agentic AI platform built and used daily to explore how AI agent
 <section class="section" id="principles">
   <div class="container">
     <h2 class="section-title">Design Principles</h2>
-    <p class="section-intro">Daily use of these systems has produced an opinionated frame of reference about what makes agentic AI actually empowering.</p>
+    <p class="section-intro">Building and using these systems daily has produced some strong opinions about what makes agentic AI actually work.</p>
 
     <div class="principles">
       <div class="principle">
         <span class="principle-number">1</span>
-        <p class="principle-title">Relational intelligence, not tooling</p>
-        <p class="principle-body">How you meet AI determines what you can do together. Not a tool you operate, but a form of intelligence you collaborate with. The products here are built on that: agents with personality and stance, designed to meet you where you are.</p>
+        <p class="principle-title">AI as collaborative presence</p>
+        <p class="principle-body">Human in the loop, automation where it makes sense. The right balance shifts depending on the task. These systems are built to support both, while allowing the use case to decide the right mix.</p>
       </div>
       <div class="principle">
         <span class="principle-number">2</span>
@@ -251,7 +254,7 @@ description: An agentic AI platform built and used daily to explore how AI agent
       <div class="principle">
         <span class="principle-number">3</span>
         <p class="principle-title">Constraints enable real delegation</p>
-        <p class="principle-body">The more defined an agent's behavior, the more you can actually rely on it. Vague outputs require constant supervision. Clear interfaces make it possible to genuinely hand work off and trust that it lands.</p>
+        <p class="principle-body">The more defined an agent's behavior, the more you can actually rely on it. Vague outputs require constant supervision. Clear interfaces make it possible to genuinely hand work off and trust the AI to get it right.</p>
       </div>
       <div class="principle">
         <span class="principle-number">4</span>
