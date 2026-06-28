@@ -5,7 +5,7 @@ import { initAudio, getCtx, getGain, getMuted, getVolume, setMuted, setVolume } 
 import { initAmbientPlayer } from '../ambient-player.js';
 import { log } from '../utils/log.js';
 import { initScene, getStoredTier } from '../scene.js';
-import { getUserId } from '../auth/auth.js';
+import { getUserId, isSignedIn } from '../auth/auth.js';
 import { fetchWitnessQueue, markWitnessed } from '../collections/witness-queue.js';
 import { ifPlayCutscene } from '../celebration.js';
 import { getUserProfile } from '../collections/users.js';
@@ -32,7 +32,7 @@ let _pendingChime = null;   // chime to play once audio is ready
       playChime(_pendingChime);
       _pendingChime = null;
     }
-    log('debug', '[audio] buffers ready');
+    log('debug', '[audio] buffers ready — ctx state:', ctx.state);
     if (ctx.state === 'suspended') wireGestureResume();
   } catch (err) { log('warn', '[audio] init failed:', err); }
 })();
@@ -191,7 +191,11 @@ function onChimeClick() {
 document.getElementById('wind-chime')?.addEventListener('click', async () => {
   swingChime(windChimeEl);
   const ctx = getCtx();
-  if (ctx && ctx.state === 'suspended') { try { await ctx.resume(); } catch (_) {} }
+  log('debug', '[chime] click — ctx state:', ctx?.state);
+  if (ctx && ctx.state === 'suspended') {
+    try { await ctx.resume(); } catch (err) { log('debug', '[chime] resume error:', err); }
+    log('debug', '[chime] after resume — ctx state:', ctx?.state);
+  }
   onChimeClick();
 });
 
@@ -496,12 +500,14 @@ fetchWitnessQueue(getUserId()).then(queue => {
   updateChimePulse();
 }).catch(() => {});
 
-getUserProfile().then(p => {
-  _userChime = p.chime || null;
-  updateChimePulse();
-  if (_pageState === 'caught-up') {
-    const sig = _userChime ?? SELF_CHIME;
-    if (!playChime(sig)) _pendingChime = sig;
-  }
-}).catch(() => {});
+if (isSignedIn()) {
+  getUserProfile().then(p => {
+    _userChime = p.chime || null;
+    updateChimePulse();
+    if (_pageState === 'caught-up') {
+      const sig = _userChime ?? SELF_CHIME;
+      if (!playChime(sig)) _pendingChime = sig;
+    }
+  }).catch(err => log('debug', '[home] getUserProfile failed:', err.message));
+}
 
