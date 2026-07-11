@@ -1,0 +1,45 @@
+# =============================================================================
+# Netlify Configuration for hip-taco
+# Set "Package directory" to "apps/hip-taco" in Netlify UI.
+# =============================================================================
+[build]
+  base = "apps/hip-taco"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -E '^apps/hip-taco/' | grep -c ."
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter hip-taco build"
+  publish = "_site"
+  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
+
+[dev]
+  framework = "#custom"
+  command = "pnpm --filter hip-taco run eleventy:serve"
+  targetPort = 8080
+  port = 8890
+  autoLaunch = false
+  functions = "netlify/functions"
+  publish = "_site"
+  edge_functions = "netlify/edge-functions"
+
+# =============================================================================
+# Node.js Functions
+# =============================================================================
+
+[functions]
+  node_bundler = "esbuild"
+
+# =============================================================================
+# Edge Functions
+# =============================================================================
+
+[[edge_functions]]
+  path = "/*"
+  function = "auth"
+
+# =============================================================================
+# Redirects
+# =============================================================================
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

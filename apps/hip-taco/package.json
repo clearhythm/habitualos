@@ -1,0 +1,24 @@
+{
+  "name": "hip-taco",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "netlify dev",
+    "eleventy:build": "eleventy",
+    "eleventy:serve": "eleventy --serve --port=8080",
+    "build": "eleventy"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@habitualos/auth-server": "workspace:*",
+    "@habitualos/db-core": "workspace:*",
+    "@habitualos/frontend-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@11ty/eleventy-plugin-vite": "6.0.0",
+    "concurrently": "^9.2.1",
+    "sass": "^1.69.5",
+    "vite": "^6.0.0"
+  }
+}
