@@ -1,0 +1,124 @@
+@use 'variables' as *;
+
+// Centered masthead — fixed top, acts as menu trigger on all pages
+.nav-masthead {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.875rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: $font-family;
+  font-size: $font-size-lg;
+  font-weight: 600;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+
+  &:hover, &:active {
+    .nav-masthead-label { color: rgba(255, 255, 255, 1); }
+  }
+
+  &.scrolled {
+    background: color-mix(in srgb, $color-bg 90%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: 100%;
+    left: 0;
+    transform: none;
+    justify-content: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition: opacity 0.2s ease, background 0.3s ease;
+  }
+
+  &.open { opacity: 1; }
+}
+
+.nav-masthead-label {
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.2s ease;
+}
+
+.nav-masthead-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+// Sidemenu overlay
+.sidemenu-main {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  height: 100dvh;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+.sidemenu-open {
+  overflow-y: hidden;
+
+  .sidemenu-main {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+// Left panel
+.sidemenu-left {
+  position: relative;
+  z-index: 1001;
+  height: 100dvh;
+  width: 100%;
+  padding: 0 2rem;
+  background: $color-bg;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+
+  ul {
+    list-style: none;
+    padding: 12vh 0 2vh 0;
+    margin: 0;
+    flex-grow: 1;
+
+    li {
+      padding: 0.5rem 0;
+      margin: 0;
+
+      a {
+        font-size: 1.5rem;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.7);
+        transition: color 0.2s;
+
+        &:hover { color: rgba(255, 255, 255, 0.9); }
+      }
+    }
+  }
+}
+
+// Footer block — pinned to bottom, left-aligned with nav links
+.sidemenu-footer {
+  padding-bottom: 2.5rem;
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba($color-text, 0.4);
+  }
+}
+
+.sidemenu-right { display: none; }

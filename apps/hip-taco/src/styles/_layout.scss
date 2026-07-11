@@ -1,0 +1,80 @@
+@use 'variables' as *;
+
+// Full-page canvas — fixed below the nav, spans full viewport width.
+// --nav-height is set from the nav's actual offsetHeight by navigation.js.
+// $nav-height is the SCSS fallback (used at compile time / before JS fires).
+@mixin page-canvas {
+  position: fixed;
+  top: var(--nav-height, #{$nav-height});
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 5rem $space-md $space-md;
+
+  @media (min-width: $breakpoint-md) {
+    padding: 5rem $space-xl $space-md;
+  }
+}
+
+.container-narrow {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 $space-md;
+}
+
+.main {
+  flex: 1;
+  padding-bottom: $space-2xl;
+}
+
+.footer {
+  background: $color-bg;
+  border-top: 1px solid $color-border;
+  padding: $space-lg 0;
+  margin-top: $space-2xl;
+  text-align: center;
+
+  p {
+    margin-bottom: 0;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+  }
+}
+
+.page-title {
+  font-size: $font-size-3xl;
+  font-weight: 300;
+  color: $color-text;
+  margin-bottom: $space-xl;
+}
+
+// Grid utilities
+.grid   { display: grid; gap: $space-lg; }
+.grid-2 { @media (min-width: $breakpoint-md) { grid-template-columns: repeat(2, 1fr); } }
+.grid-3 { @media (min-width: $breakpoint-md) { grid-template-columns: repeat(3, 1fr); } }
+
+// Flex utilities
+.flex         { display: flex; }
+.flex-col     { flex-direction: column; }
+.flex-between { justify-content: space-between; }
+.flex-center  { justify-content: center; align-items: center; }
+
+// Gap utilities
+.gap-sm { gap: $space-sm; }
+.gap-md { gap: $space-md; }
+.gap-lg { gap: $space-lg; }
+
+// Spacing utilities
+.mt-sm { margin-top: $space-sm; }
+.mt-md { margin-top: $space-md; }
+.mt-lg { margin-top: $space-lg; }
+.mt-xl { margin-top: $space-xl; }
+.mb-sm { margin-bottom: $space-sm; }
+.mb-md { margin-bottom: $space-md; }
+.mb-lg { margin-bottom: $space-lg; }
+.mb-xl { margin-bottom: $space-xl; }

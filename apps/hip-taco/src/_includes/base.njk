@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or "Hip Taco" }}</title>
+  <link rel="icon" href="https://fav.farm/🌮">
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  {% if not noNav %}{% include "nav.njk" %}{% endif %}
+
+  <main class="main">
+    {% if noContainer %}
+      {{ content | safe }}
+    {% else %}
+      <div class="container">
+        {{ content | safe }}
+      </div>
+    {% endif %}
+  </main>
+
+  {% if not noFooter %}
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; Hip Taco</p>
+    </div>
+  </footer>
+  {% endif %}
+
+  <script type="module" src="/assets/js/navigation.js"></script>
+  {% if pageScript %}<script type="module" src="{{ pageScript }}"></script>{% endif %}
+</body>
+</html>

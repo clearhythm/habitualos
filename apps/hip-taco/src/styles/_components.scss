@@ -1,0 +1,28 @@
+@use 'variables' as *;
+
+// Minimal shared component primitives — expand as real UI gets built.
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-sm;
+  padding: $space-sm $space-lg;
+  border: none;
+  border-radius: 0.5rem;
+  background: $color-primary;
+  color: $color-text;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+
+  &:hover { background: $color-primary-dark; }
+}
+
+.card {
+  background: $color-bg-surface;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+  padding: $space-lg;
+}

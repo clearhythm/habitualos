@@ -1,0 +1,39 @@
+// Placeholder palette — warm/terracotta, revisit once visual design is settled
+$color-primary:       #d9622b;
+$color-primary-dark:  #b34d1f;
+$color-success:       #4d9618;
+$color-warning:       #f39c12;
+$color-danger:        #ef4444;
+
+$color-bg:            #1a1410;
+$color-bg-surface:    #241c16;
+$color-bg-muted:      #2e2420;
+$color-text:          #f2ece4;
+$color-text-muted:    #a89a8c;
+$color-border:        #3a2e26;
+$color-border-hover:  #4d3d32;
+
+// Spacing (8px base unit)
+$space-xs:  0.25rem;
+$space-sm:  0.5rem;
+$space-md:  1rem;
+$space-lg:  1.5rem;
+$space-xl:  2rem;
+$space-2xl: 3rem;
+
+// Typography
+$font-family:    'Inter', system-ui, -apple-system, sans-serif;
+$font-size-sm:   0.875rem;
+$font-size-base: 1rem;
+$font-size-lg:   1.125rem;
+$font-size-xl:   1.25rem;
+$font-size-2xl:  1.5rem;
+$font-size-3xl:  2rem;
+
+// Nav height — masthead padding (0.875rem × 2) + font/icon line ≈ 3.5rem
+$nav-height: 3.5rem;
+
+// Breakpoints
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
