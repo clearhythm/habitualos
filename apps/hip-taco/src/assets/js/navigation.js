@@ -1,3 +1,10 @@
+// Fade in masthead background once page content scrolls under it
+function updateMasthead() {
+  const masthead = document.getElementById('sidemenu-toggle');
+  if (masthead) masthead.classList.toggle('scrolled', window.scrollY > 40);
+}
+window.addEventListener('scroll', updateMasthead, { passive: true });
+
 // Sidemenu toggle and auto-close
 document.addEventListener('DOMContentLoaded', function() {
   // Set --nav-height from actual rendered height so the page-canvas mixin stays accurate.
@@ -17,9 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.classList.toggle('sidemenu-open');
     });
   }
-
-  const overlay = document.querySelector('.sidemenu-right');
-  if (overlay) overlay.addEventListener('click', closeMenu);
 
   document.querySelectorAll('.sidemenu-left a').forEach(link => link.addEventListener('click', closeMenu));
 });
