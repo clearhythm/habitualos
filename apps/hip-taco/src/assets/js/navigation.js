@@ -13,17 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.documentElement.style.setProperty('--nav-height', toggle.offsetHeight + 'px');
   }
 
-  function closeMenu() {
-    if (toggle) toggle.classList.remove('open');
-    document.body.classList.remove('sidemenu-open');
-  }
-
   if (toggle) {
     toggle.addEventListener('click', function() {
       toggle.classList.toggle('open');
       document.body.classList.toggle('sidemenu-open');
     });
   }
-
-  document.querySelectorAll('.sidemenu-left a').forEach(link => link.addEventListener('click', closeMenu));
 });

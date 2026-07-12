@@ -13,7 +13,7 @@
 [dev]
   framework = "#custom"
   command = "pnpm --filter hip-taco run eleventy:serve"
-  targetPort = 8080
+  targetPort = 8081
   port = 8890
   autoLaunch = false
   functions = "netlify/functions"
