@@ -1,7 +1,7 @@
-# Design — Hip Taco (MVP Mechanics)
+# Design — Tico (MVP Mechanics)
 
-*Working name: **Hip Taco**. See Vision.md for the naming rationale and
-trademark note.*
+*Working name: **Tico** (formerly "Hip Taco"). See Vision.md for the naming
+rationale and trademark note.*
 
 This document covers *how the core loop actually works* — the state model,
 the session flow, and the assessment logic. It intentionally excludes tech

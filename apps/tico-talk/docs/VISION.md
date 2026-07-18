@@ -1,4 +1,4 @@
-# Project Vision — Hip Taco
+# Project Vision — Tico
 
 ## One-Line Pitch
 
@@ -165,19 +165,23 @@ probably doesn't.
 
 ## Notes
 
-- **Working name:** "Hip Taco" (previously "Ready Set," which felt too
-  stiff/corporate). The name works on three levels: (1) "hip taco" reads
-  as "hip talk" — getting hip to, and fluent in, the workplace
-  interaction; (2) it's grounded in the literal restaurant/taco context;
-  (3) it's a gentle, self-aware nod to the classic English-speaker habit
-  of tacking an "o" onto English words to make them sound Spanish —
-  exactly the kind of well-meaning fumble the target user is trying to
-  grow past. Checked for conflicts: a small California catering business
-  ("Hip Taco Catering") uses a similar name but is a different market and
-  not trademark-aggressive — low risk for a personal MVP, revisit if this
-  ever scales into a wider B2B product.
+- **Working name:** "Tico" (previously "Hip Taco," before that "Ready
+  Set," which felt too stiff/corporate). "Hip Taco" was chosen because
+  the name works on three levels: (1) "hip taco" reads as "hip talk" —
+  getting hip to, and fluent in, the workplace interaction; (2) it's
+  grounded in the literal restaurant/taco context; (3) it's a gentle,
+  self-aware nod to the classic English-speaker habit of tacking an "o"
+  onto English words to make them sound Spanish — exactly the kind of
+  well-meaning fumble the target user is trying to grow past. Checked
+  for conflicts: a small California catering business ("Hip Taco
+  Catering") uses a similar name but is a different market and not
+  trademark-aggressive — low risk for a personal MVP, revisit if this
+  ever scales into a wider B2B product. Shortened to "Tico" for the
+  actual product/app name — more succinct and memorable, and reads as a
+  blend of "talk" + "confidence." The taco mascot/visual identity and
+  wordplay carry over from "Hip Taco."
 - **Mascot concept:** a friendly talking taco as the in-app coach/tutor
-  character — literally embodies the "hip taco" wordplay and gives the
+  character — literally embodies the "hip taco"/"Tico" wordplay and gives the
   coaching voice a warm, approachable personality rather than a generic
   AI assistant feel. Visual/personality design is a later step, not
   blocking MVP build.

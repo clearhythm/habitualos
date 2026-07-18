@@ -112,34 +112,6 @@ importers:
         specifier: ^1.69.5
         version: 1.97.3
 
-  apps/hip-taco:
-    dependencies:
-      '@11ty/eleventy':
-        specifier: ^3.0.0
-        version: 3.1.2
-      '@habitualos/auth-server':
-        specifier: workspace:*
-        version: link:../../packages/auth-server
-      '@habitualos/db-core':
-        specifier: workspace:*
-        version: link:../../packages/db-core
-      '@habitualos/frontend-utils':
-        specifier: workspace:*
-        version: link:../../packages/frontend-utils
-    devDependencies:
-      '@11ty/eleventy-plugin-vite':
-        specifier: 6.0.0
-        version: 6.0.0(@types/node@25.2.1)(jiti@2.6.1)(sass-embedded@1.98.0)(sass@1.98.0)(yaml@2.8.2)
-      concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
-      sass:
-        specifier: ^1.69.5
-        version: 1.98.0
-      vite:
-        specifier: ^6.0.0
-        version: 6.4.2(@types/node@25.2.1)(jiti@2.6.1)(sass-embedded@1.98.0)(sass@1.98.0)(yaml@2.8.2)
-
   apps/obi-wai-web:
     dependencies:
       '@11ty/eleventy':
@@ -253,6 +225,34 @@ importers:
       sass:
         specifier: ^1.69.5
         version: 1.97.3
+
+  apps/tico-talk:
+    dependencies:
+      '@11ty/eleventy':
+        specifier: ^3.0.0
+        version: 3.1.2
+      '@habitualos/auth-server':
+        specifier: workspace:*
+        version: link:../../packages/auth-server
+      '@habitualos/db-core':
+        specifier: workspace:*
+        version: link:../../packages/db-core
+      '@habitualos/frontend-utils':
+        specifier: workspace:*
+        version: link:../../packages/frontend-utils
+    devDependencies:
+      '@11ty/eleventy-plugin-vite':
+        specifier: 6.0.0
+        version: 6.0.0(@types/node@25.2.1)(jiti@2.6.1)(sass-embedded@1.98.0)(sass@1.98.0)(yaml@2.8.2)
+      concurrently:
+        specifier: ^9.2.1
+        version: 9.2.1
+      sass:
+        specifier: ^1.69.5
+        version: 1.98.0
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.2(@types/node@25.2.1)(jiti@2.6.1)(sass-embedded@1.98.0)(sass@1.98.0)(yaml@2.8.2)
 
   apps/zerogravity:
     dependencies:
