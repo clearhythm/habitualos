@@ -50,10 +50,11 @@
   flex-shrink: 0;
 }
 
-// Sidemenu overlay
+// Sidemenu overlay — above page content (e.g. .talk-bar at 1500) but below
+// the masthead toggle button (2000) so it stays clickable to close the menu.
 .sidemenu-main {
   position: fixed;
-  z-index: 1000;
+  z-index: 1900;
   top: 0;
   left: 0;
   height: 100dvh;

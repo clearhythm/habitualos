@@ -8,6 +8,13 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export default async function(eleventyConfig) {
   eleventyConfig.addPlugin(EleventyVitePlugin, {
     viteOptions: {
+      // AI_VERIFY_HMR_PORT: set by the eleventy:serve:ai script so Claude's
+      // isolated verification server never collides with the human dev
+      // server's Vite HMR websocket, which otherwise defaults to a fixed
+      // port (24678) regardless of --port.
+      server: process.env.AI_VERIFY_HMR_PORT
+        ? { hmr: { port: Number(process.env.AI_VERIFY_HMR_PORT) } }
+        : undefined,
       resolve: {
         alias: {
           // Resolve workspace packages for browser JS
