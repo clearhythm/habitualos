@@ -53,6 +53,35 @@
   margin-bottom: $space-xl;
 }
 
+// Homepage lander — comp hero image + real HTML tagline/CTA below it
+.hero-lander {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: $space-lg;
+
+  &__image {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+  }
+
+  &__tagline {
+    font-size: $font-size-xl;
+    line-height: 1.4;
+    margin-bottom: $space-xs;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: $font-size-2xl;
+    }
+  }
+
+  .btn {
+    margin-top: $space-lg;
+  }
+}
+
 // Grid utilities
 .grid   { display: grid; gap: $space-lg; }
 .grid-2 { @media (min-width: $breakpoint-md) { grid-template-columns: repeat(2, 1fr); } }

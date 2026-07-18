@@ -1,17 +1,19 @@
-// Placeholder palette — warm/terracotta, revisit once visual design is settled
-$color-primary:       #d9622b;
-$color-primary-dark:  #b34d1f;
+// Palette pulled from the Tico comp (tico_full_lander.png / tico_taco_man.png)
+$color-green:         #0e3f2d; // wordmark, headings, primary button
+$color-green-dark:    #0a2f22; // hover state
+$color-primary:       #b85400; // burnt-orange accent (taglines, links)
+$color-primary-dark:  #8f4200;
 $color-success:       #4d9618;
 $color-warning:       #f39c12;
 $color-danger:        #ef4444;
 
-$color-bg:            #1a1410;
-$color-bg-surface:    #241c16;
-$color-bg-muted:      #2e2420;
-$color-text:          #f2ece4;
-$color-text-muted:    #a89a8c;
-$color-border:        #3a2e26;
-$color-border-hover:  #4d3d32;
+$color-bg:            #ffffff;
+$color-bg-surface:    #f6e4cd; // warm cream from the comp background
+$color-bg-muted:      #efe0c7;
+$color-text:          #1c1c1c;
+$color-text-muted:    #6b6258;
+$color-border:        #e6d6ba;
+$color-border-hover:  #d9c5a0;
 
 // Spacing (8px base unit)
 $space-xs:  0.25rem;
@@ -22,7 +24,10 @@ $space-xl:  2rem;
 $space-2xl: 3rem;
 
 // Typography
-$font-family:    'Inter', system-ui, -apple-system, sans-serif;
+// Poppins: general UI/body copy, buttons, and the nav wordmark — rounded, friendly
+// Playfair Display (italic): taglines/subtitles — matches the comp's elegant italic serif
+$font-family:         'Poppins', system-ui, -apple-system, sans-serif;
+$font-family-accent:  'Playfair Display', serif;
 $font-size-sm:   0.875rem;
 $font-size-base: 1rem;
 $font-size-lg:   1.125rem;

@@ -49,6 +49,7 @@ export default async function(eleventyConfig) {
 
   // JS: passthrough so files land in _site/ for Vite to transform.
   eleventyConfig.addPassthroughCopy("src/assets/js");
+  eleventyConfig.addPassthroughCopy("src/assets/images");
 
   return {
     dir: { input: "src", output: "_site", includes: "_includes" },

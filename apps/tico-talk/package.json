@@ -7,6 +7,7 @@
     "start": "netlify dev",
     "eleventy:build": "eleventy",
     "eleventy:serve": "eleventy --serve --port=8081",
+    "eleventy:serve:ai": "eleventy --serve --port=8095 --quiet",
     "build": "eleventy"
   },
   "dependencies": {

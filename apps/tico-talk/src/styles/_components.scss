@@ -1,23 +1,29 @@
 @use 'variables' as *;
 
 // Minimal shared component primitives — expand as real UI gets built.
+//
+// .btn is uppercase — a deliberate, scoped exception to the no-uppercase
+// rule used everywhere else, matching the Tico comp's primary CTA. Do not
+// extend uppercase/letter-spacing to nav labels, form labels, or chips.
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: $space-sm;
-  padding: $space-sm $space-lg;
+  padding: $space-md $space-xl;
   border: none;
-  border-radius: 0.5rem;
-  background: $color-primary;
-  color: $color-text;
+  border-radius: 0.75rem;
+  background: $color-green;
+  color: #ffffff;
   font-family: $font-family;
   font-size: $font-size-base;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
   transition: background 0.2s ease;
 
-  &:hover { background: $color-primary-dark; }
+  &:hover { background: $color-green-dark; }
 }
 
 .card {
@@ -26,3 +32,14 @@
   border-radius: 0.75rem;
   padding: $space-lg;
 }
+
+// Italic serif tagline/subtitle accent, e.g. "Talk with Confidence"
+// Pair with .text-green / .text-orange for the comp's alternating color lines.
+.tagline {
+  font-family: $font-family-accent;
+  font-style: italic;
+  font-weight: 600;
+}
+
+.text-green  { color: $color-green; }
+.text-orange { color: $color-primary; }
