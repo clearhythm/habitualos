@@ -21,29 +21,9 @@
   }
 }
 
-.container-narrow {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 0 $space-md;
-}
-
 .main {
   flex: 1;
   padding-bottom: $space-2xl;
-}
-
-.footer {
-  background: $color-bg;
-  border-top: 1px solid $color-border;
-  padding: $space-lg 0;
-  margin-top: $space-2xl;
-  text-align: center;
-
-  p {
-    margin-bottom: 0;
-    color: $color-text-muted;
-    font-size: $font-size-sm;
-  }
 }
 
 .page-title {

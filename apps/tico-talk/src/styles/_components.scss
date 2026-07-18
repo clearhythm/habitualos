@@ -49,7 +49,27 @@
   display: flex;
   flex-direction: column;
   gap: $space-lg;
-  padding-bottom: 7rem; // clears the fixed talk-bar
+  padding-bottom: 9rem; // clears the fixed talk-zone/talk-bar
+}
+
+// Compact persistent header — current role + a tappable confidence
+// summary. Tapping it is meant to reveal .skill-tree-detail below (no JS
+// yet, so both states are just shown in place for visual review).
+.session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-header__role {
+  font-size: $font-size-2xl;
+  font-weight: 600;
+}
+
+.skill-tree-detail__label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-bottom: $space-sm;
 }
 
 .skill-tree {
@@ -61,17 +81,10 @@
   padding-bottom: $space-xs;
 }
 
-.skill-node {
-  flex-shrink: 0;
-  padding: $space-xs $space-md;
-  border-radius: 999px;
-  font-size: $font-size-sm;
-  font-weight: 500;
-  white-space: nowrap;
-  border: 1px solid $color-border;
-  background: $color-bg-surface;
-  color: $color-text-muted;
-
+// Tier color states, shared by the skill-tree chips and the header's
+// confidence-badge summary.
+.skill-node,
+.confidence-badge {
   &.tier-mastered {
     background: $color-green;
     border-color: $color-green;
@@ -93,12 +106,36 @@
   &.tier-untouched {
     opacity: 0.5;
   }
+}
+
+.skill-node {
+  flex-shrink: 0;
+  padding: $space-xs $space-md;
+  border-radius: 999px;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid $color-border;
+  background: $color-bg-surface;
+  color: $color-text-muted;
 
   &.is-frontier {
     border-width: 2px;
     font-weight: 600;
     color: $color-text;
   }
+}
+
+.confidence-badge {
+  padding: $space-xs $space-md;
+  border-radius: 999px;
+  border: 1px solid $color-border;
+  background: $color-bg-surface;
+  color: $color-text-muted;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .transcript {
@@ -136,21 +173,36 @@
   }
 }
 
-.talk-bar {
+// Cream band behind the talk-bar — visually separates the fixed action
+// zone from the scrolling white content above it. Sized to its content —
+// half the button + a small gap + the label + a thumb-safe bottom margin —
+// not an arbitrary fixed height, so there's no dead cream space below the label.
+.talk-zone {
   position: fixed;
-  bottom: $space-lg;
+  bottom: 0;
   left: 0;
   right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $space-xs;
+  height: 5.5rem;
+  background: $color-bg-surface;
+  border-top: 1px solid $color-border;
+  z-index: 1400;
+}
+
+// .talk-bar is just a semantic wrapper now — .talk-btn and .talk-bar__label
+// each position themselves independently (position: fixed is relative to
+// the viewport regardless of parent here), so the button's vertical center
+// can land exactly on .talk-zone's top edge rather than being constrained
+// to sit fully inside or outside it as a single flex-stacked unit.
+.talk-bar {
   pointer-events: none;
-  z-index: 1500;
 }
 
 .talk-btn {
   pointer-events: auto;
+  position: fixed;
+  bottom: 3rem; // half the 5rem button sits above .talk-zone's 5.5rem edge, half below
+  left: 50%;
+  transform: translateX(-50%);
   width: 5rem;
   height: 5rem;
   border-radius: 50%;
@@ -162,13 +214,19 @@
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   transition: background 0.2s ease, transform 0.1s ease;
+  z-index: 1500;
 
   &:hover { background: $color-green-dark; }
-  &:active { transform: scale(0.96); }
+  &:active { transform: translateX(-50%) scale(0.96); }
 }
 
 .talk-bar__label {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
   margin: 0;
   font-size: $font-size-sm;
   color: $color-text-muted;
+  z-index: 1500;
 }
