@@ -2,6 +2,7 @@
 layout: base.njk
 title: Prepare for Shift — Tico
 permalink: /practice/
+pageScript: /assets/js/practice.js
 ---
 
 <div class="practice-screen">
@@ -10,16 +11,120 @@ permalink: /practice/
     <button class="confidence-badge tier-training" aria-label="View full skill tree">Training</button>
   </div>
 
-  <div class="skill-tree-detail card">
-    <p class="skill-tree-detail__label">Host skill tree</p>
-    <div class="skill-tree">
-      <span class="skill-node tier-mastered">Greet</span>
-      <span class="skill-node tier-natural">Party size</span>
-      <span class="skill-node tier-capable">Seating</span>
-      <span class="skill-node tier-training is-frontier">Accommodations</span>
-      <span class="skill-node tier-untouched">Seat &amp; menu</span>
-      <span class="skill-node tier-untouched">Hand-off</span>
-      <span class="skill-node tier-untouched">Water</span>
+  <div class="skill-tree-modal" id="skill-tree-modal">
+    <div class="skill-tree-modal__backdrop"></div>
+    <div class="skill-tree-modal__panel">
+      <div class="skill-tree-modal__header">
+        <p class="skill-tree-modal__title">Greet skill tree</p>
+        <button class="skill-tree-modal__close" aria-label="Close">✕</button>
+      </div>
+      <ol class="skill-tree-list">
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Greet &amp; welcome</span>
+            <span class="skill-tree-row__desc">Warmly welcome the guest as they arrive</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+            </div>
+            <span class="tier-indicator__label">Mastered</span>
+          </div>
+        </li>
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Party size</span>
+            <span class="skill-tree-row__desc">Find out how many guests are in the group</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Natural</span>
+          </div>
+        </li>
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Seating preference</span>
+            <span class="skill-tree-row__desc">Inside or outside, high-top or low-top, sun or shade</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Capable</span>
+          </div>
+        </li>
+        <li class="skill-tree-row is-frontier">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Accommodations</span>
+            <span class="skill-tree-row__desc">Check for special needs, like a high chair</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot is-filled"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Training</span>
+          </div>
+        </li>
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Seat &amp; present menu</span>
+            <span class="skill-tree-row__desc">Walk the guest to their table and present the menu, including specials</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Not started</span>
+          </div>
+        </li>
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Server hand-off</span>
+            <span class="skill-tree-row__desc">Introduce the table to their server</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Not started</span>
+          </div>
+        </li>
+        <li class="skill-tree-row">
+          <div class="skill-tree-row__info">
+            <span class="skill-tree-row__name">Water service</span>
+            <span class="skill-tree-row__desc">Offer water — ice or no ice — and deliver it</span>
+          </div>
+          <div class="tier-indicator">
+            <div class="tier-dots">
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+              <span class="tier-dot"></span>
+            </div>
+            <span class="tier-indicator__label">Not started</span>
+          </div>
+        </li>
+      </ol>
     </div>
   </div>
 

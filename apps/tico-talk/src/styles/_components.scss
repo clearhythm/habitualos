@@ -66,24 +66,7 @@
   font-weight: 600;
 }
 
-.skill-tree-detail__label {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  margin-bottom: $space-sm;
-}
-
-.skill-tree {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: $space-sm;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: $space-xs;
-}
-
-// Tier color states, shared by the skill-tree chips and the header's
-// confidence-badge summary.
-.skill-node,
+// Tier color states for the header's confidence-badge summary.
 .confidence-badge {
   &.tier-mastered {
     background: $color-green;
@@ -103,26 +86,17 @@
     color: $color-primary;
   }
 
-  &.tier-untouched {
-    opacity: 0.5;
-  }
-}
-
-.skill-node {
-  flex-shrink: 0;
-  padding: $space-xs $space-md;
-  border-radius: 999px;
-  font-size: $font-size-sm;
-  font-weight: 500;
-  white-space: nowrap;
-  border: 1px solid $color-border;
-  background: $color-bg-surface;
-  color: $color-text-muted;
-
-  &.is-frontier {
-    border-width: 2px;
-    font-weight: 600;
+  &.tier-training {
+    background: $color-bg-surface;
+    border-color: $color-border;
     color: $color-text;
+  }
+
+  &.tier-untouched {
+    background: $color-bg-surface;
+    border-color: $color-border;
+    color: $color-text-muted;
+    opacity: 0.6;
   }
 }
 
@@ -136,6 +110,136 @@
   font-size: $font-size-sm;
   font-weight: 600;
   cursor: pointer;
+}
+
+// Full skill-tree modal — toggled via practice.js (.confidence-badge opens,
+// .skill-tree-modal__close / .skill-tree-modal__backdrop close).
+// True full-screen modal — panel fills the entire viewport (position:
+// absolute; inset: 0 inside this fixed inset:0 wrapper), flush with all
+// four edges. No rounding, no max-width, no centering — there's no gap
+// around it for rounded corners or a floating card to make sense against.
+.skill-tree-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+
+  &.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+.skill-tree-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.skill-tree-modal__panel {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: $space-lg;
+}
+
+.skill-tree-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-md;
+}
+
+.skill-tree-modal__title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin: 0;
+}
+
+.skill-tree-modal__close {
+  border: none;
+  background: none;
+  color: $color-text-muted;
+  font-size: $font-size-lg;
+  line-height: 1;
+  padding: $space-xs;
+  cursor: pointer;
+}
+
+.skill-tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.skill-tree-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-md;
+  padding: $space-md 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child { border-bottom: none; }
+
+  &.is-frontier {
+    background: rgba($color-primary, 0.06);
+    margin: 0 -#{$space-md};
+    padding-left: $space-md;
+    padding-right: $space-md;
+    border-radius: 0.5rem;
+  }
+}
+
+.skill-tree-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.skill-tree-row__name {
+  font-weight: 600;
+}
+
+.skill-tree-row__desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+// 4-dot tier readout for skill-tree-list rows — fixed width regardless of
+// tier name, unlike a text pill (whose width ragged the row's right edge).
+.tier-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.tier-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.tier-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: $color-border;
+
+  &.is-filled { background: $color-green; }
+}
+
+.tier-indicator__label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
 }
 
 .transcript {
