@@ -1,57 +1,112 @@
 @use 'variables' as *;
 
-// Centered masthead — fixed top, acts as menu trigger on all pages
-.nav-masthead {
+// Three-zone header — hamburger (left, opens the sidemenu), brand (center),
+// help icon (right, only on pages that set `showHelp` in frontmatter).
+// Left/right slots share a fixed width so the center brand stays visually
+// centered whether or not the right slot has anything in it.
+.nav-bar {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   z-index: 2000;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.875rem 1.25rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: $font-family;
-  font-size: $font-size-lg;
-  font-weight: 600;
-  transition: opacity 0.2s ease;
-  white-space: nowrap;
-
-  &:hover, &:active {
-    .nav-masthead-label { color: $color-green; }
-  }
+  justify-content: space-between;
+  padding: 1.25rem $space-lg;
+  transition: background 0.3s ease;
 
   &.scrolled {
     background: color-mix(in srgb, $color-bg 90%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    width: 100%;
-    left: 0;
-    transform: none;
-    justify-content: center;
     border-bottom: 1px solid $color-border;
-    transition: opacity 0.2s ease, background 0.3s ease;
+  }
+}
+
+.nav-bar__slot {
+  width: 2rem;
+  display: flex;
+  align-items: center;
+
+  &--right { justify-content: flex-end; }
+}
+
+.nav-bar__brand {
+  font-family: $font-family;
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-text;
+}
+
+// Real hamburger icon + open/close transition — three bars morphing into an
+// ×, matching apps/signal's nav toggle pattern. Driven by the same
+// body.sidemenu-open class the existing toggle JS already sets.
+.nav-hamburger {
+  width: 24px;
+  height: 18px;
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  span {
+    display: block;
+    position: absolute;
+    left: 0;
+    height: 3px;
+    width: 24px;
+    background: $color-text;
+    border-radius: 2px;
+    transform: rotate(0deg);
+    transition: top 0.25s ease-in-out, transform 0.25s ease-in-out,
+                opacity 0.25s ease-in-out, width 0.25s ease-in-out,
+                height 0.25s ease-in-out, left 0.25s ease-in-out;
   }
 
-  &.open { opacity: 1; }
+  span:nth-child(1) { top: 0; width: 85%; }
+  span:nth-child(2) { top: 8px; }
+  span:nth-child(3) { top: 16px; width: 65%; }
 }
 
-.nav-masthead-label {
-  color: rgba($color-green, 0.75);
-  transition: color 0.2s ease;
+// Open state — morphs into an ×
+body.sidemenu-open .nav-hamburger span:nth-child(1) {
+  top: 7px;
+  width: 24px;
+  height: 4px;
+  transform: rotate(135deg);
+}
+body.sidemenu-open .nav-hamburger span:nth-child(2) {
+  opacity: 0;
+  left: -24px;
+}
+body.sidemenu-open .nav-hamburger span:nth-child(3) {
+  top: 7px;
+  width: 24px;
+  height: 4px;
+  transform: rotate(-135deg);
 }
 
-.nav-masthead-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-  flex-shrink: 0;
+.nav-bar__help {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid $color-border;
+  background: none;
+  color: $color-text-muted;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  padding: 0;
+  cursor: pointer;
 }
 
 // Sidemenu overlay — above page content (e.g. .talk-bar at 1500) but below
-// the masthead toggle button (2000) so it stays clickable to close the menu.
+// the nav-bar (2000) so the hamburger stays clickable to close the menu.
 .sidemenu-main {
   position: fixed;
   z-index: 1900;

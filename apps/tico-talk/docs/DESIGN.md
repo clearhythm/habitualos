@@ -17,8 +17,8 @@ A fixed, hand-authored, ordered sequence of nodes:
 3. Ask seating preference (inside/outside, high-top/low-top, sun/shade)
 4. Accommodations (e.g., high chair)
 5. Seat guests & present menu (incl. specials)
-6. Server hand-off
-7. Water service (ice/no ice, delivery)
+6. Water service (ice/no ice, delivery)
+7. Server hand-off ("your server will be right with you")
 
 Each node stores canonical **concepts** it must convey — not canonical
 sentences. Example, node 3:

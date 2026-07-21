@@ -92,7 +92,53 @@ percentage:
 
 This is the thing a user could show a manager: not "completed Lesson 8," but
 "Natural at greeting and seating, Capable at water service" — a real,
-legible skill profile.
+legible skill profile. **Update below:** this profile is real and still
+tracked, but is no longer shown directly to the person it describes — see
+"Staff-Facing Experience."
+
+## Staff-Facing Experience: Coworker, Not Evaluator
+
+A key refinement, reached through building and discussing an actual practice
+screen: the tier model above is real and still tracked, but *showing it to
+the person being tracked* backfires. It reads as grading existing job
+competence rather than practicing something still being learned, which kills
+the low-stakes, game-like feeling the product depends on. (This surfaced
+concretely: a Spanish-language prototype of this idea genuinely felt fun and
+low-stakes to try; the identical mechanic, imagined in English, started to
+feel like corporate compliance training. The cause wasn't the language, it
+was visible grading.)
+
+What changes for the staff-facing experience specifically:
+
+- **Tico behaves like an experienced coworker, not a teacher** — occasional
+  observational tips (not after every turn), never a delivered score or
+  correction.
+- **Visible progress is a lived-experience tally** ("12 guests welcomed,"
+  "3rd shift") — not a bar, not a percentage. The tier/mastery model above
+  still exists and still runs, invisibly, deciding which scenarios get
+  served (harder/rarer guest types as skill grows) — it's just never
+  displayed to the user as a grade.
+- **Content is meant to come from combining three axes** — situation (date
+  night, family, business lunch, rainstorm...) × guest personality
+  (nervous, chatty, celebrating...) × restaurant state (packed, waitlist,
+  kitchen behind...) — rather than authoring an exhaustive scripted
+  curriculum. Not yet built as dynamic logic (no backend exists to combine
+  these live) — documented here as the intended direction.
+- **Sessions are framed as "starting a shift,"** not choosing a scenario
+  from a list — a roguelike "you don't pick, you handle what comes"
+  framing, explicitly *without* any permadeath/failure-ends-the-run
+  mechanic.
+- **Any tip Tico shares must be real, verified hospitality knowledge** —
+  never AI-invented pseudo-psychology presented as fact. This is a hard
+  content constraint, not a style preference.
+- **The tier model isn't wrong, it's repositioned** — it's the seed for a
+  future **manager/GM-facing view** (aggregate team competency, not a
+  personal report card), not something the practicing staff member sees
+  directly. Not yet built as screens.
+
+The "No gamification" non-goal below is narrower than it reads in light of
+this: no streaks/points/badges in the Duolingo sense, but a lived-experience
+tally and unlockable variety are part of the design, not excluded by it.
 
 ## Phrasing Philosophy: Concepts Are Canonical, Phrasing Is Generative
 
@@ -114,8 +160,8 @@ curation, but MVP does not require a hand-built phrase bank.
 3. Ask seating preference (inside/outside, high-top/low-top, sun/shade)
 4. Accommodations (e.g., high chair)
 5. Seat guests & present menu (including specials)
-6. Server hand-off ("your server will be right with you")
-7. Water service (ice/no ice, delivery)
+6. Water service (ice/no ice, delivery)
+7. Server hand-off ("your server will be right with you")
 
 This tree is treated as fixed and hand-authored for MVP — see Non-Goals.
 
@@ -133,7 +179,9 @@ This tree is treated as fixed and hand-authored for MVP — see Non-Goals.
   extensibility later, but do not build it now.
 - **No gamification** in the Duolingo sense — no streaks, points, or
   badges. Progression is expressed entirely through the confidence bar and
-  tier language.
+  tier language. **Update:** see "Staff-Facing Experience" above — the
+  tier language is no longer user-visible; a lived-experience tally and
+  unlockable variety replace it and aren't excluded by this non-goal.
 - **No full-duplex/interruptible voice** for MVP. Push-to-talk is the
   right fidelity for Host-level scenarios (see Design.md); realtime,
   interruptible conversation is a later difficulty lever, not an MVP

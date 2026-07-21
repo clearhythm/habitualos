@@ -53,8 +53,7 @@
 }
 
 // Compact persistent header — current role + a tappable confidence
-// summary. Tapping it is meant to reveal .skill-tree-detail below (no JS
-// yet, so both states are just shown in place for visual review).
+// summary. Tapping the badge reveals the full skill-tree modal.
 .session-header {
   display: flex;
   align-items: center;
@@ -66,59 +65,39 @@
   font-weight: 600;
 }
 
-// Tier color states for the header's confidence-badge summary.
+// Header confidence summary — represents the lowest tier reached across
+// all nodes ("only as strong as your weakest sub-skill"), not one
+// arbitrary node. Uses the same dot language as the modal's row list for
+// visual consistency, plus a chevron so it reads as tappable.
 .confidence-badge {
-  &.tier-mastered {
-    background: $color-green;
-    border-color: $color-green;
-    color: #ffffff;
-  }
-
-  &.tier-natural {
-    background: rgba($color-green, 0.12);
-    border-color: $color-green;
-    color: $color-green;
-  }
-
-  &.tier-capable {
-    background: rgba($color-primary, 0.1);
-    border-color: $color-primary;
-    color: $color-primary;
-  }
-
-  &.tier-training {
-    background: $color-bg-surface;
-    border-color: $color-border;
-    color: $color-text;
-  }
-
-  &.tier-untouched {
-    background: $color-bg-surface;
-    border-color: $color-border;
-    color: $color-text-muted;
-    opacity: 0.6;
-  }
-}
-
-.confidence-badge {
-  padding: $space-xs $space-md;
-  border-radius: 999px;
-  border: 1px solid $color-border;
-  background: $color-bg-surface;
-  color: $color-text-muted;
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding: 0;
+  border: none;
+  background: none;
   font-family: $font-family;
-  font-size: $font-size-sm;
-  font-weight: 600;
   cursor: pointer;
 }
 
-// Full skill-tree modal — toggled via practice.js (.confidence-badge opens,
-// .skill-tree-modal__close / .skill-tree-modal__backdrop close).
-// True full-screen modal — panel fills the entire viewport (position:
+.confidence-badge__label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.confidence-badge__chevron {
+  color: $color-text-muted;
+  font-size: $font-size-base;
+  line-height: 1;
+}
+
+// Generic full-screen modal shell — used by both the skill-tree modal and
+// the "How it works" modal. Panel fills the entire viewport (position:
 // absolute; inset: 0 inside this fixed inset:0 wrapper), flush with all
 // four edges. No rounding, no max-width, no centering — there's no gap
 // around it for rounded corners or a floating card to make sense against.
-.skill-tree-modal {
+.modal {
   position: fixed;
   inset: 0;
   z-index: 2500;
@@ -134,13 +113,13 @@
   }
 }
 
-.skill-tree-modal__backdrop {
+.modal__backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
 }
 
-.skill-tree-modal__panel {
+.modal__panel {
   position: absolute;
   inset: 0;
   overflow-y: auto;
@@ -148,20 +127,20 @@
   padding: $space-lg;
 }
 
-.skill-tree-modal__header {
+.modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: $space-md;
 }
 
-.skill-tree-modal__title {
+.modal__title {
   font-size: $font-size-lg;
   font-weight: 600;
   margin: 0;
 }
 
-.skill-tree-modal__close {
+.modal__close {
   border: none;
   background: none;
   color: $color-text-muted;
@@ -169,6 +148,32 @@
   line-height: 1;
   padding: $space-xs;
   cursor: pointer;
+}
+
+.modal__body-text {
+  margin-bottom: $space-md;
+  line-height: 1.6;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.skill-tree-group {
+  margin-bottom: $space-lg;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.skill-tree-group__label {
+  background: $color-bg-surface;
+  // Negate .modal__panel's own padding so the bar runs edge to
+  // edge, flush with the panel's true left/right boundaries.
+  margin-left: -$space-lg;
+  margin-right: -$space-lg;
+  margin-bottom: $space-sm;
+  padding: $space-sm $space-lg;
+  font-family: $font-family-accent;
+  font-style: italic;
+  color: $color-primary;
 }
 
 .skill-tree-list {
@@ -188,14 +193,6 @@
   border-bottom: 1px solid $color-border;
 
   &:last-child { border-bottom: none; }
-
-  &.is-frontier {
-    background: rgba($color-primary, 0.06);
-    margin: 0 -#{$space-md};
-    padding-left: $space-md;
-    padding-right: $space-md;
-    border-radius: 0.5rem;
-  }
 }
 
 .skill-tree-row__info {
@@ -267,7 +264,9 @@
     color: #ffffff;
   }
 
-  &--coach {
+  // Tico's voice — both scene-setup narration and performance coaching are
+  // the same character stepping outside the roleplay, so they share one style.
+  &--tico {
     align-self: center;
     max-width: 90%;
     text-align: center;
@@ -322,6 +321,32 @@
 
   &:hover { background: $color-green-dark; }
   &:active { transform: translateX(-50%) scale(0.96); }
+
+  // Not the user's turn — button is inert (auto-playing guest/Tico lines).
+  &:disabled {
+    background: $color-text-muted;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  // Simulated processing pause right after the user taps, before their
+  // transcribed line appears.
+  &.is-processing {
+    opacity: 0.7;
+  }
+
+  // Actively "recording" — tap again to stop. Orange (not the default
+  // green) and pulsing, so it's visually obvious this is a distinct,
+  // in-progress state waiting on a second tap.
+  &.is-recording {
+    background: $color-primary;
+    animation: talk-btn-recording-pulse 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes talk-btn-recording-pulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); }
+  50% { box-shadow: 0 4px 24px rgba($color-primary, 0.55); }
 }
 
 .talk-bar__label {
@@ -333,4 +358,71 @@
   font-size: $font-size-sm;
   color: $color-text-muted;
   z-index: 1500;
+}
+
+// First-visit guided tour (practice.js) — no backdrop/dimming by design,
+// just an outline on the real target element plus a floating tooltip.
+// Avoids fighting the page's existing fixed-position z-index layers
+// (nav: 2000, modal: 2500, talk-bar: 1500) that a full-screen scrim with
+// a "cutout" would need to be threaded through.
+body.tour-open {
+  overflow: hidden;
+}
+
+.tour-highlight {
+  outline: 3px solid $color-primary;
+  outline-offset: 4px;
+  border-radius: 0.75rem;
+
+  // Preserve fully-round targets (e.g. .talk-btn) instead of letting the
+  // rectangular rounding above turn the circle into a rounded rectangle.
+  &.talk-btn {
+    border-radius: 50%;
+  }
+}
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 3000;
+  width: min(280px, calc(100vw - 32px));
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: $space-md;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.tour-tooltip__text {
+  margin: 0 0 $space-md;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}
+
+.tour-tooltip__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tour-tooltip__skip {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  cursor: pointer;
+}
+
+.tour-tooltip__next {
+  border: none;
+  border-radius: 999px;
+  padding: $space-xs $space-md;
+  background: $color-green;
+  color: #ffffff;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover { background: $color-green-dark; }
 }

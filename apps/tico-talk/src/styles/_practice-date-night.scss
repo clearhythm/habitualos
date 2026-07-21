@@ -1,0 +1,62 @@
+@use 'variables' as *;
+
+// Date Night practice variant — reuses .transcript/.transcript-line,
+// .talk-zone/.talk-btn/.talk-bar__label from _components.scss (shared,
+// untouched) but adds its own scene/aside treatment. Isolated in its own
+// partial; _components.scss is not modified. Page background is the
+// app's default white — the illustration has real baked-in transparency
+// (not a flat fill needing a color-matched page bg to hide a seam).
+
+.dn-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-lg;
+  padding-bottom: 9rem; // clears the fixed talk-zone/talk-bar, same as .practice-screen
+}
+
+.dn-scene {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  display: block;
+}
+
+// Narration — every scenario opens with one. Styled like the rest of
+// Tico's narrating voice elsewhere (italic serif), since that's what this
+// is: the scene-setup line, just positioned under the illustration instead
+// of as the first transcript bubble.
+.dn-lander__desc {
+  font-family: $font-family-accent;
+  font-style: italic;
+  color: $color-text-muted;
+  max-width: 24rem;
+  margin: 0;
+}
+
+// Tico's occasional coworker aside — visually distinct from the regular
+// guest/user bubbles and from a scene-setup line: a rarer, different kind
+// of moment (a tip in passing), not a per-turn grade.
+.tico-aside {
+  align-self: center;
+  max-width: 90%;
+  margin: 0;
+  padding: $space-md;
+  border: 1px dashed $color-border;
+  border-radius: 0.75rem;
+  background: $color-bg-surface;
+  font-family: $font-family-accent;
+  font-style: italic;
+  color: $color-text;
+  text-align: left;
+}
+
+.tico-aside__label {
+  display: block;
+  margin-bottom: $space-xs;
+  font-family: $font-family;
+  font-style: normal;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-primary;
+}

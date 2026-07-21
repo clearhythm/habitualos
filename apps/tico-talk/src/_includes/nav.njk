@@ -1,7 +1,18 @@
-<button id="sidemenu-toggle" class="nav-masthead" aria-label="Menu">
-  <span class="nav-masthead-icon">🌮</span>
-  {% if not hideNavLabel %}<span class="nav-masthead-label">Tico</span>{% endif %}
-</button>
+<div class="nav-bar" id="nav-bar">
+  <div class="nav-bar__slot nav-bar__slot--left">
+    <button id="sidemenu-toggle" class="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="nav-bar__brand">
+    {% if not hideNavLabel %}<span class="nav-bar__label">Tico</span>{% endif %}
+  </div>
+
+  <div class="nav-bar__slot nav-bar__slot--right">
+    {% if showHelp %}<button class="nav-bar__help" id="how-it-works-trigger" aria-label="How it works">?</button>{% endif %}
+  </div>
+</div>
 
 <div class="sidemenu-main">
   <div class="sidemenu-left">
