@@ -13,15 +13,14 @@ function wireModal(trigger, modal) {
 }
 
 wireModal(document.querySelector('.confidence-badge'), document.getElementById('skill-tree-modal'));
-wireModal(document.getElementById('how-it-works-trigger'), document.getElementById('how-it-works-modal'));
 
 // Guided tour — spotlights one real element at a time with a short
 // callout, rather than dumping all the explanation into a modal at once.
 // No backdrop/dimming (keeps this simple and avoids fighting the existing
 // fixed-position z-index layers) — just an outline on the target element
-// plus a small tooltip near it. Runs on every page load — this is a demo
-// Erik replays live, not a real first-run flow yet, so it should never go
-// quiet on its own (no localStorage gating).
+// plus a small tooltip near it. Triggered by the "?" button (never
+// auto-plays) so it stays available on demand rather than firing once and
+// being gone.
 const tourSteps = [
   { selector: '.session-header', text: "This shows what you're practicing and your current confidence level." },
   { selector: '.transcript', text: 'Tico sets the scene, then plays each line as the scenario unfolds.' },
@@ -88,8 +87,6 @@ function startTour() {
   showStep(0);
 }
 
-setTimeout(startTour, 500);
-
 // Scripted demo — matches the real interaction model: only the user's own
 // turns need an explicit tap. Guest and Tico lines auto-advance on their
 // own after a short pause (simulating audio playback / an API round-trip),
@@ -155,7 +152,7 @@ function setState(state) {
 // between each; stops and enables the button as soon as a non-auto
 // (user) turn is next.
 function playAutoTurns() {
-  if (turnIndex >= turns.length) { setState('done'); return; }
+  if (turnIndex >= turns.length) { setState('done'); recordSessionComplete(); return; }
   const next = turns[turnIndex];
   if (!next.auto) { setState('waiting'); return; }
   setState('listening');
@@ -184,4 +181,68 @@ talkBtn?.addEventListener('click', () => {
   }, PROCESSING_DELAY_MS);
 });
 
-playAutoTurns();
+// Support → Server unlock — "mastering" Support unlocks Server, but that
+// has to mean showing up for the reps, not hitting a quality/score
+// threshold. The unlock needs to read as something the user did by
+// engaging, not a grade the system handed down — same gate, different
+// causality. Threshold is a small placeholder for demo purposes.
+const SUPPORT_MASTERY_THRESHOLD = 2;
+const SESSIONS_KEY = 'tico:completedSessions:welcome-seating';
+
+function getCompletedSessions() {
+  return Number(localStorage.getItem(SESSIONS_KEY) || 0);
+}
+
+const serverGroup = document.getElementById('server-group');
+const serverLock = serverGroup?.querySelector('.competency-group__lock');
+
+function refreshServerLock() {
+  if (!serverGroup) return;
+  const unlocked = getCompletedSessions() >= SUPPORT_MASTERY_THRESHOLD;
+  serverGroup.classList.toggle('is-locked', !unlocked);
+  if (serverLock) serverLock.hidden = unlocked;
+}
+
+function recordSessionComplete() {
+  localStorage.setItem(SESSIONS_KEY, String(getCompletedSessions() + 1));
+  refreshServerLock();
+}
+
+refreshServerLock();
+
+// Competency picker — the practice session (tour + scripted turns) only
+// starts once the user picks what they're drilling on. Only "Welcome &
+// Seating" has real scenario content behind it right now; the rest are
+// shown so the full curriculum is visible, but stay disabled until built.
+const competencySelect = document.getElementById('competency-select');
+const practiceSession = document.getElementById('practice-session');
+const helpTrigger = document.getElementById('how-it-works-trigger');
+
+// The "?" only makes sense once a session is actually on screen — hide it
+// on the select screen, reveal it once a competency is chosen.
+if (helpTrigger) helpTrigger.hidden = true;
+helpTrigger?.addEventListener('click', () => {
+  dismissTour();
+  startTour();
+});
+
+document.querySelector('.competency-pill[data-competency="welcome-seating"]')?.addEventListener('click', () => {
+  competencySelect.hidden = true;
+  practiceSession.hidden = false;
+  if (helpTrigger) helpTrigger.hidden = false;
+  playAutoTurns();
+});
+
+// Back to selection — resets the scripted session so picking the same
+// competency again starts clean rather than resuming mid-transcript.
+const backToMenu = document.getElementById('back-to-menu');
+const transcriptInitialHTML = transcript?.innerHTML;
+
+backToMenu?.addEventListener('click', () => {
+  dismissTour();
+  practiceSession.hidden = true;
+  competencySelect.hidden = false;
+  if (helpTrigger) helpTrigger.hidden = true;
+  if (transcript) transcript.innerHTML = transcriptInitialHTML;
+  turnIndex = 0;
+});

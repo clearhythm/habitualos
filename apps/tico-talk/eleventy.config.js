@@ -58,6 +58,12 @@ export default async function(eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/assets/js");
   eleventyConfig.addPassthroughCopy("src/assets/images");
 
+  // Menu/Drinks reference pages filter one venue's categories down to just
+  // the food or drink subset by name.
+  eleventyConfig.addFilter("selectCategories", (categories, names) => {
+    return categories.filter((category) => names.includes(category.name));
+  });
+
   return {
     dir: { input: "src", output: "_site", includes: "_includes" },
     templateFormats: ["njk", "md", "html", "scss"],

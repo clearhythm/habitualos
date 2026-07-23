@@ -1,0 +1,106 @@
+@use 'variables' as *;
+
+// Read-only review of extracted menu JSON — internal tool, not linked from
+// nav. Optimized for scanning a lot of dense data on desktop (per Erik:
+// this piece doesn't need to be as mobile-first as the rest of the app),
+// but still usable on a phone via the column-count collapse below.
+.menu-review__venue-name {
+  font-size: $font-size-2xl;
+  font-weight: 600;
+  margin-bottom: $space-lg;
+}
+
+.menu-review__categories {
+  column-count: 1;
+  column-gap: $space-xl;
+
+  @media (min-width: $breakpoint-md) {
+    column-count: 2;
+  }
+
+  @media (min-width: $breakpoint-lg) {
+    column-count: 3;
+  }
+}
+
+.menu-category {
+  break-inside: avoid;
+  margin-bottom: $space-xl;
+}
+
+.menu-category__name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-green;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $space-xs;
+  margin-bottom: $space-sm;
+}
+
+.menu-category__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu-item {
+  padding: $space-sm 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child { border-bottom: none; }
+}
+
+.menu-item__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-sm;
+}
+
+.menu-item__name {
+  font-weight: 600;
+}
+
+.menu-item__price {
+  font-weight: 600;
+  color: $color-text-muted;
+  white-space: nowrap;
+}
+
+.menu-item__desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-xs;
+}
+
+.menu-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-xs;
+  margin-top: $space-xs;
+}
+
+.menu-item__tag {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  background: $color-bg-muted;
+  border-radius: 999px;
+  padding: 0.125rem $space-sm;
+}
+
+// Notes are real menu facts (off-menu add-ons, portion sizes, disclaimers)
+// — they show on every page. Plain text by default; the mustard highlight
+// below is only for /menu-review/'s proofing-scan use case.
+.menu-item__notes {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-xs;
+}
+
+.menu-item__notes--highlight {
+  color: $color-primary-dark;
+  background: color-mix(in srgb, $color-warning 8%, transparent);
+  border-left: 2px solid $color-warning;
+  padding: $space-xs $space-sm;
+  margin-top: $space-sm;
+}

@@ -6,9 +6,47 @@ pageScript: /assets/js/practice.js
 showHelp: true
 ---
 
+<div class="competency-select" id="competency-select">
+  <p class="competency-select__title">Choose a craft to practice:</p>
+  <div class="competency-group">
+    <p class="competency-group__label">Support</p>
+    <div class="competency-pills">
+      <button class="competency-pill" data-competency="welcome-seating">Welcome &amp; Seating</button>
+      <button class="competency-pill" disabled>Menu Knowledge</button>
+      <button class="competency-pill" disabled>Managing Waits</button>
+      <button class="competency-pill" disabled>Table Presence</button>
+    </div>
+  </div>
+
+  <div class="competency-group is-locked" id="server-group">
+    <p class="competency-group__label">Server</p>
+    <p class="competency-group__lock">Unlocks after you master support</p>
+    <div class="competency-pills">
+      <button class="competency-pill" disabled>Recommendations &amp; Upselling</button>
+      <button class="competency-pill" disabled>Beverage Knowledge</button>
+      <button class="competency-pill" disabled>Taking Orders</button>
+      <button class="competency-pill" disabled>Service Flow</button>
+      <button class="competency-pill" disabled>Service Recovery</button>
+      <button class="competency-pill" disabled>Closing the Experience</button>
+    </div>
+  </div>
+
+  <div class="competency-group">
+    <p class="competency-group__label">Specialty Craft</p>
+    <div class="competency-pills">
+      <button class="competency-pill" disabled>Spanish Service</button>
+    </div>
+  </div>
+</div>
+
+<div class="practice-session" id="practice-session" hidden>
 <div class="practice-screen">
   <div class="session-header">
-    <span class="session-header__role">Greet</span>
+    <p class="session-header__crumbs">
+      <button class="breadcrumb__back" id="back-to-menu" type="button">Craft area</button>
+      <span class="breadcrumb__sep">›</span>
+      <span class="breadcrumb__current">Welcome &amp; Seating</span>
+    </p>
     <button class="confidence-badge" aria-label="View full skill tree">
       <div class="tier-dots">
         <span class="tier-dot is-filled"></span>
@@ -21,24 +59,11 @@ showHelp: true
     </button>
   </div>
 
-  <div class="modal" id="how-it-works-modal">
-    <div class="modal__backdrop"></div>
-    <div class="modal__panel">
-      <div class="modal__header">
-        <p class="modal__title">How it works</p>
-        <button class="modal__close" aria-label="Close">✕</button>
-      </div>
-      <p class="modal__body-text">Tico sets the scene, then plays each guest's line as it happens — you don't need to tap anything to hear them.</p>
-      <p class="modal__body-text">When it's your turn, the mic button at the bottom lights up. Tap it and respond the way you actually would on shift — there's no script, so just roll with whatever you're handed.</p>
-      <p class="modal__body-text">Tico coaches you along the way and tracks your progress on each sub-skill — tap the badge up top any time to see the full skill tree.</p>
-    </div>
-  </div>
-
   <div class="modal" id="skill-tree-modal">
     <div class="modal__backdrop"></div>
     <div class="modal__panel">
       <div class="modal__header">
-        <p class="modal__title">Greet skill tree</p>
+        <p class="modal__title">Welcome &amp; Seating skill tree</p>
         <button class="modal__close" aria-label="Close">✕</button>
       </div>
       <div class="skill-tree-group">
@@ -169,4 +194,5 @@ showHelp: true
 <div class="talk-bar">
   <button class="talk-btn" aria-label="Tap to talk">🎙️</button>
   <p class="talk-bar__label">Tap to talk</p>
+</div>
 </div>

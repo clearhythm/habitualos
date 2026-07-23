@@ -1,0 +1,18 @@
+---
+layout: base.njk
+title: Menu — Tico
+permalink: /menu/
+---
+
+{% from "menu-categories.njk" import render as renderCategories %}
+
+<p class="page-title">Menu</p>
+
+{% set foodCategoryNames = ["Starters", "Soup & Salad", "Chilled Seafood", "Traditional Plates", "Tacos", "Seafood Plates"] %}
+
+{% for menu in menus %}
+<section class="menu-review__venue">
+  <h2 class="menu-review__venue-name">{{ menu.name }}</h2>
+  {{ renderCategories(menu.categories | selectCategories(foodCategoryNames), false) }}
+</section>
+{% endfor %}

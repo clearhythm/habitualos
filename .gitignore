@@ -10,6 +10,7 @@ node_modules/
 _site/
 # Live Sass Compiler VSCode extension output
 apps/obi-wai-web/css/
+apps/tico-talk/css/
 
 # Logs
 *.log

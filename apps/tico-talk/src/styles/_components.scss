@@ -56,12 +56,34 @@
 // summary. Tapping the badge reveals the full skill-tree modal.
 .session-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $space-sm;
 }
 
-.session-header__role {
-  font-size: $font-size-2xl;
+.session-header__crumbs {
+  display: flex;
+  align-items: baseline;
+  gap: $space-xs;
+  font-size: $font-size-sm;
+  font-weight: 500;
+}
+
+.breadcrumb__back {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: $color-text-muted;
+  cursor: pointer;
+}
+
+.breadcrumb__sep {
+  color: $color-text-muted;
+}
+
+.breadcrumb__current {
+  color: $color-text;
   font-weight: 600;
 }
 

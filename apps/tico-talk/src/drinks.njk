@@ -1,0 +1,18 @@
+---
+layout: base.njk
+title: Drinks — Tico
+permalink: /drinks/
+---
+
+{% from "menu-categories.njk" import render as renderCategories %}
+
+<p class="page-title">Drinks</p>
+
+{% set drinkCategoryNames = ["Tiki Drinks", "Zero Proof", "Non-Alc", "Premium Margaritas", "Margaritas", "Beer", "Wine", "House Cocktails"] %}
+
+{% for menu in menus %}
+<section class="menu-review__venue">
+  <h2 class="menu-review__venue-name">{{ menu.name }}</h2>
+  {{ renderCategories(menu.categories | selectCategories(drinkCategoryNames), false) }}
+</section>
+{% endfor %}

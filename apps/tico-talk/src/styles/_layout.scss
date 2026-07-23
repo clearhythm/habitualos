@@ -14,11 +14,7 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 5rem $space-md $space-md;
-
-  @media (min-width: $breakpoint-md) {
-    padding: 5rem $space-xl $space-md;
-  }
+  padding: 5rem $space-lg $space-md; // horizontal matches .nav-bar's padding so edges align
 }
 
 .main {
@@ -42,10 +38,23 @@
   padding-top: 0;
   margin-top: -$space-md;
 
-  &__image {
+  // Both images are crops of what used to be one 1024px-wide composition
+  // (previously shown at max-width: 420px). The crops removed the dead
+  // space around each element, so they need to be scaled down by the same
+  // ratio (420/1024) rather than each capped at 420px again, or they'd
+  // render larger than the original design intended.
+  &__logo {
     width: 100%;
-    max-width: 420px;
+    max-width: 252px; // 614px crop × (420/1024)
     height: auto;
+    margin-top: 14px;
+  }
+
+  &__mascot {
+    width: 100%;
+    max-width: 274px; // 668px crop × (420/1024)
+    height: auto;
+    margin: 14px 0;
   }
 
   &__tagline {

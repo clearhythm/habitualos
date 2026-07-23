@@ -1,0 +1,625 @@
+{
+  "venueId": "margaritaville",
+  "name": "Margaritaville Capitola",
+  "categories": [
+    {
+      "name": "Starters",
+      "items": [
+        {
+          "id": "chips-and-salsa",
+          "name": "Chips & Salsa",
+          "description": "Warm house made corn tortilla chips served with a roasted tomato salsa and a tomatillo (green) salsa — two separate salsas",
+          "price": 10,
+          "tags": ["vegetarian", "dairy-free"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "guacamole",
+          "name": "Guacamole",
+          "description": "Avocado, fresh jalapeños, red onion and cilantro, topped with queso fresco, served with warm housemade corn tortilla chips and a roasted tomato salsa and a tomatillo (green) salsa — two separate salsas",
+          "price": 18,
+          "tags": ["vegetarian"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "quesadilla",
+          "name": "Quesadilla",
+          "description": "Flour tortilla folded with melted queso oaxaca, served with crema and pico de gallo",
+          "price": 18,
+          "tags": ["vegetarian"],
+          "allergens": [],
+          "notes": "Protein add-ons available off-menu (chicken, steak, shrimp, birria, or veggie — matching the Nachos add-ons); exact pricing not confirmed"
+        },
+        {
+          "id": "calamari",
+          "name": "Calamari",
+          "description": "Deep fried breaded tubes and tentacles with jalapeño slices, served with chipotle aioli and jalapeño aioli",
+          "price": 21,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "nachos",
+          "name": "Nachos",
+          "description": "Housemade corn tortilla chips, refried pinto beans, queso oaxaca, topped with guacamole, pico de gallo, house pickled jalapeños and crema",
+          "price": 21,
+          "tags": ["vegetarian"],
+          "allergens": [],
+          "notes": "Add-ons (shared across Starters section): grilled chicken +$12, steak +$16, shrimp +$14, sautéed veggies +$8, chile verde +$12, birria +$12. Also available off-menu in a half order or full order — most guests order the half, which is still large. Substantially bigger/more filling than the Guacamole as an actual portion."
+        }
+      ]
+    },
+    {
+      "name": "Soup & Salad",
+      "items": [
+        {
+          "id": "new-england-clam-chowder",
+          "name": "New England Clam Chowder",
+          "description": "Creamy chowder with clams, potato, celery, carrot, and onion, topped with bacon and cilantro",
+          "price": 10,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": "Cup $10 / Bowl $18 / Sourdough bread bowl $24"
+        },
+        {
+          "id": "caesar-salad",
+          "name": "Caesar Salad",
+          "description": "Chopped romaine with creamy housemade Caesar dressing, parmesan and sourdough croutons",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "house-salad",
+          "name": "House Salad",
+          "description": "Mixed greens with avocado, cucumber, pico de gallo, queso fresco and house made tortilla strips, dressed with creamy lime dressing",
+          "price": 18,
+          "tags": ["vegetarian"],
+          "allergens": [],
+          "notes": "Add-ons (shared across Soup & Salad section): grilled chicken +$12, steak +$16, shrimp +$14, sautéed veggies +$8"
+        }
+      ]
+    },
+    {
+      "name": "Chilled Seafood",
+      "items": [
+        {
+          "id": "ceviche",
+          "name": "Ceviche",
+          "description": "Halibut and shrimp marinated in fresh lime juice with avocado, jalapeño, onion and tomato, served with warm housemade corn tortilla chips",
+          "price": 21,
+          "tags": ["dairy-free"],
+          "allergens": [],
+          "notes": "*Contains raw or undercooked ingredients"
+        },
+        {
+          "id": "dungeness-crab-tostadas",
+          "name": "Dungeness Crab Tostadas",
+          "description": "Corn tostadas with crab, guacamole, chipotle aioli and cilantro, served with fresh lemon, topped with Maldon's sea salt",
+          "price": 32,
+          "tags": ["dairy-free"],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Traditional Plates",
+      "items": [
+        {
+          "id": "chile-verde-plate",
+          "name": "Chile Verde Plate",
+          "description": "Slow roasted pork with tomatillos and jalapeños, topped with cilantro, served with Spanish rice, refried beans and warm flour tortillas",
+          "price": 28,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "chile-verde-enchiladas",
+          "name": "Chile Verde Enchiladas",
+          "description": "Pork chile verde wrapped in corn tortillas with queso oaxaca, smothered in chile verde, topped with cilantro, served with Spanish rice and refried beans",
+          "price": 28,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "el-ultimo-burrito",
+          "name": "El Ultimo Burrito",
+          "description": "Choice of chicken, shrimp or chile verde wrapped in a flour tortilla with refried beans, Spanish rice, pico de gallo, lime crema and queso oaxaca, smothered and topped with queso fresco and cilantro",
+          "price": 28,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "grilled-skirt-steak-plate",
+          "name": "Grilled Skirt Steak",
+          "description": "Marinated skirt steak grilled medium rare, topped with chimichurri, served with Spanish rice, refried beans and warm corn tortillas",
+          "price": 38,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Tacos",
+      "items": [
+        {
+          "id": "blackened-shrimp-tacos",
+          "name": "Blackened Shrimp",
+          "description": "Blackened shrimp, cabbage, lime crema and cilantro",
+          "price": 26,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": "Trio of tacos"
+        },
+        {
+          "id": "baja-fish-tacos",
+          "name": "Baja Fish",
+          "description": "Beer battered halibut, cabbage, chipotle aioli, topped with avocado, cilantro and Maldon's sea salt",
+          "price": 28,
+          "tags": ["dairy-free"],
+          "allergens": [],
+          "notes": "Trio of tacos"
+        },
+        {
+          "id": "grilled-chicken-tacos",
+          "name": "Grilled Chicken",
+          "description": "Marinated grilled chicken with queso fresco, lime crema, fresh pico de gallo and cilantro",
+          "price": 26,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": "Trio of tacos"
+        },
+        {
+          "id": "skirt-steak-tacos",
+          "name": "Skirt Steak",
+          "description": "Marinated skirt steak grilled with peppers and onions, topped with queso fresco and chimichurri",
+          "price": 28,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": "Trio of tacos"
+        },
+        {
+          "id": "quesabirria",
+          "name": "Quesabirria",
+          "description": "Braised beef and melted queso oaxaca folded into corn tortillas, topped with white onion and cilantro, served with a side of consommé",
+          "price": 28,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": "Trio of tacos"
+        }
+      ]
+    },
+    {
+      "name": "Seafood Plates",
+      "items": [
+        {
+          "id": "blackened-shrimp-enchiladas",
+          "name": "Blackened Shrimp Enchiladas",
+          "description": "Blackened shrimp wrapped in corn tortillas with queso oaxaca, smothered in house enchilada sauce, served with Spanish rice and refried beans",
+          "price": 32,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "shrimp-de-ajo",
+          "name": "Shrimp de Ajo",
+          "description": "Shrimp sautéed with peppers and onions in garlic, butter and white wine, served with Spanish rice and refried beans",
+          "price": 34,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "shrimp-diabla",
+          "name": "Shrimp Diabla",
+          "description": "Shrimp sautéed with garlic, peppers and onions in a spicy diabla sauce, served with Spanish rice and refried beans",
+          "price": 34,
+          "tags": ["gluten-free"],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "branzino",
+          "name": "Branzino",
+          "description": "Whole fried fish served with house side salad, fresh lemon, and topped with Maldon's sea salt",
+          "price": 44,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Tiki Drinks",
+      "items": [
+        {
+          "id": "mai-tai",
+          "name": "Mai Tai",
+          "description": "Planteray 3 Stars rum, Disaronno, fresh pineapple juice, fresh ginger, clove, Meyer's dark rum float",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "pina-colada",
+          "name": "Piña Colada",
+          "description": "Planteray 3 Stars rum, fresh pineapple juice, coconut cream, Meyer's dark rum float",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "painkiller",
+          "name": "Painkiller",
+          "description": "Mount Gay black barrel rum, fresh pineapple juice, orange juice, coconut cream, nutmeg",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "lava-flow",
+          "name": "Lava Flow",
+          "description": "Planteray 3 Stars rum, fresh pineapple juice, coconut cream, strawberry purée, Meyer's dark rum float",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Zero Proof",
+      "items": [
+        {
+          "id": "mariposa-gingerade",
+          "name": "Mariposa Gingerade",
+          "description": "Fever Tree ginger beer, house made lemonade, butterfly pea flower tea",
+          "price": 8,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "margarita-sobria",
+          "name": "Margarita Sobria",
+          "description": "Ritual Zero proof tequila, fresh lime juice, orange juice, simple syrup, orange bitters",
+          "price": 15,
+          "tags": [],
+          "allergens": [],
+          "notes": "*Contains trace alcohol. Add: strawberry, cucumber, pomegranate, jalapeño, or mango +$1 (mango contains fresh pineapple juice)"
+        }
+      ]
+    },
+    {
+      "name": "Non-Alc",
+      "items": [
+        {
+          "id": "soda",
+          "name": "Soda",
+          "description": "Coke, Diet Coke, Coke Zero, Sprite, Mr. Pibb",
+          "price": 4,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "coffee",
+          "name": "Coffee",
+          "description": "Cat & Cloud coffee: regular or decaf",
+          "price": 5,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "hot-tea",
+          "name": "Hot Tea",
+          "description": "Earl grey, mint, chamomile, or green",
+          "price": 5,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "iced-tea",
+          "name": "Iced Tea",
+          "description": "",
+          "price": 5,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "homemade-lemonade",
+          "name": "Homemade Lemonade",
+          "description": "",
+          "price": 6,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "boylans-root-beer",
+          "name": "Boylans Root Beer",
+          "description": "By the bottle",
+          "price": 6,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Premium Margaritas",
+      "items": [
+        {
+          "id": "el-ultimo-margarita",
+          "name": "El Ultimo",
+          "description": "Patrón Añejo, Cointreau, agave, fresh lime juice, Grand Marnier float, salt rim",
+          "price": 21,
+          "tags": [],
+          "allergens": [],
+          "notes": "Single $21 / Pitcher $78"
+        },
+        {
+          "id": "italian-margarita",
+          "name": "Italian",
+          "description": "Campo Bravo Reposado, Cointreau, fresh lime juice, agave, pineapple, Disaronno float",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": "Single $18 / Pitcher $68"
+        },
+        {
+          "id": "midnight-margarita",
+          "name": "Midnight",
+          "description": "Mezcal Verde, fresh lime juice, agave, lavender",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": "Single $18 / Pitcher $68"
+        }
+      ]
+    },
+    {
+      "name": "Margaritas",
+      "items": [
+        {
+          "id": "house-margarita",
+          "name": "House",
+          "description": "Campo Bravo Plata, fresh lime juice, agave, salt rim",
+          "price": 15,
+          "tags": [],
+          "allergens": [],
+          "notes": "Single $15 / Pitcher $54"
+        },
+        {
+          "id": "skinny-margarita",
+          "name": "Skinny",
+          "description": "Campo Bravo Plata, fresh lime juice, agave, club soda, salt rim",
+          "price": 15,
+          "tags": [],
+          "allergens": [],
+          "notes": "Single $15 / Pitcher $54. Add: strawberry, cucumber, pomegranate, jalapeño, or mango +$1 single / +$4 pitcher (mango contains fresh pineapple juice). Make it a Cadillac: +$6 single / +$24 pitcher"
+        }
+      ]
+    },
+    {
+      "name": "Beer",
+      "items": [
+        {
+          "id": "draft-beer",
+          "name": "Draft",
+          "description": "Modelo Especial or Lagunitas",
+          "price": 12,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "bottle-beer",
+          "name": "By the Bottle",
+          "description": "Modelo Negra, Corona, Pacifico, Sierra Nevada Pale Ale, Blue Moon, Coors Light, Estrella Galicia (0.0% ABV)",
+          "price": 8,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "sincere-cider",
+          "name": "Sincere Cider",
+          "description": "5.9% ABV",
+          "price": 13,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "name": "Wine",
+      "items": [
+        {
+          "id": "soquel-vineyards-pinot-noir",
+          "name": "Soquel Vineyards",
+          "description": "Pinot noir, Santa Cruz Mountains",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "cinnabar-mercury-rising",
+          "name": "Cinnabar",
+          "description": "Mercury Rising, Bordeaux blend, Central Coast",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "ridge-three-valleys-zinfandel",
+          "name": "Ridge Three Valley's",
+          "description": "Zinfandel, Sonoma",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "roth-cabernet-sauvignon",
+          "name": "Roth",
+          "description": "Cabernet sauvignon, Sonoma",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "bele-casel-prosecco",
+          "name": "Bele Casel Prosecco",
+          "description": "Sparkling, Italy",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "bargetto-pinot-grigio",
+          "name": "Bargetto",
+          "description": "Pinot grigio, Monterey",
+          "price": 14,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $14 / Bottle $52"
+        },
+        {
+          "id": "birichino-rose",
+          "name": "Birichino",
+          "description": "Rosé, Santa Cruz",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        },
+        {
+          "id": "whitehaven-sauvignon-blanc",
+          "name": "Whitehaven",
+          "description": "Sauvignon blanc, New Zealand",
+          "price": 14,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $14 / Bottle $52"
+        },
+        {
+          "id": "storrs-chardonnay",
+          "name": "Storrs",
+          "description": "Chardonnay, Santa Cruz",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": "Glass $16 / Bottle $58"
+        }
+      ]
+    },
+    {
+      "name": "House Cocktails",
+      "items": [
+        {
+          "id": "ketel-one-espresso-martini",
+          "name": "Ketel One Espresso Martini",
+          "description": "Ketel One vodka, Mr. Black coffee liqueur, Cat & Cloud coffee",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "seaside-spritz",
+          "name": "Seaside Spritz",
+          "description": "Skyy vodka, St. Germain, Aperol, fresh lemon juice, sparkling wine",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "butterfly-passion",
+          "name": "Butterfly Passion",
+          "description": "Skyy vodka, passionfruit liqueur, fresh lemon juice, butterfly pea flower tea, served up",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "vodka-strawberry-lemonade",
+          "name": "Vodka Strawberry Lemonade",
+          "description": "Skyy vodka, fresh strawberry puree, house made lemonade",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "venus-rosemary-refresher",
+          "name": "Venus Rosemary Refresher",
+          "description": "Venus gin, rosemary, fresh lime juice, Fever Tree sparkling grapefruit",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "oaxacanite",
+          "name": "Oaxacanite",
+          "description": "Mezcal Verde, agave, angostura bitters, orange bitters",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "white-peach-sangria",
+          "name": "White Peach Sangria",
+          "description": "Bargetto pinot grigio, peach liqueur, fresh citrus",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "paper-crane",
+          "name": "Paper Crane",
+          "description": "Maker's Mark whiskey, Aperol, fresh pineapple juice, demerara syrup",
+          "price": 16,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        },
+        {
+          "id": "pomegranate-mimosa",
+          "name": "Pomegranate Mimosa",
+          "description": "Sparkling wine and pomegranate juice",
+          "price": 18,
+          "tags": [],
+          "allergens": [],
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}

@@ -33,10 +33,14 @@
 }
 
 .nav-bar__brand {
-  font-family: $font-family;
-  font-size: $font-size-lg;
-  font-weight: 600;
-  color: $color-text;
+  display: flex;
+  align-items: center;
+}
+
+.nav-bar__logo {
+  height: 24px;
+  width: auto;
+  display: block;
 }
 
 // Real hamburger icon + open/close transition — three bars morphing into an
@@ -161,6 +165,12 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 
         &:hover { color: $color-green; }
       }
+    }
+
+    .sidemenu-section-label {
+      padding: 1rem 0 0.25rem;
+      font-size: 0.9rem;
+      color: rgba($color-text, 0.4);
     }
   }
 }

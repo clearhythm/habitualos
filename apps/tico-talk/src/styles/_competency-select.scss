@@ -1,0 +1,75 @@
+@use 'variables' as *;
+
+// First screen on /practice/ — pick a competency area to drill on before
+// the tap-to-talk session starts. Only "Welcome & Seating" has real
+// scenario content right now; the rest are shown (disabled) so the full
+// curriculum is visible from day one.
+.competency-select {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+  padding-top: $space-md;
+}
+
+.competency-select__title {
+  font-size: $font-size-xl;
+  font-weight: 600;
+  text-align: center;
+}
+
+.competency-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+}
+
+.competency-group__label {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text-muted;
+  text-align: center;
+}
+
+.competency-group__lock {
+  font-size: $font-size-sm;
+  font-weight: 400;
+  color: $color-text-muted;
+  text-align: center;
+  margin-top: -$space-xs;
+  font-style: italic;
+}
+
+.competency-group.is-locked .competency-pills {
+  opacity: 0.5;
+}
+
+.competency-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  justify-content: center;
+}
+
+.competency-pill {
+  padding: $space-sm $space-md;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  background: $color-bg-surface;
+  color: $color-text;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: $color-border-hover;
+  }
+
+  &:disabled {
+    color: $color-text-muted;
+    background: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
