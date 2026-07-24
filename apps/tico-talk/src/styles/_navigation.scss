@@ -111,13 +111,18 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 
 // Sidemenu overlay — above page content (e.g. .talk-bar at 1500) but below
 // the nav-bar (2000) so the hamburger stays clickable to close the menu.
+// Mobile: .sidemenu-left fills the screen. Desktop: a partial panel with
+// the rest of the page visible (dimmed) behind it via .sidemenu-right —
+// matches apps/signal's sidemenu pattern.
 .sidemenu-main {
   position: fixed;
   z-index: 1900;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   height: 100dvh;
-  width: 100%;
+  display: flex;
   opacity: 0;
   visibility: hidden;
   overflow: hidden;
@@ -147,6 +152,10 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   display: flex;
   flex-direction: column;
 
+  @media (min-width: $breakpoint-md) {
+    width: 420px;
+  }
+
   ul {
     list-style: none;
     padding: 12vh 0 2vh 0;
@@ -166,13 +175,34 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
         &:hover { color: $color-green; }
       }
     }
-
-    .sidemenu-section-label {
-      padding: 1rem 0 0.25rem;
-      font-size: 0.9rem;
-      color: rgba($color-text, 0.4);
-    }
   }
+}
+
+// Right side — click-to-close overlay, covering the rest of the viewport
+// behind the panel. Only exists on desktop; on mobile .sidemenu-left
+// already fills the screen so there's no "behind" area to click.
+.sidemenu-right {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+
+  @media (min-width: $breakpoint-md) {
+    display: block;
+  }
+}
+
+.sidemenu-overlay {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  cursor: pointer;
+}
+
+.sidemenu-open .sidemenu-overlay {
+  opacity: 1;
 }
 
 // Footer block — pinned to bottom, left-aligned with nav links
