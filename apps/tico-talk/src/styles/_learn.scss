@@ -1,0 +1,148 @@
+@use 'variables' as *;
+@use 'layout' as l;
+
+// /learn/ — text-based teach-then-drill practice. Three phases toggled by
+// JS (picker / teach / drill), reuses .competency-pill(s)/.transcript/
+// .tico-aside from elsewhere rather than duplicating those styles.
+.learn-screen {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.learn-picker {
+  display: flex;
+  flex-direction: column;
+  gap: $space-lg;
+}
+
+.learn-teach__intro {
+  font-family: $font-family-accent;
+  font-style: italic;
+  color: $color-text-muted;
+  margin-bottom: $space-lg;
+}
+
+.learn-back {
+  display: inline-block;
+  margin-bottom: $space-md;
+  cursor: pointer;
+}
+
+// Inside the drill's fixed page-canvas, the back link sits above the
+// centered chat column — give it the same max-width/padding box as
+// .learn-transcript and .learn-input-row so its left edge lines up with
+// the bubbles and textarea below instead of hugging the viewport edge.
+.learn-drill > .learn-back {
+  display: block;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  flex-shrink: 0;
+  padding: $space-md $space-lg 0;
+}
+
+.learn-start-drill {
+  margin-top: $space-lg;
+}
+
+.learn-drill {
+  @include l.page-canvas;
+  display: flex;
+  flex-direction: column;
+}
+
+// Full-width scroll container — scrollbar sits at the viewport edge.
+.learn-transcript-scroll {
+  flex: 1;
+  min-height: 0; // required for flex overflow to work correctly
+  overflow-y: scroll;
+}
+
+// Centered content column inside the scroll container.
+.learn-transcript {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: $space-lg;
+}
+
+.learn-input-shell {
+  flex-shrink: 0;
+  background: $color-bg;
+}
+
+.learn-input-row {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 $space-lg $space-lg;
+}
+
+.learn-input-wrap {
+  display: flex;
+  flex-direction: column;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: $color-border-hover; }
+}
+
+.learn-textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  background: transparent;
+  border: none;
+  padding: $space-sm $space-md;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  color: $color-text;
+  line-height: 1.55;
+  max-height: 200px;
+  overflow-y: auto;
+
+  &::placeholder { color: $color-text-muted; }
+  &:focus { outline: none; }
+  &:disabled { opacity: 0.6; }
+}
+
+.learn-input-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.2rem 0.4rem 0.3rem;
+}
+
+.learn-send-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-green;
+  border: none;
+  border-radius: 0.5rem;
+  color: #ffffff;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, background 0.15s;
+
+  &:not(:disabled) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &:not(:disabled):hover { background: $color-green-dark; }
+}
+
+@keyframes learn-thinking-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.8; }
+}
+
+.learn-thinking {
+  font-style: italic;
+  animation: learn-thinking-pulse 1.6s ease-in-out infinite;
+}

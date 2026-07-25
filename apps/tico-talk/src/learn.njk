@@ -1,0 +1,79 @@
+---
+layout: base.njk
+title: Learn — Tico
+permalink: /learn/
+pageScript: /assets/js/learn.js
+---
+
+{% from "menu-categories.njk" import render as renderCategories %}
+{% set foodCategoryNames = ["Starters", "Soup & Salad", "Chilled Seafood", "Traditional Plates", "Tacos", "Seafood Plates"] %}
+
+<div class="learn-screen">
+
+  <div class="learn-picker" id="learn-picker">
+    <p class="page-title">What do you want to learn?</p>
+
+    {% for menu in menus %}
+    <div class="competency-group">
+      <p class="competency-group__label">Food</p>
+      <div class="competency-pills">
+        {% for category in menu.categories | selectCategories(foodCategoryNames) %}
+        <button class="competency-pill" data-section="{{ category.name }}">{{ category.name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="competency-group">
+      <p class="competency-group__label">Drinks</p>
+      <div class="competency-pills">
+        {% for category in menu.categories %}
+          {% if category.name not in foodCategoryNames %}
+          <button class="competency-pill" data-section="{{ category.name }}">{{ category.name }}</button>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="learn-teach" id="learn-teach" hidden>
+    {% for menu in menus %}
+      {% for category in menu.categories %}
+      <div class="learn-teach__section" data-section="{{ category.name }}" hidden>
+        <p class="breadcrumb__back learn-back">‹ Choose a different section</p>
+        <p class="learn-teach__intro">Here's the rundown on {{ category.name }} — worth knowing cold before guests start asking.</p>
+        {{ renderCategories([category], false) }}
+        <button class="btn learn-start-drill" data-section="{{ category.name }}">Start practicing</button>
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+
+  <div class="learn-drill" id="learn-drill" hidden>
+    <p class="breadcrumb__back learn-back" data-target="picker">‹ Choose a different section</p>
+    <div class="learn-transcript-scroll" id="learn-transcript-scroll">
+      <div class="transcript learn-transcript" id="learn-transcript"></div>
+    </div>
+    <div class="learn-input-shell">
+      <form class="learn-input-row" id="learn-answer-form" autocomplete="off">
+        <div class="learn-input-wrap">
+          <textarea
+            id="learn-answer-input"
+            class="learn-textarea"
+            rows="2"
+            placeholder="Your reply…"
+            aria-label="Your answer"
+          ></textarea>
+          <div class="learn-input-toolbar">
+            <button type="submit" id="learn-send-btn" class="learn-send-btn" disabled aria-label="Send">
+              <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" aria-hidden="true">
+                <path d="M8 1.5L12.5 9H10V14.5H6V9H3.5L8 1.5Z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>

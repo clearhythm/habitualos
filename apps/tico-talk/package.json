@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",
+    "@anthropic-ai/sdk": "^0.71.2",
     "@habitualos/auth-server": "workspace:*",
     "@habitualos/db-core": "workspace:*",
     "@habitualos/frontend-utils": "workspace:*"

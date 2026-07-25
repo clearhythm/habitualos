@@ -231,6 +231,9 @@ importers:
       '@11ty/eleventy':
         specifier: ^3.0.0
         version: 3.1.2
+      '@anthropic-ai/sdk':
+        specifier: ^0.71.2
+        version: 0.71.2
       '@habitualos/auth-server':
         specifier: workspace:*
         version: link:../../packages/auth-server

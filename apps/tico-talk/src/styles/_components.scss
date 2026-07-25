@@ -271,19 +271,20 @@
   max-width: 80%;
   margin: 0;
   padding: $space-sm $space-md;
-  border-radius: 0.75rem;
   line-height: 1.5;
 
   &--guest {
     align-self: flex-start;
     background: $color-bg-surface;
     border: 1px solid $color-border;
+    border-radius: 0.75rem 0.75rem 0.75rem 0.15rem; // sharp bottom-left
   }
 
   &--user {
     align-self: flex-end;
     background: $color-green;
     color: #ffffff;
+    border-radius: 0.75rem 0.75rem 0.15rem 0.75rem; // sharp bottom-right
   }
 
   // Tico's voice — both scene-setup narration and performance coaching are
