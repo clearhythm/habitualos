@@ -158,9 +158,8 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 
   ul {
     list-style: none;
-    padding: 12vh 0 2vh 0;
+    padding: 0.5rem 0 2vh 0;
     margin: 0;
-    flex-grow: 1;
 
     li {
       padding: 0.5rem 0;
@@ -176,6 +175,23 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
       }
     }
   }
+}
+
+// Ambient group label — quiet identity anchor above a group of links.
+// Shared by the venue label ("Margaritaville Capitola") and the account
+// label ("My Account") so both groups read consistently.
+.sidemenu-venue,
+.sidemenu-account__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba($color-text, 0.5);
+}
+
+// The venue label sits at the very top of the panel, so it alone clears
+// the fixed nav-bar/hamburger — the account label below doesn't need this.
+.sidemenu-venue {
+  padding-top: 90px;
 }
 
 // Right side — click-to-close overlay, covering the rest of the viewport
@@ -205,13 +221,84 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   opacity: 1;
 }
 
-// Footer block — pinned to bottom, left-aligned with nav links
+// Account group — a second labeled section directly below the restaurant
+// group, in normal flow (not pinned to the bottom).
+.sidemenu-account {
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  a {
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: rgba($color-text, 0.75);
+    transition: color 0.2s;
+
+    &:hover { color: $color-green; }
+  }
+}
+
+// Footer block — the only thing actually pinned to the bottom of the
+// panel (margin-top: auto pushes it down regardless of how much content
+// is above it). Genuinely secondary/utility content, so smaller than the
+// primary nav groups above — that size drop is intentional here only.
 .sidemenu-footer {
+  margin-top: auto;
   padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: $space-sm;
+
+  a {
+    font-size: $font-size-base;
+    text-decoration: none;
+    color: rgba($color-text, 0.5);
+    transition: color 0.2s;
+
+    &:hover { color: $color-green; }
+  }
 
   p {
     margin: 0;
     font-size: 0.8rem;
     color: rgba($color-text, 0.4);
   }
+}
+
+// Auth row — avatar + name (links to Profile) and a separate Sign out
+// action, on one line, matching apps/signal's sidemenu-auth pattern.
+.sidemenu-auth {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+  padding-bottom: $space-sm;
+  border-bottom: 1px solid rgba($color-text, 0.15);
+}
+
+.sidemenu-auth-profile {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+}
+
+.sidemenu-auth-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: $color-bg-muted;
+  font-size: 1rem;
+}
+
+// Icon + tagline row
+.sidemenu-footer-row {
+  display: flex;
+  align-items: center;
+  gap: $space-xs;
+}
+
+.sidemenu-logo {
+  font-size: 1.125rem;
 }

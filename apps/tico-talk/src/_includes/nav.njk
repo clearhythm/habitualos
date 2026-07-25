@@ -16,16 +16,30 @@
 
 <div class="sidemenu-main" id="sidemenu-main">
   <div class="sidemenu-left">
+    {% if menus.length %}<p class="sidemenu-venue">{{ menus[0].name }}</p>{% endif %}
     <ul>
       <li><a href="/menu/">Menu</a></li>
       <li><a href="/drinks/">Drinks</a></li>
-      <li><a href="/practice/">Practice</a></li>
-      <li><a href="/stats/">Stats</a></li>
-      <li><a href="/profile/">Profile</a></li>
-      <li><a href="/about/">About</a></li>
     </ul>
+    <div class="sidemenu-account">
+      <p class="sidemenu-account__label">My Sessions</p>
+      <a href="/learn/">Learn</a>
+      <a href="/practice/">Practice</a>
+      <a href="/stats/">Progression</a>
+    </div>
     <div class="sidemenu-footer">
-      <p>&copy; Tico</p>
+      <div class="sidemenu-auth">
+        <a href="/profile/" class="sidemenu-auth-profile">
+          <span class="sidemenu-auth-avatar" aria-hidden="true">🧑</span>
+          <span class="sidemenu-auth-name">Erik</span>
+        </a>
+        <a href="#" class="sidemenu-auth-link">Sign out</a>
+      </div>
+      <div class="sidemenu-footer-row">
+        <span class="sidemenu-logo" aria-hidden="true">🌮</span>
+        <p class="sidemenu-copyright">Tico — Talk with Confidence</p>
+      </div>
+      <a href="/about/" class="sidemenu-about-link">About</a>
     </div>
   </div>
   <div class="sidemenu-right">
