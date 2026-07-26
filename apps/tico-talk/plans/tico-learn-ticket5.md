@@ -1,4 +1,4 @@
-# Ticket 5: /learn/ drill — deterministic item-coverage progress, tiered picker, per-turn context caching split
+# Ticket 5: /learn/ drill — two-pass coverage (Basics → Complete), tiered picker, per-turn context caching split
 
 ## App Context
 
@@ -7,179 +7,144 @@ ticket touches the same layers as Tickets 1-4: the shared streaming core
 (`packages/edge-functions/chat-stream-core.ts`), the per-turn prompt
 builder (`netlify/functions/learn-chat-init.cjs`), Firestore persistence
 (`_services/`), and the drill's client-side rendering
-(`src/assets/js/learn.js`).
+(`src/assets/js/learn.js`), plus (new to this ticket) the shared teach
+screen macro (`src/_includes/menu-categories.njk`).
 
 **Depends on Tickets 1-4** — specifically Ticket 4's two-block cached
-system prompt (`buildSharedPrompt`/`buildSectionPrompt`) and its
-`restaurant-notes` collection with `scope`/`section` fields. This ticket
-adds a third prompt block, removes Ticket 2/3's `mark_section_learned`
-tool entirely, and **replaces** Ticket 3's boolean `learn-progress`
-schema and checkmark-badge UI with per-item coverage. Build Ticket 4
-first; this ticket's File 4 modifies the same `learn-chat-init.cjs` file
-Ticket 4 just finished writing.
+system prompt and its `restaurant-notes` collection. This ticket adds a
+third prompt block, removes Ticket 2/3's `mark_section_learned` tool
+entirely, and **replaces** Ticket 3's boolean `learn-progress` schema and
+checkmark-badge UI with per-item, per-fact-type coverage split across
+two gated passes. Build Ticket 4 first.
 
-**Why this ticket exists**: live-testing exposed that `mark_section_learned`
-was a single, vague, model-self-graded judgment call ("once you're
-genuinely confident") with no visibility into progress along the way.
-Discussed at length and landed on something more concrete: progress
-should be **coverage-based**, not a confidence score. A section's bar
-only ever goes up, in fixed increments, one per dish, the moment that
-dish has been proven "sufficiently learned" by a rubric *we* define and
-apply deterministically, not something the model self-assesses. This
-also happens to simplify the architecture: no tool call is needed for
-Learn's completion logic anymore.
+**Why this ticket exists, and why it changed shape mid-design**: started
+from live-testing exposing that `mark_section_learned` was a single,
+vague, model-self-graded judgment call. First redesign: deterministic
+coverage, one tool-free tally per item. Then, live-testing *that* design
+(mentally, before building it) surfaced a second problem: glancing at
+4-5 items' full descriptions, prices, add-ons, and dietary tags all at
+once, then immediately fielding contextual questions pulling from any of
+it, felt overwhelming even to someone with a strong academic memorization
+background, a real signal that the actual target audience (restaurant
+staff, high turnover, studying between shifts) would find it worse. That
+reframed the design again: not just *whether* an item is covered, but
+*which kind of fact* it's covered on, taught and drilled in two
+deliberately separated, gated passes.
 
 **Existing data note**: any `learn-progress` docs from testing Ticket 3
-use the old `{sectionName: true}` boolean shape. This ticket's new shape
-is `{sectionName: {itemId: true, ...}}`, structurally incompatible.
-Since this is still pre-launch (only Erik's testing data exists, not
-real trainees), the plan is to accept that old test data becomes stale
-rather than write a migration for it — confirm this is still true before
-implementing; if real usage has started by then, this needs a real
-migration step instead.
-
-## Phase 0: Explore First
-
-- `apps/tico-talk/netlify/functions/learn-chat-init.cjs` (as Ticket 4
-  leaves it) — the two cached `systemMessages` blocks
-  (`buildSharedPrompt`/`buildSectionPrompt`), the `tools` array, the
-  `findSection`/`getMenuData`/`getRestaurantNotes` calls. This ticket
-  adds a third block and removes `tools` entirely.
-- `packages/edge-functions/chat-stream-core.ts` — specifically the
-  `initBody` construction (already customized twice: `section` in Ticket
-  2, unchanged since). This ticket adds `coveredItemIds` the same way.
-  Same "sync the copy into `apps/tico-talk/netlify/edge-functions/_lib/`"
-  step Tickets 2/3 already established applies again here.
-- `apps/tico-talk/src/assets/js/learn.js` — `SEGMENT_MARKER_RE`,
-  `createStreamRenderer()`, `renderAssistantTurn()` (Ticket 3's
-  TICO:/GUEST: line-marker parser). This ticket extends the marker
-  vocabulary to include `ITEM:`/`RESULT:` as a second, *hidden* marker
-  type (parsed out, never rendered, unlike TICO:/GUEST: which each open
-  a visible segment) — read that parser closely, this ticket's parser
-  changes build directly on its "hold back a few characters, only act on
-  a fully-resolved marker" approach rather than replacing it.
-- `apps/tico-talk/netlify/functions/_services/db-learn-progress.cjs`
-  (Ticket 3) — `markSectionLearned(userId, sectionName)` writes
-  `{[sectionName]: true}`. This ticket's per-item write
-  (`{[sectionName]: {[itemId]: true}}`) relies on `dbCore.create()`'s
-  `{merge: true}` performing a **recursive** merge on nested map fields
-  (confirmed Firestore behavior, not dot-notation paths) — verify this
-  still holds while implementing rather than assuming from this ticket's
-  memory of it.
-- `apps/tico-talk/src/styles/_components.scss:237-262` — the *existing*
-  4-dot skill-tree tier system (`.tier-dots`/`.tier-dot.is-filled`/
-  `.tier-indicator__label`), and `apps/tico-talk/src/practice.njk:77-129`
-  for how it's used today (Not started / Training / Capable / Natural /
-  Mastered). This ticket reuses this exact visual language for Learn's
-  picker instead of inventing a new one — Learn coverage alone can only
-  ever grant up to **Capable**; Natural/Mastered stay tied to real
-  Practice performance (a different, not-yet-built system, out of scope
-  here).
-- `apps/tico-talk/src/styles/_learn.scss` and `_competency-select.scss`
-  — Ticket 3's `.learn-learned-banner` and `.competency-pill--learned`
-  (checkmark modifier). The banner's trigger changes (coverage-derived
-  instead of tool-fired) but the element itself stays. The checkmark
-  modifier and its JS (`applyLearnedBadges`/`markSectionLearnedLocally`
-  in `learn.js`) get **replaced** by the tier-dot readout below, not left
-  in place alongside it.
+use the old `{sectionName: true}` boolean shape; this ticket's shape is
+`{sectionName: {itemId: {factType: true, ...}, ...}}`, structurally
+incompatible. Still pre-launch (only Erik's testing data exists), so the
+plan is to let old test data go stale rather than migrate it, confirm
+that's still true before implementing.
 
 ## Overview
 
-1. Extend the TICO:/GUEST: line-marker protocol (Ticket 3) with two more
-   markers, `ITEM:`/`RESULT:`, emitted once per evaluation round,
-   *hidden* from the transcript (parsed out, never rendered) — the
-   model's way of reporting "this round was about dish X, and the answer
-   was correct/partial/incorrect."
-2. Client-side, deterministic coverage tracking: tally `RESULT: correct`
-   per item, apply a fixed rubric (a single tunable constant, default:
-   one clean correct answer covers an item), monotonic, never uncovers.
-3. Drop the `mark_section_learned` tool entirely. Section-complete
-   becomes client-computed (`coveredCount === totalCount`), no model
-   judgment call involved.
-4. `learn-chat-init.cjs` gains a third `systemMessages` block: current
-   coverage state (what's covered, what's left), *not* cached
-   (`cache_control` omitted), small, rebuilt fresh every turn — the two
-   blocks Ticket 4 built stay fully cache-eligible since nothing dynamic
-   lives in them anymore.
-5. The client sends `coveredItemIds` with every turn (via
-   `chat-stream-core.ts`'s `initBody`, same mechanism `section` already
-   uses) so block 3 can be built fresh server-side each time.
-6. `learn-progress` becomes per-item:
-   `{sectionName: {itemId: true, ...}}`. Written incrementally, one
-   small write per item the moment it's covered, not batched into
-   Ticket 3's boundary-triggered chat-transcript flushes (those exist to
-   avoid *expensive* per-turn writes of a whole transcript; a
-   `{itemId: true}` write is cheap enough not to need that).
-7. Live "X of N dishes covered" bar during the drill, and a tier-dot
-   readout per section on the picker, replacing Ticket 3's flat
-   checkmark badge.
+**The core idea, restated end to end**: each section has two passes.
 
-**Design note — why this replaces the tool instead of adding a second
-one**: an earlier version of this design (see the conversation this
-ticket comes from) proposed the model self-report a 0-100 confidence
-score every turn. Rejected as noisy and not something *we* control. The
-version here has the model report two small, checkable facts per round
-(which item, was the answer right) — closer to a classification task
-than a judgment call, and the actual "is this section done" logic lives
-entirely in our own code applying our own rubric to those facts, not in
-the model deciding when it's confident enough.
+1. **Basics** — ingredients only. Teach screen shows the section with
+   descriptions (ingredients) visually emphasized, price and dietary tags
+   muted. Drilling only asks ingredient-type questions ("what's in the
+   queso," never "is it gluten-free" or "how much is it") until every
+   item's ingredients have been correctly answered once.
+2. **Complete** — dietary + pricing, together (not further split, that's
+   the "not too many passes" tradeoff). Once Basics finishes, a short
+   transition moment fires, then the teach screen shows again with price
+   and dietary tags emphasized, description muted. Drilling only asks
+   dietary/pricing-type questions from here on, until every item has both
+   confirmed.
+3. Once Complete finishes for every item, the section is **Capable**
+   (the ceiling this app alone can grant, per the existing skill-tree
+   scale — Natural/Mastered stay earned through real Practice reps, a
+   separate, not-yet-built system).
 
-**Design note — why a third, uncached block instead of folding coverage
-into block 2**: raised directly during design. Anthropic's prompt
-caching only reuses a cached prefix when it's byte-identical to a recent
-previous call. If live coverage state lived inside Ticket 4's
-section-specific block, that block's cache-eligibility would break on
-*every single turn* of a conversation (since coverage changes turn to
-turn), not just across different conversations — the exact kind of
-tradeoff worth catching before it ships, not after. Splitting it into
-its own tiny, deliberately uncached block keeps the expensive, static
-parts (menu data, restaurant notes) cache-eligible while only the cheap,
-small, actually-dynamic part gets reprocessed each turn.
+Which pass a section is in is **derived, not separately stored**: it's
+just "have all items got `ingredients: true` yet?" — no separate pass
+flag to desync from the underlying coverage data.
 
-**Design note — `learn-chat-init.cjs` is called every turn, not once**:
-also raised directly during design, worth restating here since it's
-exactly why this ticket's approach works at all. `chat-stream-core.ts`
-calls the `initEndpoint` fresh on every POST to `/api/chat-stream`, not
-just at conversation start — the edge function is stateless and the
-whole conversation lives in client-sent `chatHistory`. The function's
-*name* ("init") undersells what it actually does across every app that
-uses this shared core, and doing this rename in our own code isn't in
-scope (it's shared cross-app wiring), but **within this app's comments
-and docs, refer to `learn-chat-init.cjs`'s role as building fresh turn
-context, not one-time initialization** — call it `buildTurnContext`
-conceptually wherever it's described, even though the file/endpoint
-name itself stays `learn-chat-init.cjs` for consistency with the other
-four apps' `*-chat-init.cjs` naming.
+**Design note — why this replaced the earlier deterministic-but-flat
+version**: that version (one tool-free tally per item, any one correct
+answer covers it) solved the "model self-grades its own confidence"
+problem but not the "wall of undifferentiated facts, then quizzed on
+anything" problem. Splitting facts into ingredients vs. dietary+pricing,
+and gating the *drill's own question scope* to match whichever pass is
+active (not just prioritizing, actually restricting), addresses the
+cognitive-load complaint directly, at both ends: what's shown to read
+and what's asked afterward.
+
+**Design note — why two passes, not three**: dietary and pricing are
+grouped together deliberately, not each given their own pass. Both are
+already lower cognitive load than ingredients (a tag or a number, not a
+sentence to parse), and further splitting risks trading "overwhelming"
+for "tedious, too many hoops." Two passes was the balance landed on
+during design.
+
+**Design note — why this replaces the tool, and why a third uncached
+prompt block**: unchanged from the earlier version of this ticket. The
+model reports two (now three, with `FACT_TYPE:`) small checkable facts
+per round instead of self-grading its own confidence, and "is this pass
+done" is arithmetic in our own code, not a model judgment call. Anthropic
+only reuses a cached prefix when it's byte-identical to a recent
+previous call; live coverage state changes every turn, so it lives in
+its own small, deliberately uncached block, keeping the (now
+pass-specific, but still static per pass) section block cache-eligible.
+
+**Design note — `learn-chat-init.cjs` runs every turn, not once**:
+`chat-stream-core.ts` calls the `initEndpoint` fresh on every POST to
+`/api/chat-stream`, not just at conversation start (the edge function is
+stateless, the whole conversation lives in client-sent `chatHistory`).
+Refer to this file's role in comments/docs as building fresh turn
+context (`buildTurnContext`, conceptually), not one-time initialization
+— the file/endpoint name itself stays `learn-chat-init.cjs` for
+consistency with the other four apps using this shared core.
+
+## Phase 0: Explore First
+
+- Everything Ticket 5's original Phase 0 already named (unchanged):
+  `learn-chat-init.cjs` as Ticket 4 leaves it, `chat-stream-core.ts`'s
+  `initBody` construction, `learn.js`'s `SEGMENT_MARKER_RE`/
+  `createStreamRenderer()`/`renderAssistantTurn()`, `db-learn-progress.cjs`,
+  the existing 4-dot skill-tree tier system
+  (`_components.scss:237-262`, `practice.njk:77-129`).
+- `src/_includes/menu-categories.njk` — the shared teach-screen macro
+  (`render(categories, highlightNotes)`), also used by `/menu/` and
+  `/menu-review/`. Note the existing per-field classes:
+  `.menu-item__desc` (ingredients), `.menu-item__tags`/`.menu-item__tag`
+  (dietary), `.menu-item__price` (pricing) — these map directly onto the
+  three fact types with zero macro changes needed. Highlighting is
+  driven by a `data-pass` attribute on an ancestor element and pure CSS
+  attribute selectors (see File 8), not a new macro parameter — keeps
+  `/menu/`'s public rendering (which never sets `data-pass`) completely
+  unaffected.
+- `src/learn.njk`'s `.learn-teach__section`/`.learn-start-drill` — the
+  existing teach-then-drill transition. This ticket reuses the exact
+  same button/flow for *both* the Basics→drill and Complete→drill
+  transitions, the teach screen just gets shown a second time with
+  different `data-pass` state and isn't a new code path.
 
 ## File 1: `packages/edge-functions/chat-stream-core.ts` (MODIFY, shared)
 
-Same pattern as `section` (Ticket 2) and its `toolBody` extension
-(Ticket 3, now moot since there's no tool). Add `coveredItemIds` to the
-`RequestBody` interface and pass it through to `initBody`:
+Add `factCoverage` (replaces the earlier `coveredItemIds` idea — richer,
+per item per fact type) to `RequestBody` and pass it through to
+`initBody`, same pattern as `section`:
 
 ```typescript
-// RequestBody interface — add alongside `section`:
-coveredItemIds?: string[]; // ADDED: item ids already covered this drill (tico-talk "learn" chat type)
+// RequestBody interface, alongside `section`:
+factCoverage?: Record<string, Record<string, boolean>>; // ADDED: {itemId: {factType: true}} for tico-talk "learn"
 ```
 
 ```typescript
-// In the handler, destructure alongside `section`:
-coveredItemIds,
-
-// In the initBody-building else branch:
+// initBody-building else branch:
 } else {
   initBody = { userId, timezone, userName };
   if (replyToMomentId) initBody.replyToMomentId = replyToMomentId;
   if (section) initBody.section = section;
-  if (coveredItemIds) initBody.coveredItemIds = coveredItemIds;
+  if (factCoverage) initBody.factCoverage = factCoverage;
 }
 ```
 
-This is the shared file (not a per-app fork, confirmed during Ticket 2 —
-all five apps copy the same canonical file at build time). Edit
-`packages/edge-functions/chat-stream-core.ts` directly, then re-sync
-`apps/tico-talk/netlify/edge-functions/_lib/chat-stream-core.ts` (the
-committed local copy `netlify dev` reads) the same way Tickets 2/3 did.
+Shared file, not a per-app fork (confirmed in Ticket 2). Edit
+`packages/edge-functions/chat-stream-core.ts` directly, then re-sync.
 
 ## File 2: sync step
 
@@ -187,56 +152,48 @@ committed local copy `netlify dev` reads) the same way Tickets 2/3 did.
 cp packages/edge-functions/chat-stream-core.ts apps/tico-talk/netlify/edge-functions/_lib/chat-stream-core.ts
 ```
 
-Confirm `diff` shows no difference afterward, matching Tickets 2/3's
-verification step.
-
 ## File 3: `netlify/functions/_services/db-learn-progress.cjs` (MODIFY)
 
-Replace the whole-section boolean write with a per-item one. Keep
-`getLearnProgress` as-is (still a point lookup by `userId`, the shape of
-what it *returns* just changes upstream).
-
 ```javascript
-// Before (Ticket 3):
-exports.markSectionLearned = async (userId, sectionName) => {
-  return dbCore.create({
-    collection: COLLECTION,
-    id: userId,
-    data: { [sectionName]: true }
-  });
-};
+// Schema comment, updated:
+//   learn-progress/{userId}
+//   {
+//     "Starters": {
+//       "chips-and-salsa": { "ingredients": true, "dietary": true, "pricing": true },
+//       "guacamole": { "ingredients": true }
+//     },
+//     ...
+//   }
 
-// After:
 /**
- * Mark one item within a section as covered for a user. Relies on
- * dbCore.create()'s {merge: true} performing a recursive merge on
- * nested map fields (confirmed Firestore behavior) — an existing doc's
- * other sections/items are untouched, only this one key gets added.
+ * Mark one fact type, for one item, within a section, as covered.
+ * Relies on dbCore.create()'s {merge: true} performing a recursive
+ * merge on nested map fields (confirmed Firestore behavior) — sibling
+ * items/fact-types/sections are untouched.
  * @param {string} userId
  * @param {string} sectionName
  * @param {string} itemId
+ * @param {'ingredients'|'dietary'|'pricing'} factType
  */
-exports.markItemLearned = async (userId, sectionName, itemId) => {
+exports.markFactLearned = async (userId, sectionName, itemId, factType) => {
   return dbCore.create({
     collection: COLLECTION,
     id: userId,
-    data: { [sectionName]: { [itemId]: true } }
+    data: { [sectionName]: { [itemId]: { [factType]: true } } }
   });
 };
 ```
 
-Update the module's schema comment at the top from `{"Starters": true,
-...}` to `{"Starters": {"chips-and-salsa": true, "guacamole": true},
-...}`.
+`markSectionLearned` (Ticket 3) and `markItemLearned` (this ticket's
+earlier draft) both get removed, superseded by `markFactLearned`.
 
-## File 4: `netlify/functions/learn-item-learned.cjs` (NEW)
+## File 4: `netlify/functions/learn-fact-learned.cjs` (NEW)
 
-Thin endpoint the client calls the moment an item flips to covered (not
-batched into any boundary flush — this is cheap enough to write
-immediately, unlike the full `learn-chats` transcript).
+Replaces the earlier draft's `learn-item-learned.cjs` — same shape, one
+more field.
 
 ```javascript
-const { markItemLearned } = require('./_services/db-learn-progress.cjs');
+const { markFactLearned } = require('./_services/db-learn-progress.cjs');
 const { log } = require('./_utils/log.cjs');
 
 exports.handler = async (event) => {
@@ -245,65 +202,69 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, section, itemId } = JSON.parse(event.body || '{}');
-    if (!userId || !section || !itemId) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'userId, section, and itemId are required' }) };
+    const { userId, section, itemId, factType } = JSON.parse(event.body || '{}');
+    if (!userId || !section || !itemId || !factType) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'userId, section, itemId, and factType are required' }) };
     }
 
-    await markItemLearned(userId, section, itemId);
-    log('debug', '[learn-item-learned] covered', itemId, 'in', section, 'for', userId);
+    await markFactLearned(userId, section, itemId, factType);
+    log('debug', '[learn-fact-learned] covered', factType, 'for', itemId, 'in', section);
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
   } catch (error) {
-    log('error', '[learn-item-learned] failed', error);
+    log('error', '[learn-fact-learned] failed', error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message || 'Internal server error' }) };
   }
 };
 ```
 
-Fire-and-forget from the client (don't block the drill on this write
-succeeding — the localStorage mirror, File 6, is the source of truth for
-the current session regardless).
+Fire-and-forget from the client, same reasoning as before — localStorage
+is this session's source of truth regardless of whether this write lands
+immediately.
 
 ## File 5: `netlify/functions/learn-chat-init.cjs` (MODIFY)
 
-Three changes: drop `tools`, add the third prompt block, filter
-`getRestaurantNotes()`'s results by `scope` into the right blocks
-(Ticket 4 wrote `buildSharedPrompt` to dump every note into the global
-block regardless of scope — this ticket is what actually applies the
-filter Ticket 4's design promised).
+The big one. `buildSectionPrompt` now takes the current pass and only
+describes/permits that pass's fact type(s). The coverage block filters
+"what's remaining" to the current pass too — no point telling the model
+about dietary/pricing gaps while it's still restricted to ingredients.
 
 ```javascript
 const { getMenuData } = require('./_services/db-menu.cjs');
 const { getRestaurantNotes } = require('./_services/db-restaurant-notes.cjs');
 
+const PASS_FACT_TYPES = {
+  basics: ['ingredients'],
+  complete: ['dietary', 'pricing']
+};
+
 function findSection(menuData, sectionName) {
   return menuData.categories.find((c) => c.name === sectionName) || null;
 }
 
-// buildSharedPrompt: filter to scope === 'restaurant' only.
-function buildSharedPrompt(notes) {
-  const restaurantNotes = notes.filter((n) => n.scope === 'restaurant');
-  const notesBlock = restaurantNotes.length
-    ? restaurantNotes.map((n) => `- ${n.text}`).join('\n')
-    : '(none yet)';
-
-  return `You are Tico, a warm, experienced coworker helping a restaurant server-in-training drill their knowledge of the menu.
-
-The trainee is a server working the floor, not a host at the entrance. Every customer in this drill is already seated at a table, mid-visit. That means the trainee can and should take orders, make recommendations, and answer questions the way a server actually would. Never frame anything as out of scope for them because "that's the host's job" or "wait until they're seated," they're already seated.
-
-RESTAURANT NOTES (apply across every section, equally authoritative to a section's menu data — these are staff-confirmed facts, not guesses):
-${notesBlock}
-
-Never use an em dash anywhere in your response, in either voice. Use a comma, period, or parentheses instead.`;
+function derivePass(section, factCoverage) {
+  const allIngredientsDone = section.items.every((i) => factCoverage?.[i.id]?.ingredients);
+  return allIngredientsDone ? 'complete' : 'basics';
 }
 
-// buildSectionPrompt: filter notes to scope === 'section' && note.section === section.name,
-// fold them into the section block (still cacheable per-section, nothing dynamic added here).
-function buildSectionPrompt(section, notes) {
+// unchanged from Ticket 4/5-draft, filters to scope === 'restaurant'
+function buildSharedPrompt(notes) { /* ...as Ticket 4 wrote it... */ }
+
+// Now pass-aware. Two distinct, still-static-within-a-pass variants —
+// each independently cacheable across turns/trainees within that pass;
+// a pass boundary is a natural, rare, acceptable cache miss.
+function buildSectionPrompt(section, notes, pass) {
   const trimmedItems = section.items.map((item) => {
-    const trimmed = { id: item.id, name: item.name, description: item.description, price: item.price };
-    if (item.tags && item.tags.length) trimmed.tags = item.tags;
-    if (item.notes) trimmed.notes = item.notes;
+    const trimmed = { id: item.id, name: item.name };
+    // Only expose the fields relevant to the CURRENT pass — not just an
+    // instruction to ignore the rest, actually omit them, so there's no
+    // ambiguity about what's in scope right now.
+    if (pass === 'basics') {
+      trimmed.description = item.description;
+    } else {
+      trimmed.price = item.price;
+      if (item.tags && item.tags.length) trimmed.tags = item.tags;
+    }
+    if (item.notes) trimmed.notes = item.notes; // notes can matter either pass, kept in both
     return trimmed;
   });
 
@@ -312,42 +273,57 @@ function buildSectionPrompt(section, notes) {
     ? `\nADDITIONAL NOTES FOR THIS SECTION (equally authoritative to SECTION DATA):\n${sectionNotes.map((n) => `- ${n.text}`).join('\n')}\n`
     : '';
 
-  return `Drilling section: "${section.name}".
+  const passScope = pass === 'basics'
+    ? `You are drilling BASICS only right now: ingredients. Every question must be about what's in a dish (ingredients, preparation, what it's made of). Never ask about price, dietary restrictions, or add-ons in this pass, even if the trainee brings one up, gently redirect back to ingredients or note you'll circle back to that later.`
+    : `You are drilling COMPLETE right now: dietary restrictions and pricing. Ingredients are already covered for this section, don't re-drill them. Every question must be about whether a dish is vegetarian/gluten-free/dairy-free/etc, or its price/add-on cost. Never ask a pure ingredients question in this pass.`;
 
-Each round works like this: you ask ONE question as if you were an ordinary seated customer looking at this section (an ingredient, whether something's vegetarian/gluten-free, "what's your favorite," a comparison between two items, a portion-size question, or just placing an order). Real customers mostly ask ordinary things, never an unusual invented premise. The trainee answers. You then evaluate that specific answer, every round, not rarely: confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then ask your next question, continuing the drill.
+  return `Drilling section: "${section.name}", ${pass} pass.
+
+${passScope}
+
+Each round works like this: you ask ONE question, in scope for this pass, as if you were an ordinary seated customer looking at this section. Real customers mostly ask ordinary things, never an unusual invented premise. The trainee answers. You then evaluate that specific answer, every round, not rarely: confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then ask your next question, continuing the drill.
 
 The drill isn't one flat, uninterrupted quiz. Narrate it as a series of distinct customer interactions. After a handful of exchanges with one table, wrap that interaction up naturally in character (they say thanks, go back to their conversation, whatever fits) and bring in a new table with a new mundane question, the same way you'd narrate it out loud to a coworker. This is just how you talk, there's no field, event, or signal attached to it, and nothing about the conversation resets when it happens.
 
-FORMAT, follow exactly: every line of your response starts with one of "TICO:", "GUEST:", "ITEM:", or "RESULT:" (all caps, immediately followed by a colon and a space), marking what that line is.
+FORMAT, follow exactly: every line of your response starts with one of "TICO:", "GUEST:", "ITEM:", "FACT_TYPE:", or "RESULT:" (all caps, immediately followed by a colon and a space), marking what that line is.
 - GUEST: the customer's own question or line of dialogue.
 - TICO: everything that's you: narrating the scene, evaluating the trainee's answer, or any other aside.
-- ITEM: only right before you evaluate an answer, one line, the id of the specific dish the question was about (use the "id" field from SECTION DATA below, e.g. "baja-fish-tacos").
-- RESULT: only right after an ITEM: line, one line, one word: "correct", "partial", or "incorrect", your honest judgment of the trainee's answer to that item's question.
+- ITEM: only right before you evaluate an answer, one line, the id of the specific dish (use the "id" field from SECTION DATA below, e.g. "baja-fish-tacos").
+- FACT_TYPE: only right after an ITEM: line, one line, one word: ${pass === 'basics' ? '"ingredients" (the only valid value this pass)' : '"dietary" or "pricing"'}.
+- RESULT: only right after a FACT_TYPE: line, one line, one word: "correct", "partial", or "incorrect".
 
-ITEM: and RESULT: lines are never shown to the trainee, they're just for tracking. Always emit them as a pair, right before your TICO: evaluation of an answer (never on the very first question of the drill, there's nothing to evaluate yet). Never put content from two different markers on the same line, and never skip a marker on a new line.
+ITEM:/FACT_TYPE:/RESULT: lines are never shown to the trainee, they're just for tracking. Always emit all three together, right before your TICO: evaluation (never on the very first question of the drill, there's nothing to evaluate yet). Never put content from two different markers on the same line, never skip a marker on a new line.
+
+STOP after your GUEST: question, every turn. Never invent, assume, or simulate what the trainee would say, only evaluate an answer they actually gave earlier in this conversation.
 
 HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below, or facts listed in RESTAURANT NOTES or this section's additional notes. If something isn't in any of those, say so honestly ("worth checking with the kitchen") rather than inventing an answer.
 
-SECTION DATA (${section.name} only):
+SECTION DATA (${section.name} only, ${pass} pass, only the fields relevant to this pass are included):
 ${JSON.stringify(trimmedItems, null, 2)}
 ${sectionNotesBlock}
 Follow the format exactly, on every line. No markdown formatting, no code fences, no em dashes. Start the drill now with your first line.`;
 }
 
-// NEW: uncached, per-turn coverage block.
-function buildCoveragePrompt(section, coveredItemIds) {
-  const covered = new Set(coveredItemIds || []);
-  const remaining = section.items.filter((i) => !covered.has(i.id)).map((i) => i.id);
-  const done = section.items.filter((i) => covered.has(i.id)).map((i) => i.id);
+// Uncached, per-turn. Filtered to the current pass's fact type(s) only.
+function buildCoveragePrompt(section, notes, factCoverage, pass) {
+  const types = PASS_FACT_TYPES[pass];
+  const remaining = [];
+  const done = [];
+  section.items.forEach((item) => {
+    types.forEach((type) => {
+      const label = `${item.id} (${type})`;
+      if (factCoverage?.[item.id]?.[type]) done.push(label); else remaining.push(label);
+    });
+  });
 
   if (remaining.length === 0) {
-    return `CURRENT COVERAGE: every item in this section has already been covered (${done.join(', ') || 'none'}). Wrap up warmly, let the trainee know they've covered everything here, and don't manufacture new questions just to keep going.`;
+    return `CURRENT COVERAGE: every ${pass}-pass fact for this section is already covered. Wrap up warmly, let the trainee know they've got this pass down, and don't manufacture new questions just to keep going.`;
   }
 
-  return `CURRENT COVERAGE: still need to cover: ${remaining.join(', ')}.${done.length ? ` Already covered, don't re-drill unless it's genuinely useful: ${done.join(', ')}.` : ''} Prioritize what's not covered yet.`;
+  return `CURRENT COVERAGE (${pass} pass): still need: ${remaining.join(', ')}.${done.length ? ` Already covered, don't re-drill unless genuinely useful: ${done.join(', ')}.` : ''} Prioritize what's not covered yet.`;
 }
 
-const tools = []; // no tools for Learn anymore — coverage is fully client-computed, see Ticket 5
+const tools = []; // no tools for Learn — coverage is fully client-computed
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -355,7 +331,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { section: sectionName, coveredItemIds } = JSON.parse(event.body || '{}');
+    const { section: sectionName, factCoverage } = JSON.parse(event.body || '{}');
     if (!sectionName) {
       return { statusCode: 400, body: JSON.stringify({ error: 'section is required' }) };
     }
@@ -367,10 +343,12 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown section: ${sectionName}` }) };
     }
 
+    const pass = derivePass(section, factCoverage);
+
     const systemMessages = [
       { type: 'text', text: buildSharedPrompt(notes), cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: buildSectionPrompt(section, notes), cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: buildCoveragePrompt(section, coveredItemIds) } // no cache_control — deliberately uncached, changes every turn
+      { type: 'text', text: buildSectionPrompt(section, notes, pass), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: buildCoveragePrompt(section, notes, factCoverage, pass) } // no cache_control
     ];
 
     return {
@@ -384,51 +362,42 @@ exports.handler = async (event) => {
 };
 ```
 
-Note `tools` is now an empty array rather than removed entirely from the
-response — confirm `chat-stream-core.ts` handles an empty `tools` array
-gracefully (it should: `tools: tools && tools.length > 0 ? tools : undefined`
-in the shared core already guards against sending an empty array to
-Anthropic), don't assume, verify while implementing.
+Confirm `chat-stream-core.ts` still handles the empty `tools` array
+gracefully (it should, per its existing `tools.length > 0 ? tools :
+undefined` guard) — don't assume, verify while implementing.
 
 ## File 6: `src/assets/js/learn.js` (MODIFY)
 
-The biggest file in this ticket. Four pieces: extend the marker parser,
-track coverage, wire the progress bar, and send `coveredItemIds` with
-every turn.
-
-**Extend `SEGMENT_MARKER_RE`** to recognize all four marker types:
+**Extend `SEGMENT_MARKER_RE`** for the fifth marker:
 
 ```javascript
-// Before:
-const SEGMENT_MARKER_RE = /(?:^|\n)[ \t]*(TICO|GUEST):[ \t]?/;
-
-// After:
-const SEGMENT_MARKER_RE = /(?:^|\n)[ \t]*(TICO|GUEST|ITEM|RESULT):[ \t]?/;
+const SEGMENT_MARKER_RE = /(?:^|\n)[ \t]*(TICO|GUEST|ITEM|FACT_TYPE|RESULT):[ \t]?/;
 ```
 
-**Rework `createStreamRenderer()`** so segment content routes differently
-depending on marker type — TICO/GUEST open a visible bubble as before
-(unchanged real-time character-by-character feel); ITEM/RESULT
-accumulate silently and only get processed once their segment closes
-(next marker found, or `finalize()`), since they're short single-line
-values with nothing to gain from partial rendering (there's nothing to
-render, they're never shown):
+**`createStreamRenderer()`** needs a third hidden-marker slot. Same
+"accumulate silently, process on segment close" shape as the two-marker
+version, just one more pending value to carry between `ITEM:` and
+`RESULT:`:
 
 ```javascript
-function createStreamRenderer(onItemResult) {
+function createStreamRenderer(onFactResult) {
   let consumedLen = 0;
-  let currentMarker = null; // 'TICO' | 'GUEST' | 'ITEM' | 'RESULT' | null
+  let currentMarker = null;
   let currentBubble = null;
-  let currentBuffer = ''; // raw content of the segment currently being accumulated
+  let currentBuffer = '';
   let pendingItemId = null;
+  let pendingFactType = null;
 
   function closeCurrentSegment() {
     if (currentMarker === 'ITEM') {
       pendingItemId = currentBuffer.trim();
+    } else if (currentMarker === 'FACT_TYPE') {
+      pendingFactType = currentBuffer.trim();
     } else if (currentMarker === 'RESULT') {
       const result = currentBuffer.trim();
-      if (pendingItemId && result) onItemResult(pendingItemId, result);
+      if (pendingItemId && pendingFactType && result) onFactResult(pendingItemId, pendingFactType, result);
       pendingItemId = null;
+      pendingFactType = null;
     }
     currentBuffer = '';
   }
@@ -483,90 +452,161 @@ function createStreamRenderer(onItemResult) {
 }
 ```
 
-`SEGMENT_MARKER_HOLDBACK` stays `6` (still the longest marker, "GUEST:").
+`SEGMENT_MARKER_HOLDBACK` becomes `10` (`"FACT_TYPE:"` is now the
+longest marker, not `"GUEST:"`).
 
-`renderAssistantTurn()` (rehydration path) needs the equivalent
-ITEM:/RESULT:-skipping behavior — its current regex-position-scan
-approach already iterates all markers found in the raw text; just skip
-creating a segment element for `ITEM`/`RESULT` positions instead of only
-handling `TICO`/`GUEST`. Rehydration does **not** need to re-derive
-coverage from old messages, coverage is loaded from its own persisted
-source (below), independently of chat history.
+`renderAssistantTurn()` (rehydration): same "skip creating a segment for
+non-TICO/GUEST markers" behavior, now three marker types to skip instead
+of two.
 
-**Coverage tracking** — new state, alongside `chatHistory`/`currentChatId`:
+**Coverage tracking, two-dimensional, plus pass derivation**:
 
 ```javascript
-// ─── Item coverage ────────────────────────────────────────────────────
-// Deterministic, our rubric, not the model's self-assessment. Tunable.
-const CORRECT_ANSWERS_TO_COVER = 1;
+// ─── Fact coverage (two-dimensional: item × fact type) ──────────────────
+const PASS_FACT_TYPES = { basics: ['ingredients'], complete: ['dietary', 'pricing'] };
 
-let sectionItemIds = []; // all item ids in the current section, set in startDrill()
-let coveredItemIds = new Set(); // monotonic — only ever grows
-let correctCounts = {}; // itemId -> count of RESULT: correct seen this drill
+let sectionItemIds = []; // set in startDrill()
+let factCoverage = {}; // {itemId: {factType: true}}
+let passTransitionShown = false; // guards the mid-drill transition banner from firing twice
 
 function lsCoverageKey(section) {
   return `tico-learn-coverage-${section}`;
 }
 
-function loadCoverage(section) {
+function loadFactCoverage(section) {
   try {
     const raw = localStorage.getItem(lsCoverageKey(section));
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch { return new Set(); }
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
 }
 
-function saveCoverage(section, covered) {
-  try { localStorage.setItem(lsCoverageKey(section), JSON.stringify([...covered])); } catch {}
+function saveFactCoverage(section, coverage) {
+  try { localStorage.setItem(lsCoverageKey(section), JSON.stringify(coverage)); } catch {}
+}
+
+function currentPass() {
+  const allIngredientsDone = sectionItemIds.every((id) => factCoverage[id]?.ingredients);
+  return allIngredientsDone ? 'complete' : 'basics';
+}
+
+function passProgress(pass) {
+  const types = PASS_FACT_TYPES[pass];
+  let done = 0;
+  const total = sectionItemIds.length * types.length;
+  sectionItemIds.forEach((id) => types.forEach((t) => { if (factCoverage[id]?.[t]) done++; }));
+  return { done, total };
 }
 
 function updateProgressBar() {
-  const total = sectionItemIds.length;
-  const done = coveredItemIds.size;
+  const pass = currentPass();
+  const { done, total } = passProgress(pass);
   progressBar.style.setProperty('--progress', total ? `${(done / total) * 100}%` : '0%');
-  progressBarLabel.textContent = `${done} of ${total} dishes covered`;
+  progressBarLabel.textContent = pass === 'basics'
+    ? `Basics: ${done} of ${total}`
+    : `Complete: ${done} of ${total}`;
+  progressBar.dataset.pass = pass; // for styling — see File 8
 }
 
-function handleItemResult(itemId, result) {
-  if (!sectionItemIds.includes(itemId)) return; // model referenced an id we don't recognize — ignore, don't crash the tally
-  if (coveredItemIds.has(itemId)) return; // already covered, monotonic
-  if (result !== 'correct') return; // only clean correct answers count toward coverage in this rubric
-  correctCounts[itemId] = (correctCounts[itemId] || 0) + 1;
-  if (correctCounts[itemId] >= CORRECT_ANSWERS_TO_COVER) {
-    coveredItemIds.add(itemId);
-    saveCoverage(currentSection, coveredItemIds);
-    updateProgressBar();
-    fetch('/api/learn-item-learned', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: getOrCreateUserId(), section: currentSection, itemId })
-    }).catch(() => {}); // fire-and-forget — localStorage is this session's source of truth regardless
-    if (coveredItemIds.size === sectionItemIds.length) {
-      showLearnedBanner();
-      markSectionLearnedLocally(currentSection); // Ticket 3's picker-badge mirror — repurposed below, see File 7
-      applyLearnedBadges();
-    }
+function handleFactResult(itemId, factType, result) {
+  if (!sectionItemIds.includes(itemId)) return;
+  if (!['ingredients', 'dietary', 'pricing'].includes(factType)) return;
+  if (factCoverage[itemId]?.[factType]) return; // already covered, monotonic
+  if (result !== 'correct') return;
+
+  const passBefore = currentPass();
+  factCoverage[itemId] = factCoverage[itemId] || {};
+  factCoverage[itemId][factType] = true;
+  saveFactCoverage(currentSection, factCoverage);
+  updateProgressBar();
+
+  fetch('/api/learn-fact-learned', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: getOrCreateUserId(), section: currentSection, itemId, factType })
+  }).catch(() => {});
+
+  const passAfter = currentPass();
+  if (passBefore === 'basics' && passAfter === 'complete' && !passTransitionShown) {
+    passTransitionShown = true;
+    showPassTransition();
+    return;
+  }
+  if (passAfter === 'complete' && passProgress('complete').done === passProgress('complete').total) {
+    showLearnedBanner(); // copy updates to "Capable" — see below
+    markSectionLearnedLocally(currentSection);
+    applyLearnedBadges();
   }
 }
 ```
 
-**Wire it into `sendTurn()`**: pass `handleItemResult` into
-`createStreamRenderer()`, and include `coveredItemIds` in the request
-body:
+**Pass transition** — disables the input, shows a distinct inline
+banner, and routes back through the teach screen (reusing the existing
+`.learn-start-drill` button, not a new flow):
 
 ```javascript
-// Before:
-const renderer = createStreamRenderer();
-...
-body: JSON.stringify({
-  chatType: 'learn',
-  userId: getOrCreateUserId(),
-  message,
-  chatHistory,
-  section: currentSection
-})
+function showPassTransition() {
+  answerInput.disabled = true;
+  sendButton.disabled = true;
+  const banner = document.createElement('div');
+  banner.className = 'learn-pass-transition';
+  banner.innerHTML = `
+    <p class="learn-pass-transition__label">You've got the basics down for ${currentSection}. Let's go deeper on dietary and pricing.</p>
+    <button type="button" class="btn" data-action="continue">Continue</button>
+  `;
+  transcript.appendChild(banner);
+  banner.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
+    document.querySelectorAll('.learn-teach__section').forEach((el) => {
+      el.hidden = el.dataset.section !== currentSection;
+      el.dataset.pass = currentPass(); // 'complete' by this point — drives highlighting, see File 8
+    });
+    showPhase('teach');
+  });
+}
+```
 
-// After:
-const renderer = createStreamRenderer(handleItemResult);
+`showLearnedBanner()`'s copy changes from "You've learned X!" to match
+the tier vocabulary: `` `You're Capable at ${currentSection}!` ``.
+
+**`startDrill()`**: needs `sectionItemIds` (all item ids in the current
+section) client-side now, same open question as the earlier draft of
+this ticket — the menu data lives in Firestore as of Ticket 4, not
+statically `require()`-able into a browser module, so this needs either
+item ids embedded in the picker/teach markup via `data-*` attributes, or
+a small endpoint. Resolve while implementing. Also loads persisted
+coverage and sets the teach screen's initial `data-pass`:
+
+```javascript
+function startDrill() {
+  factCoverage = loadFactCoverage(currentSection);
+  passTransitionShown = false;
+  updateProgressBar();
+  // ...existing loadSectionState()/rehydration logic, unchanged...
+}
+```
+
+And wherever the picker pill click handler currently reveals the right
+`.learn-teach__section` (Ticket 1), also set its initial `data-pass`
+before first showing it:
+
+```javascript
+// Picker → Teach (existing handler, one line added):
+document.querySelectorAll('.learn-teach__section').forEach((section) => {
+  section.hidden = section.dataset.section !== currentSection;
+  if (!section.hidden) section.dataset.pass = 'basics'; // always starts here on a fresh entry from the picker
+});
+```
+
+(A returning trainee re-entering a section already in the Complete pass
+via URL-restore or rehydration needs this set to `currentPass()`'s
+actual value instead of a hardcoded `'basics'` — check both entry paths,
+picker-click and URL-restore, set it consistently.)
+
+**Wire `handleFactResult` and `factCoverage` into `sendTurn()`**, same
+shape as the earlier draft, one more field in the request body:
+
+```javascript
+const renderer = createStreamRenderer(handleFactResult);
 ...
 body: JSON.stringify({
   chatType: 'learn',
@@ -574,42 +614,14 @@ body: JSON.stringify({
   message,
   chatHistory,
   section: currentSection,
-  coveredItemIds: [...coveredItemIds]
+  factCoverage
 })
 ```
 
-**`startDrill()`**: set `sectionItemIds` from the section's menu data
-(needs it client-side now — check whether `learn.njk`'s picker/teach
-markup already exposes each section's item ids somewhere in the DOM via
-`data-*` attributes, or whether this needs a small new endpoint/embedded
-JSON; the menu data itself lives in Firestore as of Ticket 4, not
-statically importable into a browser module the way `require()` could
-before — this is the one piece of this ticket most likely to need a
-judgment call while implementing), and load persisted coverage instead
-of Ticket 3's simple existing/absent chat check alone:
-
-```javascript
-function startDrill() {
-  coveredItemIds = loadCoverage(currentSection);
-  correctCounts = {};
-  updateProgressBar();
-  // ...existing loadSectionState()/rehydration logic, unchanged...
-}
-```
-
-**Remove**: Ticket 3's `markSectionLearnedLocally`/`applyLearnedBadges`
-functions stay (repurposed for the tier-dot picker, see File 7) but their
-*trigger* changes from the deleted tool's `learned` flag to
-`handleItemResult`'s coverage-complete check above. The old
-`tool_complete`/`mark_section_learned` branch in `sendTurn`'s SSE-parsing
-loop gets deleted outright (there's no tool anymore, `chat-stream-core.ts`
-won't send a `tool_complete` event for Learn at all now that `tools` is
-empty).
-
 ## File 7: `src/learn.njk` (MODIFY)
 
-Progress bar element in the drill (flex-shrink:0, alongside the back
-link, above the scrolling transcript):
+Progress bar in the drill (unchanged position from the earlier draft,
+now pass-aware via `data-pass` set from JS, not the markup):
 
 ```html
 <div class="learn-drill" id="learn-drill" hidden>
@@ -622,20 +634,22 @@ link, above the scrolling transcript):
     ...
 ```
 
-Picker pills gain a tier-dot readout, replacing the checkmark modifier —
-exact markup depends on whatever's cleanest once the tier-dot component
-is in front of you (it may be worth extracting a Nunjucks macro shared
-with `practice.njk`'s existing skill-tree-row tier-indicator rather than
-copy-pasting the dot markup, implementer's call, but don't duplicate
-the visual system, reuse `.tier-dots`/`.tier-dot`/`.tier-indicator__label`
-as-is):
+Teach screen sections need a `data-pass` attribute (JS sets/updates it,
+per File 6 — the markup just needs the attribute present so CSS has
+something to select on from the start):
 
 ```html
-<button class="competency-pill" data-section="{{ category.name }}">
-  {{ category.name }}
-  <span class="tier-dots" data-tier-dots></span>
-</button>
+<div class="learn-teach__section" data-section="{{ category.name }}" data-pass="basics" hidden>
+  ...
+  {{ renderCategories([category], false) }}
+  <button class="btn learn-start-drill" data-section="{{ category.name }}">Start practicing</button>
+</div>
 ```
+
+Picker pills gain the tier-dot readout, same as the earlier draft
+(reuse `.tier-dots`/`.tier-dot`/`.tier-indicator__label` as-is, judgment
+call on exact markup once it's in front of you, don't duplicate the
+visual system).
 
 ## File 8: `src/styles/_learn.scss` and `_competency-select.scss` (MODIFY)
 
@@ -663,55 +677,80 @@ as-is):
   margin: $space-xs $space-lg $space-sm;
   flex-shrink: 0;
 }
+
+.learn-pass-transition {
+  text-align: center;
+  padding: $space-lg;
+  margin: $space-md $space-lg 0;
+  background: $color-bg-surface;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+}
+
+.learn-pass-transition__label {
+  margin: 0 0 $space-md;
+  font-weight: 600;
+}
+
+// ─── Teach screen pass highlighting ──────────────────────────────────────
+// Driven entirely by data-pass on .learn-teach__section, set/updated by
+// JS (File 6). Public /menu/ and /menu-review/ never set this attribute,
+// so renderCategories() itself needs zero changes — this is pure additive
+// CSS on top of its existing .menu-item__desc/__tags/__price classes.
+.learn-teach__section[data-pass="basics"] {
+  .menu-item__price,
+  .menu-item__tags { opacity: 0.35; }
+  .menu-item__desc { font-weight: 600; }
+}
+
+.learn-teach__section[data-pass="complete"] {
+  .menu-item__desc { opacity: 0.5; }
+  .menu-item__price,
+  .menu-item__tags { font-weight: 600; }
+}
 ```
 
-Remove `.competency-pill--learned` (superseded by the tier-dot readout,
-not left dead in the stylesheet) from `_competency-select.scss`. The
-`.tier-dots`/`.tier-dot`/`.tier-indicator__label` rules already exist in
-`_components.scss` and need no changes, just reuse.
-
-Client-side, computing which tier a section's pill shows (0 covered =
-Not started, 1 to n-1 covered = Training, all covered = Capable) is
-straightforward arithmetic on the same per-section coverage data
-`applyLearnedBadges()` already reads from localStorage — extend that
-function to set dot-fill state instead of (or alongside, during
-transition) the old checkmark class.
+Remove `.competency-pill--learned` from `_competency-select.scss`
+(superseded by the tier-dot readout). `.tier-dots`/`.tier-dot`/
+`.tier-indicator__label` already exist in `_components.scss`, no changes
+needed there, just reuse. Tier computed client-side from `factCoverage`:
+0 done = Not started, partial = Training, Complete pass fully done =
+Capable — same arithmetic `passProgress()` already does, just read from
+localStorage on the picker instead of live drill state.
 
 ## Verification
 
 1. `node --check` on all new/modified `.cjs` files and `learn.js`.
 2. `sass` compile / full `pnpm build`.
-3. Manual review of the `chat-stream-core.ts` diff (no TypeScript build
-   step to lean on).
-4. Via `netlify dev`: drill a section, answer a couple of questions
-   correctly. Confirm:
-   - The progress bar advances only on genuinely correct answers, in
-     discrete steps (one item at a time), never partial/fractional
-     jumps mid-item.
-   - `ITEM:`/`RESULT:` never leak into the visible transcript, at any
-     point during streaming (not even briefly before the marker
-     resolves, given the holdback logic).
-   - Tico's questions cover *different* dishes across rounds rather than
-     repeating the same one or two, and once a couple of items are
-     covered, it prioritizes what's left over what's already covered.
-5. Answer every item in a small section (fewer dishes = faster to fully
-   verify) until coverage hits 100%. Confirm:
-   - The learned banner still fires, now via coverage instead of a tool.
-   - `learn-progress/{userId}` in Firestore now has
-     `{sectionName: {itemId: true, ...}}` for every item, not a bare
-     boolean.
-   - The picker shows the section at the "Capable" tier (however many
-     dots that maps to on the existing 4-dot scale).
-6. Reload mid-drill (after covering some but not all items). Confirm the
-   progress bar picks back up at the right count, not reset to zero and
-   not lost.
-7. **Caching check** (the actual point of File 1/5's split): with
-   `ANTHROPIC_API_KEY` set, drill the same section for a few turns and
-   check Anthropic's usage/response metadata (`cache_read_input_tokens`,
-   available in the API response) — confirm blocks 1/2 show cache reads
-   on turn 2+ of the same conversation, not just cache writes on turn 1.
-   This is the one thing unit-testing the code can't catch, has to be
-   observed against the real API.
+3. Manual review of the `chat-stream-core.ts` diff.
+4. Via `netlify dev`: enter a section fresh. Confirm:
+   - Teach screen shows with descriptions emphasized, price/tags muted.
+   - The drill only ever asks ingredient-type questions during Basics,
+     never dietary or pricing, even if you volunteer that information
+     yourself in an answer.
+   - `ITEM:`/`FACT_TYPE:`/`RESULT:` never leak into the visible
+     transcript at any point during streaming.
+5. Answer every item's ingredients correctly. Confirm:
+   - The pass-transition banner fires exactly once, input disables,
+     "Continue" routes back to the teach screen with price/tags now
+     emphasized and description muted.
+   - Clicking "Start practicing" again resumes the *same* conversation
+     (chatHistory intact, doesn't restart), now only asking
+     dietary/pricing questions.
+6. Finish dietary + pricing for every item. Confirm:
+   - The "Capable" banner fires (copy says Capable, not "learned").
+   - `learn-progress/{userId}` in Firestore has every item with all
+     three fact types `true`.
+   - Picker shows the section at the Capable tier.
+7. Reload mid-Basics and mid-Complete (two separate test passes).
+   Confirm the progress bar and pass both resume correctly in each case,
+   not reset and not stuck on the wrong pass.
+8. **Caching check**: with `ANTHROPIC_API_KEY` set, drill a few turns
+   within the same pass and check Anthropic's response metadata
+   (`cache_read_input_tokens`) — confirm blocks 1/2 show cache reads on
+   turn 2+ within a pass. A pass *boundary* is an expected, acceptable
+   cache miss on block 2 (the prompt text genuinely changes), turn-to-turn
+   *within* a pass should not be.
 
 ## Prerequisite
 
