@@ -72,4 +72,13 @@
     cursor: not-allowed;
     opacity: 0.5;
   }
+
+  &.competency-pill--learned {
+    border-color: $color-green;
+
+    &::after {
+      content: ' ✓';
+      color: $color-green;
+    }
+  }
 }

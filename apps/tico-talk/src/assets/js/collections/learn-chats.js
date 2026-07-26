@@ -1,18 +1,32 @@
-// TEMPORARY STUB (Ticket 2) — Ticket 3 replaces this with real calls to
-// /api/learn-chat-save and /api/learn-chat-get (netlify/functions), mirroring
-// apps/dreamscape/src/assets/js/collections/reflect-chats.js. Until then,
-// section chat persistence to Firestore is a no-op — everything above this
-// (localStorage save/load/TTL, the three boundary call-sites) works and is
-// testable now; only the actual Firestore write is missing.
-
-export function saveLearnChatBeacon() {
-  return false; // "not queued" — flushSectionChat falls back to saveLearnChat()
+/**
+ * saveLearnChatBeacon — fire-and-forget via sendBeacon.
+ * Returns true if the browser accepted the request, false otherwise.
+ * Use for pre-navigation saves (the 'exited' path — leaving the drill).
+ */
+export function saveLearnChatBeacon({ chatId, userId, section, messages, action, conversationStart, conversationEnd }) {
+  const payload = JSON.stringify({ chatId, userId, section, messages, action, conversationStart, conversationEnd });
+  return navigator.sendBeacon('/api/learn-chat-save', new Blob([payload], { type: 'application/json' }));
 }
 
-export async function saveLearnChat() {
-  return { ok: false, stub: true };
+/**
+ * saveLearnChat — async fetch with a response.
+ * Use for saves where the tab is staying open ('learned', TTL-driven
+ * 'abandoned' flush on load).
+ */
+export async function saveLearnChat({ chatId, userId, section, messages, action, conversationStart, conversationEnd }) {
+  const response = await fetch('/api/learn-chat-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chatId, userId, section, messages, action, conversationStart, conversationEnd })
+  });
+  return response.json();
 }
 
-export async function getLearnChat() {
-  return { found: false };
+/**
+ * getLearnChat — check whether a specific chatId was actually saved.
+ * Used only by the load-time verify/retry safety net.
+ */
+export async function getLearnChat(chatId, userId) {
+  const response = await fetch(`/api/learn-chat-get?chatId=${encodeURIComponent(chatId)}&userId=${encodeURIComponent(userId)}`);
+  return response.json();
 }

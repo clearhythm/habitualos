@@ -137,6 +137,17 @@
   &:not(:disabled):hover { background: $color-green-dark; }
 }
 
+.learn-learned-banner {
+  text-align: center;
+  padding: $space-md;
+  margin: $space-md $space-lg 0;
+  background: color-mix(in srgb, $color-success 12%, transparent);
+  border: 1px solid $color-success;
+  border-radius: 0.75rem;
+  color: $color-text;
+  font-weight: 600;
+}
+
 @keyframes learn-thinking-pulse {
   0%, 100% { opacity: 0.35; }
   50%       { opacity: 0.8; }

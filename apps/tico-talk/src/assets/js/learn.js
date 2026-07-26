@@ -137,6 +137,40 @@ function flushSectionChat(section, action, { useBeacon, stateOverride } = {}) {
   clearSectionState(section);
 }
 
+// ─── Learned badges (picker) ─────────────────────────────────────────────
+// Mirrors the Firestore write client-side so the picker can badge learned
+// sections without a network round-trip on every page load.
+function markSectionLearnedLocally(sectionName) {
+  try {
+    const learned = JSON.parse(localStorage.getItem('tico-learned-sections') || '{}');
+    learned[sectionName] = true;
+    localStorage.setItem('tico-learned-sections', JSON.stringify(learned));
+  } catch {
+    // non-fatal — the picker just won't show the badge until next real fetch
+  }
+}
+
+function applyLearnedBadges() {
+  let learned = {};
+  try {
+    learned = JSON.parse(localStorage.getItem('tico-learned-sections') || '{}');
+  } catch {}
+  document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
+    if (learned[pill.dataset.section]) {
+      pill.classList.add('competency-pill--learned');
+    }
+  });
+}
+applyLearnedBadges();
+
+function showLearnedBanner() {
+  const banner = document.createElement('div');
+  banner.className = 'learn-learned-banner';
+  banner.textContent = `You've learned ${currentSection}!`;
+  transcript.parentElement.insertBefore(banner, transcript.nextSibling);
+  banner.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
 // Picker → Teach
 document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
   pill.addEventListener('click', () => {
@@ -269,8 +303,9 @@ async function sendTurn(message) {
     saveSectionState(currentSection, chatHistory, currentChatId);
 
     if (learned) {
-      // Ticket 3 replaces this with a real, distinct visual treatment.
-      appendLine('tico-aside', 'You’ve got this section down — nice work.');
+      showLearnedBanner();
+      markSectionLearnedLocally(currentSection);
+      applyLearnedBadges();
       flushSectionChat(currentSection, 'learned', { useBeacon: false });
     }
   } finally {
