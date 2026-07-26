@@ -4,8 +4,8 @@
 # =============================================================================
 [build]
   base = "apps/tico-talk"
-  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -E '^apps/tico-talk/' | grep -c ."
-  command = "cd $(git rev-parse --show-toplevel) && pnpm install && pnpm --filter tico-talk build"
+  ignore = "! git diff-tree --no-commit-id -r --name-only $COMMIT_REF | grep -E '^(apps/tico-talk|packages/edge-functions)/' | grep -c ."
+  command = "cd $(git rev-parse --show-toplevel) && pnpm install && mkdir -p apps/tico-talk/netlify/edge-functions/_lib && cp packages/edge-functions/chat-stream-core.ts apps/tico-talk/netlify/edge-functions/_lib/ && pnpm --filter tico-talk build"
   publish = "_site"
   functions = "netlify/functions"
   edge_functions = "netlify/edge-functions"
@@ -30,6 +30,10 @@
 # =============================================================================
 # Edge Functions
 # =============================================================================
+
+[[edge_functions]]
+  path = "/api/chat-stream"
+  function = "chat-stream"
 
 [[edge_functions]]
   path = "/*"
