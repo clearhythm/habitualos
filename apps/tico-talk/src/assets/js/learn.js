@@ -203,42 +203,108 @@ document.querySelectorAll('.learn-start-drill').forEach((button) => {
 
 function appendLine(speaker, text) {
   const line = document.createElement('p');
-  if (speaker === 'tico-aside') {
-    line.className = 'tico-aside';
-    line.innerHTML = '<span class="tico-aside__label">Tico</span>' + text;
-  } else {
-    line.className = `transcript-line transcript-line--${speaker}`;
-    line.textContent = text;
-  }
+  line.className = `transcript-line transcript-line--${speaker}`;
+  line.textContent = text;
   transcript.appendChild(line);
   line.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 function appendThinking() {
   const line = document.createElement('p');
-  line.className = 'transcript-line transcript-line--guest learn-thinking';
+  line.className = 'transcript-line transcript-line--tico learn-thinking';
   line.textContent = 'Tico’s thinking…';
   transcript.appendChild(line);
   line.scrollIntoView({ behavior: 'smooth', block: 'end' });
   return line;
 }
 
-let currentAssistantBubble = null;
+// ─── Speaker segments (TICO:/GUEST: line markers) ───────────────────────
+// The model's raw text is tagged with TICO:/GUEST: markers at the start
+// of each line (see learn-chat-init.cjs's system prompt) so Tico's own
+// voice (narration/evaluation — centered italic, no bubble) renders
+// separately from the guest's spoken dialogue (a normal chat bubble).
+// Markers are parsed out here and never shown; chatHistory still stores
+// the raw marked-up text verbatim, since the model conditions on its own
+// past formatting to keep producing it reliably.
+const SEGMENT_MARKER_RE = /(?:^|\n)[ \t]*(TICO|GUEST):[ \t]?/;
+const SEGMENT_MARKER_HOLDBACK = 6; // length of "GUEST:" — longest marker
 
-function startStreamingBubble() {
-  currentAssistantBubble = document.createElement('p');
-  currentAssistantBubble.className = 'transcript-line transcript-line--guest';
-  transcript.appendChild(currentAssistantBubble);
+function createSegmentElement(speaker) {
+  const el = document.createElement('p');
+  el.className = speaker === 'tico' ? 'transcript-line transcript-line--tico' : 'transcript-line transcript-line--guest';
+  transcript.appendChild(el);
+  return el;
 }
 
-function appendStreamToken(text) {
-  if (!currentAssistantBubble) startStreamingBubble();
-  currentAssistantBubble.textContent += text;
-  currentAssistantBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+// Renders one complete (non-streaming) assistant turn — used to rehydrate
+// a persisted chat, where the full raw text is already available.
+function renderAssistantTurn(rawText) {
+  const re = new RegExp(SEGMENT_MARKER_RE, 'g');
+  const positions = [];
+  let m;
+  while ((m = re.exec(rawText))) {
+    positions.push({ start: m.index, contentStart: m.index + m[0].length, speaker: m[1] === 'TICO' ? 'tico' : 'guest' });
+  }
+  if (positions.length === 0) {
+    // No markers (older stored data, or the model skipped the format) — fall back to one guest bubble.
+    if (rawText.trim()) createSegmentElement('guest').textContent = rawText.trim();
+    return;
+  }
+  positions.forEach((pos, i) => {
+    const end = i + 1 < positions.length ? positions[i + 1].start : rawText.length;
+    const text = rawText.slice(pos.contentStart, end).trim();
+    if (text) createSegmentElement(pos.speaker).textContent = text;
+  });
 }
 
-function finalizeStreaming() {
-  currentAssistantBubble = null;
+// Streaming variant of the same parsing — call createStreamRenderer() once
+// per turn, then feed it the full accumulated text after every token.
+function createStreamRenderer() {
+  let consumedLen = 0;
+  let speaker = null;
+  let bubble = null;
+
+  function appendToBubble(text) {
+    if (!text) return;
+    if (!bubble) {
+      speaker = 'guest'; // safe fallback if the model ever forgets the opening marker
+      bubble = createSegmentElement(speaker);
+    }
+    bubble.appendChild(document.createTextNode(text));
+    bubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  return {
+    update(fullTextSoFar) {
+      for (;;) {
+        const unconsumed = fullTextSoFar.slice(consumedLen);
+        const m = SEGMENT_MARKER_RE.exec(unconsumed);
+        if (m && m.index === 0) {
+          speaker = m[1] === 'TICO' ? 'tico' : 'guest';
+          bubble = createSegmentElement(speaker);
+          consumedLen += m[0].length;
+          continue;
+        }
+        if (m && m.index > 0) {
+          appendToBubble(unconsumed.slice(0, m.index));
+          consumedLen += m.index;
+          continue;
+        }
+        // No marker in the unconsumed tail — hold back a few characters in
+        // case they're the start of one still arriving token by token.
+        if (unconsumed.length > SEGMENT_MARKER_HOLDBACK) {
+          const safeLen = unconsumed.length - SEGMENT_MARKER_HOLDBACK;
+          appendToBubble(unconsumed.slice(0, safeLen));
+          consumedLen += safeLen;
+        }
+        break;
+      }
+    },
+    finalize(fullText) {
+      appendToBubble(fullText.slice(consumedLen));
+      consumedLen = fullText.length;
+    }
+  };
 }
 
 async function sendTurn(message) {
@@ -246,6 +312,7 @@ async function sendTurn(message) {
   answerInput.disabled = true;
   sendButton.disabled = true;
   const thinkingLine = appendThinking();
+  const renderer = createStreamRenderer();
   let fullText = '';
   let learned = false;
 
@@ -265,7 +332,7 @@ async function sendTurn(message) {
     thinkingLine.remove();
 
     if (!response.ok || !response.body) {
-      appendLine('tico-aside', 'Couldn’t reach Tico just now — try again in a moment.');
+      appendLine('tico', 'Couldn’t reach Tico just now — try again in a moment.');
       return;
     }
 
@@ -285,15 +352,15 @@ async function sendTurn(message) {
         const evt = JSON.parse(line.slice(6));
 
         if (evt.type === 'token') {
-          appendStreamToken(evt.text);
           fullText += evt.text;
+          renderer.update(fullText);
         } else if (evt.type === 'tool_complete' && evt.tool === 'mark_section_learned') {
           learned = true;
         } else if (evt.type === 'done') {
-          finalizeStreaming();
+          renderer.finalize(fullText);
         } else if (evt.type === 'error') {
-          finalizeStreaming();
-          appendLine('tico-aside', evt.error || 'Something went wrong.');
+          renderer.finalize(fullText);
+          appendLine('tico', evt.error || 'Something went wrong.');
         }
       }
     }
@@ -322,7 +389,13 @@ function startDrill() {
   if (existing) {
     currentChatId = existing.chatId;
     chatHistory = existing.history;
-    chatHistory.forEach((m) => appendLine(m.role === 'user' ? 'user' : 'guest', m.content));
+    chatHistory.forEach((m) => {
+      if (m.role === 'user') {
+        appendLine('user', m.content);
+      } else {
+        renderAssistantTurn(m.content);
+      }
+    });
     answerForm.hidden = false;
   } else {
     currentChatId = generateChatId();
