@@ -20,10 +20,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  text-decoration: none;
   cursor: pointer;
   transition: background 0.2s ease;
 
-  &:hover { background: $color-green-dark; }
+  &:hover {
+    background: $color-green-dark;
+    text-decoration: none;
+  }
 }
 
 .card {
