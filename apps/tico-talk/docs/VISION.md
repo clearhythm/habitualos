@@ -37,6 +37,12 @@ Bilingual capability is a path to upward mobility on the job (becoming the
 person who can serve Spanish-speaking guests), which is real, personal
 motivation — not an abstract "learn a language" goal.
 
+**Update:** the target user set is now explicitly multi-restaurant — Erik
+himself is the primary near-term user, working across both Margaritaville
+and Pete's (a different clientele mix, see "Sequencing Pivot" below). The
+underlying "path to workplace confidence" motivation is unchanged; the
+app just can no longer assume one restaurant's menu/staff/clientele.
+
 **Target register:** formal, professional **Mexican Spanish** (usted-based,
 standard professional vocabulary, no regional slang or Peninsular forms like
 *vosotros*). This isn't "neutral Latin American Spanish" — it should match
@@ -134,7 +140,13 @@ What changes for the staff-facing experience specifically:
 - **The tier model isn't wrong, it's repositioned** — it's the seed for a
   future **manager/GM-facing view** (aggregate team competency, not a
   personal report card), not something the practicing staff member sees
-  directly. Not yet built as screens.
+  directly. Not yet built as screens. **Update:** this is now in active
+  planning as Ticket 7 (see `apps/tico-talk/plans/`) — a rough
+  competency-tree view for a demo to Margaritaville's and Pete's GMs,
+  intentionally light (single hardcoded employee, no real auth/identity
+  system yet, no real shift-scheduling integration) rather than a full
+  build of what's described here. See the sequencing pivot below for why
+  this moved up sooner than the roadmap originally implied.
 
 The "No gamification" non-goal below is narrower than it reads in light of
 this: no streaks/points/badges in the Duolingo sense, but a lived-experience
@@ -151,9 +163,76 @@ need — which keeps a practicing speaker engaged — rather than training them
 to parrot one canonical line. Generated phrases are logged for future
 curation, but MVP does not require a hand-built phrase bank.
 
+## Sequencing Pivot: Menu-First, Multi-Restaurant (Update)
+
+Written after MVP build had already started on the Host/Spanish/voice
+path described below — capturing a real, deliberate change of sequence,
+not a replacement of the vision. Two things drove it:
+
+1. **Erik's own situation changed.** He's now working at Pete's more or
+   less full-time, alongside Margaritaville. The app needs to actually
+   work across both restaurants: pick one, drill its content, track
+   progress separately per restaurant. That's not optional polish, it's
+   what makes the app usable for his own daily work right now.
+2. **Live-testing the Host/voice prototype, and separately thinking
+   through what staff actually need, surfaced that "menu-specific Q&A,
+   deferred to Server tier" (see the original Non-Goal below) was
+   actually the most immediately valuable, buildable thing** — a
+   text-based knowledge drill, not voice, not Spanish-specific.
+
+This reframed the skill tree itself. Instead of one role's fixed node
+sequence (Host: greet → party size → seating → ... below), the model
+became **six knowledge-and-judgment competencies**, applicable across
+roles rather than siloed to one:
+
+- **Menu** — ingredient/dietary/pricing recall. This is the thing
+  actually being built with real depth right now (see
+  `apps/tico-talk/plans/tico-learn-ticket*.md`).
+- **Off-Menu** — questions not on the printed menu but real guests ask.
+- **Recommendations** and **Upselling** — split into two, not one
+  "presentation quality" bucket, see the rubric note below.
+- **Complaints** — handling problems, including interpersonal conflict.
+- **Languages** — restaurant-specific (which languages, and in what
+  ratio, depends on that restaurant's actual clientele — Margaritaville
+  skews Spanish, Pete's is more Chinese/Spanish mixed), not a single
+  fixed Spanish-only module.
+
+The original Host tree (below) and its Spanish-specific voice mechanic
+(Design.md) are **not abandoned** — they're the natural home for
+Recommendations/Upselling/Complaints/Languages once those move past a
+light prompt-layer proof of concept into the same kind of real-delivery
+practice Host was designed for. Text (recall, "Capable") and voice
+(delivery, "Natural"/"Mastered") are turning out to be two *stages* of
+the same competency, not two separate products.
+
+**Procedural/mechanical skills are explicitly out of scope for now.**
+Several of the original Host tree's nodes (seating logistics, water
+service, hand-off mechanics) are "how you physically move through a
+shift," not knowledge or judgment — decided to drop that distinction
+from the six competencies rather than force a fit. If procedural
+training belongs here later, it's a separate, lighter bucket, not folded
+into the six.
+
+**Assessment rubric grounding, for Recommendations/Upselling
+specifically**: the Section 4 rubric below (naturalness, register,
+delivery, comprehensibility) is about Spanish phrase production. For
+Recommendations/Upselling, a different, evidence-grounded split applies
+— DINESERV's **assurance** (trustworthy knowledge, a universal
+baseline: is the recommendation actually accurate?) and **empathy**
+(reading the guest's actual state and calibrating — relational vs.
+transactional — rather than one blended "presentation quality" score).
+Considered and rejected Wansink's descriptive-menu-label research as a
+grounding source — real research misconduct and retractions there, not
+just contested findings.
+
 ## MVP Scope
 
-**One role: Host.** The canonical Host skill tree for this MVP:
+**Near-term build priority: Menu, multi-restaurant, text-based** (see
+the pivot above) — not Host/Spanish/voice, which is sequenced after.
+Both remain real parts of the product.
+
+**Original MVP framing, still the long-term voice/Host direction — one
+role: Host.** The canonical Host skill tree:
 
 1. Greet & welcome
 2. Ask party size
@@ -176,7 +255,12 @@ This tree is treated as fixed and hand-authored for MVP — see Non-Goals.
   deliberate authoring decision, not something the app does on its own.
 - **No per-restaurant menu customization.** Menu-specific Q&A becomes
   relevant at the Server tier, not Host. Build with an eye toward this
-  extensibility later, but do not build it now.
+  extensibility later, but do not build it now. **Update: reversed.** See
+  "Sequencing Pivot" above — per-restaurant menu data (and per-restaurant
+  everything else: notes, clientele profile, progress) is now the actual
+  near-term build, not deferred. This wasn't an oversight, real
+  circumstances (Erik working at a second restaurant) changed what was
+  most valuable to build first.
 - **No gamification** in the Duolingo sense — no streaks, points, or
   badges. Progression is expressed entirely through the confidence bar and
   tier language. **Update:** see "Staff-Facing Experience" above — the
@@ -194,7 +278,13 @@ This tree is treated as fixed and hand-authored for MVP — see Non-Goals.
   upload + OCR) becomes relevant starting at Server, where guests actually
   ask food/drink-specific questions. This is the path from "personal tool"
   to **a training product an ownership group could adopt or require** —
-  potentially sold as seat-based access.
+  potentially sold as seat-based access. **Update:** this arrived far
+  earlier than planned, not at "Server tier" but as the actual near-term
+  build (see "Sequencing Pivot") — real menu data now lives in Firestore
+  per restaurant, not ingested via OCR yet, but the multi-restaurant
+  shape this bullet anticipated is exactly what's being built. A rough
+  management/GM-facing competency view (Ticket 7) is the first concrete
+  step toward "a training product an ownership group could adopt."
 - **Language-agnostic version:** the same confidence-coaching mechanic
   (cold assessment → tiered mastery → decay/retrain) could train
   English-speaking new hires in guest-service skills generally, addressing
@@ -210,6 +300,45 @@ This tree is treated as fixed and hand-authored for MVP — see Non-Goals.
 Everything should answer one question: **will this make the user more
 confident during their next real shift?** If yes, it belongs. If not, it
 probably doesn't.
+
+## Data Principle (Menu-Era Addition)
+
+Established while first extracting Margaritaville's menu into structured
+data, now extended to every restaurant added: menu data (and restaurant
+notes, clientele profiles, anything factual about a specific restaurant)
+is real, sourced, confirmed information — scanned/typed from the actual
+menu, or a real correction from someone who actually works there. It
+should never contain AI-interpreted content (a synthesized flavor
+description, an inferred pairing, a plausible-sounding placeholder for
+data that hasn't been supplied yet). If a restaurant's clientele profile
+or complaint policy isn't populated, the app should say so honestly
+rather than invent something reasonable-sounding — same principle,
+applied everywhere this kind of data shows up now, not just the menu.
+
+## Open Questions (Not Yet Decided)
+
+Carried forward from planning, not yet resolved, worth revisiting rather
+than losing:
+
+- Whether cross-restaurant progress-sharing (someone who's mastered a
+  skill's *technique* at one property shouldn't have to redo it at
+  another) becomes real, and when — blocked on a real identity/auth
+  system that doesn't exist yet, itself a substantial separate project.
+- Whether procedural/mechanical skills (dropped from the six
+  competencies, see "Sequencing Pivot") get a lightweight home later, or
+  stay permanently out of scope.
+- **Off-Menu content sourcing**: no obvious source of truth the way the
+  printed menu has one. Planned approach: an LLM generates a "probable
+  questions" canon, validated in the field against real kitchen/server
+  knowledge, then structured into real content — a workflow to run, not
+  yet something the app's UI needs to support directly.
+- **Daily specials**: a commute-time review-and-drill feature from a
+  snapshot of the day's specials sheet — ephemeral, snackable, no
+  coverage tracking needed. Deliberately kept separate from the six
+  competencies' architecture, a real idea, not yet built.
+- What the management/competency-overview demo (Ticket 7) actually needs
+  to show, informed by separate conversations with Margaritaville's and
+  Pete's GMs — deferred until closer to that build step.
 
 ## Notes
 

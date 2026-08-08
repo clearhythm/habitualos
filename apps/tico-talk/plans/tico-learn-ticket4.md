@@ -12,9 +12,8 @@ Nunjucks (static site generation at build time) + vanilla JS ES modules
 Firestore persistence layer all exist. **Supersedes the original,
 single-restaurant version of this ticket** — that version was written
 and never implemented, so this rewrite replaces it outright rather than
-building single-restaurant first and redoing it. See
-`TRAINING-PLATFORM-VISION.md` for the full context this rewrite comes
-from.
+building single-restaurant first and redoing it. See `docs/VISION.md`'s
+"Sequencing Pivot" section for the full context this rewrite comes from.
 
 **Why this ticket exists, and why it grew**: started from a real gap —
 Tico correctly refuses to state anything not in the menu data, but the
@@ -55,8 +54,8 @@ just parameterized by restaurant instead of assumed singular.
   venue label (`{{ menus[0].name }}`), then a flat `My Sessions` group
   with `Learn`/`Practice`/`Progression`. This ticket replaces the label
   with a real switcher and restructures the group into `My Training`
-  with six competency links (per `TRAINING-PLATFORM-VISION.md`) — only
-  Menu is a real, working link right now, the rest are coming-soon.
+  with six competency links (per `docs/VISION.md`'s "Sequencing Pivot")
+  — only Menu is a real, working link right now, the rest are coming-soon.
 - `packages/db-core/db-core.cjs` — reused as-is (`create`, `get`,
   `query`, `uniqueId`).
 - `apps/tico-talk/.env`'s `FIREBASE_ADMIN_CREDENTIALS` — already set up,
@@ -90,7 +89,7 @@ just parameterized by restaurant instead of assumed singular.
 3. **Sidebar restructuring**: a real restaurant switcher replacing the
    static venue label, and `My Training` replacing the flat
    Learn/Practice/Progression list with the six competencies from
-   `TRAINING-PLATFORM-VISION.md` (Menu functional, Off-Menu/
+   `docs/VISION.md`'s "Sequencing Pivot" (Menu functional, Off-Menu/
    Recommendations/Upselling/Complaints/Languages shown as coming soon).
 4. **Restaurant notes + the flag-and-confirm correction flow**, as
    originally planned, now scoped to the current restaurant.
@@ -123,9 +122,10 @@ not per-restaurant-chain-wide**: a note like "hot sauce is available on
 request" is true for *this* restaurant, not automatically true for every
 restaurant in the system. `restaurant-notes` docs carry a `restaurantId`
 plus the existing `scope: 'restaurant' | 'section'` distinction *within*
-that restaurant. No cross-restaurant note sharing in this ticket — see
-`TRAINING-PLATFORM-VISION.md`'s canonical-vs-restaurant-specific content
-discussion for why that's deliberate, not an oversight.
+that restaurant. No cross-restaurant note sharing in this ticket — this
+is deliberate, not an oversight (a note is a fact about *this*
+restaurant specifically, not something that generalizes just because
+another restaurant happens to exist in the system).
 
 **Design note — extract, don't ask for retyping** (unchanged): the flag
 button sends the last exchange to an extraction call that proposes a
@@ -156,9 +156,9 @@ seedRestaurant({
 
 Run for `margaritaville` first (real data already exists), then again
 for `petes` once Erik has supplied real menu + clientele data (see
-Prerequisite — **do not fabricate Pete's menu content**, per the data
-principle in `TRAINING-PLATFORM-VISION.md`: menu data is scanned/
-confirmed real-world fact, never AI-invented, even as a placeholder).
+Prerequisite — **do not fabricate Pete's menu content**, per
+`docs/VISION.md`'s Data Principle: menu data is scanned/confirmed
+real-world fact, never AI-invented, even as a placeholder).
 Confirm via Firestore console or `dbCore.get` that both
 `restaurants/{id}` and `restaurant-menus/{id}` exist for each before
 moving on.

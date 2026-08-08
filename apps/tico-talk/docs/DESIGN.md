@@ -216,10 +216,55 @@ feedback slot's language, not restructuring the interaction model.
 ## 10. Explicitly Deferred (Not MVP)
 
 - Automated tree/canon expansion from reflections or in-session misses.
-- Per-restaurant menu ingestion (OCR, image upload) — relevant starting at
-  Server tier.
+- ~~Per-restaurant menu ingestion (OCR, image upload) — relevant starting
+  at Server tier.~~ **Update: no longer deferred.** See Section 11 and
+  `docs/VISION.md`'s "Sequencing Pivot" — real per-restaurant menu data
+  (Firestore, not OCR yet) is the current near-term build.
 - Multi-session confirmation before tier advancement (single strong cold
   attempt is sufficient per current design).
 - Full-duplex / interruptible voice.
 - Additional roles beyond Host.
 - Regional variants beyond formal Mexican Spanish.
+
+## 11. Text-Based Competency Mechanics (Menu, and the Recommendations/Upselling Rubric)
+
+Added alongside the sequencing pivot (`docs/VISION.md`) — the mechanics
+for the text-based competencies now being built first, parallel to (not
+replacing) the voice/Host mechanic above.
+
+**Menu's own mechanic** (full detail lives in
+`apps/tico-talk/plans/tico-learn-ticket*.md`, not repeated here — this
+is a pointer, not the spec): a text chat, one menu section at a time,
+split into two gated passes — **Basics** (ingredients only) then
+**Complete** (dietary restrictions + pricing) — rather than one
+undifferentiated quiz across every fact type at once. Coverage is
+deterministic (the model reports, per turn, which specific item and
+fact type a question covered and whether the answer was correct; our
+own code decides when that's "enough," not a model self-judgment),
+tracked per item per fact type, persisted to Firestore as the source of
+truth (not client-side state). A section reaches **Capable** once both
+passes are fully covered — the ceiling this mechanic alone can grant;
+Natural/Mastered stay earned through the voice/Host-style mechanic
+above, once these text competencies grow a delivery stage.
+
+**Recommendations/Upselling assessment rubric**: unlike Menu (pure
+recall correctness) or the Spanish voice rubric above (naturalness/
+register/delivery/comprehensibility), Recommendations and Upselling get
+evaluated on two distinct axes, grounded in DINESERV (a SERVQUAL
+adaptation for restaurants) rather than descriptive-menu-label research
+(Wansink's work here is compromised by real research misconduct/
+retractions, not just contested — deliberately not used as a basis):
+
+- **Assurance** — trustworthy knowledge, a universal baseline. Is the
+  recommendation/upsell actually accurate against real menu data? This
+  is structurally the same correctness question Menu already asks.
+- **Empathy** — reading the guest's actual state and calibrating
+  (relational vs. transactional) rather than reciting a fact regardless
+  of context. A correct-but-tone-deaf answer and a well-calibrated but
+  factually wrong one are different failure modes; feedback should say
+  which one happened, not average them into one verdict.
+
+This is currently a light prompt-layer proof of concept (see Ticket 6),
+not full coverage-tracked mechanics like Menu — the assurance/empathy
+split itself is the thing being validated before investing in tier
+tracking for it.
