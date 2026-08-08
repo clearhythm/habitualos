@@ -1,4 +1,4 @@
-# Ticket 4: /learn/ drill — DB-backed menu data, restaurant notes, live corrections
+# Ticket 4: multi-restaurant infrastructure, DB-backed menu data, restaurant notes, live corrections
 
 ## App Context
 
@@ -6,265 +6,265 @@ Tico-talk is a restaurant staff training app (`apps/tico-talk`). Backend:
 Netlify Functions (Node.js CommonJS). Database: Google Firestore via
 `@habitualos/db-core`, already wired up in Ticket 3. Frontend: 11ty +
 Nunjucks (static site generation at build time) + vanilla JS ES modules
-(runtime, in the browser). AI: `@anthropic-ai/sdk`, already a
-`package.json` dependency (used by the old, now-deleted `learn-drill.cjs`;
-not currently used by anything live, since Ticket 2 moved the drill
-itself to the streaming edge-function architecture instead).
+(runtime, in the browser). AI: `@anthropic-ai/sdk`.
 
 **Depends on Tickets 1-3** — the drill UI, streaming backend, and
-Firestore persistence layer (`_services/`, `learn-progress`, `learn-chats`)
-all already exist and are unaffected by this ticket. This ticket adds new
-Firestore-backed data sources feeding into `learn-chat-init.cjs`'s system
-prompt, plus a new correction-capture UI element.
+Firestore persistence layer all exist. **Supersedes the original,
+single-restaurant version of this ticket** — that version was written
+and never implemented, so this rewrite replaces it outright rather than
+building single-restaurant first and redoing it. See
+`TRAINING-PLATFORM-VISION.md` for the full context this rewrite comes
+from.
 
-**Why this ticket exists**: live-testing Ticket 3 surfaced a real gap.
-Tico correctly refuses to state anything not in `SECTION DATA`
-(`src/_data/menus/margaritaville.json`, loaded via `require()`) — that's
-working as designed. But the menu file is necessarily incomplete (it's a
-menu, not an operations manual), so Tico sometimes tells a trainee
-something is unconfirmed when a real staff member already knows
-otherwise (e.g. "we don't have hot sauce as an add-on" when the
-restaurant does, in fact, keep hot sauces on hand). The fix isn't to make
-Tico less careful, it's to give it a way to *learn* facts live, from the
-people using it, without needing a code deploy.
+**Why this ticket exists, and why it grew**: started from a real gap —
+Tico correctly refuses to state anything not in the menu data, but the
+menu file is necessarily incomplete (it's a menu, not an operations
+manual), so it sometimes disputes something a real staff member already
+knows. That's still true and still the core of this ticket (restaurant
+notes + the flag-and-confirm correction flow). But in the time since
+this was first planned, Erik moved to working at Pete's more or less
+full-time on top of Margaritaville, and the app needs to actually work
+across both: pick a restaurant, drill its menu, track progress
+separately per restaurant. That's not a side feature bolted onto the
+knowledge-correction work, it's the same underlying move (menu data
+stops being a single hardcoded file and becomes real, queryable data),
+just parameterized by restaurant instead of assumed singular.
 
 ## Phase 0: Explore First
 
 - `apps/tico-talk/netlify/functions/learn-chat-init.cjs` — current
-  `require()` of the static JSON, `findSection()`, `buildSystemPrompt()`.
-  This ticket changes where the menu data comes from and adds a second
-  data source; read it fully before touching it.
-- `apps/tico-talk/src/_data/menus/margaritaville.json` — the file being
-  migrated. Note its exact top-level shape: `{venueId, name, categories:
-  [{name, items: [{id, name, description, price, tags, allergens,
-  notes}]}]}`. 14 categories today.
-- **Eleventy's data cascade**: `src/_data/menus/margaritaville.json` is
-  not only `require()`'d by `learn-chat-init.cjs` — Eleventy
-  automatically loads every file under `src/_data/` as global template
-  data (exposed as `menus` in templates), which is how `menu.njk`,
-  `drinks.njk`, `menu-review.njk`, and `learn.njk`'s picker all render
-  today with zero explicit imports, via `{% for menu in menus %}`. **This
-  means the static file can't just be deleted** — see File 2 below for
-  how this ticket handles it (converting it to an async data file that
-  reads from Firestore at build time, so both the static pages and the
-  chat prompt end up reading the same one source of truth, rather than
-  the runtime prompt reading from Firestore while the pages keep reading
-  a separately-drifting static copy).
-- `packages/db-core/db-core.cjs` — reused from Ticket 3, same API
-  (`create`, `get`, `query`, `uniqueId`). No new package-level work
-  needed here.
-- `apps/tico-talk/.env`'s `FIREBASE_ADMIN_CREDENTIALS` — already set up
-  in Ticket 3, reused here. **New requirement**: for real Netlify builds
-  (not just `netlify dev`), this same var needs to be available at
-  *build* time too, since File 2 below makes the 11ty build itself read
-  from Firestore. Ticket 3 already flagged "the same var needs to be set
-  in Netlify's site config too" as future work; this ticket is what
-  actually needs it. Not blocking local work (`netlify dev` and `pnpm
-  build` both already load `.env` locally), but worth doing before an
-  actual production deploy.
+  `require()` of the static JSON, single-restaurant. Read fully before
+  touching; this ticket changes where the menu data comes from, adds a
+  restaurant dimension to every lookup, and adds a second (notes) data
+  source.
+- `apps/tico-talk/src/_data/menus/margaritaville.json` — shape being
+  migrated: `{venueId, name, categories: [{name, items: [{id, name,
+  description, price, tags, allergens, notes}]}]}`. 14 categories today.
+  This becomes the shape of *one restaurant's* menu doc, not the only
+  menu doc.
+- **Eleventy's data cascade**: this file isn't only `require()`'d by
+  `learn-chat-init.cjs` — Eleventy loads everything under `src/_data/`
+  as global template data (`menus` in templates), which is how
+  `menu.njk`, `drinks.njk`, `menu-review.njk`, and `learn.njk`'s picker
+  all render today. Converting this to an async multi-restaurant data
+  file (File 2) means the static pages and the runtime prompt end up
+  reading the same source, not two independently-drifting copies — same
+  principle as the original ticket, now covering multiple restaurants
+  instead of one.
+- `apps/tico-talk/src/_includes/nav.njk` — the current sidebar. Static
+  venue label (`{{ menus[0].name }}`), then a flat `My Sessions` group
+  with `Learn`/`Practice`/`Progression`. This ticket replaces the label
+  with a real switcher and restructures the group into `My Training`
+  with six competency links (per `TRAINING-PLATFORM-VISION.md`) — only
+  Menu is a real, working link right now, the rest are coming-soon.
+- `packages/db-core/db-core.cjs` — reused as-is (`create`, `get`,
+  `query`, `uniqueId`).
+- `apps/tico-talk/.env`'s `FIREBASE_ADMIN_CREDENTIALS` — already set up,
+  reused. Still needs to be added to Netlify's site-level env config for
+  production builds (not just local `.env`), since the Eleventy build
+  itself now depends on Firestore being reachable at build time, not
+  just at request time — flagged in the original ticket, still true.
 - `apps/dreamscape/src/reflect.njk:36-49` and
-  `apps/dreamscape/src/styles/_components.scss:1957-2002` — the
-  `.chat-input-toolbar` / `.chat-toolbar-btn` / `.chat-send-btn` pattern:
-  quiet, low-contrast icon buttons (`rgba($color-text, 0.25)`, transparent
-  background) on the left for secondary actions (start-fresh, save-chat),
-  versus the bold filled `.chat-send-btn` on the right. This ticket's flag
-  button follows the *quiet* treatment, explicitly less visually heavy
-  than `.learn-send-btn` (Ticket 1's solid green send button) — confirmed
-  against a live screenshot of dreamscape's actual composer during
-  design discussion.
-- `apps/dreamscape/src/styles/_components.scss:2071-2103` — the generic
-  `[data-tooltip]` utility (an `::after` pseudo-element rendering
-  `attr(data-tooltip)` on hover/focus-visible). Those same toolbar
-  buttons use `data-tooltip="Start a fresh conversation"` etc. to label
-  themselves on hover, since icon-only buttons need it. tico-talk has no
-  equivalent utility yet — this ticket adds one (generic, not scoped to
-  the flag button specifically, so it's there for any future icon button
-  in the app) alongside the flag button that uses it.
+  `apps/dreamscape/src/styles/_components.scss:1957-2002, 2071-2103` —
+  the quiet `.chat-toolbar-btn` pattern and the generic `[data-tooltip]`
+  utility, reused for the flag button exactly as originally planned,
+  unchanged by the multi-restaurant rework.
 - `apps/tico-talk/src/learn.njk` and `src/assets/js/learn.js` — the
-  `.learn-input-toolbar`/`.learn-send-btn` currently holds only the send
-  button, right-aligned via `justify-content: flex-end`. This ticket adds
-  a second, left-aligned button, so that becomes `justify-content:
-  space-between` (matching dreamscape's toolbar).
-- `apps/tico-talk/src/styles/_learn.scss` — where the new flag-button and
-  correction-card styles land, alongside Ticket 1/3's existing rules.
+  section picker's existing `data-section` show/hide pattern
+  (`.learn-teach__section`). This ticket adds a parallel `data-restaurant`
+  dimension using the *same* filtering approach, not a new mechanism.
 
 ## Overview
 
-1. Move menu data to Firestore as the single source of truth, read at
-   *build time* by Eleventy (for the static pages) and cached in memory
-   at *runtime* by `learn-chat-init.cjs` (for the chat prompt) — not two
-   independently-drifting copies.
-2. Add a `restaurant-notes` Firestore collection: freeform,
-   restaurant-wide facts (not scoped to a menu section), included in
-   *every* drill's system prompt alongside the section's menu data, with
-   the HARD RULE extended to trust both equally.
-3. Add a "flag" button to the drill's input toolbar (quiet/secondary
-   styling, left-aligned, opposite the bold send button) that lets
-   whoever's drilling say "what I just said was actually right" without
-   retyping it — the system extracts the claim from the exchange, they
-   confirm or edit it, and it's saved as a new restaurant note,
-   immediately available for the rest of the session (and to other
-   sessions once their function instance's cache refreshes).
+1. **Restaurant becomes a first-class Firestore entity.** A
+   `restaurants` collection, each doc holding the venue's identity plus
+   config beyond the menu (a clientele/language profile, used by the
+   later Languages competency — see the vision doc). Seeded with both
+   Margaritaville (migrated from the existing JSON) and Pete's (new,
+   needs real data from Erik, see Prerequisite).
+2. **Menu data and restaurant notes both become restaurant-scoped.**
+   Same DB-migration work the original ticket already planned
+   (Firestore as the single source of truth, read at build time by
+   Eleventy and cached at runtime by the Netlify function), now keyed by
+   restaurant instead of assumed singular.
+3. **Sidebar restructuring**: a real restaurant switcher replacing the
+   static venue label, and `My Training` replacing the flat
+   Learn/Practice/Progression list with the six competencies from
+   `TRAINING-PLATFORM-VISION.md` (Menu functional, Off-Menu/
+   Recommendations/Upselling/Complaints/Languages shown as coming soon).
+4. **Restaurant notes + the flag-and-confirm correction flow**, as
+   originally planned, now scoped to the current restaurant.
+
+**Design note — how the switcher actually works, given this is a static
+site**: Eleventy generates HTML at build time, so "switch restaurant"
+can't mean "fetch different content from the server" without adding a
+runtime API dependency just to view reference pages. Instead: *all*
+restaurants' content gets baked into the page at build time (same
+pattern the section picker already uses — every section's teach content
+already exists in the DOM, hidden until picked), each restaurant's block
+tagged `data-restaurant="{id}"`. A small client-side utility shows only
+the currently-selected restaurant's blocks, same mechanism as the
+existing `data-section` filtering, just one more dimension. The switcher
+itself just updates `localStorage['tico-current-restaurant']` and
+reloads. No new runtime data-fetching pattern, reuses what's already
+proven for section-switching.
 
 **Design note — why a build-time data file for the menu, not just a
-runtime fetch**: the ticket could have stopped at "make
-`learn-chat-init.cjs` read from Firestore" and left the static pages
-reading the committed JSON. That's simpler, but creates two sources of
-truth that will silently drift the first time someone updates one and
-forgets the other — exactly what Erik asked to avoid ("one source of
-truth in the DB"). Converting the Eleventy data file itself to an async
-Firestore read closes that gap at the cost of the production build
-depending on Firestore being reachable at deploy time (not just at
-request time) — a real tradeoff, noted here rather than decided
-silently, but the right call given the stated goal.
+runtime fetch** (unchanged from the original ticket, still the reason):
+stopping at "make `learn-chat-init.cjs` read from Firestore" and leaving
+the static pages reading committed JSON creates two sources of truth
+that will drift. The Eleventy data file itself reads from Firestore at
+build time, at the cost of the production build depending on Firestore
+being reachable at deploy time — a real tradeoff, noted rather than
+decided silently.
 
-**Design note — restaurant notes are global, not per-section**: this was
-explicitly reconsidered mid-design. A first instinct was to scope
-corrections to the section being drilled (`learn-section-notes`), but "we
-have hot sauce" isn't a Tacos fact, it's true regardless of which section
-someone's drilling. `restaurant-notes` is one flat collection, included
-in every section's prompt, not filtered by section.
+**Design note — restaurant notes stay two-tier (restaurant/section),
+not per-restaurant-chain-wide**: a note like "hot sauce is available on
+request" is true for *this* restaurant, not automatically true for every
+restaurant in the system. `restaurant-notes` docs carry a `restaurantId`
+plus the existing `scope: 'restaurant' | 'section'` distinction *within*
+that restaurant. No cross-restaurant note sharing in this ticket — see
+`TRAINING-PLATFORM-VISION.md`'s canonical-vs-restaurant-specific content
+discussion for why that's deliberate, not an oversight.
 
-**Design note — extract, don't ask for retyping**: the first UX draft for
-corrections was a free-text box ("type a clarification or new rule").
-Rejected as too much friction — the trainee already typed the correct
-fact once, in the flow of guest-facing dialogue. The flag button instead
-sends the last exchange to a small extraction call that proposes a clean,
-standalone version of what they already said, and they just confirm,
-edit, or reject it.
+**Design note — extract, don't ask for retyping** (unchanged): the flag
+button sends the last exchange to an extraction call that proposes a
+clean, standalone fact, the trainee confirms/edits/rejects rather than
+retyping it from scratch.
 
 ## File 1: One-time Firestore seed (run once, not part of the app)
 
-Not a committed file — a throwaway script run locally once to copy the
-existing JSON into Firestore. Something like:
+Not committed — a throwaway script, run twice (once per restaurant).
 
 ```javascript
 require('dotenv').config();
 const dbCore = require('@habitualos/db-core');
-const menuData = require('./src/_data/menus/margaritaville.json');
 
-dbCore.create({
-  collection: 'restaurant-config',
-  id: 'menu',
-  data: menuData
-}).then((r) => console.log('seeded:', r)).catch((e) => { console.error(e); process.exit(1); });
+async function seedRestaurant({ id, name, menuData, clientele }) {
+  await dbCore.create({ collection: 'restaurants', id, data: { name, clientele } });
+  await dbCore.create({ collection: 'restaurant-menus', id, data: menuData });
+  console.log('seeded restaurant:', id);
+}
+
+seedRestaurant({
+  id: 'margaritaville',
+  name: 'Margaritaville Capitola',
+  menuData: require('./src/_data/menus/margaritaville.json'),
+  clientele: { languages: [{ name: 'Spanish', ratio: 'majority' }] } // real ratios TBD, see Prerequisite
+}).catch((e) => { console.error(e); process.exit(1); });
 ```
 
-Run with `node -e "..."` or as a temporary `.cjs` file, from
-`apps/tico-talk`, then delete it. Confirm via Firestore console (or a
-quick `dbCore.get`) that `restaurant-config/menu` now holds the full
-object before moving on to File 2/3, which assume it's already there.
+Run for `margaritaville` first (real data already exists), then again
+for `petes` once Erik has supplied real menu + clientele data (see
+Prerequisite — **do not fabricate Pete's menu content**, per the data
+principle in `TRAINING-PLATFORM-VISION.md`: menu data is scanned/
+confirmed real-world fact, never AI-invented, even as a placeholder).
+Confirm via Firestore console or `dbCore.get` that both
+`restaurants/{id}` and `restaurant-menus/{id}` exist for each before
+moving on.
 
-## File 2: `src/_data/menus/margaritaville.js` (REPLACES `margaritaville.json`)
+## File 2: `src/_data/restaurants.js` (REPLACES `menus/margaritaville.json`)
 
-Eleventy supports JS data files that export an async function — this
-becomes the single source both the static pages and the runtime prompt
-ultimately read from (the runtime side goes through File 3's cache
-instead of hitting Firestore on every request, but it's the same
-Firestore doc).
+Now fetches *all* restaurants, not one. Eleventy JS data files support
+async functions; this becomes the single source both static pages and
+the runtime prompt ultimately read from.
 
 ```javascript
 const dbCore = require('@habitualos/db-core');
 
 module.exports = async function () {
-  const menu = await dbCore.get({ collection: 'restaurant-config', id: 'menu' });
-  if (!menu) throw new Error('restaurant-config/menu not found in Firestore — run the seed script (Ticket 4, File 1) first.');
-  return menu;
+  const restaurants = await dbCore.query({ collection: 'restaurants' });
+  if (!restaurants.length) throw new Error('No restaurants found in Firestore — run the seed script (Ticket 4, File 1) first.');
+
+  const withMenus = await Promise.all(restaurants.map(async (r) => {
+    const menu = await dbCore.get({ collection: 'restaurant-menus', id: r.id });
+    return { ...r, ...menu }; // { id, name, clientele, venueId, categories }
+  }));
+
+  return withMenus;
 };
 ```
 
-Delete `margaritaville.json` once this is confirmed working (`git rm`,
-not just leaving it to rot unreferenced — nothing will `require()` it
-anymore after this file and File 3 land). Eleventy's data cascade doesn't
-care about the `.js` vs `.json` extension change, `menus` continues to
-resolve the same way in every template that already uses it
-(`menu.njk`, `drinks.njk`, `menu-review.njk`, `learn.njk`'s picker) —
-confirm this while implementing (Eleventy caches data-file results per
-build, so this is one Firestore read per `pnpm build`, not per page).
+The global template variable is still called `menus` today — decide
+while implementing whether to rename it to `restaurants` throughout
+every template that references it (`menu.njk`, `drinks.njk`,
+`menu-review.njk`, `learn.njk`) for clarity, or keep the `menus` name to
+minimize the diff. Whichever's picked, every one of those templates now
+needs to iterate *all* restaurants and tag output with
+`data-restaurant="{{ restaurant.id }}"` (see File 6) instead of assuming
+one.
 
-## File 3: `netlify/functions/_services/db-menu.cjs` (NEW)
+Delete `src/_data/menus/margaritaville.json` once this is confirmed
+working (`git rm`) — nothing reads it directly anymore.
 
-The *runtime* counterpart to File 2 — same Firestore doc, but read (and
-cached in memory) from inside a Netlify Function's execution, which is a
-completely separate process/lifecycle from the Eleventy build. Mirrors
-the "load once per cold start, reuse across requests on that same warm
-instance" behavior the old `require()` gave for free.
+## File 3: `netlify/functions/_services/db-restaurants.cjs` (NEW)
+
+Runtime counterpart to File 2 — cached per warm instance, same "load
+once, reuse across requests" behavior `require()` gave for free,
+replacing the original ticket's `db-menu.cjs` (now needs to hold more
+than one restaurant's data, and the restaurant list itself, not just one
+menu doc).
 
 ```javascript
 //
-// netlify/functions/_services/db-menu.cjs
+// netlify/functions/_services/db-restaurants.cjs
 // ------------------------------------------------------
-// Cached accessor for the menu data Firestore doc (restaurant-config/menu).
-// Same document Eleventy reads at build time (src/_data/menus/margaritaville.js)
-// — this is the runtime (Netlify Function) side, cached per warm instance
-// so a chat turn doesn't cost a Firestore read on top of the Anthropic call.
+// Cached accessor for restaurant + menu data. Same Firestore docs
+// Eleventy reads at build time (src/_data/restaurants.js) — this is the
+// runtime (Netlify Function) side, cached per warm instance so a chat
+// turn doesn't cost a Firestore read on top of the Anthropic call.
 // ------------------------------------------------------
 
 const dbCore = require('@habitualos/db-core');
 
-let cached = null;
+let cache = null; // Map<restaurantId, {id, name, clientele, ...menuData}> | null
 
-exports.getMenuData = async () => {
-  if (cached) return cached;
-  const menu = await dbCore.get({ collection: 'restaurant-config', id: 'menu' });
-  if (!menu) throw new Error('restaurant-config/menu not found in Firestore.');
-  cached = menu;
-  return cached;
+async function loadAll() {
+  if (cache) return cache;
+  const restaurants = await dbCore.query({ collection: 'restaurants' });
+  const entries = await Promise.all(restaurants.map(async (r) => {
+    const menu = await dbCore.get({ collection: 'restaurant-menus', id: r.id });
+    return [r.id, { ...r, ...menu }];
+  }));
+  cache = new Map(entries);
+  return cache;
+}
+
+exports.getRestaurant = async (restaurantId) => {
+  const all = await loadAll();
+  const restaurant = all.get(restaurantId);
+  if (!restaurant) throw new Error(`Unknown restaurant: ${restaurantId}`);
+  return restaurant;
 };
 ```
 
-No cache-invalidation path here deliberately — menu data changing is
-rare and not this ticket's concern (unlike restaurant notes, which are
-meant to change live). If the menu needs to change, redeploy (which
-recycles function instances) or wait for natural instance recycling.
+No cache invalidation here deliberately, same reasoning as the original
+ticket — restaurant/menu data changing is rare, redeploy or wait for
+natural instance recycling if it does.
 
 ## File 4: `netlify/functions/_services/db-restaurant-notes.cjs` (NEW)
 
-Same caching shape as File 3, but adds a write path, and the cache gets
-updated (not just invalidated) on write so the *same* warm instance sees
-a just-confirmed correction immediately, without waiting for a fresh
-Firestore read.
-
-**Scope, decided during design, not left for Ticket 5 to bolt on**: a
-note is either `scope: 'restaurant'` (true regardless of section, e.g.
-"hot sauce is available on request") or `scope: 'section'` + `section:
-'<name>'` (true only within that section, e.g. something specific to the
-nachos). The *model* decides which, per correction (see File 6) — it
-already knows which section is being drilled when a correction is
-proposed, so it doesn't need to guess the section name, just classify
-scope. `getRestaurantNotes()` returns everything; callers filter by scope
-(Ticket 5's prompt-building code splits them into the right cache
-blocks — restaurant-wide notes are section-independent so they belong in
-the globally-shared block, section-scoped notes belong in that section's
-own block).
-
-Dish-level precision (a fact tied to one specific menu item, not just a
-section) was considered and deliberately deferred — that would mean
-writing into the item's own `notes` field in the canonical menu data
-(File 2) rather than this additive notes list, a more sensitive edit
-than this ticket's flag-and-confirm flow is meant for. Two tiers
-(restaurant / section) is the right scope for now.
+Same shape as the original ticket's version, with `restaurantId` added
+throughout — notes from one restaurant must never leak into another's
+prompt.
 
 ```javascript
 //
 // netlify/functions/_services/db-restaurant-notes.cjs
 // ------------------------------------------------------
-// Freeform facts that supplement the menu data in every /learn/ drill's
-// system prompt. Two scopes:
-//   - 'restaurant': true regardless of section (e.g. "hot sauce is
-//     available on request") — included in every drill.
-//   - 'section': true only within one section (e.g. something specific
-//     to the nachos) — included only when that section is being drilled.
-// Added live via the flag-and-confirm correction flow (Files 6-7), not
-// edited through a deploy. The model classifies scope at correction time
-// (File 6) since it already has the current section as context.
+// Freeform facts supplementing menu data in a drill's system prompt,
+// scoped to one restaurant. Within that restaurant, two sub-scopes:
+//   - 'restaurant': true regardless of section within this restaurant.
+//   - 'section': true only within one section of this restaurant.
+// Added live via the flag-and-confirm correction flow (Files 7-8).
 //
 // Schema:
 //   restaurant-notes/{noteId}
 //   {
+//     restaurantId: string,
 //     text: string,
 //     scope: 'restaurant' | 'section',
-//     section: string | null, // set only when scope === 'section'
+//     section: string | null,
 //     _createdAt: Firestore timestamp
 //   }
 // ------------------------------------------------------
@@ -273,66 +273,67 @@ const dbCore = require('@habitualos/db-core');
 
 const COLLECTION = 'restaurant-notes';
 
-let cached = null; // Array<{id, text, scope, section}> | null
+let cache = null; // Map<restaurantId, Array<note>> | null
 
-exports.getRestaurantNotes = async () => {
-  if (cached) return cached;
-  const notes = await dbCore.query({ collection: COLLECTION });
-  cached = notes;
-  return cached;
+exports.getRestaurantNotes = async (restaurantId) => {
+  if (!cache) cache = new Map();
+  if (cache.has(restaurantId)) return cache.get(restaurantId);
+  const notes = await dbCore.query({ collection: COLLECTION, where: `restaurantId::eq::${restaurantId}` });
+  cache.set(restaurantId, notes);
+  return notes;
 };
 
 /**
- * Add a new restaurant note and update the in-memory cache immediately
- * (not just invalidate it) so this same warm instance's next prompt
- * build already includes it — see Ticket 4's note on cross-instance
- * propagation being eventually-consistent, not instant everywhere.
+ * @param {string} restaurantId
  * @param {string} text
  * @param {{scope: 'restaurant'|'section', section?: string}} classification
  */
-exports.addRestaurantNote = async (text, { scope, section = null }) => {
-  const data = { text, scope, section: scope === 'section' ? section : null };
+exports.addRestaurantNote = async (restaurantId, text, { scope, section = null }) => {
+  const data = { restaurantId, text, scope, section: scope === 'section' ? section : null };
   const { id } = await dbCore.create({ collection: COLLECTION, data });
   const note = { id, ...data };
-  cached = cached ? [...cached, note] : [note];
+  if (!cache) cache = new Map();
+  const existing = cache.get(restaurantId) || [];
+  cache.set(restaurantId, [...existing, note]);
   return note;
 };
 ```
 
+Note the `where: "restaurantId::eq::${restaurantId}"` string-based query
+format — matches `db-core.cjs`'s established syntax (`field::eq::value`),
+confirm this still holds while implementing rather than assuming.
+
 ## File 5: `netlify/functions/learn-chat-init.cjs` (MODIFY)
 
-Replace the static `require()` with File 3/4's cached getters, and add
-restaurant notes as a second, separately-cached system message block
-(splitting them from the section-specific block means the *shared*
-restaurant-notes-plus-framing prefix can hit Anthropic's prompt cache
-across different sections and different trainees, not just across turns
-of the same conversation — the section-specific menu data still varies
-per drill, so it stays as its own block).
+Threads `restaurantId` through everything. Same two-block cached-prompt
+shape as the original ticket (shared block + section block), both now
+scoped to a restaurant.
 
 ```javascript
-const { getMenuData } = require('./_services/db-menu.cjs');
+const { getRestaurant } = require('./_services/db-restaurants.cjs');
 const { getRestaurantNotes } = require('./_services/db-restaurant-notes.cjs');
 
-function findSection(menuData, sectionName) {
-  return menuData.categories.find((c) => c.name === sectionName) || null;
+function findSection(restaurant, sectionName) {
+  return restaurant.categories.find((c) => c.name === sectionName) || null;
 }
 
-function buildSharedPrompt(notes) {
-  const notesBlock = notes.length
-    ? notes.map((n) => `- ${n.text}`).join('\n')
+function buildSharedPrompt(restaurant, notes) {
+  const restaurantNotes = notes.filter((n) => n.scope === 'restaurant');
+  const notesBlock = restaurantNotes.length
+    ? restaurantNotes.map((n) => `- ${n.text}`).join('\n')
     : '(none yet)';
 
-  return `You are Tico, a warm, experienced coworker helping a restaurant server-in-training drill their knowledge of the menu.
+  return `You are Tico, a warm, experienced coworker helping a restaurant server-in-training drill their knowledge of the menu at ${restaurant.name}.
 
 The trainee is a server working the floor, not a host at the entrance. Every customer in this drill is already seated at a table, mid-visit. That means the trainee can and should take orders, make recommendations, and answer questions the way a server actually would. Never frame anything as out of scope for them because "that's the host's job" or "wait until they're seated," they're already seated.
 
-RESTAURANT NOTES (apply across every section, equally authoritative to the section's menu data below — these are staff-confirmed facts, not guesses):
+RESTAURANT NOTES for ${restaurant.name} (apply across every section, equally authoritative to the section's menu data below — these are staff-confirmed facts, not guesses):
 ${notesBlock}
 
 Never use an em dash anywhere in your response, in either voice. Use a comma, period, or parentheses instead.`;
 }
 
-function buildSectionPrompt(section) {
+function buildSectionPrompt(restaurant, section, notes) {
   const trimmedItems = section.items.map((item) => {
     const trimmed = { name: item.name, description: item.description, price: item.price };
     if (item.tags && item.tags.length) trimmed.tags = item.tags;
@@ -340,7 +341,12 @@ function buildSectionPrompt(section) {
     return trimmed;
   });
 
-  return `Drilling section: "${section.name}".
+  const sectionNotes = notes.filter((n) => n.scope === 'section' && n.section === section.name);
+  const sectionNotesBlock = sectionNotes.length
+    ? `\nADDITIONAL NOTES FOR THIS SECTION:\n${sectionNotes.map((n) => `- ${n.text}`).join('\n')}\n`
+    : '';
+
+  return `Drilling section: "${section.name}" at ${restaurant.name}.
 
 Each round works like this: you ask ONE question as if you were an ordinary seated customer looking at this section (an ingredient, whether something's vegetarian/gluten-free, "what's your favorite," a comparison between two items, a portion-size question, or just placing an order). Real customers mostly ask ordinary things, never an unusual invented premise. The trainee answers. You then evaluate that specific answer, every round, not rarely: confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then ask your next question, continuing the drill.
 
@@ -348,14 +354,16 @@ The drill isn't one flat, uninterrupted quiz. Narrate it as a series of distinct
 
 FORMAT, follow exactly: every line of your response starts with either "TICO:" or "GUEST:" (all caps, immediately followed by a colon and a space), marking who's speaking that line. Use GUEST: for the customer's own question or line of dialogue. Use TICO: for everything that's you: narrating the scene, evaluating the trainee's answer, or any other aside. Never put GUEST and TICO content on the same line, and never skip the marker on a new line.
 
-HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below, or facts listed in RESTAURANT NOTES above. If something isn't in either, say so honestly ("worth checking with the kitchen") rather than inventing an answer.
+STOP after your GUEST: question, every turn. Never invent, assume, or simulate what the trainee would say, only evaluate an answer they actually gave earlier in this conversation.
+
+HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below, or facts listed in RESTAURANT NOTES or this section's additional notes. If something isn't in any of those, say so honestly ("worth checking with the kitchen") rather than inventing an answer.
 
 Once the trainee has answered enough questions about this section correctly, across however many customer interactions it takes, that you're genuinely confident they know it, call the mark_section_learned tool. Don't call it after just one correct answer, wait for real, repeated, demonstrated recall.
 
-SECTION DATA (${section.name} only):
+SECTION DATA (${section.name} at ${restaurant.name} only):
 ${JSON.stringify(trimmedItems, null, 2)}
-
-Follow the TICO:/GUEST: format exactly, on every line. No markdown formatting, no code fences, no em dashes. Start the drill now with your first line.`;
+${sectionNotesBlock}
+Follow the format exactly, on every line. No markdown formatting, no code fences, no em dashes. Start the drill now with your first line.`;
 }
 
 const tools = [
@@ -372,21 +380,25 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { section: sectionName } = JSON.parse(event.body || '{}');
+    const { restaurantId, section: sectionName } = JSON.parse(event.body || '{}');
+    if (!restaurantId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
+    }
     if (!sectionName) {
       return { statusCode: 400, body: JSON.stringify({ error: 'section is required' }) };
     }
 
-    const [menuData, notes] = await Promise.all([getMenuData(), getRestaurantNotes()]);
+    const restaurant = await getRestaurant(restaurantId);
+    const notes = await getRestaurantNotes(restaurantId);
 
-    const section = findSection(menuData, sectionName);
+    const section = findSection(restaurant, sectionName);
     if (!section) {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown section: ${sectionName}` }) };
     }
 
     const systemMessages = [
-      { type: 'text', text: buildSharedPrompt(notes), cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: buildSectionPrompt(section), cache_control: { type: 'ephemeral' } }
+      { type: 'text', text: buildSharedPrompt(restaurant, notes), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: buildSectionPrompt(restaurant, section, notes), cache_control: { type: 'ephemeral' } }
     ];
 
     return {
@@ -400,91 +412,33 @@ exports.handler = async (event) => {
 };
 ```
 
-Note the split versus the original single-block prompt: `buildSharedPrompt`
-now carries the framing that used to open `buildSectionPrompt` (the "you
-are Tico" intro, the server-role paragraph, the em-dash rule) since none
-of that varies by section either — only the section-specific drilling
-mechanics and SECTION DATA stay in the second block.
+**`restaurantId` needs to reach this endpoint** the same way `section`
+already does — extend `chat-stream-core.ts`'s `initBody` construction
+(the shared file, already customized for `section` in Ticket 2) to also
+pass through `restaurantId`, same pattern, then re-sync the local copy
+in `apps/tico-talk/netlify/edge-functions/_lib/`.
 
-**This file gets revisited in Ticket 5**, which adds a third (uncached,
-per-turn) prompt block for live item-coverage state, filters
-`getRestaurantNotes()`'s results by `scope` into the two cached blocks
-above instead of dumping everything into `buildSharedPrompt`, drops the
-`mark_section_learned` tool entirely in favor of a deterministic
-client-side coverage check, and renames this function's *conceptual*
-role in comments to reflect that it builds fresh context every turn, not
-just once. Nothing here is wasted work, Ticket 5 builds on this shape,
-it just isn't the final state of this file.
+**This file gets revisited again in Ticket 5**, exactly as the original
+ticket noted (third uncached coverage block, drops the tool, notes
+filtering) — restaurant-scoping doesn't change that plan, just adds the
+`restaurantId` parameter throughout it too.
 
-## File 6: `netlify/functions/learn-propose-correction.cjs` (NEW)
+## File 6: `netlify/functions/learn-propose-correction.cjs` and `learn-save-correction.cjs` (NEW)
 
-Plain, non-streaming Anthropic call (this app already depends on
-`@anthropic-ai/sdk` in `package.json`, unused since `learn-drill.cjs` was
-deleted in Ticket 2 — this is the first thing to use it again). Not part
-of `chat-stream-core.ts`, this isn't a chat turn, it's a one-shot
-extraction utility.
-
-The extraction also classifies scope (restaurant-wide vs. this section
-only) in the same call, so the trainee doesn't have to pick it manually —
-per design discussion, the model can reasonably infer this ("hot sauce"
-generalizes, something about the nachos' specific preparation doesn't).
-`currentSection` comes from the client, which already knows it.
+Same shape as the original ticket, `restaurantId` threaded through both.
 
 ```javascript
-require('dotenv').config();
-const Anthropic = require('@anthropic-ai/sdk');
-const { log } = require('./_utils/log.cjs');
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  try {
-    const { lastUserMessage, lastAssistantMessage, currentSection } = JSON.parse(event.body || '{}');
-    if (!lastUserMessage || !lastAssistantMessage || !currentSection) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'lastUserMessage, lastAssistantMessage, and currentSection are required' }) };
-    }
-
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 200,
-      messages: [{
-        role: 'user',
-        content: `You are extracting a factual correction from a restaurant staff training exchange. The trainee (a real server) said something Tico (their AI coach) disputed or wasn't confident about, but the trainee actually knows better since they work there. The trainee was drilling the "${currentSection}" section when this happened.
-
-TRAINEE SAID: "${lastUserMessage}"
-TICO RESPONDED: "${lastAssistantMessage}"
-
-Extract the specific factual claim the trainee made, phrased as a single, standalone, declarative sentence suitable for a restaurant knowledge base entry (not guest-facing dialogue, not a direct quote, no em dashes). Also classify it: is this true restaurant-wide (e.g. "hot sauce is available on request" applies no matter what's being ordered), or specific to the "${currentSection}" section (e.g. something true of one dish or a handful of related items, not the restaurant generally)?
-
-Respond with ONLY a JSON object, no markdown fences, no other text: {"fact": "...", "scope": "restaurant" or "section"}`
-      }]
-    });
-
-    const raw = response.content[0]?.text?.trim() || '{}';
-    const { fact, scope } = JSON.parse(raw);
-    if (!fact || !['restaurant', 'section'].includes(scope)) {
-      throw new Error(`Unexpected extraction shape: ${raw}`);
-    }
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ proposedFact: fact, proposedScope: scope })
-    };
-  } catch (error) {
-    log('error', '[learn-propose-correction] failed', error);
-    return { statusCode: 500, body: JSON.stringify({ error: error.message || 'Internal server error' }) };
-  }
-};
+// learn-propose-correction.cjs — same extraction logic as before, plus:
+const { restaurantId, lastUserMessage, lastAssistantMessage, currentSection } = JSON.parse(event.body || '{}');
+if (!restaurantId || !lastUserMessage || !lastAssistantMessage || !currentSection) {
+  return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId, lastUserMessage, lastAssistantMessage, and currentSection are required' }) };
+}
+// ...extraction prompt unchanged, restaurant name could be included for
+// slightly better classification context but isn't required...
 ```
 
-## File 7: `netlify/functions/learn-save-correction.cjs` (NEW)
-
 ```javascript
+// learn-save-correction.cjs
 const { addRestaurantNote } = require('./_services/db-restaurant-notes.cjs');
 const { log } = require('./_utils/log.cjs');
 
@@ -494,19 +448,14 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { text, scope, section } = JSON.parse(event.body || '{}');
-    if (!text || !text.trim()) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'text is required' }) };
-    }
-    if (!['restaurant', 'section'].includes(scope)) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'scope must be "restaurant" or "section"' }) };
-    }
-    if (scope === 'section' && !section) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'section is required when scope is "section"' }) };
-    }
+    const { restaurantId, text, scope, section } = JSON.parse(event.body || '{}');
+    if (!restaurantId) return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
+    if (!text || !text.trim()) return { statusCode: 400, body: JSON.stringify({ error: 'text is required' }) };
+    if (!['restaurant', 'section'].includes(scope)) return { statusCode: 400, body: JSON.stringify({ error: 'scope must be "restaurant" or "section"' }) };
+    if (scope === 'section' && !section) return { statusCode: 400, body: JSON.stringify({ error: 'section is required when scope is "section"' }) };
 
-    const note = await addRestaurantNote(text.trim(), { scope, section });
-    log('debug', '[learn-save-correction] saved note', note.id, 'scope:', scope);
+    const note = await addRestaurantNote(restaurantId, text.trim(), { scope, section });
+    log('debug', '[learn-save-correction] saved note', note.id, 'restaurant:', restaurantId, 'scope:', scope);
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true, note }) };
   } catch (error) {
     log('error', '[learn-save-correction] failed', error);
@@ -515,316 +464,153 @@ exports.handler = async (event) => {
 };
 ```
 
-## File 8: `src/learn.njk` (MODIFY)
-
-Add the flag button to the toolbar, before the send button:
+## File 7: `src/_includes/nav.njk` (MODIFY) — restaurant switcher + My Training
 
 ```html
-<!-- Before -->
-<div class="learn-input-toolbar">
-  <button type="submit" id="learn-send-btn" class="learn-send-btn" disabled aria-label="Send">
-    ...
+<div class="sidemenu-left">
+  <button class="sidemenu-venue" id="restaurant-switcher-trigger" aria-label="Switch restaurant">
+    <span id="current-restaurant-name">{{ restaurants[0].name }}</span>
+    <span class="sidemenu-venue__chevron" aria-hidden="true">▾</span>
   </button>
+  <ul>
+    <li><a href="/menu/">Menu</a></li>
+    <li><a href="/drinks/">Drinks</a></li>
+  </ul>
+  <div class="sidemenu-account">
+    <p class="sidemenu-account__label">My Training</p>
+    <a href="/learn/">Menu</a>
+    <span class="sidemenu-account__soon">Off-Menu <em>soon</em></span>
+    <span class="sidemenu-account__soon">Recommendations <em>soon</em></span>
+    <span class="sidemenu-account__soon">Upselling <em>soon</em></span>
+    <span class="sidemenu-account__soon">Complaints <em>soon</em></span>
+    <span class="sidemenu-account__soon">Languages <em>soon</em></span>
+    <a href="/stats/">Progression</a>
+  </div>
+  ...
 </div>
 
-<!-- After -->
-<div class="learn-input-toolbar">
-  <button type="button" id="learn-flag-btn" class="learn-toolbar-btn" disabled aria-label="Flag last correction as right" data-tooltip="Tell Tico you were right">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-         stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-      <path d="M4 22V15"/>
-    </svg>
-  </button>
-  <button type="submit" id="learn-send-btn" class="learn-send-btn" disabled aria-label="Send">
-    ...
-  </button>
+<div class="restaurant-switcher" id="restaurant-switcher" hidden>
+  {% for restaurant in restaurants %}
+  <button class="restaurant-switcher__option" data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</button>
+  {% endfor %}
 </div>
 ```
 
-Also add a placeholder container right after `.learn-transcript-scroll`
-(sibling of `.learn-input-shell`, same spot `.learn-learned-banner` uses)
-for the confirmation card, or just have File 9's JS insert/remove it
-directly into the transcript flow the same way the learned banner does —
-implementer's call, matching whichever existing pattern reads cleaner
-once File 9's actual card markup is in front of you.
+A small popover/dropdown, not a full modal — exact presentation
+(anchored dropdown vs. a simple inline expand) is a judgment call once
+it's in front of you, but keep it lightweight, this is a two-restaurant
+list today, not something needing a heavy component.
 
-## File 9: `src/assets/js/learn.js` (MODIFY)
+## File 8: `src/assets/js/restaurant.js` (NEW) — shared restaurant-selection utility
 
-Wire the button: enabled once there's a completed exchange to reference,
-click sends the last user+assistant turn to the propose endpoint, renders
-a confirm/edit/reject card, and on confirm posts to the save endpoint.
+Used by `nav.njk`'s switcher and by every page that renders
+restaurant-tagged content (`learn.js`, and eventually `menu.njk`/
+`drinks.njk` if those get client-side filtering too — see the open
+question below).
 
 ```javascript
-const flagButton = document.getElementById('learn-flag-btn');
+const STORAGE_KEY = 'tico-current-restaurant';
 
-function updateFlagButton() {
-  // Enabled once there's at least one full user+assistant exchange —
-  // chatHistory alternates {role:'user'}, {role:'assistant'}, ...
-  flagButton.disabled = chatHistory.length < 2;
+export function getCurrentRestaurantId(fallbackId) {
+  try {
+    return localStorage.getItem(STORAGE_KEY) || fallbackId;
+  } catch {
+    return fallbackId;
+  }
 }
 
-function lastExchange() {
-  const assistantIdx = [...chatHistory].reverse().findIndex((m) => m.role === 'assistant');
-  if (assistantIdx === -1) return null;
-  const assistant = chatHistory[chatHistory.length - 1 - assistantIdx];
-  const userBefore = chatHistory.slice(0, chatHistory.length - 1 - assistantIdx).reverse().find((m) => m.role === 'user');
-  if (!userBefore) return null;
-  return { lastUserMessage: userBefore.content, lastAssistantMessage: assistant.content };
+export function setCurrentRestaurantId(id) {
+  try { localStorage.setItem(STORAGE_KEY, id); } catch {}
 }
 
-function showCorrectionCard(proposedFact, proposedScope) {
-  const card = document.createElement('div');
-  card.className = 'learn-correction-card';
-  card.dataset.scope = proposedScope; // 'restaurant' | 'section'
-  const scopeLabel = proposedScope === 'restaurant' ? 'Restaurant-wide' : `${currentSection}-specific`;
-  card.innerHTML = `
-    <p class="learn-correction-card__label">Save this as a fact Tico should know?</p>
-    <p class="learn-correction-card__scope">${scopeLabel}</p>
-    <p class="learn-correction-card__text"></p>
-    <div class="learn-correction-card__actions">
-      <button type="button" class="btn-quiet" data-action="no">No</button>
-      <button type="button" class="btn-quiet" data-action="edit">Edit</button>
-      <button type="button" class="btn" data-action="yes">Yes, save it</button>
-    </div>
-  `;
-  card.querySelector('.learn-correction-card__text').textContent = proposedFact;
-  transcript.appendChild(card);
-  card.scrollIntoView({ behavior: 'smooth', block: 'end' });
-
-  card.addEventListener('click', async (e) => {
-    const action = e.target.dataset.action;
-    if (action === 'no') {
-      card.remove();
-    } else if (action === 'edit') {
-      const textEl = card.querySelector('.learn-correction-card__text');
-      const editInput = document.createElement('textarea');
-      editInput.className = 'learn-correction-card__edit';
-      editInput.value = textEl.textContent;
-      textEl.replaceWith(editInput);
-      e.target.remove(); // remove the Edit button itself once editing starts
-    } else if (action === 'yes') {
-      const textEl = card.querySelector('.learn-correction-card__text, .learn-correction-card__edit');
-      const finalText = textEl.value ?? textEl.textContent;
-      card.querySelectorAll('button').forEach((b) => (b.disabled = true));
-      try {
-        await fetch('/api/learn-save-correction', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: finalText, scope: card.dataset.scope, section: currentSection })
-        });
-        card.querySelector('.learn-correction-card__label').textContent = 'Saved, Tico will know this going forward.';
-        card.querySelectorAll('.learn-correction-card__actions button').forEach((b) => b.remove());
-      } catch {
-        card.querySelector('.learn-correction-card__label').textContent = 'Couldn’t save just now, try again in a moment.';
-        card.querySelectorAll('button').forEach((b) => (b.disabled = false));
-      }
-    }
+export function applyRestaurantFilter(containerSelector, restaurantId) {
+  document.querySelectorAll(`${containerSelector}[data-restaurant]`).forEach((el) => {
+    el.hidden = el.dataset.restaurant !== restaurantId;
   });
 }
+```
 
-flagButton?.addEventListener('click', async () => {
-  const exchange = lastExchange();
-  if (!exchange) return;
-  flagButton.disabled = true;
-  try {
-    const response = await fetch('/api/learn-propose-correction', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...exchange, currentSection })
-    });
-    const data = await response.json();
-    if (data.proposedFact) showCorrectionCard(data.proposedFact, data.proposedScope);
-  } finally {
-    updateFlagButton();
-  }
+Wire the switcher trigger/popover in `nav.njk`'s companion script
+(wherever `sidemenu-toggle` already lives) to call `setCurrentRestaurantId`
+and reload on selection — simplest correct behavior, avoids needing to
+re-filter every already-rendered page's content live.
+
+## File 9: `src/assets/js/learn.js` (MODIFY) — restaurant-aware picker + flag button
+
+The section picker needs a `data-restaurant` filter layered on top of
+its existing `data-section` filter — a trainee should only see *this*
+restaurant's sections in the picker, and drilling needs to send
+`restaurantId` with every turn.
+
+```javascript
+import { getCurrentRestaurantId } from './restaurant.js';
+
+const currentRestaurantId = getCurrentRestaurantId(/* first restaurant's id, passed from a data attribute on <body> or similar */);
+
+// Picker filtering — layer on top of the existing pill click handlers:
+document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
+  pill.hidden = pill.dataset.restaurant !== currentRestaurantId;
 });
 ```
 
-Call `updateFlagButton()` everywhere `chatHistory` changes — alongside
-the existing `updateSendButton()` calls after a turn completes, and reset
-it (disabled) in `startDrill()` for a fresh section. The correction card
-shows the model's scope classification as a small label so the trainee
-can see (and implicitly sanity-check) it before confirming — there's no
-separate "change the scope" control in this v1, if the classification is
-wrong the trainee's only recourse is "No" and re-flagging isn't
-supported; edit only changes the fact text, not its scope. Worth
-revisiting if that turns out to matter in practice.
+`sendTurn()`'s request body gains `restaurantId: currentRestaurantId`
+alongside the existing `section`. The flag-and-confirm correction flow
+(`showCorrectionCard`/the save call) gains the same field. Both are
+mechanical additions to request bodies already built in the original
+version of this ticket — the actual UX (propose → confirm/edit/reject)
+is unchanged.
 
-Note `lastAssistantMessage`/`lastUserMessage` here are the **raw**
-stored text (assistant messages still carry the TICO:/GUEST: markers,
-per Ticket 3's rehydration design) — that's fine, the extraction prompt
-in File 6 doesn't need it marker-free, the model handles it either way,
-but worth confirming while implementing rather than assuming.
+`learn.njk`'s picker pills need `data-restaurant="{{ restaurant.id }}"`
+added alongside their existing `data-section` attribute, once the
+picker's Nunjucks loop iterates all restaurants (File 2's `restaurants`
+data) instead of one.
 
-## File 10: `src/styles/_learn.scss` (MODIFY)
+## Open question, not resolved in this ticket
 
-```scss
-.learn-input-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; // was flex-end — now flag (left) + send (right)
-  padding: 0.2rem 0.4rem 0.3rem;
-}
-
-// Quiet, secondary treatment — deliberately less visually heavy than
-// .learn-send-btn's solid green fill. Mirrors dreamscape's
-// .chat-toolbar-btn (start-fresh/save-chat icons).
-.learn-toolbar-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: rgba($color-text, 0.3);
-  padding: 0.3rem;
-  display: flex;
-  align-items: center;
-  line-height: 1;
-  border-radius: 6px;
-  transition: color 0.2s;
-
-  &:hover:not(:disabled) { color: rgba($color-text, 0.7); }
-  &:disabled { opacity: 0.4; cursor: default; }
-}
-
-.learn-correction-card {
-  text-align: center;
-  padding: $space-md;
-  margin: $space-md $space-lg 0;
-  background: $color-bg-surface;
-  border: 1px solid $color-border;
-  border-radius: 0.75rem;
-}
-
-.learn-correction-card__label {
-  font-size: $font-size-sm;
-  color: $color-text-muted;
-  margin: 0 0 $space-sm;
-}
-
-.learn-correction-card__scope {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: $color-green;
-  border: 1px solid $color-green;
-  border-radius: 999px;
-  padding: 0.1rem 0.6rem;
-  margin: 0 0 $space-sm;
-}
-
-.learn-correction-card__text {
-  font-weight: 600;
-  margin: 0 0 $space-md;
-}
-
-.learn-correction-card__edit {
-  width: 100%;
-  min-height: 4rem;
-  margin: 0 0 $space-md;
-  padding: $space-sm;
-  border: 1px solid $color-border;
-  border-radius: 0.5rem;
-  font-family: $font-family;
-  font-size: $font-size-base;
-  resize: vertical;
-}
-
-.learn-correction-card__actions {
-  display: flex;
-  justify-content: center;
-  gap: $space-sm;
-}
-
-// Generic hover/focus tooltip for any icon-only button — not scoped to
-// .learn-toolbar-btn specifically. Mirrors dreamscape's [data-tooltip]
-// utility (_components.scss:2071-2103) adapted to tico-talk's light
-// theme: dark chip, readable regardless of what's underneath, rather
-// than dreamscape's light-on-dark version.
-[data-tooltip] {
-  position: relative;
-
-  &::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    background: rgba($color-text, 0.92);
-    color: #ffffff;
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-    padding: 0.3rem 0.6rem;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    z-index: 100;
-  }
-
-  &:hover::after,
-  &:focus-visible::after {
-    opacity: 1;
-  }
-}
-```
-
-This is a generic, app-wide utility (the `[data-tooltip]` attribute
-selector isn't scoped to `.learn-toolbar-btn`) — reasonable to place in
-`_components.scss` instead of `_learn.scss` if that reads better once
-it's in front of you, since nothing about it is Learn-specific; either
-location works, just don't duplicate it if `_components.scss` already
-has something similar by the time this is implemented.
-
-`.btn-quiet` is referenced in File 9's markup — confirm it already
-exists app-wide (it's used in dreamscape's ready-overlay per earlier
-exploration; check whether tico-talk already has an equivalent or needs
-one added, before assuming it's free).
+Do `/menu/` and `/drinks/` (the reference pages) get the same
+client-side `data-restaurant` filtering as the Learn picker, or does
+switching restaurants there just mean "reload and everything's already
+filtered by the same mechanism"? Functionally these should behave the
+same way as the picker (same `applyRestaurantFilter` utility, File 8),
+but confirm while implementing whether `menu-categories.njk`'s macro
+needs a `restaurantId` param threaded through or whether wrapping its
+output in a restaurant-tagged container from the calling template is
+enough — likely the latter, don't restructure the shared macro if the
+wrapper approach works.
 
 ## Verification
 
-1. `node --check` on all new/modified `.cjs` files, and the modified
-   `learn.js`.
+1. `node --check` on all new/modified `.cjs` files and `learn.js`.
 2. `sass` compile / full `pnpm build`.
-3. Run the File 1 seed script once, confirm `restaurant-config/menu`
-   exists in Firestore (console or `dbCore.get`).
-4. `pnpm build` (or `netlify dev`, which also triggers an Eleventy build)
-   — confirm `/menu/`, `/drinks/`, `/menu-review/`, and `/learn/`'s picker
-   all still render correctly now that `margaritaville.js` reads from
-   Firestore instead of the deleted `.json` file. This is the step most
-   likely to break silently (a typo'd collection/id, a missing await)
-   since a broken data file can fail the *entire* Eleventy build, not
-   just the `/learn/` page.
-5. Via `netlify dev`: drill a section, confirm Tico still behaves
-   correctly (references real menu data, refuses facts not in either
-   data source).
-6. Say something true but unconfirmed (e.g. bring up hot sauce
-   availability) and let Tico dispute it, matching the original bug
-   report. Click the flag button. Confirm:
-   - It's disabled until this exchange exists, and re-disables while the
-     proposal request is in flight.
-   - The proposed fact reads as a clean, standalone sentence, not a
-     verbatim copy of the guest-facing phrasing.
-   - "Edit" swaps in an editable textarea pre-filled with the proposed
-     text.
-   - "Yes" saves, shows the confirmation state, and disables further
-     clicks on that card.
-   - "No" just removes the card, nothing saved.
-7. Immediately after saving, start a **new** drill turn in the same
-   section (same browser tab, same warm function instance most likely)
-   and ask a related question — confirm Tico now references the new
-   fact. This is the in-session propagation case; don't worry about
-   confirming cross-instance propagation, that's expected to lag (see
-   the design note above).
-8. Confirm `restaurant-notes` in Firestore actually has the new doc.
+3. Run the File 1 seed script for both restaurants, confirm
+   `restaurants/margaritaville`, `restaurant-menus/margaritaville`,
+   `restaurants/petes`, `restaurant-menus/petes` all exist in Firestore.
+4. `pnpm build` — confirm `/menu/`, `/drinks/`, `/menu-review/`, and
+   `/learn/`'s picker all still render, now reading from Firestore via
+   `restaurants.js` instead of the deleted single-menu JSON.
+5. Via `netlify dev`: confirm the sidebar shows the switcher, switching
+   restaurants reloads and shows the correct one's Menu/Drinks/picker
+   content, and picking a different restaurant's section drills that
+   restaurant's actual menu data (not the other one's).
+6. Confirm `My Training` shows Menu as a working link and the other five
+   as visibly disabled/coming-soon, not broken links.
+7. Repeat the original ticket's correction-flow verification (flag a
+   true-but-disputed fact, confirm/edit/reject, confirm it lands in
+   `restaurant-notes` with the correct `restaurantId`) — for *both*
+   restaurants, confirming a note added while drilling Margaritaville
+   never shows up while drilling Pete's.
 
-## Prerequisite
+## Prerequisite (interactive — needs Erik)
 
-None new beyond what Ticket 3 already set up (`FIREBASE_ADMIN_CREDENTIALS`
-in `.env`, already confirmed working). Only a soft, non-blocking item:
-before an actual production deploy, `FIREBASE_ADMIN_CREDENTIALS` needs to
-be added to Netlify's site-level environment config too (not just local
-`.env`), since File 2 makes the *build* depend on Firestore, not just
-requests at runtime. Not needed for local implementation/testing.
+**Real Pete's menu data and clientele profile.** Per the data principle
+this app has followed since the very first menu extraction: never
+fabricate menu content, even as a placeholder. Needed before File 1's
+Pete's seed can run:
+- Pete's full menu (items, descriptions, prices, tags/allergens — same
+  shape as Margaritaville's existing JSON).
+- A rough clientele/language profile (e.g. "roughly even Chinese/Spanish
+  split" is enough precision for now, exact ratios aren't needed yet).
+
+Also, same as the original ticket: `FIREBASE_ADMIN_CREDENTIALS` needs to
+land in Netlify's site-level env config before a real production deploy,
+not just local `.env` — not blocking local implementation.
