@@ -6,8 +6,9 @@ Tico-talk is a restaurant staff training app (`apps/tico-talk`). This
 ticket reuses the streaming chat architecture Tickets 2-5 already built
 (`chat-stream-core.ts`, the per-turn context-builder pattern, the
 TICO:/GUEST: line-marker convention) for four new, much lighter-weight
-competencies. See `docs/VISION.md`'s "Sequencing Pivot" section for the
-full framing — this ticket is the light-PoC step in that sequence.
+competencies. See `docs/VISION.md`'s "Two Competency Shapes" section for
+the full framing — this ticket is the light-PoC step for the four
+judgment-and-delivery, voice-driven-long-term competencies.
 
 **Depends on Ticket 4** (restaurant entity, `restaurant-notes`,
 `restaurant-menus`/`restaurants` collections, the sidebar's `My Training`
@@ -47,12 +48,14 @@ infrastructure that already exists.
   specific content (a restaurant's complaint policy, its clientele
   profile for Languages, its menu for Upselling/Recommendations
   pairings). No new Firestore collections needed in this ticket.
-- `docs/DESIGN.md` Section 11 — the assurance (trustworthy knowledge,
-  universal baseline) vs. empathy (guest-state-read, relational vs.
-  transactional calibration) split, and why it's grounded in DINESERV
-  rather than Wansink's compromised menu-psychology research.
-  This is the one piece of real design work in this ticket: Recommendations
-  and Upselling's system prompts need to evaluate on *both* axes
+- `docs/DESIGN.md`'s "Recommendations, Upselling, Complaints, Languages:
+  Text PoC, Voice-Driven Target" section (Part 1) — the assurance
+  (trustworthy knowledge, universal baseline) vs. empathy (guest-state-
+  read, relational vs. transactional calibration) split, and why it's
+  grounded in DINESERV rather than Wansink's compromised menu-psychology
+  research. This is the one piece of real design work in this ticket:
+  Recommendations and Upselling's system prompts need to evaluate on
+  *both* axes
   separately, not blend them into one score.
 
 ## Overview

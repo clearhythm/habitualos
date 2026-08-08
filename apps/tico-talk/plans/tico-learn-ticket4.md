@@ -12,8 +12,9 @@ Nunjucks (static site generation at build time) + vanilla JS ES modules
 Firestore persistence layer all exist. **Supersedes the original,
 single-restaurant version of this ticket** — that version was written
 and never implemented, so this rewrite replaces it outright rather than
-building single-restaurant first and redoing it. See `docs/VISION.md`'s
-"Sequencing Pivot" section for the full context this rewrite comes from.
+building single-restaurant first and redoing it. See `docs/VISION.md`
+(in particular "The Competency Model" and "Two Competency Shapes") for
+the full context this rewrite comes from.
 
 **Why this ticket exists, and why it grew**: started from a real gap —
 Tico correctly refuses to state anything not in the menu data, but the
@@ -54,8 +55,9 @@ just parameterized by restaurant instead of assumed singular.
   venue label (`{{ menus[0].name }}`), then a flat `My Sessions` group
   with `Learn`/`Practice`/`Progression`. This ticket replaces the label
   with a real switcher and restructures the group into `My Training`
-  with six competency links (per `docs/VISION.md`'s "Sequencing Pivot")
-  — only Menu is a real, working link right now, the rest are coming-soon.
+  with six competency links (per `docs/VISION.md`'s "The Competency
+  Model") — only Menu is a real, working link right now, the rest are
+  coming-soon.
 - `packages/db-core/db-core.cjs` — reused as-is (`create`, `get`,
   `query`, `uniqueId`).
 - `apps/tico-talk/.env`'s `FIREBASE_ADMIN_CREDENTIALS` — already set up,
@@ -89,7 +91,7 @@ just parameterized by restaurant instead of assumed singular.
 3. **Sidebar restructuring**: a real restaurant switcher replacing the
    static venue label, and `My Training` replacing the flat
    Learn/Practice/Progression list with the six competencies from
-   `docs/VISION.md`'s "Sequencing Pivot" (Menu functional, Off-Menu/
+   `docs/VISION.md`'s "The Competency Model" (Menu functional, Off-Menu/
    Recommendations/Upselling/Complaints/Languages shown as coming soon).
 4. **Restaurant notes + the flag-and-confirm correction flow**, as
    originally planned, now scoped to the current restaurant.
