@@ -16,6 +16,17 @@
   gap: $space-lg;
 }
 
+// Restaurant name heading — same style as the Food/Drinks pages'
+// venue-name for visual consistency between views, centered the same
+// way theirs is when paired with a page-level heading (see
+// _menu-review.scss's :has(.page-header) rule; scoped here rather than
+// added to the shared base rule since /menu-review/ intentionally stays
+// left-aligned for its dense scanning layout).
+.learn-teach__section .menu-review__venue-name,
+.learn-drill .menu-review__venue-name {
+  text-align: center;
+}
+
 .learn-teach__intro {
   font-family: $font-family-accent;
   font-style: italic;

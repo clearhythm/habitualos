@@ -15,6 +15,16 @@ const answerForm = document.getElementById('learn-answer-form');
 const answerInput = document.getElementById('learn-answer-input');
 const sendButton = document.getElementById('learn-send-btn');
 const flagButton = document.getElementById('learn-flag-btn');
+const drillRestaurantLabel = document.getElementById('learn-drill-restaurant-label');
+
+// The picker's teach section already has each restaurant's name
+// server-rendered per-restaurant (see learn.njk); the drill phase is one
+// shared block, so its label is set here from the same switcher options
+// nav.njk already renders elsewhere on the page — no separate restaurant
+// name data needed client-side.
+function getRestaurantName(restaurantId) {
+  return document.querySelector(`.restaurant-switcher__option[data-restaurant-id="${restaurantId}"]`)?.textContent || '';
+}
 
 function updateSendButton() {
   sendButton.disabled = answerInput.value.trim().length === 0;
@@ -482,6 +492,7 @@ async function sendTurn(message) {
 }
 
 function startDrill() {
+  if (drillRestaurantLabel) drillRestaurantLabel.textContent = getRestaurantName(currentRestaurantId);
   const existing = loadSectionState(currentRestaurantId, currentSection);
   transcript.innerHTML = '';
   if (existing) {

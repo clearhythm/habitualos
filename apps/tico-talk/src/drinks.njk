@@ -6,32 +6,31 @@ pageScript: /assets/js/menu-restaurant-filter.js
 ---
 
 {% from "menu-categories.njk" import render as renderCategories %}
+{% from "venue-header.njk" import venueHeader %}
 
 {% for restaurant in restaurants %}
 <section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
-  <h2 class="menu-review__venue-name">{{ restaurant.name }}</h2>
-  <div class="page-header">
-    <p class="page-title">Drinks</p>
-    <a class="page-header__action" href="/learn/">
-      Train
-      {% if restaurant.id == "margaritaville" %}
-      <svg viewBox="2 2 22 19" width="33" height="29" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M3 5c0 5 4 8 9 8s9-3 9-8"/>
-        <line x1="12" y1="13" x2="12" y2="20"/>
-        <line x1="8" y1="20" x2="16" y2="20"/>
-        <path d="M19 3l3.5 2.2-2.2 3.5z" fill="currentColor" stroke="none"/>
-      </svg>
-      {% else %}
-      <svg viewBox="3 1 18 20" width="27" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 4h16l-8 9z"/>
-        <line x1="12" y1="13" x2="12" y2="20"/>
-        <line x1="8" y1="20" x2="16" y2="20"/>
-        <line x1="9.5" y1="2" x2="13.5" y2="6.5"/>
-        <circle cx="11.5" cy="5" r="1.3" fill="currentColor" stroke="none"/>
-      </svg>
-      {% endif %}
-    </a>
-  </div>
+  {% call venueHeader(restaurant.name, "Drinks") %}
+  <a class="page-header__action" href="/learn/">
+    Train
+    {% if restaurant.id == "margaritaville" %}
+    <svg viewBox="2 2 22 19" width="33" height="29" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 5c0 5 4 8 9 8s9-3 9-8"/>
+      <line x1="12" y1="13" x2="12" y2="20"/>
+      <line x1="8" y1="20" x2="16" y2="20"/>
+      <path d="M19 3l3.5 2.2-2.2 3.5z" fill="currentColor" stroke="none"/>
+    </svg>
+    {% else %}
+    <svg viewBox="3 1 18 20" width="27" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 4h16l-8 9z"/>
+      <line x1="12" y1="13" x2="12" y2="20"/>
+      <line x1="8" y1="20" x2="16" y2="20"/>
+      <line x1="9.5" y1="2" x2="13.5" y2="6.5"/>
+      <circle cx="11.5" cy="5" r="1.3" fill="currentColor" stroke="none"/>
+    </svg>
+    {% endif %}
+  </a>
+  {% endcall %}
   {{ renderCategories(restaurant.drinks, false) }}
 </section>
 {% endfor %}

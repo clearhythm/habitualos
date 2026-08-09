@@ -6,23 +6,22 @@ pageScript: /assets/js/menu-restaurant-filter.js
 ---
 
 {% from "menu-categories.njk" import render as renderCategories %}
+{% from "venue-header.njk" import venueHeader %}
 
 {% for restaurant in restaurants %}
 <section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
-  <h2 class="menu-review__venue-name">{{ restaurant.name }}</h2>
-  <div class="page-header">
-    <p class="page-title">Food</p>
-    <a class="page-header__action" href="/learn/">
-      Train
-      <svg viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-        <path d="M5 14a7 7 0 0 1 14 0"/>
-        <line x1="12" y1="6.5" x2="12" y2="4.5"/>
-        <circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/>
-        <path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/>
-        <ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>
-      </svg>
-    </a>
-  </div>
+  {% call venueHeader(restaurant.name, "Food") %}
+  <a class="page-header__action" href="/learn/">
+    Train
+    <svg viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <path d="M5 14a7 7 0 0 1 14 0"/>
+      <line x1="12" y1="6.5" x2="12" y2="4.5"/>
+      <circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/>
+      <path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/>
+      <ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>
+    </svg>
+  </a>
+  {% endcall %}
   {{ renderCategories(restaurant.food, false) }}
 </section>
 {% endfor %}

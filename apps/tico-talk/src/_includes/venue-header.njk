@@ -1,0 +1,12 @@
+{# Shared by /food/, /drinks/, and /learn/'s teach screen — restaurant
+   name (centered) + a title/action row. The action itself (a Train
+   link, or a phase-specific button) is passed in via {% call %} so the
+   structure stays identical everywhere even though what's clickable
+   differs by context. #}
+{% macro venueHeader(restaurantName, title) %}
+<p class="menu-review__venue-name">{{ restaurantName }}</p>
+<div class="page-header">
+  <p class="page-title">{{ title }}</p>
+  {{ caller() }}
+</div>
+{% endmacro %}

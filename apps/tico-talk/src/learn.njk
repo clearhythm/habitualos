@@ -6,6 +6,7 @@ pageScript: /assets/js/learn.js
 ---
 
 {% from "menu-categories.njk" import render as renderCategories %}
+{% from "venue-header.njk" import venueHeader %}
 
 <div class="learn-screen">
 
@@ -35,18 +36,29 @@ pageScript: /assets/js/learn.js
 
   <div class="learn-teach" id="learn-teach" hidden>
     {% for restaurant in restaurants %}
-      {% for category in restaurant.food.concat(restaurant.drinks) %}
+      {% for category in restaurant.food %}
       <div class="learn-teach__section" data-restaurant="{{ restaurant.id }}" data-section="{{ category.name }}" hidden>
-        <p class="breadcrumb__back learn-back">‹ Choose a different section</p>
-        <p class="learn-teach__intro">Here's the rundown on {{ category.name }} — worth knowing cold before guests start asking.</p>
+        {% call venueHeader(restaurant.name, "Food") %}
+        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">I'm Ready</button>
+        {% endcall %}
+        <p class="learn-teach__intro">Review the content below and click "I'm Ready" once you're ready to practice.</p>
         {{ renderCategories([category], false) }}
-        <button class="btn learn-start-drill" data-section="{{ category.name }}">Start practicing</button>
+      </div>
+      {% endfor %}
+      {% for category in restaurant.drinks %}
+      <div class="learn-teach__section" data-restaurant="{{ restaurant.id }}" data-section="{{ category.name }}" hidden>
+        {% call venueHeader(restaurant.name, "Drinks") %}
+        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">I'm Ready</button>
+        {% endcall %}
+        <p class="learn-teach__intro">Review the content below and click "I'm Ready" once you're ready to practice.</p>
+        {{ renderCategories([category], false) }}
       </div>
       {% endfor %}
     {% endfor %}
   </div>
 
   <div class="learn-drill" id="learn-drill" hidden>
+    <p class="menu-review__venue-name" id="learn-drill-restaurant-label"></p>
     <p class="breadcrumb__back learn-back" data-target="picker">‹ Choose a different section</p>
     <div class="learn-transcript-scroll" id="learn-transcript-scroll">
       <div class="transcript learn-transcript" id="learn-transcript"></div>
