@@ -16,15 +16,31 @@
 
 <div class="sidemenu-main" id="sidemenu-main">
   <div class="sidemenu-left">
-    {% if menus.length %}<p class="sidemenu-venue">{{ menus[0].name }}</p>{% endif %}
+    {% if restaurants.length %}
+    <div class="sidemenu-venue-switcher">
+      <button class="sidemenu-venue" id="restaurant-switcher-trigger" aria-expanded="false" aria-label="Switch restaurant">
+        <span id="current-restaurant-name">{{ restaurants[0].name }}</span>
+        <span class="sidemenu-venue__chevron" aria-hidden="true">▾</span>
+      </button>
+      <div class="restaurant-switcher" id="restaurant-switcher" hidden>
+        {% for restaurant in restaurants %}
+        <button class="restaurant-switcher__option" data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
     <ul>
-      <li><a href="/menu/">Menu</a></li>
+      <li><a href="/food/">Food</a></li>
       <li><a href="/drinks/">Drinks</a></li>
     </ul>
     <div class="sidemenu-account">
-      <p class="sidemenu-account__label">My Sessions</p>
-      <a href="/learn/">Learn</a>
-      <a href="/practice/">Practice</a>
+      <p class="sidemenu-account__label">My Training</p>
+      <a href="/learn/">Menu</a>
+      <span class="sidemenu-account__soon">Off-Menu <em>soon</em></span>
+      <span class="sidemenu-account__soon">Recommendations <em>soon</em></span>
+      <span class="sidemenu-account__soon">Upselling <em>soon</em></span>
+      <span class="sidemenu-account__soon">Complaints <em>soon</em></span>
+      <span class="sidemenu-account__soon">Languages <em>soon</em></span>
       <a href="/stats/">Progression</a>
     </div>
     <div class="sidemenu-footer">

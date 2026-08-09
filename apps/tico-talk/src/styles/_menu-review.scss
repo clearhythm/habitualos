@@ -10,6 +10,63 @@
   margin-bottom: $space-lg;
 }
 
+// On /food/ and /drinks/, the venue name sits above a .page-header
+// instead of directly above the category list — restore the larger gap
+// that used to separate the page title from the venue name, now that
+// their order (and which element's margin drives which gap) is swapped.
+.menu-review__venue:has(.page-header) .menu-review__venue-name {
+  margin-bottom: $space-xl;
+  text-align: center;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-md;
+  margin-bottom: $space-lg;
+
+  .page-title {
+    margin-bottom: 0;
+  }
+}
+
+// A colored link, not a button — this is a helpful shortcut off the
+// reference page, not the primary action of the page.
+.page-header__action {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-xs;
+  color: $color-green;
+  font-weight: 600;
+  font-size: $font-size-lg;
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0.4rem 0.75rem;
+  margin: -0.4rem -0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  transition: border-color 0.15s, background 0.15s;
+
+  svg {
+    display: block;
+    // Nudges for the flex-centered icon vs. text's line-height box not
+    // sharing a true visual center — verified empirically, not derived.
+    position: relative;
+    bottom: 2px;
+  }
+
+  // The generic a:hover rule in _base.scss has higher specificity than
+  // this class's own base (non-hover) text-decoration: none, since it
+  // pairs the pseudo-class with an element selector — has to be
+  // restated here, on the matching :hover selector, to actually win.
+  &:hover {
+    background: rgba($color-bg-muted, 0.12);
+    border-color: $color-bg-muted;
+    text-decoration: none;
+  }
+}
+
 .menu-review__categories {
   column-count: 1;
   column-gap: $space-xl;

@@ -4,6 +4,8 @@
 // /api/chat-stream (shared core: packages/edge-functions/chat-stream-core.ts).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { saveLearnChatBeacon, saveLearnChat } from './collections/learn-chats.js';
+import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
+import { getLearnedSections, markSectionLearnedLocally } from './learned-sections.js';
 
 const picker = document.getElementById('learn-picker');
 const teach = document.getElementById('learn-teach');
@@ -12,6 +14,7 @@ const transcript = document.getElementById('learn-transcript');
 const answerForm = document.getElementById('learn-answer-form');
 const answerInput = document.getElementById('learn-answer-input');
 const sendButton = document.getElementById('learn-send-btn');
+const flagButton = document.getElementById('learn-flag-btn');
 
 function updateSendButton() {
   sendButton.disabled = answerInput.value.trim().length === 0;
@@ -39,6 +42,7 @@ answerInput?.addEventListener('keydown', (e) => {
   }
 });
 
+let currentRestaurantId = null;
 let currentSection = null;
 let currentChatId = null;
 let chatHistory = [];
@@ -46,6 +50,8 @@ let awaitingResponse = false;
 
 // ─── URL state (section + phase) ────────────────────────────────────────
 // Query params only, updated via replaceState — not a full navigation.
+// Restaurant isn't part of the URL — it's the localStorage-selected
+// restaurant (see restaurant.js), same as every other page.
 function updateUrlState(section, phase) {
   const params = new URLSearchParams();
   if (section) params.set('section', section);
@@ -54,9 +60,9 @@ function updateUrlState(section, phase) {
   history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
 }
 
-function sectionExists(name) {
+function sectionExists(restaurantId, name) {
   return Array.from(document.querySelectorAll('.learn-picker .competency-pill'))
-    .some((p) => p.dataset.section === name);
+    .some((p) => p.dataset.restaurant === restaurantId && p.dataset.section === name);
 }
 
 function showPhase(phase) {
@@ -69,12 +75,12 @@ function showPhase(phase) {
 // ─── Section chat persistence (localStorage) ────────────────────────────
 // Every turn writes here — cheap, instant, local. Firestore is only
 // touched at three boundaries (learned / exited / abandoned), not per
-// turn — see collections/learn-chats.js (stub for now, Ticket 3 wires
-// the real Firestore write).
+// turn — see collections/learn-chats.js. Keyed by restaurant + section
+// together since two restaurants can share a category name.
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
-function lsKey(section) {
-  return `tico-learn-chat-${section}`;
+function lsKey(restaurantId, section) {
+  return `tico-learn-chat-${restaurantId}-${section}`;
 }
 
 function generateChatId() {
@@ -85,16 +91,16 @@ function generateChatId() {
 // if there's nothing usable (caller should start a brand-new drill). A
 // stale (TTL-expired) entry with real content gets flushed as
 // 'abandoned' before being cleared.
-function loadSectionState(section) {
+function loadSectionState(restaurantId, section) {
   try {
-    const raw = localStorage.getItem(lsKey(section));
+    const raw = localStorage.getItem(lsKey(restaurantId, section));
     if (!raw) return null;
     const state = JSON.parse(raw);
     if (Date.now() - state.timestamp > TTL_MS) {
       if (state.history?.some((m) => m.role === 'user')) {
-        flushSectionChat(section, 'abandoned', { useBeacon: false, stateOverride: state });
+        flushSectionChat(restaurantId, section, 'abandoned', { useBeacon: false, stateOverride: state });
       }
-      localStorage.removeItem(lsKey(section));
+      localStorage.removeItem(lsKey(restaurantId, section));
       return null;
     }
     return state;
@@ -103,25 +109,26 @@ function loadSectionState(section) {
   }
 }
 
-function saveSectionState(section, history, chatId) {
+function saveSectionState(restaurantId, section, history, chatId) {
   try {
-    localStorage.setItem(lsKey(section), JSON.stringify({ chatId, history, timestamp: Date.now() }));
+    localStorage.setItem(lsKey(restaurantId, section), JSON.stringify({ chatId, history, timestamp: Date.now() }));
   } catch {}
 }
 
-function clearSectionState(section) {
-  try { localStorage.removeItem(lsKey(section)); } catch {}
+function clearSectionState(restaurantId, section) {
+  try { localStorage.removeItem(lsKey(restaurantId, section)); } catch {}
 }
 
 // Single save path for all three boundaries. useBeacon: true for saves
 // that coincide with navigating away ('exited'); false where the tab
 // stays open ('learned', TTL-driven 'abandoned' flush on load).
-function flushSectionChat(section, action, { useBeacon, stateOverride } = {}) {
+function flushSectionChat(restaurantId, section, action, { useBeacon, stateOverride } = {}) {
   const state = stateOverride || { chatId: currentChatId, history: chatHistory };
   if (!state.history?.some((m) => m.role === 'user')) return; // nothing worth saving
   const payload = {
     chatId: state.chatId,
     userId: getOrCreateUserId(),
+    restaurantId,
     section,
     messages: state.history,
     action,
@@ -134,34 +141,23 @@ function flushSectionChat(section, action, { useBeacon, stateOverride } = {}) {
   } else {
     saveLearnChat(payload).catch(() => {});
   }
-  clearSectionState(section);
+  clearSectionState(restaurantId, section);
 }
 
 // ─── Learned badges (picker) ─────────────────────────────────────────────
-// Mirrors the Firestore write client-side so the picker can badge learned
-// sections without a network round-trip on every page load.
-function markSectionLearnedLocally(sectionName) {
-  try {
-    const learned = JSON.parse(localStorage.getItem('tico-learned-sections') || '{}');
-    learned[sectionName] = true;
-    localStorage.setItem('tico-learned-sections', JSON.stringify(learned));
-  } catch {
-    // non-fatal — the picker just won't show the badge until next real fetch
-  }
-}
-
-function applyLearnedBadges() {
-  let learned = {};
-  try {
-    learned = JSON.parse(localStorage.getItem('tico-learned-sections') || '{}');
-  } catch {}
+// getLearnedSections/markSectionLearnedLocally live in learned-sections.js
+// — shared with menu-restaurant-filter.js's "Train" button, which routes
+// around whatever's already learned rather than duplicating this here.
+function applyLearnedBadges(restaurantId) {
+  const learnedForRestaurant = getLearnedSections(restaurantId);
   document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
-    if (learned[pill.dataset.section]) {
+    if (pill.dataset.restaurant === restaurantId && learnedForRestaurant[pill.dataset.section]) {
       pill.classList.add('competency-pill--learned');
+    } else {
+      pill.classList.remove('competency-pill--learned');
     }
   });
 }
-applyLearnedBadges();
 
 function showLearnedBanner() {
   const banner = document.createElement('div');
@@ -171,12 +167,110 @@ function showLearnedBanner() {
   banner.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
+// ─── Flag-and-confirm correction flow ────────────────────────────────────
+// Tico refuses to state anything outside the menu data, but the menu is
+// necessarily incomplete — this lets a trainee flag a real staff fact
+// Tico is missing/wrong about. The last exchange is sent to an
+// extraction call that proposes a clean, standalone note; the trainee
+// confirms/edits/rejects it rather than retyping it from scratch (see
+// docs/VISION.md's Data Principle — never fabricate, always confirm).
+let activeCorrectionCard = null;
+
+function removeCorrectionCard() {
+  activeCorrectionCard?.remove();
+  activeCorrectionCard = null;
+}
+
+async function proposeCorrection() {
+  if (activeCorrectionCard) return; // already open
+  const lastAssistant = [...chatHistory].reverse().find((m) => m.role === 'assistant');
+  const lastUser = [...chatHistory].reverse().find((m) => m.role === 'user');
+  if (!lastAssistant || !lastUser) return;
+
+  flagButton.disabled = true;
+  try {
+    const response = await fetch('/api/learn-propose-correction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        restaurantId: currentRestaurantId,
+        lastUserMessage: lastUser.content,
+        lastAssistantMessage: lastAssistant.content,
+        currentSection
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || data.ok === false) {
+      renderCorrectionMessage(data.reason || data.error || 'Couldn’t find a clear correction in that exchange.');
+      return;
+    }
+    renderCorrectionCard(data.text, data.scope, data.section);
+  } catch {
+    renderCorrectionMessage('Couldn’t reach Tico just now — try flagging again in a moment.');
+  } finally {
+    flagButton.disabled = false;
+  }
+}
+
+function renderCorrectionMessage(message) {
+  const card = document.createElement('div');
+  card.className = 'correction-card';
+  card.innerHTML = `<p class="correction-card__status"></p>`;
+  card.querySelector('.correction-card__status').textContent = message;
+  transcript.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  setTimeout(() => card.remove(), 4000);
+}
+
+function renderCorrectionCard(proposedText, scope, section) {
+  const card = document.createElement('div');
+  card.className = 'correction-card';
+  card.innerHTML = `
+    <p class="correction-card__label">Add this as a staff note?</p>
+    <textarea class="correction-card__text"></textarea>
+    <p class="correction-card__scope"></p>
+    <div class="correction-card__actions">
+      <button type="button" class="btn correction-card__confirm">Confirm</button>
+      <button type="button" class="correction-card__reject">Discard</button>
+    </div>
+  `;
+  const textEl = card.querySelector('.correction-card__text');
+  const scopeEl = card.querySelector('.correction-card__scope');
+  textEl.value = proposedText;
+  scopeEl.textContent = scope === 'restaurant'
+    ? 'Applies restaurant-wide.'
+    : `Applies to ${section} only.`;
+
+  card.querySelector('.correction-card__reject').addEventListener('click', removeCorrectionCard);
+  card.querySelector('.correction-card__confirm').addEventListener('click', async () => {
+    const text = textEl.value.trim();
+    if (!text) return;
+    try {
+      await fetch('/api/learn-save-correction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restaurantId: currentRestaurantId, text, scope, section })
+      });
+      removeCorrectionCard();
+      renderCorrectionMessage('Saved — Tico will use this going forward.');
+    } catch {
+      renderCorrectionMessage('Couldn’t save that just now — try again in a moment.');
+    }
+  });
+
+  transcript.appendChild(card);
+  activeCorrectionCard = card;
+  card.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+flagButton?.addEventListener('click', proposeCorrection);
+
 // Picker → Teach
 document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
   pill.addEventListener('click', () => {
     currentSection = pill.dataset.section;
     document.querySelectorAll('.learn-teach__section').forEach((section) => {
-      section.hidden = section.dataset.section !== currentSection;
+      section.hidden = section.dataset.section !== currentSection || section.dataset.restaurant !== currentRestaurantId;
     });
     showPhase('teach');
   });
@@ -185,9 +279,11 @@ document.querySelectorAll('.learn-picker .competency-pill').forEach((pill) => {
 // Back links, from either Teach or Drill
 document.querySelectorAll('.learn-back').forEach((link) => {
   link.addEventListener('click', () => {
-    if (!drill.hidden) flushSectionChat(currentSection, 'exited', { useBeacon: true });
+    if (!drill.hidden) flushSectionChat(currentRestaurantId, currentSection, 'exited', { useBeacon: true });
     currentSection = null;
     chatHistory = [];
+    activeCorrectionCard = null;
+    if (flagButton) flagButton.hidden = true;
     if (transcript) transcript.innerHTML = '';
     showPhase('picker');
   });
@@ -325,6 +421,7 @@ async function sendTurn(message) {
         userId: getOrCreateUserId(),
         message,
         chatHistory,
+        restaurantId: currentRestaurantId,
         section: currentSection
       })
     });
@@ -367,13 +464,14 @@ async function sendTurn(message) {
 
     chatHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
     chatHistory.push({ role: 'assistant', content: fullText, timestamp: new Date().toISOString() });
-    saveSectionState(currentSection, chatHistory, currentChatId);
+    saveSectionState(currentRestaurantId, currentSection, chatHistory, currentChatId);
+    if (flagButton) flagButton.hidden = false;
 
     if (learned) {
       showLearnedBanner();
-      markSectionLearnedLocally(currentSection);
-      applyLearnedBadges();
-      flushSectionChat(currentSection, 'learned', { useBeacon: false });
+      markSectionLearnedLocally(currentRestaurantId, currentSection);
+      applyLearnedBadges(currentRestaurantId);
+      flushSectionChat(currentRestaurantId, currentSection, 'learned', { useBeacon: false });
     }
   } finally {
     awaitingResponse = false;
@@ -384,7 +482,7 @@ async function sendTurn(message) {
 }
 
 function startDrill() {
-  const existing = loadSectionState(currentSection);
+  const existing = loadSectionState(currentRestaurantId, currentSection);
   transcript.innerHTML = '';
   if (existing) {
     currentChatId = existing.chatId;
@@ -397,6 +495,7 @@ function startDrill() {
       }
     });
     answerForm.hidden = false;
+    if (flagButton) flagButton.hidden = false;
   } else {
     currentChatId = generateChatId();
     chatHistory = [];
@@ -417,18 +516,25 @@ answerForm?.addEventListener('submit', (e) => {
   sendTurn(message);
 });
 
-// ─── Initial load: restore section + phase from the URL, if present, so
-// a reload doesn't bounce back to the picker. Nothing renders until this
-// runs — see learn.njk, all three phases start `hidden`.
-(function restoreFromUrl() {
+// ─── Initial load: resolve the current restaurant, filter the picker to
+// it, then restore section + phase from the URL, if present, so a reload
+// doesn't bounce back to the picker. Nothing renders until this runs —
+// see learn.njk, all three phases start `hidden`.
+(async function init() {
+  const fallbackId = document.body.dataset.firstRestaurantId;
+  currentRestaurantId = await resolveInitialRestaurantId(getOrCreateUserId(), fallbackId);
+  applyRestaurantFilter('.competency-group', currentRestaurantId);
+  applyRestaurantFilter('.competency-pill', currentRestaurantId);
+  applyLearnedBadges(currentRestaurantId);
+
   const params = new URLSearchParams(location.search);
   const section = params.get('section');
   const phase = params.get('phase');
 
-  if (section && sectionExists(section) && (phase === 'teach' || phase === 'drill')) {
+  if (section && sectionExists(currentRestaurantId, section) && (phase === 'teach' || phase === 'drill')) {
     currentSection = section;
     document.querySelectorAll('.learn-teach__section').forEach((el) => {
-      el.hidden = el.dataset.section !== currentSection;
+      el.hidden = el.dataset.section !== currentSection || el.dataset.restaurant !== currentRestaurantId;
     });
     showPhase(phase);
     if (phase === 'drill') startDrill();
@@ -437,3 +543,27 @@ answerForm?.addEventListener('submit', (e) => {
 
   showPhase('picker');
 })();
+
+// The nav switcher changes restaurant without reloading. If we're just
+// browsing the picker, re-filter it in place. If we're mid-teach/drill
+// for the old restaurant, that content no longer applies — flush it
+// like the back link does and drop back to the (now re-filtered) picker
+// rather than continuing to drill the wrong restaurant's section.
+window.addEventListener('tico:restaurant-changed', (e) => {
+  const previousRestaurantId = currentRestaurantId;
+  currentRestaurantId = e.detail.restaurantId;
+
+  applyRestaurantFilter('.competency-group', currentRestaurantId);
+  applyRestaurantFilter('.competency-pill', currentRestaurantId);
+  applyLearnedBadges(currentRestaurantId);
+
+  if (picker.hidden) {
+    if (!drill.hidden) flushSectionChat(previousRestaurantId, currentSection, 'exited', { useBeacon: false });
+    currentSection = null;
+    chatHistory = [];
+    activeCorrectionCard = null;
+    if (flagButton) flagButton.hidden = true;
+    if (transcript) transcript.innerHTML = '';
+    showPhase('picker');
+  }
+});

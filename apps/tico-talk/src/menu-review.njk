@@ -2,15 +2,16 @@
 layout: base.njk
 title: Menu Review — Tico
 permalink: /menu-review/
+pageScript: /assets/js/menu-restaurant-filter.js
 ---
 
 {% from "menu-categories.njk" import render as renderCategories %}
 
 <p class="page-title">Menu Review</p>
 
-{% for menu in menus %}
-<section class="menu-review__venue">
-  <h2 class="menu-review__venue-name">{{ menu.name }}</h2>
-  {{ renderCategories(menu.categories, true) }}
+{% for restaurant in restaurants %}
+<section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
+  <h2 class="menu-review__venue-name">{{ restaurant.name }}</h2>
+  {{ renderCategories(restaurant.food.concat(restaurant.drinks), true) }}
 </section>
 {% endfor %}

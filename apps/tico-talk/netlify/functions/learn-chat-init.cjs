@@ -1,10 +1,27 @@
-const menuData = require('../../src/_data/menus/margaritaville.json');
+const { getRestaurant } = require('./_services/db-restaurants.cjs');
+const { getRestaurantNotes } = require('./_services/db-restaurant-notes.cjs');
 
-function findSection(sectionName) {
-  return menuData.categories.find((c) => c.name === sectionName) || null;
+function findSection(restaurant, sectionName) {
+  return [...restaurant.food, ...restaurant.drinks].find((c) => c.name === sectionName) || null;
 }
 
-function buildSystemPrompt(section) {
+function buildSharedPrompt(restaurant, notes) {
+  const restaurantNotes = notes.filter((n) => n.scope === 'restaurant');
+  const notesBlock = restaurantNotes.length
+    ? restaurantNotes.map((n) => `- ${n.text}`).join('\n')
+    : '(none yet)';
+
+  return `You are Tico, a warm, experienced coworker helping a restaurant server-in-training drill their knowledge of the menu at ${restaurant.name}.
+
+The trainee is a server working the floor, not a host at the entrance. Every customer in this drill is already seated at a table, mid-visit. That means the trainee can and should take orders, make recommendations, and answer questions the way a server actually would. Never frame anything as out of scope for them because "that's the host's job" or "wait until they're seated," they're already seated.
+
+RESTAURANT NOTES for ${restaurant.name} (apply across every section, equally authoritative to the section's menu data below — these are staff-confirmed facts, not guesses):
+${notesBlock}
+
+Never use an em dash anywhere in your response, in either voice. Use a comma, period, or parentheses instead.`;
+}
+
+function buildSectionPrompt(restaurant, section, notes) {
   const trimmedItems = section.items.map((item) => {
     const trimmed = { name: item.name, description: item.description, price: item.price };
     if (item.tags && item.tags.length) trimmed.tags = item.tags;
@@ -12,9 +29,12 @@ function buildSystemPrompt(section) {
     return trimmed;
   });
 
-  return `You are Tico, a warm, experienced coworker helping a restaurant server-in-training drill their knowledge of one section of the menu: "${section.name}".
+  const sectionNotes = notes.filter((n) => n.scope === 'section' && n.section === section.name);
+  const sectionNotesBlock = sectionNotes.length
+    ? `\nADDITIONAL NOTES FOR THIS SECTION:\n${sectionNotes.map((n) => `- ${n.text}`).join('\n')}\n`
+    : '';
 
-The trainee is a server working the floor, not a host at the entrance. Every customer in this drill is already seated at a table, mid-visit. That means the trainee can and should take orders, make recommendations, and answer questions the way a server actually would. Never frame anything as out of scope for them because "that's the host's job" or "wait until they're seated," they're already seated.
+  return `Drilling section: "${section.name}" at ${restaurant.name}.
 
 Each round works like this: you ask ONE question as if you were an ordinary seated customer looking at this section (an ingredient, whether something's vegetarian/gluten-free, "what's your favorite," a comparison between two items, a portion-size question, or just placing an order). Real customers mostly ask ordinary things, never an unusual invented premise. The trainee answers. You then evaluate that specific answer, every round, not rarely: confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then ask your next question, continuing the drill.
 
@@ -34,15 +54,13 @@ GUEST: Oh got it. And what comes on top?
 
 Never put GUEST and TICO content on the same line, and never skip the marker on a new line.
 
-Never use an em dash anywhere in your response, in either voice. Use a comma, period, or parentheses instead.
-
-HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below. If something isn't in the data (a prep detail, an off-menu customization not noted in an item's own notes field), say so honestly ("worth checking with the kitchen") rather than inventing an answer.
+HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below, or facts listed in RESTAURANT NOTES or this section's additional notes. If something isn't in any of those, say so honestly ("worth checking with the kitchen") rather than inventing an answer.
 
 Once the trainee has answered enough questions about this section correctly, across however many customer interactions it takes, that you're genuinely confident they know it, call the mark_section_learned tool. Don't call it after just one correct answer, wait for real, repeated, demonstrated recall.
 
-SECTION DATA (${section.name} only):
+SECTION DATA (${section.name} at ${restaurant.name} only):
 ${JSON.stringify(trimmedItems, null, 2)}
-
+${sectionNotesBlock}
 Follow the TICO:/GUEST: format exactly, on every line. No markdown formatting, no code fences, no em dashes. Start the drill now with your first line.`;
 }
 
@@ -60,18 +78,25 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { section: sectionName } = JSON.parse(event.body || '{}');
+    const { restaurantId, section: sectionName } = JSON.parse(event.body || '{}');
+    if (!restaurantId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
+    }
     if (!sectionName) {
       return { statusCode: 400, body: JSON.stringify({ error: 'section is required' }) };
     }
 
-    const section = findSection(sectionName);
+    const restaurant = await getRestaurant(restaurantId);
+    const notes = await getRestaurantNotes(restaurantId);
+
+    const section = findSection(restaurant, sectionName);
     if (!section) {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown section: ${sectionName}` }) };
     }
 
     const systemMessages = [
-      { type: 'text', text: buildSystemPrompt(section), cache_control: { type: 'ephemeral' } }
+      { type: 'text', text: buildSharedPrompt(restaurant, notes), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: buildSectionPrompt(restaurant, section, notes), cache_control: { type: 'ephemeral' } }
     ];
 
     return {

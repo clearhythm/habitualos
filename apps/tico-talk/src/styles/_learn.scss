@@ -110,8 +110,118 @@
 
 .learn-input-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.2rem 0.4rem 0.3rem;
+}
+
+// Quiet toolbar icon button (ported from apps/dreamscape's
+// .chat-toolbar-btn — same pattern, this app's own copy) — the flag
+// button, hidden until there's an exchange worth flagging.
+.chat-toolbar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba($color-text, 0.25);
+  padding: 0.3rem;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  border-radius: 6px;
+  transition: color 0.2s;
+
+  &:hover { color: rgba($color-text, 0.65); }
+}
+
+// Ported from apps/dreamscape's [data-tooltip] utility.
+[data-tooltip] {
+  position: relative;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(6px);
+    color: #1a1a1a;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 100;
+  }
+
+  &:hover::after,
+  &:focus-visible::after { opacity: 1; }
+}
+
+// Correction card — appended inline in the transcript after the flag
+// button is used. Confirm/edit/reject, not a modal; a lightweight
+// interruption to the drill, not a context switch.
+.correction-card {
+  max-width: 680px;
+  margin: $space-md auto 0;
+  padding: $space-md;
+  background: $color-bg-surface;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+}
+
+.correction-card__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba($color-text, 0.5);
+  margin: 0 0 0.5rem;
+}
+
+.correction-card__text {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 3.5rem;
+  background: transparent;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  padding: $space-sm;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  color: $color-text;
+  margin-bottom: 0.5rem;
+}
+
+.correction-card__scope {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  margin: 0 0 0.75rem;
+}
+
+.correction-card__actions {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+}
+
+.correction-card__reject {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $color-text-muted;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  padding: 0.5rem 0.75rem;
+
+  &:hover { color: $color-text; }
+}
+
+.correction-card__status {
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  margin: 0.5rem 0 0;
 }
 
 .learn-send-btn {

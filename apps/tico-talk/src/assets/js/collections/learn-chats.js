@@ -3,8 +3,8 @@
  * Returns true if the browser accepted the request, false otherwise.
  * Use for pre-navigation saves (the 'exited' path — leaving the drill).
  */
-export function saveLearnChatBeacon({ chatId, userId, section, messages, action, conversationStart, conversationEnd }) {
-  const payload = JSON.stringify({ chatId, userId, section, messages, action, conversationStart, conversationEnd });
+export function saveLearnChatBeacon({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) {
+  const payload = JSON.stringify({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd });
   return navigator.sendBeacon('/api/learn-chat-save', new Blob([payload], { type: 'application/json' }));
 }
 
@@ -13,11 +13,11 @@ export function saveLearnChatBeacon({ chatId, userId, section, messages, action,
  * Use for saves where the tab is staying open ('learned', TTL-driven
  * 'abandoned' flush on load).
  */
-export async function saveLearnChat({ chatId, userId, section, messages, action, conversationStart, conversationEnd }) {
+export async function saveLearnChat({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) {
   const response = await fetch('/api/learn-chat-save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chatId, userId, section, messages, action, conversationStart, conversationEnd })
+    body: JSON.stringify({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd })
   });
   return response.json();
 }

@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, toolUse, section } = JSON.parse(event.body || '{}');
+    const { userId, toolUse, section, restaurantId } = JSON.parse(event.body || '{}');
     if (!toolUse || !toolUse.name) {
       return { statusCode: 400, body: JSON.stringify({ error: 'toolUse is required' }) };
     }
@@ -15,10 +15,13 @@ exports.handler = async (event) => {
       if (!userId) {
         return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
       }
+      if (!restaurantId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
+      }
       if (!section) {
         return { statusCode: 400, body: JSON.stringify({ error: 'section is required' }) };
       }
-      await markSectionLearned(userId, section);
+      await markSectionLearned(userId, restaurantId, section);
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },

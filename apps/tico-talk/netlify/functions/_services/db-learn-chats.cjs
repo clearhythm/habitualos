@@ -11,7 +11,7 @@
 // Schema:
 //   learn-chats/{chatId}
 //   {
-//     _chatId, _userId, section,
+//     _chatId, _userId, restaurantId, section,
 //     messages: [{role, content, timestamp}, ...],
 //     action: 'learned' | 'exited' | 'abandoned',
 //     conversationStart: Firestore timestamp,
@@ -35,7 +35,7 @@ function toTimestamp(iso) {
  * duplicate.
  * @returns {Promise<{chatId: string}>}
  */
-exports.saveLearnChat = async ({ chatId, userId, section, messages, action, conversationStart, conversationEnd }) => {
+exports.saveLearnChat = async ({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) => {
   const id = chatId || uniqueId('lc');
   await create({
     collection: COLLECTION,
@@ -43,6 +43,7 @@ exports.saveLearnChat = async ({ chatId, userId, section, messages, action, conv
     data: {
       _chatId: id,
       _userId: userId,
+      restaurantId,
       section,
       messages,
       action,
