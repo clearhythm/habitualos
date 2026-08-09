@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: Food — Tico
-permalink: /menu/food/
+title: Menu — Tico
+permalink: /menu/
 pageScript: /assets/js/menu-restaurant-filter.js
 ---
 
@@ -10,7 +10,7 @@ pageScript: /assets/js/menu-restaurant-filter.js
 
 {% for restaurant in restaurants %}
 <section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
-  {% call venueHeader(restaurant.name, "Food", "Drinks", "/menu/drinks/") %}
+  {% call venueHeader(restaurant.name, "Food", true) %}
   <a class="page-header__action" href="/learn/">
     Train
     <svg viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
@@ -22,6 +22,11 @@ pageScript: /assets/js/menu-restaurant-filter.js
     </svg>
   </a>
   {% endcall %}
-  {{ renderCategories(restaurant.food, false) }}
+  <div class="menu-content-panel" data-content-type="food">
+    {{ renderCategories(restaurant.food, false) }}
+  </div>
+  <div class="menu-content-panel" data-content-type="drink" hidden>
+    {{ renderCategories(restaurant.drinks, false) }}
+  </div>
 </section>
 {% endfor %}

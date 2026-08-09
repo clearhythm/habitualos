@@ -173,6 +173,16 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 
         &:hover { color: $color-green; }
       }
+
+      // Competencies without a real page yet — same size/position as the
+      // real links around them, just muted and inert. Specificity has to
+      // match the plain `a`/`a:hover` rules above (same ul/li/a nesting
+      // depth) to actually win, not just add a class on top of it.
+      a.sidemenu-disabled,
+      a.sidemenu-disabled:hover {
+        color: rgba($color-text, 0.35);
+        pointer-events: none;
+      }
     }
   }
 }
@@ -205,15 +215,10 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 .sidemenu-venue__chevron {
   font-size: 0.7rem;
   color: rgba($color-text, 0.4);
-  transition: transform 0.2s ease;
 }
 
 .sidemenu-venue-switcher {
   position: relative;
-
-  &.is-open .sidemenu-venue__chevron {
-    transform: rotate(180deg);
-  }
 }
 
 // Lightweight inline popover — two restaurants today, not a heavy

@@ -1,26 +1,27 @@
-{# Shared by /menu/food/, /menu/drinks/, and /learn/'s teach screen —
-   restaurant name (centered) + a title/action row. The action itself (a
-   Train link, or the teach screen's "I'm Ready" button) is passed in via
-   {% call %} so the structure stays identical everywhere even though
-   what's clickable differs by context.
+{# Shared by /menu/ and /learn/'s teach screen — restaurant name
+   (centered) + a title/action row. The action itself (a Train link, or
+   the teach screen's "I'm Ready" button) is passed in via {% call %} so
+   the structure stays identical everywhere even though what's clickable
+   differs by context.
 
-   altTitle/altHref are optional — when given (food.njk/drinks.njk), the
-   title itself becomes a small dropdown to switch between Food and
-   Drinks in place of the sidemenu ever listing them separately. Omitted
-   on the teach screen — mid-drill isn't the place to jump to the other
-   content type. #}
-{% macro venueHeader(restaurantName, title, altTitle=None, altHref=None) %}
+   showToggle renders the title as an in-page Food/Drinks dropdown
+   instead of static text — both options always present, content-type
+   filtered client-side (see menu-restaurant-filter.js), same mechanism
+   as the sidemenu's restaurant switcher (no page reload). Omitted on
+   the teach screen — mid-drill isn't the place to jump to the other
+   content type, so it just gets the plain static title there. #}
+{% macro venueHeader(restaurantName, title, showToggle=false) %}
 <p class="menu-review__venue-name">{{ restaurantName }}</p>
 <div class="page-header">
-  {% if altTitle and altHref %}
+  {% if showToggle %}
   <div class="page-title-switcher">
     <button class="page-title page-title-switcher__trigger" type="button" aria-expanded="false" aria-label="Switch between Food and Drinks">
-      {{ title }}
+      <span class="page-title-switcher__label">{{ title }}</span>
       <span class="page-title-switcher__chevron" aria-hidden="true">▾</span>
     </button>
     <div class="content-type-switcher" hidden>
-      <span class="content-type-switcher__option is-current">{{ title }}</span>
-      <a class="content-type-switcher__option" href="{{ altHref }}">{{ altTitle }}</a>
+      <button class="content-type-switcher__option" type="button" data-content-type="food">Food</button>
+      <button class="content-type-switcher__option" type="button" data-content-type="drink">Drinks</button>
     </div>
   </div>
   {% else %}

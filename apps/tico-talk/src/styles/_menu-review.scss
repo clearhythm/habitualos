@@ -37,10 +37,6 @@
 // font-size/weight instead of the switcher's smaller label style.
 .page-title-switcher {
   position: relative;
-
-  &.is-open .page-title-switcher__chevron {
-    transform: rotate(180deg);
-  }
 }
 
 .page-title-switcher__trigger {
@@ -56,9 +52,10 @@
 }
 
 .page-title-switcher__chevron {
-  font-size: 0.9rem;
-  color: rgba($color-text, 0.4);
-  transition: transform 0.2s ease;
+  // Proportionate to .page-title (2rem) rather than the smaller
+  // .sidemenu-venue label context this pattern is borrowed from.
+  font-size: 1.75rem;
+  color: $color-green;
 }
 
 .content-type-switcher {

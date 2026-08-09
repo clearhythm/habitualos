@@ -47,3 +47,16 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Food/Drinks merged into one /menu/ page with an in-page toggle — these
+# stay as permanent routes rather than 404ing for anyone who bookmarked
+# or typed the old nested URLs.
+[[redirects]]
+  from = "/menu/food/"
+  to = "/menu/"
+  status = 301
+
+[[redirects]]
+  from = "/menu/drinks/"
+  to = "/menu/"
+  status = 301
