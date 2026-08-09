@@ -48,19 +48,24 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# /menu/food/ and /menu/drinks/ are real, independently-visitable routes
-# but not separate pages — status 200 is a silent rewrite (unlike a 301,
-# the browser's URL bar keeps showing the route actually requested), so
-# they serve the exact same /menu/ file with no duplication. The page
-# script reads location.pathname to pick the right default content type
-# on a direct visit; the in-page toggle after that is pure client-side
-# filtering, no navigation.
+# /menu/food/, /menu/drinks/, and /menu/food/{category} (etc.) are real,
+# independently-visitable routes but not separate pages — status 200 is a
+# silent rewrite (unlike a 301, the browser's URL bar keeps showing the
+# route actually requested), so they all serve the exact same /menu/ file
+# with no duplication. The wildcard covers both the bare content-type
+# path and any category segment after it. The page script reads
+# location.pathname to pick the right content type (and, if a category
+# segment is present, jump straight to that category's teach screen) on
+# a direct visit; navigation after that is pure client-side filtering +
+# pushState, no further server round-trip.
 [[redirects]]
-  from = "/menu/food/"
+  from = "/menu/food/*"
   to = "/menu/"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/menu/drinks/"
+  from = "/menu/drinks/*"
   to = "/menu/"
   status = 200
+  force = true

@@ -1,23 +1,31 @@
-{# Shared by /menu/ and /learn/'s teach screen — restaurant name
-   (centered) + a title/action row. The action itself (a Train link, or
-   the teach screen's "I'm Ready" button) is passed in via {% call %} so
-   the structure stays identical everywhere even though what's clickable
-   differs by context.
+{# Used by all three /menu/ phases (browse, teach, drill) — restaurant
+   name (centered) + a title/action row. The action itself (Train, "I'm
+   Ready", or drill's "Back to Food") is passed in via {% call %} so the
+   structure stays identical across every phase even though what's
+   clickable differs by context — this is the one shared wrapper that
+   replaced the old separate /learn/ page and its own divergent layout.
 
    showToggle renders the title as an in-page Food/Drinks dropdown
    instead of static text — both options always present, content-type
    filtered client-side (see menu-restaurant-filter.js), same mechanism
    as the sidemenu's restaurant switcher (no page reload, one file, no
-   content duplication). /menu/food/ and /menu/drinks/ are real,
-   independently-visitable routes via Netlify rewrites (netlify.toml,
-   status 200 — not a redirect, so the URL bar keeps showing the route
-   the visitor actually requested) that silently serve this same file;
-   the page script reads the real URL on load to pick the right initial
-   content type on a direct visit. Omitted on the teach screen — mid-
-   drill isn't the place to jump to the other content type, so it just
-   gets the plain static title there. #}
-{% macro venueHeader(restaurantName, title, showToggle=false) %}
-<p class="menu-review__venue-name">{{ restaurantName }}</p>
+   content duplication). /menu/food/, /menu/drinks/, and
+   /menu/food/{category} (etc.) are real, independently-visitable routes
+   via Netlify rewrites (netlify.toml, status 200 — not a redirect, so
+   the URL bar keeps showing the route the visitor actually requested)
+   that silently serve this same file; the page script reads the real
+   URL on load to pick the right content type (and category, if present)
+   on a direct visit. showToggle is omitted on teach/drill — mid-flow
+   isn't the place to jump to the other content type, so those phases get
+   a plain static (or, for drill, JS-filled — see nameId/titleId) title.
+
+   nameId/titleId: drill is one shared dynamic block (not baked per
+   category, since chat transcripts are inherently dynamic), so its
+   restaurant name + Food/Drinks title can't be server-rendered per
+   category like teach's can — these let the page script target and
+   fill them in once a drill starts. #}
+{% macro venueHeader(restaurantName, title, showToggle=false, nameId=false, titleId=false) %}
+<p class="menu-review__venue-name"{% if nameId %} id="{{ nameId }}"{% endif %}>{{ restaurantName }}</p>
 <div class="page-header">
   {% if showToggle %}
   <div class="page-title-switcher">
@@ -31,7 +39,7 @@
     </div>
   </div>
   {% else %}
-  <p class="page-title">{{ title }}</p>
+  <p class="page-title"{% if titleId %} id="{{ titleId }}"{% endif %}>{{ title }}</p>
   {% endif %}
   {{ caller() }}
 </div>

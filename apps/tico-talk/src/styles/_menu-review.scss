@@ -10,11 +10,14 @@
   margin-bottom: $space-lg;
 }
 
-// On /food/ and /drinks/, the venue name sits above a .page-header
-// instead of directly above the category list — restore the larger gap
-// that used to separate the page title from the venue name, now that
-// their order (and which element's margin drives which gap) is swapped.
-.menu-review__venue:has(.page-header) .menu-review__venue-name {
+// venue-header.njk always renders the venue name immediately followed by
+// a .page-header sibling (browse, teach, and drill all use this same
+// macro) — keying off that sibling relationship instead of an ancestor
+// wrapper class means every phase gets the same spacing/centering
+// automatically, rather than each wrapper needing its own copy of this
+// rule (see the bug this replaced: teach/drill silently fell back to the
+// plain 1.5rem margin below because they aren't .menu-review__venue).
+.menu-review__venue-name:has(+ .page-header) {
   margin-bottom: $space-xl;
   text-align: center;
 }
@@ -98,12 +101,18 @@
 }
 
 // A colored link, not a button — this is a helpful shortcut off the
-// reference page, not the primary action of the page.
+// reference page, not the primary action of the page. Also used on
+// <button> elements (teach's "I'm Ready", drill's "Back to Food") for
+// visual consistency across all three phases — background/font/cursor
+// reset here since those properties have no effect on <a> (nothing to
+// override) but default to the browser's native button chrome otherwise.
 .page-header__action {
   display: inline-flex;
   align-items: center;
   gap: $space-xs;
+  background: none;
   color: $color-green;
+  font-family: inherit;
   font-weight: 600;
   font-size: $font-size-lg;
   text-decoration: none;
@@ -112,6 +121,7 @@
   margin: -0.4rem -0.75rem;
   border: 1px solid transparent;
   border-radius: 0.75rem;
+  cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
 
   svg {
@@ -152,12 +162,31 @@
 }
 
 .menu-category__name {
+  display: block;
+  width: 100%;
   font-size: $font-size-lg;
   font-weight: 600;
   color: $color-green;
   border-bottom: 1px solid $color-border;
   padding-bottom: $space-xs;
   margin-bottom: $space-sm;
+}
+
+// /menu/'s category headings are clickable (jump to that category's teach
+// screen) — /menu-review/'s aren't, so this only applies where the
+// clickable=true macro param renders a <button> instead of a plain <h3>.
+button.menu-category__name--link {
+  background: none;
+  border: none;
+  border-bottom: 1px solid $color-border;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-green-dark;
+    border-bottom-color: $color-green;
+  }
 }
 
 .menu-category__items {

@@ -1,8 +1,12 @@
-{% macro render(categories, highlightNotes=false) %}
+{% macro render(categories, highlightNotes=false, clickable=false) %}
 <div class="menu-review__categories">
   {% for category in categories %}
   <div class="menu-category">
+    {% if clickable %}
+    <button type="button" class="menu-category__name menu-category__name--link" data-section="{{ category.name }}">{{ category.name }}</button>
+    {% else %}
     <h3 class="menu-category__name">{{ category.name }}</h3>
+    {% endif %}
     <ul class="menu-category__items">
       {% for item in category.items %}
       <li class="menu-item">

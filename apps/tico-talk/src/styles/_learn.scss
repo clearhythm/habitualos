@@ -1,87 +1,109 @@
 @use 'variables' as *;
-@use 'layout' as l;
 
-// /learn/ — text-based teach-then-drill practice. Three phases toggled by
-// JS (picker / teach / drill), reuses .competency-pill(s)/.transcript/
-// .tico-aside from elsewhere rather than duplicating those styles.
-.learn-screen {
-  display: flex;
-  flex-direction: column;
-  gap: $space-lg;
-}
-
-.learn-picker {
-  display: flex;
-  flex-direction: column;
-  gap: $space-lg;
-}
-
-// Restaurant name heading — same style as the Food/Drinks pages'
-// venue-name for visual consistency between views, centered the same
-// way theirs is when paired with a page-level heading (see
-// _menu-review.scss's :has(.page-header) rule; scoped here rather than
-// added to the shared base rule since /menu-review/ intentionally stays
-// left-aligned for its dense scanning layout).
-.learn-teach__section .menu-review__venue-name,
-.learn-drill .menu-review__venue-name {
+// /menu/ — browse and detail (one category, with a Review/Practice
+// toggle) are the two phases of one page (menu.njk), toggled by JS. The
+// detail header is deliberately its own simple thing (restaurant name,
+// then a "Food › Starters" title with the type clickable, then the
+// toggle) rather than reusing browse's venue-header.njk macro — a
+// Food/Drinks dropdown and a boxed action button read as reference-page
+// affordances that made sense on browse but were noise once you're
+// actually reading/chatting about one category. Keeping the restaurant
+// name as the first line (no breadcrumb line above it) matches browse's
+// layout exactly, so it doesn't shift position between the two.
+.menu-detail__header {
   text-align: center;
-}
-
-.learn-teach__intro {
-  font-family: $font-family-accent;
-  font-style: italic;
-  color: $color-text-muted;
   margin-bottom: $space-lg;
 }
 
-.learn-back {
-  display: inline-block;
+.menu-detail__title {
   margin-bottom: $space-md;
+}
+
+// The "Food" segment of "Food › Starters" — clickable, back to browse.
+.menu-detail__crumb {
+  color: $color-text-muted;
   cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover {
+    color: $color-green;
+  }
 }
 
-// Inside the drill's fixed page-canvas, the back link sits above the
-// centered chat column — give it the same max-width/padding box as
-// .learn-transcript and .learn-input-row so its left edge lines up with
-// the bubbles and textarea below instead of hugging the viewport edge.
-.learn-drill > .learn-back {
-  display: block;
-  width: 100%;
-  max-width: 680px;
-  margin: 0 auto;
-  flex-shrink: 0;
-  padding: $space-md $space-lg 0;
+.menu-detail__crumb-sep {
+  color: $color-text-muted;
+  margin: 0 0.35em;
 }
 
+.menu-detail__toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: $color-bg-muted;
+  border-radius: 999px;
+}
+
+.menu-detail__mode-btn {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $color-text-muted;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(.is-active) {
+    color: $color-text;
+  }
+
+  &.is-active {
+    background: $color-bg;
+    color: $color-green;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+}
+
+// Detail's practice mode (#menu-practice) is normal document flow, same
+// as the header above it and review mode — that's what keeps the
+// category header genuinely shared across Review and Practice instead of
+// two different layout systems fighting over the same screen. Only the
+// composer is pinned (.learn-input-shell, position: fixed); scrolling
+// itself is the whole page's, driven by one direct
+// window.scrollTo(0, document.documentElement.scrollHeight) call after
+// every render (see scrollTranscriptToBottom in
+// menu-restaurant-filter.js) rather than per-element scrollIntoView(),
+// which is what caused streaming to jump around and rehydrated history
+// to stop short of the true bottom.
 .learn-drill {
-  @include l.page-canvas;
-  display: flex;
-  flex-direction: column;
+  // Reserves room so the fixed composer never overlaps the last
+  // transcript line — must stay comfortably larger than the composer's
+  // real rendered height (~130px) since window.scrollTo's "bottom" is
+  // measured including this padding.
+  padding-bottom: 9rem;
 }
 
-// Full-width scroll container — scrollbar sits at the viewport edge.
-.learn-transcript-scroll {
-  flex: 1;
-  min-height: 0; // required for flex overflow to work correctly
-  overflow-y: scroll;
-}
-
-// Centered content column inside the scroll container.
 .learn-transcript {
   max-width: 680px;
   margin: 0 auto;
-  padding: $space-lg;
+  padding: $space-lg 0;
 }
 
 .learn-input-shell {
-  flex-shrink: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
   background: $color-bg;
 }
 
 .learn-input-row {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0 $space-lg $space-lg;
+  padding: $space-sm $space-lg;
 }
 
 .learn-input-wrap {
