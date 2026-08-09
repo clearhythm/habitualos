@@ -39,7 +39,16 @@ pageScript: /assets/js/learn.js
       {% for category in restaurant.food %}
       <div class="learn-teach__section" data-restaurant="{{ restaurant.id }}" data-section="{{ category.name }}" hidden>
         {% call venueHeader(restaurant.name, "Food") %}
-        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">I'm Ready</button>
+        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">
+          I'm Ready
+          <svg viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M5 14a7 7 0 0 1 14 0"/>
+            <line x1="12" y1="6.5" x2="12" y2="4.5"/>
+            <circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/>
+            <path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/>
+            <ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>
+          </svg>
+        </button>
         {% endcall %}
         <p class="learn-teach__intro">Review the content below and click "I'm Ready" once you're ready to practice.</p>
         {{ renderCategories([category], false) }}
@@ -48,7 +57,16 @@ pageScript: /assets/js/learn.js
       {% for category in restaurant.drinks %}
       <div class="learn-teach__section" data-restaurant="{{ restaurant.id }}" data-section="{{ category.name }}" hidden>
         {% call venueHeader(restaurant.name, "Drinks") %}
-        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">I'm Ready</button>
+        <button class="page-header__action learn-start-drill" data-section="{{ category.name }}">
+          I'm Ready
+          <svg viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M5 14a7 7 0 0 1 14 0"/>
+            <line x1="12" y1="6.5" x2="12" y2="4.5"/>
+            <circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/>
+            <path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/>
+            <ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>
+          </svg>
+        </button>
         {% endcall %}
         <p class="learn-teach__intro">Review the content below and click "I'm Ready" once you're ready to practice.</p>
         {{ renderCategories([category], false) }}

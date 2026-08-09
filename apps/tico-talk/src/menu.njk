@@ -22,7 +22,7 @@ pageScript: /assets/js/menu-restaurant-filter.js
     </svg>
   </a>
   {% endcall %}
-  <div class="menu-content-panel" data-content-type="food">
+  <div class="menu-content-panel" data-content-type="food" hidden>
     {{ renderCategories(restaurant.food, false) }}
   </div>
   <div class="menu-content-panel" data-content-type="drink" hidden>

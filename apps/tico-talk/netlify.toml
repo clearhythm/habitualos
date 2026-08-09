@@ -48,15 +48,19 @@
   to = "/.netlify/functions/:splat"
   status = 200
 
-# Food/Drinks merged into one /menu/ page with an in-page toggle — these
-# stay as permanent routes rather than 404ing for anyone who bookmarked
-# or typed the old nested URLs.
+# /menu/food/ and /menu/drinks/ are real, independently-visitable routes
+# but not separate pages — status 200 is a silent rewrite (unlike a 301,
+# the browser's URL bar keeps showing the route actually requested), so
+# they serve the exact same /menu/ file with no duplication. The page
+# script reads location.pathname to pick the right default content type
+# on a direct visit; the in-page toggle after that is pure client-side
+# filtering, no navigation.
 [[redirects]]
   from = "/menu/food/"
   to = "/menu/"
-  status = 301
+  status = 200
 
 [[redirects]]
   from = "/menu/drinks/"
   to = "/menu/"
-  status = 301
+  status = 200

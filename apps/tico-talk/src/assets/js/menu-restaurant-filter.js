@@ -8,21 +8,32 @@
 // app bakes menu content at build time on purpose, to avoid a live
 // fetch path duplicating a source of truth that already exists) and a
 // "Train" link (menu-review has neither): rather than dropping into the
-// picker, Train jumps straight to the first section this restaurant
-// hasn't learned yet — the categories on the page, food then drinks, in
-// their real order, cross-referenced against the same learned-section
-// tracking the picker itself uses. Falls back to the first category if
-// everything's already learned, so it's never a dead link. Lands on the
-// teach phase, not drill — skipping straight into cold Q&A would bypass
-// the "study the section first" step the app's own two-phase design
-// depends on (see docs/DESIGN.md's Menu & Off-Menu mechanic).
+// picker, Train jumps straight to the first section in the currently
+// selected content type (Food or Drinks) this restaurant hasn't learned
+// yet, in real menu order. Falls back to the first category in that
+// type if everything's already learned, so it's never a dead link.
+// Deliberately doesn't cross over into the other content type — jumping
+// from Drinks into Food felt jarring in practice, even though the
+// underlying data would support it (see learn.js's Train scoping).
+// Lands on the teach phase, not drill — skipping straight into cold Q&A
+// would bypass the "study the section first" step the app's own
+// two-phase design depends on (see docs/DESIGN.md's Menu & Off-Menu
+// mechanic).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
 import { getLearnedSections } from './learned-sections.js';
 
 const CONTENT_TYPE_KEY = 'tico-current-content-type';
 
+// /menu/food/ and /menu/drinks/ are real routes (silently rewritten to
+// this same file by netlify.toml, status 200 — not a redirect, so the
+// URL bar still shows exactly what was requested). A direct visit to
+// one of those should show that type regardless of what's in
+// localStorage from a previous session; bare /menu/ falls back to
+// localStorage (defaulting to food) since it has no type of its own.
 function getCurrentContentType() {
+  if (location.pathname.startsWith('/menu/drinks')) return 'drink';
+  if (location.pathname.startsWith('/menu/food')) return 'food';
   try {
     return localStorage.getItem(CONTENT_TYPE_KEY) || 'food';
   } catch {
@@ -52,12 +63,13 @@ function applyContentTypeFilter(contentType) {
   });
 }
 
-function updateTrainLink(restaurantId) {
+function updateTrainLink(restaurantId, contentType) {
   const section = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   const trainLink = section?.querySelector('.page-header__action');
   if (!trainLink) return;
 
-  const categoryNames = Array.from(section.querySelectorAll('.menu-category__name')).map((el) => el.textContent.trim());
+  const panel = section.querySelector(`.menu-content-panel[data-content-type="${contentType}"]`);
+  const categoryNames = Array.from(panel?.querySelectorAll('.menu-category__name') || []).map((el) => el.textContent.trim());
   if (!categoryNames.length) return;
 
   const learned = getLearnedSections(restaurantId);
@@ -65,20 +77,23 @@ function updateTrainLink(restaurantId) {
   trainLink.href = `/learn/?section=${encodeURIComponent(target)}&phase=teach`;
 }
 
+let currentRestaurantId = null;
+
 (async function () {
   const fallbackId = document.body.dataset.firstRestaurantId;
-  const currentId = await resolveInitialRestaurantId(getOrCreateUserId(), fallbackId);
-  applyRestaurantFilter('.menu-review__venue', currentId);
+  currentRestaurantId = await resolveInitialRestaurantId(getOrCreateUserId(), fallbackId);
+  applyRestaurantFilter('.menu-review__venue', currentRestaurantId);
   applyContentTypeFilter(getCurrentContentType());
-  updateTrainLink(currentId);
+  updateTrainLink(currentRestaurantId, getCurrentContentType());
 })();
 
 // The nav switcher changes restaurant without reloading — re-filter and
 // recompute the Train target in place when that happens while this page
 // is open.
 window.addEventListener('tico:restaurant-changed', (e) => {
-  applyRestaurantFilter('.menu-review__venue', e.detail.restaurantId);
-  updateTrainLink(e.detail.restaurantId);
+  currentRestaurantId = e.detail.restaurantId;
+  applyRestaurantFilter('.menu-review__venue', currentRestaurantId);
+  updateTrainLink(currentRestaurantId, getCurrentContentType());
 });
 
 // ─── In-page Food/Drinks toggle ──────────────────────────────────────────
@@ -103,6 +118,7 @@ document.addEventListener('click', (e) => {
     const contentType = option.dataset.contentType;
     setCurrentContentType(contentType);
     applyContentTypeFilter(contentType);
+    if (currentRestaurantId) updateTrainLink(currentRestaurantId, contentType);
     if (openSwitcher) closeSwitcher(openSwitcher);
     return;
   }

@@ -7,9 +7,15 @@
    showToggle renders the title as an in-page Food/Drinks dropdown
    instead of static text — both options always present, content-type
    filtered client-side (see menu-restaurant-filter.js), same mechanism
-   as the sidemenu's restaurant switcher (no page reload). Omitted on
-   the teach screen — mid-drill isn't the place to jump to the other
-   content type, so it just gets the plain static title there. #}
+   as the sidemenu's restaurant switcher (no page reload, one file, no
+   content duplication). /menu/food/ and /menu/drinks/ are real,
+   independently-visitable routes via Netlify rewrites (netlify.toml,
+   status 200 — not a redirect, so the URL bar keeps showing the route
+   the visitor actually requested) that silently serve this same file;
+   the page script reads the real URL on load to pick the right initial
+   content type on a direct visit. Omitted on the teach screen — mid-
+   drill isn't the place to jump to the other content type, so it just
+   gets the plain static title there. #}
 {% macro venueHeader(restaurantName, title, showToggle=false) %}
 <p class="menu-review__venue-name">{{ restaurantName }}</p>
 <div class="page-header">
