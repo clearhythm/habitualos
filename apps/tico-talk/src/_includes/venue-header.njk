@@ -1,12 +1,31 @@
-{# Shared by /food/, /drinks/, and /learn/'s teach screen — restaurant
-   name (centered) + a title/action row. The action itself (a Train
-   link, or a phase-specific button) is passed in via {% call %} so the
-   structure stays identical everywhere even though what's clickable
-   differs by context. #}
-{% macro venueHeader(restaurantName, title) %}
+{# Shared by /menu/food/, /menu/drinks/, and /learn/'s teach screen —
+   restaurant name (centered) + a title/action row. The action itself (a
+   Train link, or the teach screen's "I'm Ready" button) is passed in via
+   {% call %} so the structure stays identical everywhere even though
+   what's clickable differs by context.
+
+   altTitle/altHref are optional — when given (food.njk/drinks.njk), the
+   title itself becomes a small dropdown to switch between Food and
+   Drinks in place of the sidemenu ever listing them separately. Omitted
+   on the teach screen — mid-drill isn't the place to jump to the other
+   content type. #}
+{% macro venueHeader(restaurantName, title, altTitle=None, altHref=None) %}
 <p class="menu-review__venue-name">{{ restaurantName }}</p>
 <div class="page-header">
+  {% if altTitle and altHref %}
+  <div class="page-title-switcher">
+    <button class="page-title page-title-switcher__trigger" type="button" aria-expanded="false" aria-label="Switch between Food and Drinks">
+      {{ title }}
+      <span class="page-title-switcher__chevron" aria-hidden="true">▾</span>
+    </button>
+    <div class="content-type-switcher" hidden>
+      <span class="content-type-switcher__option is-current">{{ title }}</span>
+      <a class="content-type-switcher__option" href="{{ altHref }}">{{ altTitle }}</a>
+    </div>
+  </div>
+  {% else %}
   <p class="page-title">{{ title }}</p>
+  {% endif %}
   {{ caller() }}
 </div>
 {% endmacro %}

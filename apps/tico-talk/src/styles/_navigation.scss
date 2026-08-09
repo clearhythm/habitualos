@@ -177,11 +177,8 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   }
 }
 
-// Ambient group label — quiet identity anchor above a group of links.
-// Shared by the venue label ("Margaritaville Capitola") and the account
-// label ("My Account") so both groups read consistently.
-.sidemenu-venue,
-.sidemenu-account__label {
+// Ambient identity anchor above the venue name.
+.sidemenu-venue {
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
@@ -258,20 +255,6 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   }
 }
 
-// Disabled "coming soon" competency rows in My Training — same visual
-// register as the real links below/above them, just muted and inert.
-.sidemenu-account__soon {
-  font-size: 1.5rem;
-  color: rgba($color-text, 0.35);
-
-  em {
-    font-style: normal;
-    font-size: 0.9rem;
-    vertical-align: middle;
-    margin-left: 0.35rem;
-  }
-}
-
 // Right side — click-to-close overlay, covering the rest of the viewport
 // behind the panel. Only exists on desktop; on mobile .sidemenu-left
 // already fills the screen so there's no "behind" area to click.
@@ -297,23 +280,6 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
 
 .sidemenu-open .sidemenu-overlay {
   opacity: 1;
-}
-
-// Account group — a second labeled section directly below the restaurant
-// group, in normal flow (not pinned to the bottom).
-.sidemenu-account {
-  display: flex;
-  flex-direction: column;
-  gap: $space-sm;
-
-  a {
-    font-size: 1.5rem;
-    text-decoration: none;
-    color: rgba($color-text, 0.75);
-    transition: color 0.2s;
-
-    &:hover { color: $color-green; }
-  }
 }
 
 // Footer block — the only thing actually pinned to the bottom of the

@@ -31,6 +31,75 @@
   }
 }
 
+// In-page Food/Drinks toggle — the title itself becomes the trigger,
+// mirroring the sidemenu's restaurant switcher (.sidemenu-venue /
+// .restaurant-switcher) exactly, just reusing .page-title's own
+// font-size/weight instead of the switcher's smaller label style.
+.page-title-switcher {
+  position: relative;
+
+  &.is-open .page-title-switcher__chevron {
+    transform: rotate(180deg);
+  }
+}
+
+.page-title-switcher__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.page-title-switcher__chevron {
+  font-size: 0.9rem;
+  color: rgba($color-text, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.content-type-switcher {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  min-width: 140px;
+  margin-top: 0.25rem;
+  padding: 0.4rem;
+  background: $color-bg-surface;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-type-switcher__option {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  background: none;
+  text-align: left;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 1rem;
+  color: rgba($color-text, 0.85);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba($color-text, 0.06); }
+
+  &.is-current {
+    color: $color-green;
+    font-weight: 600;
+    cursor: default;
+  }
+}
+
 // A colored link, not a button — this is a helpful shortcut off the
 // reference page, not the primary action of the page.
 .page-header__action {
