@@ -9,7 +9,10 @@
 // visible on the page (food-only or drinks-only, whichever page this is)
 // in their real order, cross-referenced against the same learned-section
 // tracking the picker itself uses. Falls back to the first category if
-// everything's already learned, so it's never a dead link.
+// everything's already learned, so it's never a dead link. Lands on the
+// teach phase, not drill — skipping straight into cold Q&A would bypass
+// the "study the section first" step the app's own two-phase design
+// depends on (see docs/DESIGN.md's Menu & Off-Menu mechanic).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
 import { getLearnedSections } from './learned-sections.js';
@@ -24,7 +27,7 @@ function updateTrainLink(restaurantId) {
 
   const learned = getLearnedSections(restaurantId);
   const target = categoryNames.find((name) => !learned[name]) || categoryNames[0];
-  trainLink.href = `/learn/?section=${encodeURIComponent(target)}&phase=drill`;
+  trainLink.href = `/learn/?section=${encodeURIComponent(target)}&phase=teach`;
 }
 
 (async function () {
