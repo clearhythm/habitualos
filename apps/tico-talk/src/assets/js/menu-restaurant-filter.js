@@ -11,12 +11,13 @@
 // phase, then a teach/drill split with "I'm Ready"/"Back to X" verbs;
 // both are gone in favor of this Review/Practice framing.
 //
-// Every restaurant's content and every category's detail block are baked
-// into the page at build time (same pattern as before) and shown/hidden
-// here — no live fetch path duplicating a source of truth that already
-// exists. The chat transcript itself is inherently dynamic and lives in
-// one shared shell (#menu-practice) rather than being duplicated per
-// category.
+// Menu *content* (categories + items) is fetched on demand and cached in
+// localStorage (see collections/restaurant-menus.js) rather than baked
+// into the page at build time for every restaurant — only the current
+// restaurant's data is ever in memory or the DOM. The restaurant
+// switcher itself (just names) stays build-time-baked; it's tiny. The
+// chat transcript is inherently dynamic too and lives in one shared
+// shell (#menu-practice) rather than being duplicated per category.
 //
 // URL scheme: /menu/food/, /menu/drinks/ (browse) and
 // /menu/food/{category}, /menu/drinks/{category} (detail) are real
@@ -28,6 +29,8 @@ import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
 import { getLearnedSections, markSectionLearnedLocally } from './learned-sections.js';
 import { saveLearnChatBeacon, saveLearnChat } from './collections/learn-chats.js';
+import { getRestaurantMenu } from './collections/restaurant-menus.js';
+import { log } from './utils/log.js';
 
 const CONTENT_TYPE_KEY = 'tico-current-content-type';
 
@@ -86,16 +89,18 @@ function setCurrentContentType(type) {
   try { localStorage.setItem(CONTENT_TYPE_KEY, type); } catch {}
 }
 
-// Finds the exact (unslugified) category name a URL's category segment
-// refers to, scoped to the current restaurant + content type — detail
-// blocks are matched everywhere else by exact name (data-section,
-// getLearnedSections), so this resolves the slug back to that instead of
-// introducing a second, stored slug<->name mapping.
-function findSectionBySlug(restaurantId, contentType, slug) {
-  const match = Array.from(document.querySelectorAll('.menu-detail')).find(
-    (el) => el.dataset.restaurant === restaurantId && el.dataset.contentType === contentType && slugify(el.dataset.section) === slug
-  );
-  return match?.dataset.section || null;
+function categoriesFor(contentType) {
+  return currentMenuData?.[contentType === 'drink' ? 'drinks' : 'food'] || [];
+}
+
+// Finds the exact category name a URL's category segment refers to,
+// scoped to the current restaurant + content type. Reads currentMenuData
+// (in-memory, already scoped to the current restaurant) rather than
+// querying the DOM — categories aren't baked per-restaurant into the
+// page anymore, so there's nothing to query until the menu has loaded.
+function findSectionBySlug(contentType, slug) {
+  const match = categoriesFor(contentType).find((c) => slugify(c.name) === slug);
+  return match?.name || null;
 }
 
 function applyContentTypeFilter(contentType) {
@@ -103,8 +108,20 @@ function applyContentTypeFilter(contentType) {
   // toggle's own option buttons also carry a data-content-type attribute
   // (to identify which is which on click), and a bare [data-content-type]
   // selector here would match and hide those too.
-  document.querySelectorAll('.menu-content-panel[data-content-type], .train-icon[data-content-type]').forEach((el) => {
+  const toggled = document.querySelectorAll('.menu-content-panel[data-content-type], .train-icon[data-content-type]');
+  toggled.forEach((el) => {
     el.hidden = el.dataset.contentType !== contentType;
+  });
+  log('debug', '[menu] applyContentTypeFilter', {
+    contentType,
+    elementsToggled: toggled.length,
+    details: Array.from(toggled).map((el) => ({
+      tag: el.tagName,
+      class: el.className,
+      dataContentType: el.dataset.contentType,
+      restaurantId: el.closest('.menu-review__venue')?.dataset.restaurant || null,
+      hiddenAfter: el.hidden,
+    })),
   });
   document.querySelectorAll('.page-title-switcher').forEach((wrapper) => {
     const label = contentType === 'drink' ? 'Drinks' : 'Food';
@@ -119,16 +136,136 @@ function applyContentTypeFilter(contentType) {
 function updateTrainLink(restaurantId, contentType) {
   const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   const trainLink = venue?.querySelector('[data-train-link]');
-  if (!trainLink) return;
+  if (!trainLink) {
+    log('debug', '[menu] updateTrainLink: no Train link found for restaurant', { restaurantId, contentType });
+    return;
+  }
 
-  const panel = venue.querySelector(`.menu-content-panel[data-content-type="${contentType}"]`);
-  const categoryNames = Array.from(panel?.querySelectorAll('.menu-category__name') || []).map((el) => el.textContent.trim());
-  if (!categoryNames.length) return;
+  const categoryNames = categoriesFor(contentType).map((c) => c.name);
+  if (!categoryNames.length) {
+    log('debug', '[menu] updateTrainLink: no categories loaded yet', { restaurantId, contentType });
+    return;
+  }
 
   const learned = getLearnedSections(restaurantId);
   const target = categoryNames.find((name) => !learned[name]) || categoryNames[0];
   trainLink.href = pathForTeach(contentType, target);
   trainLink.dataset.targetSection = target;
+  log('debug', '[menu] updateTrainLink', { restaurantId, contentType, target, href: trainLink.href });
+}
+
+// ─── Menu content: fetched + cached, rendered client-side ────────────
+// currentMenuData is always scoped to currentRestaurantId — reassigned
+// whenever the restaurant changes, never merged/accumulated across
+// restaurants (see /api/restaurant-menu-get, collections/restaurant-menus.js).
+let currentMenuData = null;
+
+// JS port of menu-categories.njk's macro — same classes throughout, so
+// the existing CSS needs no changes. Built with createElement/textContent
+// (not innerHTML) matching this file's existing DOM-building style (see
+// createSegmentElement) — Firestore data is trusted, but there's no
+// reason to treat it differently from the rest of this file's rendering.
+function renderCategoryList(categories, { clickable = false } = {}) {
+  const container = document.createElement('div');
+  container.className = 'menu-review__categories';
+
+  categories.forEach((category) => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'menu-category';
+
+    const heading = document.createElement(clickable ? 'button' : 'h3');
+    heading.className = clickable ? 'menu-category__name menu-category__name--link' : 'menu-category__name';
+    if (clickable) {
+      heading.type = 'button';
+      heading.dataset.section = category.name;
+    }
+    heading.textContent = category.name;
+    catDiv.appendChild(heading);
+
+    const ul = document.createElement('ul');
+    ul.className = 'menu-category__items';
+    category.items.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'menu-item';
+
+      const row = document.createElement('div');
+      row.className = 'menu-item__row';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'menu-item__name';
+      nameSpan.textContent = item.name;
+      row.appendChild(nameSpan);
+      if (item.price) {
+        const priceSpan = document.createElement('span');
+        priceSpan.className = 'menu-item__price';
+        priceSpan.textContent = `$${item.price}`;
+        row.appendChild(priceSpan);
+      }
+      li.appendChild(row);
+
+      if (item.description) {
+        const desc = document.createElement('p');
+        desc.className = 'menu-item__desc';
+        desc.textContent = item.description;
+        li.appendChild(desc);
+      }
+
+      if (item.tags && item.tags.length) {
+        const tagsDiv = document.createElement('div');
+        tagsDiv.className = 'menu-item__tags';
+        item.tags.forEach((tag) => {
+          const tagSpan = document.createElement('span');
+          tagSpan.className = 'menu-item__tag';
+          tagSpan.textContent = tag;
+          tagsDiv.appendChild(tagSpan);
+        });
+        li.appendChild(tagsDiv);
+      }
+
+      if (item.notes) {
+        const notes = document.createElement('p');
+        notes.className = 'menu-item__notes';
+        notes.textContent = item.notes;
+        li.appendChild(notes);
+      }
+
+      ul.appendChild(li);
+    });
+    catDiv.appendChild(ul);
+    container.appendChild(catDiv);
+  });
+
+  return container;
+}
+
+// Replaces the current restaurant's two content panels' contents —
+// clearing whatever was there (the skeleton placeholder, on first load)
+// and rendering the real category lists in one shot.
+function renderMenuPanels(restaurantId, menuData) {
+  const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
+  if (!venue) return;
+  const foodPanel = venue.querySelector('.menu-content-panel[data-content-type="food"]');
+  const drinkPanel = venue.querySelector('.menu-content-panel[data-content-type="drink"]');
+  if (foodPanel) {
+    foodPanel.innerHTML = '';
+    foodPanel.appendChild(renderCategoryList(menuData.food, { clickable: true }));
+  }
+  if (drinkPanel) {
+    drinkPanel.innerHTML = '';
+    drinkPanel.appendChild(renderCategoryList(menuData.drinks, { clickable: true }));
+  }
+}
+
+async function loadMenuForRestaurant(restaurantId) {
+  log('debug', '[menu] loadMenuForRestaurant: start', { restaurantId });
+  const menuData = await getRestaurantMenu(restaurantId);
+  currentMenuData = menuData;
+  renderMenuPanels(restaurantId, menuData);
+  log('debug', '[menu] loadMenuForRestaurant: rendered', {
+    restaurantId,
+    foodCategories: menuData.food?.length || 0,
+    drinkCategories: menuData.drinks?.length || 0,
+  });
+  return menuData;
 }
 
 // ─── Phase/mode state ─────────────────────────────────────────────────
@@ -165,20 +302,19 @@ function showPhase(phase) {
   currentPhase = phase;
   if (browseEl) browseEl.hidden = phase !== 'browse';
   if (detailEl) detailEl.hidden = phase !== 'detail';
+  log('debug', '[menu] showPhase', { phase });
 }
 
-// Applies the review/practice mode to whichever category block is
-// currently visible — scoped with :not([hidden]) rather than a stored
-// reference, since the visible block already unambiguously identifies
-// itself the same way restaurant/content-type filtering does elsewhere.
+// Applies review/practice mode to the (single, dynamically-rendered)
+// detail shell.
 function applyMode(mode) {
   currentMode = mode;
-  const active = document.querySelector('.menu-detail:not([hidden])');
-  active?.querySelectorAll('.menu-detail__review').forEach((el) => { el.hidden = mode !== 'review'; });
-  active?.querySelectorAll('.menu-detail__mode-btn').forEach((btn) => {
+  detailEl?.querySelectorAll('.menu-detail__review').forEach((el) => { el.hidden = mode !== 'review'; });
+  detailEl?.querySelectorAll('.menu-detail__mode-btn').forEach((btn) => {
     btn.classList.toggle('is-active', btn.dataset.mode === mode);
   });
   if (practiceEl) practiceEl.hidden = mode !== 'practice';
+  log('debug', '[menu] applyMode', { mode, currentSection });
 }
 
 // Only (re)starts the chat if one isn't already running for this
@@ -189,7 +325,74 @@ function setMode(mode) {
   if (mode === 'practice' && !currentChatId) startDrill();
 }
 
+// Reads the restaurant's display name from the sidemenu switcher's own
+// DOM (nav.njk already renders it there) — no separate restaurant-name
+// data needed client-side just for this.
+function getRestaurantName(restaurantId) {
+  return document.querySelector(`.restaurant-switcher__option[data-restaurant-id="${restaurantId}"]`)?.textContent || '';
+}
+
+// Builds the detail shell's entire contents (breadcrumb, restaurant
+// name, "Food › Category" title, Review/Practice toggle, review content)
+// fresh into #menu-detail — replaces the old per-category baked-and-
+// hidden blocks now that categories aren't known until the menu fetch
+// resolves.
+function renderDetailBlock(contentType, sectionName) {
+  const category = categoriesFor(contentType).find((c) => c.name === sectionName);
+  if (!category) {
+    log('debug', '[menu] renderDetailBlock: category not found', { contentType, sectionName });
+    return false;
+  }
+
+  detailEl.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'menu-detail__header';
+
+  const venueName = document.createElement('p');
+  venueName.className = 'menu-review__venue-name';
+  venueName.textContent = getRestaurantName(currentRestaurantId);
+  header.appendChild(venueName);
+
+  const title = document.createElement('p');
+  title.className = 'page-title menu-detail__title';
+  const crumb = document.createElement('a');
+  crumb.className = 'menu-detail__crumb';
+  crumb.href = pathForContentType(contentType);
+  crumb.textContent = contentType === 'drink' ? 'Drinks' : 'Food';
+  title.appendChild(crumb);
+  const sep = document.createElement('span');
+  sep.className = 'menu-detail__crumb-sep';
+  sep.setAttribute('aria-hidden', 'true');
+  sep.textContent = '›';
+  title.appendChild(sep);
+  title.appendChild(document.createTextNode(` ${category.name}`));
+  header.appendChild(title);
+
+  const toggle = document.createElement('div');
+  toggle.className = 'menu-detail__toggle';
+  [['review', 'Review'], ['practice', 'Practice']].forEach(([mode, label]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'menu-detail__mode-btn';
+    btn.dataset.mode = mode;
+    btn.textContent = label;
+    toggle.appendChild(btn);
+  });
+  header.appendChild(toggle);
+
+  detailEl.appendChild(header);
+
+  const review = document.createElement('div');
+  review.className = 'menu-detail__review';
+  review.appendChild(renderCategoryList([category], { clickable: false }));
+  detailEl.appendChild(review);
+
+  return true;
+}
+
 function enterBrowse(contentType, { pushUrl = true } = {}) {
+  log('debug', '[menu] enterBrowse', { contentType, pushUrl, previousContentType: currentContentType, previousPhase: currentPhase });
   currentContentType = contentType;
   currentSection = null;
   setCurrentContentType(contentType);
@@ -209,6 +412,7 @@ function enterBrowse(contentType, { pushUrl = true } = {}) {
 
 function enterDetail(contentType, sectionName, mode = 'review', { pushUrl = true } = {}) {
   const isNewSection = currentPhase !== 'detail' || currentSection !== sectionName;
+  log('debug', '[menu] enterDetail', { contentType, sectionName, mode, pushUrl, isNewSection });
   if (isNewSection && currentChatId) {
     flushSectionChat(currentRestaurantId, currentSection, 'exited', { useBeacon: false });
   }
@@ -222,9 +426,7 @@ function enterDetail(contentType, sectionName, mode = 'review', { pushUrl = true
     if (flagButton) flagButton.hidden = true;
     if (transcript) transcript.innerHTML = '';
   }
-  document.querySelectorAll('.menu-detail').forEach((el) => {
-    el.hidden = !(el.dataset.restaurant === currentRestaurantId && el.dataset.contentType === contentType && el.dataset.section === sectionName);
-  });
+  if (!renderDetailBlock(contentType, sectionName)) return;
   showPhase('detail');
   setMode(mode);
   if (pushUrl) history.pushState(null, '', pathForTeach(contentType, sectionName));
@@ -682,9 +884,30 @@ answerForm?.addEventListener('submit', (e) => {
 
   const { contentType, categorySlug } = parsePath(location.pathname);
   const type = contentType || getCurrentContentType();
+  log('debug', '[menu] init', { pathname: location.pathname, currentRestaurantId, contentType, categorySlug, resolvedType: type });
+
+  // Show browse — and the correct content-type panel, with its skeleton
+  // — now, before the menu fetch resolves. #menu-browse AND each
+  // .menu-content-panel carry their own separate hidden attribute; both
+  // gate whether the skeleton inside can be seen at all, so both have to
+  // be cleared here rather than waiting for enterBrowse (which normally
+  // does this, but only after the fetch it's guarding against completes).
+  currentContentType = type;
+  showPhase('browse');
+  applyContentTypeFilter(type);
+
+  // ?debugSkeleton — skips the fetch entirely so the skeleton placeholder
+  // stays up indefinitely, for iterating on its CSS without racing
+  // Firestore/the 24h cache. Remove this block once that's done.
+  if (new URLSearchParams(location.search).has('debugSkeleton')) {
+    log('debug', '[menu] debugSkeleton: skipping fetch, skeleton will stay up');
+    return;
+  }
+
+  await loadMenuForRestaurant(currentRestaurantId);
 
   if (categorySlug) {
-    const sectionName = findSectionBySlug(currentRestaurantId, type, categorySlug);
+    const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
       // A reload mid-practice should stay in practice, not bounce back
       // to Review — resume it whenever a session already exists for this
@@ -697,15 +920,18 @@ answerForm?.addEventListener('submit', (e) => {
   enterBrowse(type, { pushUrl: false });
 })();
 
-// The nav switcher changes restaurant without reloading — re-filter and
-// recompute the Train target in place. If we're mid-detail for the old
-// restaurant, that content no longer applies — flush any in-progress
-// practice session and drop back to browse rather than continuing on the
-// wrong restaurant's section.
-window.addEventListener('tico:restaurant-changed', (e) => {
+// The nav switcher changes restaurant without reloading — re-filter,
+// fetch/cache-hit the new restaurant's menu, and recompute the Train
+// target in place. If we're mid-detail for the old restaurant, that
+// content no longer applies — flush any in-progress practice session and
+// drop back to browse rather than continuing on the wrong restaurant's
+// section.
+window.addEventListener('tico:restaurant-changed', async (e) => {
   const previousRestaurantId = currentRestaurantId;
   currentRestaurantId = e.detail.restaurantId;
+  log('debug', '[menu] tico:restaurant-changed', { previousRestaurantId, currentRestaurantId, currentPhase, currentContentType });
   applyRestaurantFilter('.menu-review__venue', currentRestaurantId);
+  await loadMenuForRestaurant(currentRestaurantId);
 
   if (currentPhase === 'browse') {
     updateTrainLink(currentRestaurantId, currentContentType);
@@ -730,9 +956,10 @@ window.addEventListener('tico:restaurant-changed', (e) => {
 window.addEventListener('popstate', () => {
   const { contentType, categorySlug } = parsePath(location.pathname);
   const type = contentType || getCurrentContentType();
+  log('debug', '[menu] popstate', { pathname: location.pathname, contentType, categorySlug, resolvedType: type });
 
   if (categorySlug) {
-    const sectionName = findSectionBySlug(currentRestaurantId, type, categorySlug);
+    const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
       const initialMode = loadSectionState(currentRestaurantId, sectionName) ? 'practice' : 'review';
       enterDetail(type, sectionName, initialMode, { pushUrl: false });
@@ -747,8 +974,10 @@ window.addEventListener('popstate', () => {
 // name (browse → detail), the Train link (browse → detail), the
 // Review/Practice toggle, and the detail page's breadcrumb (detail →
 // browse) — event delegation throughout since these elements exist once
-// per restaurant/category, baked into the page, only one combination
-// visible at a time.
+// per restaurant/category, only one combination visible at a time.
+// Delegation also means clicks on JS-rendered category buttons (see
+// renderCategoryList) need no extra wiring — they carry the same
+// classes/data attributes the old baked markup did.
 function closeSwitcher(wrapper) {
   wrapper.classList.remove('is-open');
   wrapper.querySelector('.content-type-switcher').hidden = true;
@@ -761,6 +990,7 @@ document.addEventListener('click', (e) => {
   const trigger = e.target.closest('.page-title-switcher__trigger');
 
   if (option) {
+    log('debug', '[menu] click: content-type-switcher__option', { contentType: option.dataset.contentType });
     switchToBrowse(option.dataset.contentType);
     if (openSwitcher) closeSwitcher(openSwitcher);
     return;
@@ -783,6 +1013,7 @@ document.addEventListener('click', (e) => {
   const categoryLink = e.target.closest('.menu-category__name--link');
   if (categoryLink) {
     const panel = categoryLink.closest('.menu-content-panel');
+    log('debug', '[menu] click: category link', { contentType: panel?.dataset.contentType, section: categoryLink.dataset.section });
     if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, 'review');
     return;
   }
@@ -790,12 +1021,14 @@ document.addEventListener('click', (e) => {
   const trainLink = e.target.closest('[data-train-link]');
   if (trainLink) {
     e.preventDefault();
+    log('debug', '[menu] click: train link', { currentContentType, targetSection: trainLink.dataset.targetSection });
     if (trainLink.dataset.targetSection) enterDetail(currentContentType, trainLink.dataset.targetSection, 'review');
     return;
   }
 
   const modeBtn = e.target.closest('.menu-detail__mode-btn');
   if (modeBtn) {
+    log('debug', '[menu] click: mode toggle', { mode: modeBtn.dataset.mode });
     setMode(modeBtn.dataset.mode);
     return;
   }
@@ -803,6 +1036,7 @@ document.addEventListener('click', (e) => {
   const crumb = e.target.closest('.menu-detail__crumb');
   if (crumb) {
     e.preventDefault();
+    log('debug', '[menu] click: breadcrumb', { currentContentType });
     switchToBrowse(currentContentType);
   }
 });

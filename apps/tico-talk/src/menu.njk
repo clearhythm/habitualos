@@ -5,7 +5,6 @@ permalink: /menu/
 pageScript: /assets/js/menu-restaurant-filter.js
 ---
 
-{% from "menu-categories.njk" import render as renderCategories %}
 {% from "venue-header.njk" import venueHeader %}
 
 {% macro trainIcons(restaurant) %}
@@ -34,6 +33,27 @@ pageScript: /assets/js/menu-restaurant-filter.js
 {% endif %}
 {% endmacro %}
 
+{% macro skeleton() %}
+<div class="menu-skeleton" aria-hidden="true">
+  <div class="menu-skeleton__bar menu-skeleton__bar--title"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar menu-skeleton__bar--title"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+  <div class="menu-skeleton__bar"></div>
+</div>
+{% endmacro %}
+
+{# Category/item content isn't baked here — it's fetched on demand and
+   cached client-side (see menu-restaurant-filter.js's loadMenuForRestaurant,
+   collections/restaurant-menus.js) so only the current restaurant's menu
+   is ever in the DOM, not every restaurant's every time. Panels start
+   with a skeleton placeholder; JS replaces it once the fetch (or an
+   already-cached, same-day read) resolves. #}
 <div id="menu-browse" hidden>
   {% for restaurant in restaurants %}
   <section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
@@ -43,42 +63,18 @@ pageScript: /assets/js/menu-restaurant-filter.js
       {{ trainIcons(restaurant) }}
     </a>
     {% endcall %}
-    <div class="menu-content-panel" data-content-type="food" hidden>
-      {{ renderCategories(restaurant.food, false, true) }}
-    </div>
-    <div class="menu-content-panel" data-content-type="drink" hidden>
-      {{ renderCategories(restaurant.drinks, false, true) }}
-    </div>
+    <div class="menu-content-panel" data-content-type="food" hidden>{{ skeleton() }}</div>
+    <div class="menu-content-panel" data-content-type="drink" hidden>{{ skeleton() }}</div>
   </section>
   {% endfor %}
 </div>
 
-{% macro categoryDetail(restaurant, category, contentType, crumbLabel, crumbHref) %}
-<div class="menu-detail" data-restaurant="{{ restaurant.id }}" data-content-type="{{ contentType }}" data-section="{{ category.name }}" hidden>
-  <div class="menu-detail__header">
-    <p class="menu-review__venue-name">{{ restaurant.name }}</p>
-    <p class="page-title menu-detail__title">
-      <a class="menu-detail__crumb" href="{{ crumbHref }}">{{ crumbLabel }}</a>
-      <span class="menu-detail__crumb-sep" aria-hidden="true">›</span>
-      {{ category.name }}
-    </p>
-    <div class="menu-detail__toggle">
-      <button type="button" class="menu-detail__mode-btn" data-mode="review">Review</button>
-      <button type="button" class="menu-detail__mode-btn" data-mode="practice">Practice</button>
-    </div>
-  </div>
-  <div class="menu-detail__review">
-    {{ renderCategories([category], false) }}
-  </div>
-</div>
-{% endmacro %}
-
-<div id="menu-detail" hidden>
-  {% for restaurant in restaurants %}
-    {% for category in restaurant.food %}{{ categoryDetail(restaurant, category, "food", "Food", "/menu/food/") }}{% endfor %}
-    {% for category in restaurant.drinks %}{{ categoryDetail(restaurant, category, "drink", "Drinks", "/menu/drinks/") }}{% endfor %}
-  {% endfor %}
-</div>
+{# One dynamic shell, populated by menu-restaurant-filter.js's
+   renderDetailBlock — category names aren't known at build time anymore,
+   so this can no longer be one baked-and-hidden block per category
+   (same reasoning as #menu-practice's transcript being a single shared
+   shell rather than duplicated per category). #}
+<div id="menu-detail" hidden></div>
 
 <div class="learn-drill" id="menu-practice" hidden>
   <div class="transcript learn-transcript" id="learn-transcript"></div>

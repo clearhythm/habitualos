@@ -256,3 +256,57 @@ button.menu-category__name--link {
   padding: $space-xs $space-sm;
   margin-top: $space-sm;
 }
+
+// Placeholder shown in a .menu-content-panel while its menu data is being
+// fetched (see loadMenuForRestaurant in menu-restaurant-filter.js) —
+// replaced wholesale once real content renders, so this never needs its
+// own hide/show logic.
+.menu-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+  padding-top: $space-xs;
+}
+
+// Neutral gray, not the warm beige ($color-bg-muted) used elsewhere on
+// this page — beige matches real rendered UI (tags, the toggle pill), so
+// using it here would read as content rather than a placeholder for it.
+// Local to the skeleton only, not a palette addition.
+$skeleton-color: #e3e3e3;
+
+.menu-skeleton__bar {
+  height: 1.75rem;
+  border-radius: 0.35rem;
+  background-color: $skeleton-color;
+  // Highlight stops are tight around the midpoint rather than spanning
+  // the full 0–100% — a wide gradient reads as a diffuse glow; this
+  // keeps it a narrow, distinct band as it sweeps. The angle here is the
+  // direction of color change, not the visible band itself — the band
+  // is perpendicular to it, so -45deg (not 45deg) is what actually
+  // produces a forward-leaning "/" band instead of a backward-leaning "\".
+  background-image: linear-gradient(
+    -45deg,
+    $skeleton-color 0%,
+    $skeleton-color 35%,
+    color-mix(in srgb, $skeleton-color 75%, white) 50%,
+    $skeleton-color 65%,
+    $skeleton-color 100%
+  );
+  background-size: 200% 100%;
+  // linear, not ease-in-out — easing bunches the motion at the start/end
+  // of each loop, which reads as a pulse rather than one steady sweep.
+  animation: menu-skeleton-shimmer 1.6s linear infinite;
+
+  &--title {
+    width: 40%;
+    height: 2.25rem;
+    margin-top: $space-md;
+
+    &:first-child { margin-top: 0; }
+  }
+}
+
+@keyframes menu-skeleton-shimmer {
+  0%   { background-position: 150% 0; }
+  100% { background-position: -50% 0; }
+}
