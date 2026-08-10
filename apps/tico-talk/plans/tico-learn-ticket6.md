@@ -323,17 +323,30 @@ directly in a chat, no phase-switching.
 
 ## File 8: `src/_includes/nav.njk` (MODIFY)
 
-The four `coming-soon` spans become real links:
+Note: this file's structure has changed since this ticket was written —
+"My Training" as a labeled group was dropped entirely (a later, direct
+decision — the six competency links are now flat list items, no wrapper
+label), and the disabled items use a `.sidemenu-disabled` class on a real
+`<a>`, not a `<span class="sidemenu-account__soon">`. Current markup:
+
+```html
+<li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
+```
+
+Four of these become real links (drop `class="sidemenu-disabled"
+aria-disabled="true"`, point `href` at the real route):
 
 ```html
 <!-- Before -->
-<span class="sidemenu-account__soon">Recommendations <em>soon</em></span>
+<li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
 
 <!-- After -->
-<a href="/recommendations/">Recommendations</a>
+<li><a href="/recommendations/">Recommendations</a></li>
 ```
 
-Repeat for Upselling, Complaints, Languages.
+Repeat for Upselling, Complaints, Languages. Off-Menu stays disabled
+(not built, blocked on its own content-sourcing workflow per Ticket 7's
+notes) — only these four move.
 
 ## Verification
 
