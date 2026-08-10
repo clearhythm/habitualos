@@ -128,8 +128,23 @@
     display: block;
     // Nudges for the flex-centered icon vs. text's line-height box not
     // sharing a true visual center — verified empirically, not derived.
+    // Shared baseline for all Train icon shapes (see .icon-* below for
+    // per-shape adjustments on top of this — different shapes' visual
+    // weight sits differently within their own bounding box).
     position: relative;
     bottom: 2px;
+  }
+
+  // Per-shape nudges (menu-restaurant-filter.js's updateTrainIcon sets
+  // one of these classes alongside .train-icon) — adjust independently
+  // here rather than in the shape data, so all Train icon positioning
+  // tuning lives in one place.
+  .icon-margarita {
+    bottom: -1px; // sat ~2-3px too high against the shared baseline above
+  }
+
+  .icon-martini {
+    bottom: 1px; // sat ~2-3px too high against the shared baseline above
   }
 
   // The generic a:hover rule in _base.scss has higher specificity than

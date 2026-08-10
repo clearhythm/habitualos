@@ -7,32 +7,6 @@ pageScript: /assets/js/menu-restaurant-filter.js
 
 {% from "venue-header.njk" import venueHeader %}
 
-{% macro trainIcons(restaurant) %}
-<svg class="train-icon" data-content-type="food" viewBox="2 1 20 17" width="30" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-  <path d="M5 14a7 7 0 0 1 14 0"/>
-  <line x1="12" y1="6.5" x2="12" y2="4.5"/>
-  <circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/>
-  <path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/>
-  <ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>
-</svg>
-{% if restaurant.id == "margaritaville" %}
-<svg class="train-icon" data-content-type="drink" hidden viewBox="2 2 22 19" width="33" height="29" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <path d="M3 5c0 5 4 8 9 8s9-3 9-8"/>
-  <line x1="12" y1="13" x2="12" y2="20"/>
-  <line x1="8" y1="20" x2="16" y2="20"/>
-  <path d="M19 3l3.5 2.2-2.2 3.5z" fill="currentColor" stroke="none"/>
-</svg>
-{% else %}
-<svg class="train-icon" data-content-type="drink" hidden viewBox="3 1 18 20" width="27" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-  <path d="M4 4h16l-8 9z"/>
-  <line x1="12" y1="13" x2="12" y2="20"/>
-  <line x1="8" y1="20" x2="16" y2="20"/>
-  <line x1="9.5" y1="2" x2="13.5" y2="6.5"/>
-  <circle cx="11.5" cy="5" r="1.3" fill="currentColor" stroke="none"/>
-</svg>
-{% endif %}
-{% endmacro %}
-
 {% macro skeleton() %}
 <div class="menu-skeleton" aria-hidden="true">
   <div class="menu-skeleton__bar menu-skeleton__bar--title"></div>
@@ -60,7 +34,14 @@ pageScript: /assets/js/menu-restaurant-filter.js
     {% call venueHeader(restaurant.name, "Food", true) %}
     <a class="page-header__action" href="#" data-train-link>
       Train
-      {{ trainIcons(restaurant) }}
+      {# One icon, not two hidden-toggled ones — its shape (tray/margarita
+         glass/martini glass) depends on both restaurant and content type,
+         so JS sets viewBox/width/height/class/contents directly instead
+         of baking any shape here (see updateTrainIcon in
+         menu-restaurant-filter.js, which runs unconditionally on every
+         load before this is ever seen — no fallback shape needed). Only
+         the attributes that are the same across every shape live here. #}
+      <svg class="train-icon" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
     </a>
     {% endcall %}
     <div class="menu-content-panel" data-content-type="food" hidden>{{ skeleton() }}</div>

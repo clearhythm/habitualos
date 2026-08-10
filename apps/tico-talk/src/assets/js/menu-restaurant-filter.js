@@ -104,25 +104,11 @@ function findSectionBySlug(contentType, slug) {
 }
 
 function applyContentTypeFilter(contentType) {
-  // Scoped to .menu-content-panel and .train-icon specifically — the
-  // toggle's own option buttons also carry a data-content-type attribute
-  // (to identify which is which on click), and a bare [data-content-type]
-  // selector here would match and hide those too.
-  const toggled = document.querySelectorAll('.menu-content-panel[data-content-type], .train-icon[data-content-type]');
+  const toggled = document.querySelectorAll('.menu-content-panel[data-content-type]');
   toggled.forEach((el) => {
     el.hidden = el.dataset.contentType !== contentType;
   });
-  log('debug', '[menu] applyContentTypeFilter', {
-    contentType,
-    elementsToggled: toggled.length,
-    details: Array.from(toggled).map((el) => ({
-      tag: el.tagName,
-      class: el.className,
-      dataContentType: el.dataset.contentType,
-      restaurantId: el.closest('.menu-review__venue')?.dataset.restaurant || null,
-      hiddenAfter: el.hidden,
-    })),
-  });
+  log('debug', '[menu] applyContentTypeFilter', { contentType, elementsToggled: toggled.length });
   document.querySelectorAll('.page-title-switcher').forEach((wrapper) => {
     const label = contentType === 'drink' ? 'Drinks' : 'Food';
     const trigger = wrapper.querySelector('.page-title-switcher__label');
@@ -133,6 +119,65 @@ function applyContentTypeFilter(contentType) {
   });
 }
 
+// Train's icon shape depends on both restaurant and content type (food
+// tray vs. each restaurant's own drink glass) — one <svg> per Train link,
+// JS sets its actual contents directly rather than baking every
+// restaurant's every shape and hidden-toggling between them. That old
+// approach (two <svg>s per link, four total per restaurant) was real
+// duplication of the same kind the whole-menu-content fetch/cache change
+// eliminated elsewhere on this page, just at a smaller scale — and it's
+// what made a genuinely simple "which icon shows" question hard to
+// answer with confidence even when the toggle logic itself was correct.
+const TRAIN_ICON_SHAPES = {
+  food: {
+    className: 'icon-tray',
+    viewBox: '2 1 20 17', width: 30, height: 26,
+    inner: '<path d="M5 14a7 7 0 0 1 14 0"/><line x1="12" y1="6.5" x2="12" y2="4.5"/><circle cx="12" cy="3.6" r="0.9" fill="currentColor" stroke="none"/><path d="M8 11.5a5 5 0 0 1 2.5-3.5" opacity="0.5"/><ellipse cx="12" cy="14.5" rx="8.5" ry="1.7"/>'
+  },
+  'drink-margaritaville': {
+    // Flat rim, rounded (not straight-diagonal) sides bulging out then
+    // narrowing to a flat bottom, plain ring as the lime-wheel garnish
+    // overlapping the rim — verified by rendering locally (qlmanage -t
+    // on a scratch SVG) before landing here; earlier attempts (a
+    // scalloped curve, then a straight-sided wedge) either looked like a
+    // bird/arrow or read as too angular once actually rendered.
+    className: 'icon-margarita',
+    viewBox: '2 2 22 19', width: 33, height: 29,
+    inner: '<path d="M4 4L20 4Q21 7 16 10L8 10Q3 7 4 4Z"/><line x1="12" y1="10" x2="12" y2="18"/><line x1="8" y1="18" x2="16" y2="18"/><circle cx="19.5" cy="4.5" r="2"/>'
+  },
+  'drink-default': {
+    className: 'icon-martini',
+    viewBox: '3 1 18 20', width: 27, height: 30,
+    inner: '<path d="M4 4h16l-8 9z"/><line x1="12" y1="13" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="9.5" y1="2" x2="13.5" y2="6.5"/><circle cx="11.5" cy="5" r="1.3" fill="currentColor" stroke="none"/>'
+  }
+};
+
+function trainIconShapeFor(restaurantId, contentType) {
+  if (contentType !== 'drink') return TRAIN_ICON_SHAPES.food;
+  return TRAIN_ICON_SHAPES[`drink-${restaurantId}`] || TRAIN_ICON_SHAPES['drink-default'];
+}
+
+// Each shape gets its own class (icon-tray/icon-margarita/icon-martini)
+// so any one of them can be nudged independently in CSS, layered on top
+// of the shared .page-header__action svg { bottom: 2px } baseline in
+// _menu-review.scss — that rule centers icons against the text in
+// general, but different shapes' visual weight sits differently within
+// their own bounding box.
+function updateTrainIcon(trainLink, restaurantId, contentType) {
+  const icon = trainLink.querySelector('.train-icon');
+  if (!icon) return;
+  const shape = trainIconShapeFor(restaurantId, contentType);
+  icon.setAttribute('viewBox', shape.viewBox);
+  icon.setAttribute('width', shape.width);
+  icon.setAttribute('height', shape.height);
+  icon.innerHTML = shape.inner;
+  // Not icon.className = ... — on SVG elements className is an
+  // SVGAnimatedString, not a plain string, so assigning to it directly
+  // silently doesn't update the actual class attribute. setAttribute
+  // works regardless of element type/namespace.
+  icon.setAttribute('class', `train-icon ${shape.className}`);
+}
+
 function updateTrainLink(restaurantId, contentType) {
   const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   const trainLink = venue?.querySelector('[data-train-link]');
@@ -141,9 +186,11 @@ function updateTrainLink(restaurantId, contentType) {
     return;
   }
 
+  updateTrainIcon(trainLink, restaurantId, contentType);
+
   const categoryNames = categoriesFor(contentType).map((c) => c.name);
   if (!categoryNames.length) {
-    log('debug', '[menu] updateTrainLink: no categories loaded yet', { restaurantId, contentType });
+    log('debug', '[menu] updateTrainLink: icon set, no categories loaded yet for target/href', { restaurantId, contentType });
     return;
   }
 
@@ -397,7 +444,14 @@ function enterBrowse(contentType, { pushUrl = true } = {}) {
   currentSection = null;
   setCurrentContentType(contentType);
   applyContentTypeFilter(contentType);
-  if (currentRestaurantId) updateTrainLink(currentRestaurantId, contentType);
+  // Skipped (not called with stale/empty data) when the menu hasn't
+  // loaded yet — true only on the very first call during init, before
+  // loadMenuForRestaurant resolves. That caller is responsible for its
+  // own follow-up updateTrainLink() once data's in, so this never fires
+  // twice for the same load — every other call site (toggle clicks,
+  // breadcrumb, restaurant switch already past its own fetch) already
+  // has real data by the time enterBrowse runs.
+  if (currentRestaurantId && currentMenuData) updateTrainLink(currentRestaurantId, contentType);
   // applyMode (called from enterDetail) is what normally shows/hides
   // #menu-practice — leaving detail phase entirely bypasses that, so its
   // visibility (and the composer inside it) has to be reset explicitly
@@ -887,14 +941,12 @@ answerForm?.addEventListener('submit', (e) => {
   log('debug', '[menu] init', { pathname: location.pathname, currentRestaurantId, contentType, categorySlug, resolvedType: type });
 
   // Show browse — and the correct content-type panel, with its skeleton
-  // — now, before the menu fetch resolves. #menu-browse AND each
-  // .menu-content-panel carry their own separate hidden attribute; both
-  // gate whether the skeleton inside can be seen at all, so both have to
-  // be cleared here rather than waiting for enterBrowse (which normally
-  // does this, but only after the fetch it's guarding against completes).
-  currentContentType = type;
-  showPhase('browse');
-  applyContentTypeFilter(type);
+  // — now, before the menu fetch resolves. Called exactly once here;
+  // it's what normally gets deferred until after the fetch, but that
+  // left the skeleton with no window to ever be visible. Only
+  // updateTrainLink (icon + href/target) needs to run again once real
+  // data is in — everything else enterBrowse sets up doesn't change.
+  enterBrowse(type, { pushUrl: false });
 
   // ?debugSkeleton — skips the fetch entirely so the skeleton placeholder
   // stays up indefinitely, for iterating on its CSS without racing
@@ -917,7 +969,7 @@ answerForm?.addEventListener('submit', (e) => {
       return;
     }
   }
-  enterBrowse(type, { pushUrl: false });
+  updateTrainLink(currentRestaurantId, type);
 })();
 
 // The nav switcher changes restaurant without reloading — re-filter,
