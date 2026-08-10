@@ -19,7 +19,8 @@
 //   }
 // ------------------------------------------------------
 
-const { create, get, uniqueId, Timestamp } = require('@habitualos/db-core');
+const { create, get, Timestamp } = require('@habitualos/db-core');
+const { generateChatId } = require('../_utils/data-utils.cjs');
 
 const COLLECTION = 'learn-chats';
 
@@ -36,7 +37,7 @@ function toTimestamp(iso) {
  * @returns {Promise<{chatId: string}>}
  */
 exports.saveLearnChat = async ({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) => {
-  const id = chatId || uniqueId('lc');
+  const id = chatId || generateChatId();
   await create({
     collection: COLLECTION,
     id,

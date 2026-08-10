@@ -7,7 +7,7 @@ import { createChatStreamHandler } from "./_lib/chat-stream-core.ts";
 export default createChatStreamHandler({
   "learn": {
     initEndpoint: "/api/learn-chat-init",
-    toolExecuteEndpoint: "/api/learn-tool-execute",
+    toolExecuteEndpoint: null,
     signalPatterns: [],
   },
 });

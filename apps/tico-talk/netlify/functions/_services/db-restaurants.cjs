@@ -27,6 +27,7 @@ function buildCategoryList(section) {
   section.items.forEach((item) => {
     const list = itemsByCategory.get(item.category) || [];
     list.push({
+      id: item._id,
       name: item._name,
       description: item.description,
       price: item.price,

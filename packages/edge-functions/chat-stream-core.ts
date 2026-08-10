@@ -46,6 +46,7 @@ export interface RequestBody {
   // Domain data (tico-talk "learn" chat type: which menu section is being drilled)
   section?: string;
   restaurantId?: string;
+  factCoverage?: Record<string, Record<string, boolean>>;
 }
 
 export interface ChatTypeConfig {
@@ -223,6 +224,7 @@ export function createChatStreamHandler(
       // Domain data
       section,
       restaurantId,
+      factCoverage,
     } = body;
 
     // Get chat type configuration
@@ -274,6 +276,7 @@ export function createChatStreamHandler(
       if (replyToMomentId) initBody.replyToMomentId = replyToMomentId;
       if (section) initBody.section = section;
       if (restaurantId) initBody.restaurantId = restaurantId;
+      if (factCoverage) initBody.factCoverage = factCoverage;
     }
 
     // Initialize chat session - get system prompt and tools from Node.js function

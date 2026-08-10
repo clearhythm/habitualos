@@ -296,3 +296,60 @@
   font-style: italic;
   animation: learn-thinking-pulse 1.6s ease-in-out infinite;
 }
+
+// ─── Two-pass (Basics -> Complete) fact coverage ───────────────────────
+.learn-progress-bar {
+  height: 4px;
+  background: $color-border;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 auto;
+  max-width: 680px;
+}
+
+.learn-progress-bar__fill {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: $color-green;
+  transition: width 0.4s ease;
+}
+
+.learn-progress-bar__label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  text-align: center;
+  max-width: 680px;
+  margin: $space-xs auto $space-sm;
+}
+
+.learn-pass-transition {
+  max-width: 680px;
+  text-align: center;
+  padding: $space-lg;
+  margin: $space-md auto 0;
+  background: $color-bg-surface;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+}
+
+.learn-pass-transition__label {
+  margin: 0 0 $space-md;
+  font-weight: 600;
+}
+
+// Driven by data-pass on .menu-detail__review, set/updated by
+// learn-practice.js's onCoverageChanged callback (via menu-restaurant-
+// filter.js) and initially by renderDetailBlock from the local coverage
+// cache. Pure additive CSS on top of renderCategoryList's existing
+// .menu-item__desc/__tags/__price classes — no renderer changes needed.
+.menu-detail__review[data-pass="basics"] {
+  .menu-item__price,
+  .menu-item__tags { opacity: 0.35; }
+  .menu-item__desc { font-weight: 600; }
+}
+
+.menu-detail__review[data-pass="complete"] {
+  .menu-item__desc { opacity: 0.5; }
+  .menu-item__price,
+  .menu-item__tags { font-weight: 600; }
+}

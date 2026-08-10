@@ -15,9 +15,14 @@
 // localStorage (see collections/restaurant-menus.js) rather than baked
 // into the page at build time for every restaurant — only the current
 // restaurant's data is ever in memory or the DOM. The restaurant
-// switcher itself (just names) stays build-time-baked; it's tiny. The
-// chat transcript is inherently dynamic too and lives in one shared
-// shell (#menu-practice) rather than being duplicated per category.
+// switcher itself (just names) stays build-time-baked; it's tiny.
+//
+// This file owns layout/rendering/filtering only — browse/detail phase
+// management, the restaurant switcher, and the browse list's tier pills.
+// The Practice chat itself (streaming, fact coverage, transitions, chat
+// persistence) is a separate concern, owned by learn-practice.js — this
+// file calls into it (startPractice/exitPractice/hasActiveSession) rather
+// than containing that logic inline.
 //
 // URL scheme: /menu/food/, /menu/drinks/ (browse) and
 // /menu/food/{category}, /menu/drinks/{category} (detail) are real
@@ -27,8 +32,15 @@
 // bookmarkable/deep-linkable distinction, unlike browse vs. detail).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
-import { getLearnedSections, markSectionLearnedLocally } from './learned-sections.js';
-import { saveLearnChatBeacon, saveLearnChat } from './collections/learn-chats.js';
+import {
+  loadFactCoverageCache,
+  hydrateRestaurantProgress,
+  computeTierBySection,
+  tierForSectionInProgress,
+  passForSection,
+  isSectionMastered
+} from './learn-coverage.js';
+import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
 import { log } from './utils/log.js';
 
@@ -178,6 +190,10 @@ function updateTrainIcon(trainLink, restaurantId, contentType) {
   icon.setAttribute('class', `train-icon ${shape.className}`);
 }
 
+// Target section: the restaurant's last-trained section if it isn't
+// Mastered yet (resume where they left off), else the first non-Mastered
+// section in list order, else just the first section (nothing left to
+// train — reopen it to review).
 function updateTrainLink(restaurantId, contentType) {
   const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   const trainLink = venue?.querySelector('[data-train-link]');
@@ -188,14 +204,24 @@ function updateTrainLink(restaurantId, contentType) {
 
   updateTrainIcon(trainLink, restaurantId, contentType);
 
-  const categoryNames = categoriesFor(contentType).map((c) => c.name);
+  const categories = categoriesFor(contentType);
+  const categoryNames = categories.map((c) => c.name);
   if (!categoryNames.length) {
     log('debug', '[menu] updateTrainLink: icon set, no categories loaded yet for target/href', { restaurantId, contentType });
     return;
   }
 
-  const learned = getLearnedSections(restaurantId);
-  const target = categoryNames.find((name) => !learned[name]) || categoryNames[0];
+  const isMastered = (name) => {
+    const category = categories.find((c) => c.name === name);
+    const itemIds = category ? category.items.map((item) => item.id) : [];
+    return isSectionMastered(itemIds, currentRestaurantProgress.sections?.[name] || {});
+  };
+
+  const lastTrained = currentRestaurantProgress.lastTrained;
+  const target = (lastTrained && categoryNames.includes(lastTrained) && !isMastered(lastTrained))
+    ? lastTrained
+    : categoryNames.find((name) => !isMastered(name)) || categoryNames[0];
+
   trainLink.href = pathForTeach(contentType, target);
   trainLink.dataset.targetSection = target;
   log('debug', '[menu] updateTrainLink', { restaurantId, contentType, target, href: trainLink.href });
@@ -207,18 +233,26 @@ function updateTrainLink(restaurantId, contentType) {
 // restaurants (see /api/restaurant-menu-get, collections/restaurant-menus.js).
 let currentMenuData = null;
 
+// This restaurant's full learn-progress ({sections, lastTrained}) —
+// fetched once per restaurant load, kept in sync locally afterward (see
+// refreshPillFor) rather than re-fetched on every small change.
+let currentRestaurantProgress = { sections: {}, lastTrained: null };
+
 // JS port of menu-categories.njk's macro — same classes throughout, so
 // the existing CSS needs no changes. Built with createElement/textContent
-// (not innerHTML) matching this file's existing DOM-building style (see
-// createSegmentElement) — Firestore data is trusted, but there's no
-// reason to treat it differently from the rest of this file's rendering.
-function renderCategoryList(categories, { clickable = false } = {}) {
+// (not innerHTML) matching this file's existing DOM-building style —
+// Firestore data is trusted, but there's no reason to treat it
+// differently from the rest of this file's rendering.
+function renderCategoryList(categories, { clickable = false, tierBySection = null } = {}) {
   const container = document.createElement('div');
   container.className = 'menu-review__categories';
 
   categories.forEach((category) => {
     const catDiv = document.createElement('div');
     catDiv.className = 'menu-category';
+
+    const header = document.createElement('div');
+    header.className = 'menu-category__header';
 
     const heading = document.createElement(clickable ? 'button' : 'h3');
     heading.className = clickable ? 'menu-category__name menu-category__name--link' : 'menu-category__name';
@@ -227,7 +261,20 @@ function renderCategoryList(categories, { clickable = false } = {}) {
       heading.dataset.section = category.name;
     }
     heading.textContent = category.name;
-    catDiv.appendChild(heading);
+    header.appendChild(heading);
+
+    // Pill: blank/no pill by default, kept deliberately quiet — only
+    // "training" (the single most-recently-entered-Practice section) or
+    // "mastered" (every fact covered) ever show. See learn-coverage.js.
+    const tier = tierBySection?.[category.name];
+    if (tier && tier !== 'blank') {
+      const pill = document.createElement('span');
+      pill.className = `menu-category__pill menu-category__pill--${tier}`;
+      pill.textContent = tier === 'mastered' ? 'Mastered' : 'Training';
+      header.appendChild(pill);
+    }
+
+    catDiv.appendChild(header);
 
     const ul = document.createElement('ul');
     ul.className = 'menu-category__items';
@@ -287,63 +334,107 @@ function renderCategoryList(categories, { clickable = false } = {}) {
 // Replaces the current restaurant's two content panels' contents —
 // clearing whatever was there (the skeleton placeholder, on first load)
 // and rendering the real category lists in one shot.
-function renderMenuPanels(restaurantId, menuData) {
+function renderMenuPanels(restaurantId, menuData, tierBySection) {
   const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   if (!venue) return;
   const foodPanel = venue.querySelector('.menu-content-panel[data-content-type="food"]');
   const drinkPanel = venue.querySelector('.menu-content-panel[data-content-type="drink"]');
   if (foodPanel) {
     foodPanel.innerHTML = '';
-    foodPanel.appendChild(renderCategoryList(menuData.food, { clickable: true }));
+    foodPanel.appendChild(renderCategoryList(menuData.food, { clickable: true, tierBySection }));
   }
   if (drinkPanel) {
     drinkPanel.innerHTML = '';
-    drinkPanel.appendChild(renderCategoryList(menuData.drinks, { clickable: true }));
+    drinkPanel.appendChild(renderCategoryList(menuData.drinks, { clickable: true, tierBySection }));
   }
 }
 
 async function loadMenuForRestaurant(restaurantId) {
   log('debug', '[menu] loadMenuForRestaurant: start', { restaurantId });
+  // Menu content renders as soon as its own cache/fetch resolves (Ticket
+  // 4's original fast path) — restaurant-wide progress is a separate,
+  // slower round trip (no client cache of its own) that shouldn't gate
+  // the menu itself. It fills in the pills/Train-link a moment later
+  // instead, same "progressively enhance, don't block" tolerance already
+  // accepted for the browse skeleton.
   const menuData = await getRestaurantMenu(restaurantId);
   currentMenuData = menuData;
-  renderMenuPanels(restaurantId, menuData);
+  renderMenuPanels(restaurantId, menuData, computeTierBySection(menuData, currentRestaurantProgress));
   log('debug', '[menu] loadMenuForRestaurant: rendered', {
     restaurantId,
     foodCategories: menuData.food?.length || 0,
     drinkCategories: menuData.drinks?.length || 0,
   });
+
+  hydrateRestaurantProgress(getOrCreateUserId(), restaurantId).then((progress) => {
+    if (currentRestaurantId !== restaurantId) return; // restaurant changed again before this resolved
+    currentRestaurantProgress = progress;
+    renderMenuPanels(restaurantId, currentMenuData, computeTierBySection(currentMenuData, progress));
+    if (currentPhase === 'browse') updateTrainLink(restaurantId, currentContentType);
+  });
+
   return menuData;
+}
+
+// Updates one category's browse-list pill in place, from
+// currentRestaurantProgress (kept in sync locally after writes) — avoids a
+// full re-fetch/re-render just to reflect a tier that changed this session.
+function refreshCategoryPill(sectionName, tier) {
+  const heading = document.querySelector(`.menu-category__name--link[data-section="${sectionName}"]`);
+  const header = heading?.closest('.menu-category__header');
+  if (!header) return;
+  let pill = header.querySelector('.menu-category__pill');
+  if (!tier || tier === 'blank') {
+    pill?.remove();
+    return;
+  }
+  if (!pill) {
+    pill = document.createElement('span');
+    header.appendChild(pill);
+  }
+  pill.className = `menu-category__pill menu-category__pill--${tier}`;
+  pill.textContent = tier === 'mastered' ? 'Mastered' : 'Training';
+}
+
+function refreshPillFor(sectionName) {
+  if (!sectionName) return;
+  refreshCategoryPill(sectionName, tierForSectionInProgress(currentMenuData, currentRestaurantProgress, sectionName));
+}
+
+// ─── Practice module callbacks ────────────────────────────────────────
+// learn-practice.js owns the drill itself; these are the only two points
+// where it needs to reach back into this file's rendering — a new session
+// starting (lastTrained bookkeeping) and coverage changing (review
+// highlight + pill + Train link).
+function handlePracticeSessionStarted() {
+  const previousLastTrained = currentRestaurantProgress.lastTrained;
+  currentRestaurantProgress = { ...currentRestaurantProgress, lastTrained: currentSection };
+  if (previousLastTrained && previousLastTrained !== currentSection) refreshPillFor(previousLastTrained);
+  refreshPillFor(currentSection);
+}
+
+function handleCoverageChanged(pass, sectionCoverage) {
+  const review = detailEl.querySelector('.menu-detail__review');
+  if (review) review.dataset.pass = pass;
+  currentRestaurantProgress = {
+    ...currentRestaurantProgress,
+    sections: { ...currentRestaurantProgress.sections, [currentSection]: sectionCoverage }
+  };
+  refreshPillFor(currentSection);
+  updateTrainLink(currentRestaurantId, currentContentType);
 }
 
 // ─── Phase/mode state ─────────────────────────────────────────────────
 const browseEl = document.getElementById('menu-browse');
 const detailEl = document.getElementById('menu-detail');
 const practiceEl = document.getElementById('menu-practice');
-const transcript = document.getElementById('learn-transcript');
-
-// Direct scroll control on the page itself, not element.scrollIntoView()
-// — the latter's per-element/per-render geometry guessing is what caused
-// streaming to jump around and rehydrated history to stop short of the
-// true bottom. This always lands exactly at the bottom, unconditionally,
-// regardless of what changed. Whole-page scroll (not an internal
-// container) is deliberate here — see .learn-drill's comment in
-// _learn.scss for why.
-function scrollTranscriptToBottom() {
-  window.scrollTo(0, document.documentElement.scrollHeight);
-}
-const answerForm = document.getElementById('learn-answer-form');
-const answerInput = document.getElementById('learn-answer-input');
-const sendButton = document.getElementById('learn-send-btn');
-const flagButton = document.getElementById('learn-flag-btn');
 
 let currentRestaurantId = null;
 let currentContentType = 'food';
 let currentSection = null; // category name — only meaningful in detail
+let currentSectionItemIds = []; // item ids for currentSection — only meaningful in detail
 let currentPhase = 'browse'; // 'browse' | 'detail'
 let currentMode = 'review'; // 'review' | 'practice' — only meaningful in detail
-let currentChatId = null;
-let chatHistory = [];
-let awaitingResponse = false;
 
 function showPhase(phase) {
   currentPhase = phase;
@@ -364,12 +455,19 @@ function applyMode(mode) {
   log('debug', '[menu] applyMode', { mode, currentSection });
 }
 
-// Only (re)starts the chat if one isn't already running for this
-// section — toggling back to Practice after a Review detour must resume
-// the same conversation, not restart it (see module comment).
+// startPractice is idempotent — calling it again for a session that's
+// already open for this exact restaurant+section just re-syncs the UI,
+// so toggling back to Practice after a Review detour resumes the same
+// conversation rather than restarting it (see module comment).
 function setMode(mode) {
   applyMode(mode);
-  if (mode === 'practice' && !currentChatId) startDrill();
+  if (mode === 'practice') {
+    startPractice(currentRestaurantId, currentSection, currentSectionItemIds, {
+      onSessionStarted: handlePracticeSessionStarted,
+      onCoverageChanged: handleCoverageChanged,
+      onTransitionToReview: () => setMode('review')
+    });
+  }
 }
 
 // Reads the restaurant's display name from the sidemenu switcher's own
@@ -383,13 +481,18 @@ function getRestaurantName(restaurantId) {
 // name, "Food › Category" title, Review/Practice toggle, review content)
 // fresh into #menu-detail — replaces the old per-category baked-and-
 // hidden blocks now that categories aren't known until the menu fetch
-// resolves.
+// resolves. The review panel's data-pass starts from whatever's cached
+// locally (instant, no network) — learn-practice.js corrects it once
+// hydration reconciles against Firestore, via the onCoverageChanged
+// callback above.
 function renderDetailBlock(contentType, sectionName) {
   const category = categoriesFor(contentType).find((c) => c.name === sectionName);
   if (!category) {
     log('debug', '[menu] renderDetailBlock: category not found', { contentType, sectionName });
     return false;
   }
+
+  currentSectionItemIds = category.items.map((item) => item.id);
 
   detailEl.innerHTML = '';
 
@@ -432,6 +535,7 @@ function renderDetailBlock(contentType, sectionName) {
 
   const review = document.createElement('div');
   review.className = 'menu-detail__review';
+  review.dataset.pass = passForSection(currentSectionItemIds, loadFactCoverageCache(currentRestaurantId, sectionName));
   review.appendChild(renderCategoryList([category], { clickable: false }));
   detailEl.appendChild(review);
 
@@ -467,19 +571,10 @@ function enterBrowse(contentType, { pushUrl = true } = {}) {
 function enterDetail(contentType, sectionName, mode = 'review', { pushUrl = true } = {}) {
   const isNewSection = currentPhase !== 'detail' || currentSection !== sectionName;
   log('debug', '[menu] enterDetail', { contentType, sectionName, mode, pushUrl, isNewSection });
-  if (isNewSection && currentChatId) {
-    flushSectionChat(currentRestaurantId, currentSection, 'exited', { useBeacon: false });
-  }
+  if (isNewSection) exitPractice();
   currentContentType = contentType;
   currentSection = sectionName;
   setCurrentContentType(contentType);
-  if (isNewSection) {
-    currentChatId = null;
-    chatHistory = [];
-    activeCorrectionCard = null;
-    if (flagButton) flagButton.hidden = true;
-    if (transcript) transcript.innerHTML = '';
-  }
   if (!renderDetailBlock(contentType, sectionName)) return;
   showPhase('detail');
   setMode(mode);
@@ -488,447 +583,12 @@ function enterDetail(contentType, sectionName, mode = 'review', { pushUrl = true
 
 // Shared by the breadcrumb link and the restaurant switcher — both leave
 // detail for browse of a (possibly different) content type. If that
-// means abandoning an in-progress practice session, flush it first so
-// the chat isn't silently dropped.
+// means abandoning an in-progress practice session, exitPractice flushes
+// it first so the chat isn't silently dropped.
 function switchToBrowse(contentType) {
-  if (currentPhase === 'detail' && currentChatId) {
-    flushSectionChat(currentRestaurantId, currentSection, 'exited', { useBeacon: false });
-  }
-  if (currentPhase !== 'browse') {
-    currentChatId = null;
-    chatHistory = [];
-    activeCorrectionCard = null;
-    if (flagButton) flagButton.hidden = true;
-    if (transcript) transcript.innerHTML = '';
-  }
+  if (currentPhase === 'detail') exitPractice();
   enterBrowse(contentType);
 }
-
-// ─── Section chat persistence (localStorage) ────────────────────────────
-// Every turn writes here — cheap, instant, local. Firestore is only
-// touched at three boundaries (learned / exited / abandoned), not per
-// turn. Keyed by restaurant + section together since two restaurants can
-// share a category name.
-const TTL_MS = 24 * 60 * 60 * 1000; // 24h
-
-function lsKey(restaurantId, section) {
-  return `tico-learn-chat-${restaurantId}-${section}`;
-}
-
-function generateChatId() {
-  return `lc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-// Returns { chatId, history } for a fresh or rehydrated section, or null
-// if there's nothing usable (caller should start a brand-new drill). A
-// stale (TTL-expired) entry with real content gets flushed as
-// 'abandoned' before being cleared.
-function loadSectionState(restaurantId, section) {
-  try {
-    const raw = localStorage.getItem(lsKey(restaurantId, section));
-    if (!raw) return null;
-    const state = JSON.parse(raw);
-    if (Date.now() - state.timestamp > TTL_MS) {
-      if (state.history?.some((m) => m.role === 'user')) {
-        flushSectionChat(restaurantId, section, 'abandoned', { useBeacon: false, stateOverride: state });
-      }
-      localStorage.removeItem(lsKey(restaurantId, section));
-      return null;
-    }
-    return state;
-  } catch {
-    return null;
-  }
-}
-
-function saveSectionState(restaurantId, section, history, chatId) {
-  try {
-    localStorage.setItem(lsKey(restaurantId, section), JSON.stringify({ chatId, history, timestamp: Date.now() }));
-  } catch {}
-}
-
-function clearSectionState(restaurantId, section) {
-  try { localStorage.removeItem(lsKey(restaurantId, section)); } catch {}
-}
-
-// Single save path for all three boundaries. useBeacon: true for saves
-// that coincide with navigating away ('exited'); false where the tab
-// stays open ('learned', TTL-driven 'abandoned' flush on load).
-function flushSectionChat(restaurantId, section, action, { useBeacon, stateOverride } = {}) {
-  const state = stateOverride || { chatId: currentChatId, history: chatHistory };
-  if (!state.history?.some((m) => m.role === 'user')) return; // nothing worth saving
-  const payload = {
-    chatId: state.chatId,
-    userId: getOrCreateUserId(),
-    restaurantId,
-    section,
-    messages: state.history,
-    action,
-    conversationStart: state.history[0]?.timestamp || null,
-    conversationEnd: new Date().toISOString(),
-  };
-  if (useBeacon) {
-    const queued = saveLearnChatBeacon(payload);
-    if (!queued) saveLearnChat(payload).catch(() => {});
-  } else {
-    saveLearnChat(payload).catch(() => {});
-  }
-  clearSectionState(restaurantId, section);
-}
-
-// ─── Flag-and-confirm correction flow ────────────────────────────────────
-// Tico refuses to state anything outside the menu data, but the menu is
-// necessarily incomplete — this lets a trainee flag a real staff fact
-// Tico is missing/wrong about. The last exchange is sent to an
-// extraction call that proposes a clean, standalone note; the trainee
-// confirms/edits/rejects it rather than retyping it from scratch (see
-// docs/VISION.md's Data Principle — never fabricate, always confirm).
-let activeCorrectionCard = null;
-
-function removeCorrectionCard() {
-  activeCorrectionCard?.remove();
-  activeCorrectionCard = null;
-}
-
-async function proposeCorrection() {
-  if (activeCorrectionCard) return; // already open
-  const lastAssistant = [...chatHistory].reverse().find((m) => m.role === 'assistant');
-  const lastUser = [...chatHistory].reverse().find((m) => m.role === 'user');
-  if (!lastAssistant || !lastUser) return;
-
-  flagButton.disabled = true;
-  try {
-    const response = await fetch('/api/learn-propose-correction', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        restaurantId: currentRestaurantId,
-        lastUserMessage: lastUser.content,
-        lastAssistantMessage: lastAssistant.content,
-        currentSection
-      })
-    });
-    const data = await response.json();
-    if (!response.ok || data.ok === false) {
-      renderCorrectionMessage(data.reason || data.error || 'Couldn’t find a clear correction in that exchange.');
-      return;
-    }
-    renderCorrectionCard(data.text, data.scope, data.section);
-  } catch {
-    renderCorrectionMessage('Couldn’t reach Tico just now — try flagging again in a moment.');
-  } finally {
-    flagButton.disabled = false;
-  }
-}
-
-function renderCorrectionMessage(message) {
-  const card = document.createElement('div');
-  card.className = 'correction-card';
-  card.innerHTML = `<p class="correction-card__status"></p>`;
-  card.querySelector('.correction-card__status').textContent = message;
-  transcript.appendChild(card);
-  scrollTranscriptToBottom();
-  setTimeout(() => card.remove(), 4000);
-}
-
-function renderCorrectionCard(proposedText, scope, section) {
-  const card = document.createElement('div');
-  card.className = 'correction-card';
-  card.innerHTML = `
-    <p class="correction-card__label">Add this as a staff note?</p>
-    <textarea class="correction-card__text"></textarea>
-    <p class="correction-card__scope"></p>
-    <div class="correction-card__actions">
-      <button type="button" class="btn correction-card__confirm">Confirm</button>
-      <button type="button" class="correction-card__reject">Discard</button>
-    </div>
-  `;
-  const textEl = card.querySelector('.correction-card__text');
-  const scopeEl = card.querySelector('.correction-card__scope');
-  textEl.value = proposedText;
-  scopeEl.textContent = scope === 'restaurant'
-    ? 'Applies restaurant-wide.'
-    : `Applies to ${section} only.`;
-
-  card.querySelector('.correction-card__reject').addEventListener('click', removeCorrectionCard);
-  card.querySelector('.correction-card__confirm').addEventListener('click', async () => {
-    const text = textEl.value.trim();
-    if (!text) return;
-    try {
-      await fetch('/api/learn-save-correction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ restaurantId: currentRestaurantId, text, scope, section })
-      });
-      removeCorrectionCard();
-      renderCorrectionMessage('Saved — Tico will use this going forward.');
-    } catch {
-      renderCorrectionMessage('Couldn’t save that just now — try again in a moment.');
-    }
-  });
-
-  transcript.appendChild(card);
-  activeCorrectionCard = card;
-  scrollTranscriptToBottom();
-}
-
-flagButton?.addEventListener('click', proposeCorrection);
-
-function updateSendButton() {
-  sendButton.disabled = answerInput.value.trim().length === 0;
-}
-
-// Auto-resize textarea as the user types — reset to auto first so
-// scrollHeight re-measures from a collapsed state, otherwise it only
-// ever grows.
-answerInput?.addEventListener('input', function () {
-  this.style.height = 'auto';
-  this.style.height = `${this.scrollHeight}px`;
-  updateSendButton();
-});
-
-// Desktop: Enter submits. Mobile (coarse pointer): Enter inserts a
-// newline, matching native textarea behavior. Shift+Enter always inserts
-// a newline on both.
-answerInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    const isMobile = window.matchMedia('(pointer: coarse)').matches;
-    if (!isMobile) {
-      e.preventDefault();
-      answerForm.requestSubmit();
-    }
-  }
-});
-
-function appendLine(speaker, text) {
-  const line = document.createElement('p');
-  line.className = `transcript-line transcript-line--${speaker}`;
-  line.textContent = text;
-  transcript.appendChild(line);
-  scrollTranscriptToBottom();
-}
-
-function appendThinking() {
-  const line = document.createElement('p');
-  line.className = 'transcript-line transcript-line--tico learn-thinking';
-  line.textContent = 'Tico’s thinking…';
-  transcript.appendChild(line);
-  scrollTranscriptToBottom();
-  return line;
-}
-
-// ─── Speaker segments (TICO:/GUEST: line markers) ───────────────────────
-// The model's raw text is tagged with TICO:/GUEST: markers at the start
-// of each line (see learn-chat-init.cjs's system prompt) so Tico's own
-// voice (narration/evaluation — centered italic, no bubble) renders
-// separately from the guest's spoken dialogue (a normal chat bubble).
-// Markers are parsed out here and never shown; chatHistory still stores
-// the raw marked-up text verbatim, since the model conditions on its own
-// past formatting to keep producing it reliably.
-const SEGMENT_MARKER_RE = /(?:^|\n)[ \t]*(TICO|GUEST):[ \t]?/;
-const SEGMENT_MARKER_HOLDBACK = 6; // length of "GUEST:" — longest marker
-
-function createSegmentElement(speaker) {
-  const el = document.createElement('p');
-  el.className = speaker === 'tico' ? 'transcript-line transcript-line--tico' : 'transcript-line transcript-line--guest';
-  transcript.appendChild(el);
-  return el;
-}
-
-// Renders one complete (non-streaming) assistant turn — used to rehydrate
-// a persisted chat, where the full raw text is already available.
-function renderAssistantTurn(rawText) {
-  const re = new RegExp(SEGMENT_MARKER_RE, 'g');
-  const positions = [];
-  let m;
-  while ((m = re.exec(rawText))) {
-    positions.push({ start: m.index, contentStart: m.index + m[0].length, speaker: m[1] === 'TICO' ? 'tico' : 'guest' });
-  }
-  if (positions.length === 0) {
-    // No markers (older stored data, or the model skipped the format) — fall back to one guest bubble.
-    if (rawText.trim()) createSegmentElement('guest').textContent = rawText.trim();
-    return;
-  }
-  positions.forEach((pos, i) => {
-    const end = i + 1 < positions.length ? positions[i + 1].start : rawText.length;
-    const text = rawText.slice(pos.contentStart, end).trim();
-    if (text) createSegmentElement(pos.speaker).textContent = text;
-  });
-}
-
-// Streaming variant of the same parsing — call createStreamRenderer() once
-// per turn, then feed it the full accumulated text after every token.
-function createStreamRenderer() {
-  let consumedLen = 0;
-  let speaker = null;
-  let bubble = null;
-
-  function appendToBubble(text) {
-    if (!text) return;
-    if (!bubble) {
-      speaker = 'guest'; // safe fallback if the model ever forgets the opening marker
-      bubble = createSegmentElement(speaker);
-    }
-    bubble.appendChild(document.createTextNode(text));
-    scrollTranscriptToBottom();
-  }
-
-  return {
-    update(fullTextSoFar) {
-      for (;;) {
-        const unconsumed = fullTextSoFar.slice(consumedLen);
-        const m = SEGMENT_MARKER_RE.exec(unconsumed);
-        if (m && m.index === 0) {
-          speaker = m[1] === 'TICO' ? 'tico' : 'guest';
-          bubble = createSegmentElement(speaker);
-          consumedLen += m[0].length;
-          continue;
-        }
-        if (m && m.index > 0) {
-          appendToBubble(unconsumed.slice(0, m.index));
-          consumedLen += m.index;
-          continue;
-        }
-        // No marker in the unconsumed tail — hold back a few characters in
-        // case they're the start of one still arriving token by token.
-        if (unconsumed.length > SEGMENT_MARKER_HOLDBACK) {
-          const safeLen = unconsumed.length - SEGMENT_MARKER_HOLDBACK;
-          appendToBubble(unconsumed.slice(0, safeLen));
-          consumedLen += safeLen;
-        }
-        break;
-      }
-    },
-    finalize(fullText) {
-      appendToBubble(fullText.slice(consumedLen));
-      consumedLen = fullText.length;
-    }
-  };
-}
-
-async function sendTurn(message) {
-  awaitingResponse = true;
-  answerInput.disabled = true;
-  sendButton.disabled = true;
-  const thinkingLine = appendThinking();
-  const renderer = createStreamRenderer();
-  let fullText = '';
-  let learned = false;
-
-  try {
-    const response = await fetch('/api/chat-stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chatType: 'learn',
-        userId: getOrCreateUserId(),
-        message,
-        chatHistory,
-        restaurantId: currentRestaurantId,
-        section: currentSection
-      })
-    });
-
-    thinkingLine.remove();
-
-    if (!response.ok || !response.body) {
-      appendLine('tico', 'Couldn’t reach Tico just now — try again in a moment.');
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const evt = JSON.parse(line.slice(6));
-
-        if (evt.type === 'token') {
-          fullText += evt.text;
-          renderer.update(fullText);
-        } else if (evt.type === 'tool_complete' && evt.tool === 'mark_section_learned') {
-          learned = true;
-        } else if (evt.type === 'done') {
-          renderer.finalize(fullText);
-        } else if (evt.type === 'error') {
-          renderer.finalize(fullText);
-          appendLine('tico', evt.error || 'Something went wrong.');
-        }
-      }
-    }
-
-    chatHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
-    chatHistory.push({ role: 'assistant', content: fullText, timestamp: new Date().toISOString() });
-    saveSectionState(currentRestaurantId, currentSection, chatHistory, currentChatId);
-    if (flagButton) flagButton.hidden = false;
-
-    if (learned) {
-      showLearnedBanner();
-      markSectionLearnedLocally(currentRestaurantId, currentSection);
-      flushSectionChat(currentRestaurantId, currentSection, 'learned', { useBeacon: false });
-    }
-  } finally {
-    awaitingResponse = false;
-    answerInput.disabled = false;
-    updateSendButton();
-    answerInput.focus();
-  }
-}
-
-function showLearnedBanner() {
-  const banner = document.createElement('div');
-  banner.className = 'learn-learned-banner';
-  banner.textContent = `You've learned ${currentSection}!`;
-  transcript.appendChild(banner);
-  scrollTranscriptToBottom();
-}
-
-function startDrill() {
-  const existing = loadSectionState(currentRestaurantId, currentSection);
-  transcript.innerHTML = '';
-  if (existing) {
-    currentChatId = existing.chatId;
-    chatHistory = existing.history;
-    chatHistory.forEach((m) => {
-      if (m.role === 'user') {
-        appendLine('user', m.content);
-      } else {
-        renderAssistantTurn(m.content);
-      }
-    });
-    answerForm.hidden = false;
-    if (flagButton) flagButton.hidden = false;
-    // renderAssistantTurn doesn't scroll on its own — one explicit call
-    // here after the whole history is rendered guarantees landing at the
-    // true bottom regardless of which role the last message happens to be.
-    scrollTranscriptToBottom();
-  } else {
-    currentChatId = generateChatId();
-    chatHistory = [];
-    answerForm.hidden = false;
-    sendTurn('Let’s get started.');
-  }
-}
-
-answerForm?.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (awaitingResponse) return;
-  const message = answerInput.value.trim();
-  if (!message) return;
-  appendLine('user', message);
-  answerInput.value = '';
-  answerInput.style.height = 'auto';
-  updateSendButton();
-  sendTurn(message);
-});
 
 // ─── Initial load ────────────────────────────────────────────────────
 (async function () {
@@ -964,7 +624,7 @@ answerForm?.addEventListener('submit', (e) => {
       // A reload mid-practice should stay in practice, not bounce back
       // to Review — resume it whenever a session already exists for this
       // section rather than always defaulting to Review on landing.
-      const initialMode = loadSectionState(currentRestaurantId, sectionName) ? 'practice' : 'review';
+      const initialMode = hasActiveSession(currentRestaurantId, sectionName) ? 'practice' : 'review';
       enterDetail(type, sectionName, initialMode, { pushUrl: false });
       return;
     }
@@ -975,9 +635,10 @@ answerForm?.addEventListener('submit', (e) => {
 // The nav switcher changes restaurant without reloading — re-filter,
 // fetch/cache-hit the new restaurant's menu, and recompute the Train
 // target in place. If we're mid-detail for the old restaurant, that
-// content no longer applies — flush any in-progress practice session and
-// drop back to browse rather than continuing on the wrong restaurant's
-// section.
+// content no longer applies — exitPractice flushes any in-progress
+// session (against whichever restaurant it actually belongs to, tracked
+// internally by learn-practice.js) and we drop back to browse rather than
+// continuing on the wrong restaurant's section.
 window.addEventListener('tico:restaurant-changed', async (e) => {
   const previousRestaurantId = currentRestaurantId;
   currentRestaurantId = e.detail.restaurantId;
@@ -990,14 +651,7 @@ window.addEventListener('tico:restaurant-changed', async (e) => {
     return;
   }
 
-  if (currentChatId) {
-    flushSectionChat(previousRestaurantId, currentSection, 'exited', { useBeacon: false });
-  }
-  currentChatId = null;
-  chatHistory = [];
-  activeCorrectionCard = null;
-  if (flagButton) flagButton.hidden = true;
-  if (transcript) transcript.innerHTML = '';
+  exitPractice();
   enterBrowse(currentContentType);
 });
 
@@ -1013,7 +667,7 @@ window.addEventListener('popstate', () => {
   if (categorySlug) {
     const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
-      const initialMode = loadSectionState(currentRestaurantId, sectionName) ? 'practice' : 'review';
+      const initialMode = hasActiveSession(currentRestaurantId, sectionName) ? 'practice' : 'review';
       enterDetail(type, sectionName, initialMode, { pushUrl: false });
       return;
     }

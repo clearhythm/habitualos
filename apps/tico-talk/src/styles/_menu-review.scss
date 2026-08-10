@@ -176,15 +176,25 @@
   margin-bottom: $space-xl;
 }
 
-.menu-category__name {
-  display: block;
-  width: 100%;
-  font-size: $font-size-lg;
-  font-weight: 600;
-  color: $color-green;
+// Wraps the category heading (+ optional tier pill, right-aligned) — the
+// border/spacing that used to live directly on .menu-category__name now
+// lives here, so the pill sits on the same row as the name rather than
+// needing its own line.
+.menu-category__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-sm;
   border-bottom: 1px solid $color-border;
   padding-bottom: $space-xs;
   margin-bottom: $space-sm;
+}
+
+.menu-category__name {
+  display: block;
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-green;
 }
 
 // /menu/'s category headings are clickable (jump to that category's teach
@@ -193,15 +203,34 @@
 button.menu-category__name--link {
   background: none;
   border: none;
-  border-bottom: 1px solid $color-border;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
 
   &:hover {
     color: $color-green-dark;
-    border-bottom-color: $color-green;
   }
+}
+
+// Blank/no pill by default (kept deliberately quiet) — only "training"
+// (the single most-recently-entered-Practice section) or "mastered"
+// (every fact covered, both passes) ever render. See learn-coverage.js.
+.menu-category__pill {
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.125rem $space-sm;
+}
+
+.menu-category__pill--training {
+  color: $color-text-muted;
+  background: $color-bg-muted;
+}
+
+.menu-category__pill--mastered {
+  color: #ffffff;
+  background: $color-green;
 }
 
 .menu-category__items {
