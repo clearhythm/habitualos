@@ -135,6 +135,19 @@
     bottom: 2px;
   }
 
+  // The <svg class="train-icon"> ships with no viewBox/width/height in
+  // the baked HTML — those only get set by updateTrainIcon() once real
+  // menu data has loaded (menu-restaurant-filter.js explicitly skips it
+  // until then). Without a CSS fallback, an unstyled <svg> renders at the
+  // browser's default replaced-element intrinsic size (300x150) for
+  // however long that takes — normally invisible in the ~hundreds-of-ms
+  // it takes to load, but real (and visible, breaking this row's layout)
+  // whenever that window is held open, e.g. via ?debugSkeleton.
+  .train-icon {
+    width: 30px;
+    height: 26px;
+  }
+
   // Per-shape nudges (menu-restaurant-filter.js's updateTrainIcon sets
   // one of these classes alongside .train-icon) — adjust independently
   // here rather than in the shape data, so all Train icon positioning
