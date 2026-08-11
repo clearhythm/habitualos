@@ -53,17 +53,36 @@ different device recovers real progress instead of looking reset.
   per-item-per-fact-type, computed client-side from the stream.
 - **`learn-progress` id scheme**: one Firestore doc per **(user,
   restaurant)** pair, not one doc per user with restaurant as a nested
-  object key. Doc id is a generated `lp-{unique}` (via a new
-  `netlify/functions/_utils/data-utils.cjs`, mirroring `learn-chats`'
-  `lc-` ids and this app's client-side `data-utils.js` pattern — every
-  `db-*.cjs` service now gets its ids from this one shared file instead of
-  calling `uniqueId(prefix)` inline). Fields: `_progressId` (mirrors the
-  doc id — useful in queries, survives flattening), `_userId`,
-  `_restaurantId`, `sections`. Writes resolve `(userId, restaurantId) →
-  docId` via a query (`_userId::eq::X`, filtered to `_restaurantId` in JS —
-  db-core has no compound queries) rather than a direct `get`, since the
-  natural key isn't the doc id; that's the accepted cost of the cleaner,
-  queryable shape over nesting restaurant as a dynamic object key.
+  object key. Doc id is **deterministic**, not randomly generated —
+  `lp-{userId minus its u- prefix}-{restaurantId}` (computed by
+  `progressId()` in `db-learn-progress.cjs`). Went through a randomly-
+  generated `lp-{unique}` + query-by-`_userId`-then-filter phase first
+  (matching `learn-chats`' pattern) before landing here once it was clear
+  the natural key is always known upfront — unlike a chat session's id,
+  which the client has to remember across saves, `(userId, restaurantId)`
+  is stable and available on every call, so there's nothing to query for.
+  This means every write/read is a direct `get`/`create` by known id —
+  no query, and `db-core.create()`'s own create-if-new/merge-if-exists
+  behavior (a real `.get().exists` check on that specific doc reference,
+  every call) handles new-vs-existing correctly without a separate check.
+  Fields: `_progressId` (mirrors the doc id — still useful even though
+  it's derivable, e.g. if the doc is ever read without its id metadata),
+  `_userId`, `_restaurantId`, `sections`.
+  - **Accepted trade-offs**: (1) if `restaurantId` values were ever
+    rekeyed, every `learn-progress` doc's id would go stale — but
+    `restaurantId` is already the primary doc id for `restaurants` and
+    `restaurant-menus`, the more foundational collections, so a rekey
+    would already force recreating those regardless; migrating
+    `learn-progress` alongside them is a small addition to an
+    already-necessary migration, not a new one. (2) the id no longer
+    carries a fresh timestamp for *this record's* own creation (unlike
+    `uniqueId()`'s ids), so it doesn't sort chronologically by creation
+    time in the Firestore console — what it gains instead is that every
+    one of a user's `learn-progress` docs shares the same prefix and
+    sorts adjacent to each other, grouped by user rather than scattered
+    by creation time.
+  - `generateProgressId()` (the old random-id generator, in
+    `_utils/data-utils.cjs`) was removed once nothing called it anymore.
 - **`_lastTrained`** (the Training-pill pointer) lives *inside* `sections`
   as a sibling key to section names, not as a top-level doc field — it's
   semantically about the section it points into, and sorts visually

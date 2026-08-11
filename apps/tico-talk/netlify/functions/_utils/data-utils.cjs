@@ -15,6 +15,3 @@ const { uniqueId } = require('@habitualos/db-core');
 
 // Generates a unique learn-chat id with "lc-" prefix.
 exports.generateChatId = () => uniqueId('lc');
-
-// Generates a unique learn-progress id with "lp-" prefix.
-exports.generateProgressId = () => uniqueId('lp');

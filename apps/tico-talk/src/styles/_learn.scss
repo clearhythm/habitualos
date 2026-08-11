@@ -80,9 +80,10 @@
 .learn-drill {
   // Reserves room so the fixed composer never overlaps the last
   // transcript line — must stay comfortably larger than the composer's
-  // real rendered height (~130px) since window.scrollTo's "bottom" is
-  // measured including this padding.
-  padding-bottom: 9rem;
+  // real rendered height (~130px, now ~146px with the gold panel's added
+  // padding-top for the status badge) since window.scrollTo's "bottom"
+  // is measured including this padding.
+  padding-bottom: 10rem;
 }
 
 .learn-transcript {
@@ -92,18 +93,35 @@
 }
 
 .learn-input-shell {
+  // position: fixed escapes .container's width constraint entirely
+  // (it positions relative to the viewport, ignoring DOM nesting) — left:
+  // 50%; transform: translateX(-50%); width: 100%; max-width: 1200px is
+  // what actually caps it at .container's own max-width instead of the
+  // true viewport, while staying pinned to the screen's bottom edge on
+  // scroll. On mobile (narrower than 1200px) this is a no-op, same full-
+  // width behavior as before. Kept from the dropped "gold panel" design
+  // pass — this part was a real alignment fix, not decoration.
   position: fixed;
-  left: 0;
-  right: 0;
+  left: 50%;
   bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 1200px;
   z-index: 50;
   background: $color-bg;
+  // Horizontal padding matches .container's own — without it, this
+  // element's content area (and .learn-input-row's max-width: 680px
+  // centering inside it) doesn't start/end at the same point .container's
+  // does, so the textarea's edges drift out of alignment with the
+  // transcript's chat bubbles above it, which live directly inside
+  // .container. Also kept from the dropped design pass, same reason.
+  padding: 0 $space-lg;
 }
 
 .learn-input-row {
   max-width: 680px;
   margin: 0 auto;
-  padding: $space-sm $space-lg;
+  padding: $space-sm 0;
 }
 
 .learn-input-wrap {
@@ -298,28 +316,30 @@
 }
 
 // ─── Two-pass (Basics -> Complete) fact coverage ───────────────────────
-.learn-progress-bar {
-  height: 4px;
-  background: $color-border;
-  border-radius: 999px;
-  overflow: hidden;
-  margin: 0 auto;
+// A playful three-state status ("Training" / "Warming Up" / "Getting
+// Hot" — see passStatusLabel in learn-coverage.js), never a count or a
+// fill — a literal tally, in any visual form, read as "being tracked"
+// rather than encouraging. Rendered in-line in the transcript (see
+// createStatusElement/appendStatusMarker in learn-practice.js), sharing
+// the timeline with the actual conversation rather than living as
+// separate persistent chrome — a lightweight title block, not a bubble.
+.learn-status-marker {
   max-width: 680px;
+  margin: $space-lg auto;
+  text-align: center;
 }
 
-.learn-progress-bar__fill {
-  height: 100%;
-  width: var(--progress, 0%);
-  background: $color-green;
-  transition: width 0.4s ease;
-}
-
-.learn-progress-bar__label {
+.learn-status-marker__prefix {
+  display: block;
   font-size: $font-size-sm;
   color: $color-text-muted;
-  text-align: center;
-  max-width: 680px;
-  margin: $space-xs auto $space-sm;
+}
+
+.learn-status-marker__label {
+  display: block;
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $color-green;
 }
 
 .learn-pass-transition {

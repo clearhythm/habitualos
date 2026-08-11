@@ -1,0 +1,59 @@
+@use 'variables' as *;
+
+// /stats/ — currently just a testing/support "reset progress" utility,
+// not a real skill-tree view yet (see stats.njk). Kept deliberately
+// plain — this isn't a trainee-facing feature.
+.stats-venue-name {
+  color: $color-text-muted;
+  margin-bottom: $space-lg;
+}
+
+.stats-sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  padding: $space-md 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child { border-bottom: none; }
+}
+
+.stats-row__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.stats-row__tier {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+
+  &--mastered { color: $color-green; font-weight: 600; }
+  &--training { color: $color-text-muted; }
+}
+
+.stats-row__reset {
+  border: 1px solid $color-border;
+  background: none;
+  color: $color-text-muted;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    color: $color-text;
+    border-color: $color-text-muted;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}

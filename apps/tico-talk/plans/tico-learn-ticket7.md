@@ -46,6 +46,17 @@ than build it; the view shows competency tiers, not schedules.
 - `apps/tico-talk/src/assets/js/restaurant.js` (Ticket 4) —
   `getCurrentRestaurantId()`, reused so the management view reflects
   whichever restaurant is currently selected, not a separate concept.
+- `apps/tico-talk/src/assets/js/learn-coverage.js`'s
+  `hydrateRestaurantProgress`/`computeTierBySection` (Ticket 5) — the
+  exact functions needed to list a restaurant's sections with their
+  current tier already exist and are proven working. `/stats/`
+  (`src/stats.njk`/`src/assets/js/stats.js`, built as a testing/reset
+  utility, not this ticket) already uses both to render a per-section
+  list — a real, working reference for that part of this ticket's UI,
+  even though `/stats/` itself is a different page with a different
+  purpose (a destructive reset tool, plain sidemenu layout, Menu-only —
+  not the read-only, employee-labeled, all-six-competencies view this
+  ticket actually wants).
 
 ## Overview
 
@@ -222,8 +233,20 @@ The "roll every section up to one tier" simplification is a real
 judgment call, not hidden: Menu currently tracks per-section coverage
 (Starters, Tacos, ...), and this v1 just shows whichever tier is
 highest across all of them rather than a full per-section breakdown.
-Reasonable for a first pass; note it explicitly if a GM demo specifically
-asks "which sections, not just overall."
+
+**Update, from a later conversation**: a manager plausibly *does* want
+the per-section detail, on two counts — not just *which* sections are
+Mastered (so "Menu: Mastered" alone hides real information), but also
+*which one is currently being worked on* (Training) as a sign of active
+engagement, not just completed outcomes — "I can see Erik's working on
+it" matters on its own, separate from what's finished. Leaning toward an
+accordion/dropdown per competency row: collapsed shows the same rolled-up
+summary this file already builds, expanding it reveals the per-section
+breakdown (reusing the same Training/Mastered vocabulary and tier
+arithmetic `/stats/` and the browse-list pills already use — see the
+Phase 0 note above). Still a v1-vs-later judgment call, not fully
+decided, but leaning toward building the accordion now rather than
+deferring it.
 
 ## File 5: `src/styles/_management.scss` (NEW), added to `main.scss`
 

@@ -194,12 +194,20 @@ when writing the actual scan prompt rather than re-deriving the rubric.
   (simpler, but a trainee could be the first to see an unreviewed
   answer). Leaning batch-and-review to match the correction flow's
   existing pattern, but not confirmed.
-- **Term matching in rendered descriptions**: how a term in
-  `item.description`/`item.notes` text gets turned into a tappable span
-  client-side — exact-string match against the glossary's known terms
-  list is the obvious starting approach (wrap matches in
-  `renderCategoryList`'s description rendering), but multi-word terms
-  ("pico de gallo," "queso fresco") and case/pluralization need handling.
+- **Term matching in rendered descriptions AND item names**: scope isn't
+  just `item.description`/`item.notes` — item *names* carry qualifying
+  terms too (real example: "Tuna Tonnato" — tonnato is exactly the
+  "named preparation whose nature isn't self-evident" case the rubric
+  already covers, it just happened to show up in the dish's name rather
+  than its description). The rubric itself doesn't change — it's about
+  whether a term qualifies, not where it appears — but both the scan
+  (needs to read `item._name`/`item.name` as a source, not just
+  description/notes) and the render-side matching (needs to wrap matches
+  in `.menu-item__name`, not just `.menu-item__desc`/`.menu-item__notes`,
+  in `renderCategoryList`) need to cover it. Exact-string match against
+  the glossary's known terms list is the obvious starting approach, but
+  multi-word terms ("pico de gallo," "queso fresco") and
+  case/pluralization need handling.
 - **Popover UI**: reuse an existing pattern in this app if one fits
   (`[data-tooltip]` in `_learn.scss` is a hover-only tooltip, not tap-
   friendly for mobile — this needs a real tap-to-open popover, closer to

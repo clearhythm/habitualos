@@ -34,6 +34,17 @@ export function saveFactCoverageCache(restaurantId, section, coverage) {
   }
 }
 
+// Testing/support utility — clears the local cache side of a section
+// reset. Firestore reconciliation is monotonic (union-merge, never
+// removes), so the Firestore side must also be cleared separately or
+// this cache will just get refilled from there on next hydration — see
+// resetSectionProgress in collections/learn-progress.js.
+export function clearFactCoverageCache(restaurantId, section) {
+  try {
+    localStorage.removeItem(lsCoverageKey(restaurantId, section));
+  } catch {}
+}
+
 // Union merge — safe because coverage is monotonic (a fact, once covered,
 // is never uncovered), so merging two coverage maps can only ever add true
 // flags, never lose or contradict one.
@@ -90,9 +101,38 @@ export function markLastTrained(userId, restaurantId, section) {
 // sectionItemIds: array of every item id in the section (from menu data).
 // sectionProgress: {itemId: {factType: true}} (from factCoverage/Firestore).
 
+// A playful three-state label instead of a literal count — Erik's call:
+// exposing the underlying per-item tally (even as dots, even framed nicely)
+// felt like "being tracked"; a coarse, Tico-voiced status doesn't reveal
+// the mechanism while still giving a sense of forward motion. Bucketed off
+// the same done/total passProgress() already computes, just never shown as
+// a fraction.
+export function passStatusLabel(sectionItemIds, sectionProgress, pass) {
+  const { done, total } = passProgress(sectionItemIds, sectionProgress, pass);
+  if (!total || done === 0) return 'Training';
+  if (done / total < 0.67) return 'Warming Up';
+  return 'Getting Hot';
+}
+
 export function passForSection(sectionItemIds, sectionProgress) {
   const allIngredientsDone = sectionItemIds.every((id) => sectionProgress?.[id]?.ingredients);
   return allIngredientsDone ? 'complete' : 'basics';
+}
+
+// Deterministic, not random — first not-yet-covered (item, factType) pair
+// in section/pass order. Mirrors pickNextTarget in
+// netlify/functions/_services/learn-coverage-logic.cjs exactly (can't
+// literally share the file across ESM/CJS): both the client and the
+// server derive "what's this turn about" from the same factCoverage this
+// same way, so they always agree without either side telling the other.
+export function pickNextTarget(sectionItemIds, sectionProgress, pass) {
+  const types = PASS_FACT_TYPES[pass];
+  for (const itemId of sectionItemIds) {
+    for (const type of types) {
+      if (!sectionProgress?.[itemId]?.[type]) return { itemId, factType: type };
+    }
+  }
+  return null;
 }
 
 export function passProgress(sectionItemIds, sectionProgress, pass) {

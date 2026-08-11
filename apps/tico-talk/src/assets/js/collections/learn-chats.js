@@ -1,7 +1,12 @@
+import { get, post } from '../api.js';
+
 /**
  * saveLearnChatBeacon — fire-and-forget via sendBeacon.
  * Returns true if the browser accepted the request, false otherwise.
  * Use for pre-navigation saves (the 'exited' path — leaving the drill).
+ * sendBeacon is a distinct browser API (no response to read), so it can't
+ * go through api.js's fetch-based post() — this is the one deliberate
+ * exception to the "always use the wrapper" rule.
  */
 export function saveLearnChatBeacon({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) {
   const payload = JSON.stringify({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd });
@@ -14,12 +19,7 @@ export function saveLearnChatBeacon({ chatId, userId, restaurantId, section, mes
  * 'abandoned' flush on load).
  */
 export async function saveLearnChat({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd }) {
-  const response = await fetch('/api/learn-chat-save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd })
-  });
-  return response.json();
+  return post('/api/learn-chat-save', { chatId, userId, restaurantId, section, messages, action, conversationStart, conversationEnd });
 }
 
 /**
@@ -27,6 +27,5 @@ export async function saveLearnChat({ chatId, userId, restaurantId, section, mes
  * Used only by the load-time verify/retry safety net.
  */
 export async function getLearnChat(chatId, userId) {
-  const response = await fetch(`/api/learn-chat-get?chatId=${encodeURIComponent(chatId)}&userId=${encodeURIComponent(userId)}`);
-  return response.json();
+  return get(`/api/learn-chat-get?chatId=${encodeURIComponent(chatId)}&userId=${encodeURIComponent(userId)}`);
 }

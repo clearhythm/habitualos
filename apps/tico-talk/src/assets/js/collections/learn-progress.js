@@ -17,3 +17,11 @@ export async function getLearnProgress(userId, restaurantId) {
 export async function writeLearnProgress({ userId, restaurantId, section, itemId, factType, lastTrained }) {
   return post('/api/learn-progress-write', { userId, restaurantId, section, itemId, factType, lastTrained });
 }
+
+/**
+ * resetSectionProgress — clears one section's coverage entirely (testing/
+ * support utility, not a trainee-facing action). Thin POST wrapper.
+ */
+export async function resetSectionProgress(userId, restaurantId, section) {
+  return post('/api/learn-progress-reset', { userId, restaurantId, section });
+}
