@@ -210,30 +210,43 @@
   color: $color-green;
 }
 
-// /menu/'s category headings are clickable (jump to that category's teach
+// /menu/'s category headers are clickable (jump to that category's teach
 // screen) — /menu-review/'s aren't, so this only applies where the
-// clickable=true macro param renders a <button> instead of a plain <h3>.
-button.menu-category__name--link {
+// clickable=true macro param renders a <button> instead of a plain <div>.
+// The whole row is the target, not just the name text, so this lives on
+// .menu-category__header itself now, not the name/pill individually.
+button.menu-category__header--link {
+  width: 100%;
+  // Resets the browser's default <button> box (padding on all sides,
+  // sometimes a smaller inherited font) — .menu-category__header's own
+  // padding-bottom/border/margin above still apply, this only overrides
+  // what the button UA-stylesheet would otherwise add on top of them.
+  padding: 0 0 $space-xs;
+  margin: 0 0 $space-sm;
   background: none;
   border: none;
+  border-bottom: 1px solid $color-border;
   font-family: inherit;
+  font-size: inherit;
+  color: inherit;
   text-align: left;
   cursor: pointer;
 
-  &:hover {
+  &:hover .menu-category__name {
     color: $color-green-dark;
   }
 }
 
 // Blank/no pill by default (kept deliberately quiet) — only "training"
-// (the single most-recently-entered-Practice section) or "mastered"
-// (every fact covered, both passes) ever render. See learn-coverage.js.
+// (the single most-recently-entered-Practice section) or "covered"
+// (every fact covered, both passes, once) ever render today. See
+// learn-coverage.js.
 .menu-category__pill {
   flex-shrink: 0;
   font-size: $font-size-sm;
   font-weight: 600;
   border-radius: 999px;
-  padding: 0.125rem $space-sm;
+  padding: 0.125rem $space-md;
 }
 
 .menu-category__pill--training {
@@ -241,9 +254,26 @@ button.menu-category__name--link {
   background: $color-bg-muted;
 }
 
+// Covered: got everything right once. Plain text, no pill shape at all —
+// strips the base pill's padding/border-radius/background back off.
+// Reserves the actual badge look for real Mastery below.
+.menu-category__pill--covered {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: $color-success;
+}
+
+// Mastered: not computed anywhere yet — real Mastery is meant to be
+// earned through repeated correct Review passes over time, a separate
+// mechanic not built yet. Styled ahead of time since Covered/Mastered
+// were speced together — same $color-success as Covered, just inverted:
+// solid fill + white text instead of plain colored text, so it reads as
+// "further along," not an unrelated third color.
 .menu-category__pill--mastered {
   color: #ffffff;
-  background: $color-green;
+  background: $color-success;
 }
 
 .menu-category__items {

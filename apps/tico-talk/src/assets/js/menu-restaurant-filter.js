@@ -38,7 +38,7 @@ import {
   computeTierBySection,
   tierForSectionInProgress,
   passForSection,
-  isSectionMastered
+  isSectionCovered
 } from './learn-coverage.js';
 import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
@@ -191,27 +191,36 @@ function updateTrainIcon(trainLink, restaurantId, contentType) {
 }
 
 // Target section: the restaurant's last-trained section if it isn't
-// Mastered yet (resume where they left off), else the first non-Mastered
+// Covered yet (resume where they left off), else the first non-Covered
 // section in list order, else just the first section (nothing left to
 // train — reopen it to review). Shared by updateTrainLink (the browse
-// list's Train button) and the Mastered banner's Continue button (see
+// list's Train button) and the Covered banner's Continue button (see
 // handlePracticeSessionStarted/setMode below) — both are the same "what's
 // next" question, scoped to one content type (food or drinks).
+function isCategoryCovered(contentType, sectionName) {
+  const category = categoriesFor(contentType).find((c) => c.name === sectionName);
+  const itemIds = category ? category.items.map((item) => item.id) : [];
+  return isSectionCovered(itemIds, currentRestaurantProgress.sections?.[sectionName] || {});
+}
+
 function nextTrainTarget(contentType) {
-  const categories = categoriesFor(contentType);
-  const categoryNames = categories.map((c) => c.name);
+  const categoryNames = categoriesFor(contentType).map((c) => c.name);
   if (!categoryNames.length) return null;
 
-  const isMastered = (name) => {
-    const category = categories.find((c) => c.name === name);
-    const itemIds = category ? category.items.map((item) => item.id) : [];
-    return isSectionMastered(itemIds, currentRestaurantProgress.sections?.[name] || {});
-  };
-
   const lastTrained = currentRestaurantProgress.lastTrained;
-  return (lastTrained && categoryNames.includes(lastTrained) && !isMastered(lastTrained))
+  return (lastTrained && categoryNames.includes(lastTrained) && !isCategoryCovered(contentType, lastTrained))
     ? lastTrained
-    : categoryNames.find((name) => !isMastered(name)) || categoryNames[0];
+    : categoryNames.find((name) => !isCategoryCovered(contentType, name)) || categoryNames[0];
+}
+
+// Covered sections default straight into Practice (re-drill what you
+// already know) rather than Review. An in-progress session always wins
+// regardless of coverage, though — a reload mid-practice should stay in
+// practice, not bounce to Review because the underlying section happens
+// to already be covered.
+function initialModeFor(contentType, sectionName) {
+  if (hasActiveSession(currentRestaurantId, sectionName)) return 'practice';
+  return isCategoryCovered(contentType, sectionName) ? 'practice' : 'review';
 }
 
 function updateTrainLink(restaurantId, contentType) {
@@ -259,26 +268,30 @@ function renderCategoryList(categories, { clickable = false, tierBySection = nul
     const catDiv = document.createElement('div');
     catDiv.className = 'menu-category';
 
-    const header = document.createElement('div');
-    header.className = 'menu-category__header';
-
-    const heading = document.createElement(clickable ? 'button' : 'h3');
-    heading.className = clickable ? 'menu-category__name menu-category__name--link' : 'menu-category__name';
+    // The whole row (name + pill) is one clickable target, not just the
+    // name text — a small pill sitting just outside the tap target read
+    // as a dead zone. header itself becomes the <button> when clickable;
+    // heading is just a plain span inside it.
+    const header = document.createElement(clickable ? 'button' : 'div');
+    header.className = clickable ? 'menu-category__header menu-category__header--link' : 'menu-category__header';
     if (clickable) {
-      heading.type = 'button';
-      heading.dataset.section = category.name;
+      header.type = 'button';
+      header.dataset.section = category.name;
     }
+
+    const heading = document.createElement(clickable ? 'span' : 'h3');
+    heading.className = 'menu-category__name';
     heading.textContent = category.name;
     header.appendChild(heading);
 
     // Pill: blank/no pill by default, kept deliberately quiet — only
     // "training" (the single most-recently-entered-Practice section) or
-    // "mastered" (every fact covered) ever show. See learn-coverage.js.
+    // "covered" (every fact covered) ever show. See learn-coverage.js.
     const tier = tierBySection?.[category.name];
     if (tier && tier !== 'blank') {
       const pill = document.createElement('span');
       pill.className = `menu-category__pill menu-category__pill--${tier}`;
-      pill.textContent = tier === 'mastered' ? 'Mastered' : 'Training';
+      pill.textContent = tier === 'covered' ? 'Covered' : 'Training';
       header.appendChild(pill);
     }
 
@@ -388,8 +401,7 @@ async function loadMenuForRestaurant(restaurantId) {
 // currentRestaurantProgress (kept in sync locally after writes) — avoids a
 // full re-fetch/re-render just to reflect a tier that changed this session.
 function refreshCategoryPill(sectionName, tier) {
-  const heading = document.querySelector(`.menu-category__name--link[data-section="${sectionName}"]`);
-  const header = heading?.closest('.menu-category__header');
+  const header = document.querySelector(`.menu-category__header--link[data-section="${sectionName}"]`);
   if (!header) return;
   let pill = header.querySelector('.menu-category__pill');
   if (!tier || tier === 'blank') {
@@ -401,7 +413,7 @@ function refreshCategoryPill(sectionName, tier) {
     header.appendChild(pill);
   }
   pill.className = `menu-category__pill menu-category__pill--${tier}`;
-  pill.textContent = tier === 'mastered' ? 'Mastered' : 'Training';
+  pill.textContent = tier === 'covered' ? 'Covered' : 'Training';
 }
 
 function refreshPillFor(sectionName) {
@@ -474,9 +486,9 @@ function setMode(mode) {
       onSessionStarted: handlePracticeSessionStarted,
       onCoverageChanged: handleCoverageChanged,
       onTransitionToReview: () => setMode('review'),
-      onMasteredContinue: () => {
+      onCoveredContinue: () => {
         const next = nextTrainTarget(currentContentType);
-        if (next) enterDetail(currentContentType, next, 'review');
+        if (next) enterDetail(currentContentType, next, initialModeFor(currentContentType, next));
       }
     });
   }
@@ -580,7 +592,7 @@ function enterBrowse(contentType, { pushUrl = true } = {}) {
   }
 }
 
-function enterDetail(contentType, sectionName, mode = 'review', { pushUrl = true } = {}) {
+function enterDetail(contentType, sectionName, mode, { pushUrl = true } = {}) {
   const isNewSection = currentPhase !== 'detail' || currentSection !== sectionName;
   log('debug', '[menu] enterDetail', { contentType, sectionName, mode, pushUrl, isNewSection });
   if (isNewSection) exitPractice();
@@ -636,8 +648,7 @@ function switchToBrowse(contentType) {
       // A reload mid-practice should stay in practice, not bounce back
       // to Review — resume it whenever a session already exists for this
       // section rather than always defaulting to Review on landing.
-      const initialMode = hasActiveSession(currentRestaurantId, sectionName) ? 'practice' : 'review';
-      enterDetail(type, sectionName, initialMode, { pushUrl: false });
+      enterDetail(type, sectionName, initialModeFor(type, sectionName), { pushUrl: false });
       return;
     }
   }
@@ -679,8 +690,7 @@ window.addEventListener('popstate', () => {
   if (categorySlug) {
     const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
-      const initialMode = hasActiveSession(currentRestaurantId, sectionName) ? 'practice' : 'review';
-      enterDetail(type, sectionName, initialMode, { pushUrl: false });
+      enterDetail(type, sectionName, initialModeFor(type, sectionName), { pushUrl: false });
       return;
     }
   }
@@ -728,11 +738,11 @@ document.addEventListener('click', (e) => {
 
   if (openSwitcher && !openSwitcher.contains(e.target)) closeSwitcher(openSwitcher);
 
-  const categoryLink = e.target.closest('.menu-category__name--link');
+  const categoryLink = e.target.closest('.menu-category__header--link');
   if (categoryLink) {
     const panel = categoryLink.closest('.menu-content-panel');
     log('debug', '[menu] click: category link', { contentType: panel?.dataset.contentType, section: categoryLink.dataset.section });
-    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, 'review');
+    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, initialModeFor(panel.dataset.contentType, categoryLink.dataset.section));
     return;
   }
 
@@ -740,7 +750,7 @@ document.addEventListener('click', (e) => {
   if (trainLink) {
     e.preventDefault();
     log('debug', '[menu] click: train link', { currentContentType, targetSection: trainLink.dataset.targetSection });
-    if (trainLink.dataset.targetSection) enterDetail(currentContentType, trainLink.dataset.targetSection, 'review');
+    if (trainLink.dataset.targetSection) enterDetail(currentContentType, trainLink.dataset.targetSection, initialModeFor(currentContentType, trainLink.dataset.targetSection));
     return;
   }
 

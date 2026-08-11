@@ -6,7 +6,7 @@ const { log } = require('./_utils/log.cjs');
 // this endpoint doesn't compute "what's next" itself, it validates that
 // pick against real coverage and falls back to the first open item if
 // it's ever missing/stale/invalid. What it DOES decide itself: whether
-// there's a next question at all — a pass boundary or full mastery always
+// there's a next question at all — a pass boundary or full coverage always
 // wins over whatever the model proposed, the app has final say on that.
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
     } else {
       const openList = openTargets(section, updatedCoverage, newPass);
       if (openList.length === 0) {
-        toolResult.stop = 'mastered';
+        toolResult.stop = 'covered';
       } else {
         const proposed = nextItemId && nextFactType ? { itemId: nextItemId, factType: nextFactType } : null;
         const isValid = proposed && openList.some((t) => t.itemId === proposed.itemId && t.factType === proposed.factType);

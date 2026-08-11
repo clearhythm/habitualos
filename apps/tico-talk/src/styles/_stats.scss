@@ -32,6 +32,7 @@
   font-size: $font-size-sm;
   color: $color-text-muted;
 
+  &--covered { color: $color-success; font-weight: 600; }
   &--mastered { color: $color-green; font-weight: 600; }
   &--training { color: $color-text-muted; }
 }

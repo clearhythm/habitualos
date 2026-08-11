@@ -127,19 +127,22 @@ export function passProgress(sectionItemIds, sectionProgress, pass) {
   return { done, total };
 }
 
-export function isSectionMastered(sectionItemIds, sectionProgress) {
+// "Covered," not "Mastered" — every fact got asked and answered correctly
+// once. Real mastery (durable retention) is a separate, later concept
+// tied to repeated correct Review passes over time, not this.
+export function isSectionCovered(sectionItemIds, sectionProgress) {
   return sectionItemIds.length > 0 && sectionItemIds.every((id) => {
     const item = sectionProgress?.[id];
     return item?.ingredients && item?.dietary && item?.pricing;
   });
 }
 
-// Browse-list pill state — 'mastered' wins outright; 'training' only for
+// Browse-list pill state — 'covered' wins outright; 'training' only for
 // the single most-recently-entered-Practice section (isLastTrained, passed
 // in by the caller); otherwise 'blank'. Kept deliberately quiet: no
 // "training" pill for every section with partial, non-active progress.
 export function tierForSection(sectionItemIds, sectionProgress, isLastTrained) {
-  if (isSectionMastered(sectionItemIds, sectionProgress)) return 'mastered';
+  if (isSectionCovered(sectionItemIds, sectionProgress)) return 'covered';
   if (isLastTrained) return 'training';
   return 'blank';
 }

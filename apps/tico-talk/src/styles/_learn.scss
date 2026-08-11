@@ -294,7 +294,7 @@
   &:not(:disabled):hover { background: $color-green-dark; }
 }
 
-.learn-learned-banner {
+.learn-covered-banner {
   max-width: 680px;
   text-align: center;
   padding: $space-lg;
@@ -305,7 +305,7 @@
   color: $color-text;
 }
 
-.learn-learned-banner__label {
+.learn-covered-banner__label {
   margin: 0 0 $space-md;
   font-weight: 600;
 }

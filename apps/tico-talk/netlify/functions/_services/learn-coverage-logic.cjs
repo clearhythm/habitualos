@@ -1,5 +1,5 @@
 // Shared coverage arithmetic. The app owns "ordering" — which pass you're
-// in, when a pass is complete, when a section is mastered, what happens
+// in, when a pass is complete, when a section is covered, what happens
 // next — but NOT which specific open item gets asked about on a given
 // turn. That's the model's free choice: learn-chat-init.cjs hands it the
 // open-items list for the current pass, and it reports its own pick back

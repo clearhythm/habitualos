@@ -1,13 +1,13 @@
 // The Menu drill's Practice experience — streaming chat, TICO:/GUEST:
 // marker parsing, the record_fact_result tool call, two-pass (Basics ->
-// Complete) fact coverage, the pass-transition/Mastered banners, the
+// Complete) fact coverage, the pass-transition/Covered banners, the
 // flag-and-confirm correction flow, and per-section chat persistence.
 // Owns its own DOM (#learn-transcript, the composer, the progress bar)
 // inside #menu-practice.
 //
 // Each turn is stateless from the model's point of view — chatHistory is
 // never sent to the model at all (see sendTurn), it exists purely as a
-// local display/persistence log. The app owns coverage, pass/mastery
+// local display/persistence log. The app owns coverage, pass/coverage
 // state, and when to even invoke the model for a new turn — but not which
 // open item gets asked about next. That's the model's free choice every
 // turn (given the open-items list, see learn-chat-init.cjs), reported
@@ -65,9 +65,9 @@ let chatHistory = [];
 let factCoverage = {};
 let currentTarget = null; // {itemId, factType} the model is currently being asked to evaluate — its own free pick, reported back via record_fact_result; null before the model has picked anything yet
 let awaitingResponse = false;
-let awaitingContinue = false; // guards sendTurn's finally from re-enabling input under the pass-transition or Mastered banner
+let awaitingContinue = false; // guards sendTurn's finally from re-enabling input under the pass-transition or Covered banner
 let passTransitionShown = false; // guards the transition banner from firing twice per session
-let masteredThisTurn = false;
+let coveredThisTurn = false;
 let passTransitionThisTurn = false; // set mid-stream by handleFactResult, shown only after the turn's own evaluation text has rendered
 let activeCorrectionCard = null;
 
@@ -75,7 +75,7 @@ let activeCorrectionCard = null;
 // LS is the primary read/write surface — every turn writes here, and it's
 // trusted indefinitely, never expired/cleared client-side. Firestore is a
 // rare, deliberate write (not a continuous sync): only at real boundaries
-// (leaving a section, mastering it) or when a status threshold is
+// (leaving a section, covering it) or when a status threshold is
 // crossed (see appendStatusMarker below) — see saveLearnChat below.
 // Keyed by restaurant + section together since two restaurants can share
 // a category name.
@@ -114,8 +114,8 @@ export function clearChatState(restaurantId, section) {
   } catch {}
 }
 
-// The rare Firestore write — 'exited' (leaving the section), 'learned'
-// (Mastered), or 'milestone' (a status threshold crossed mid-session, see
+// The rare Firestore write — 'exited' (leaving the section), 'covered'
+// (Covered), or 'milestone' (a status threshold crossed mid-session, see
 // appendStatusMarker). Never clears LS — LS stays the ongoing source of
 // truth for display regardless of what's been flushed to Firestore.
 // useBeacon: true for saves that coincide with navigating away ('exited').
@@ -505,25 +505,25 @@ function showPassTransition() {
   }, { once: true });
 }
 
-function showMasteredBanner() {
+function showCoveredBanner() {
   awaitingContinue = true;
   answerInput.disabled = true;
   sendButton.disabled = true;
   const banner = document.createElement('div');
-  banner.className = 'learn-learned-banner';
+  banner.className = 'learn-covered-banner';
   banner.innerHTML = `
-    <p class="learn-learned-banner__label">You’ve mastered ${practiceSection}!</p>
+    <p class="learn-covered-banner__label">You’ve covered ${practiceSection}!</p>
     <button type="button" class="btn" data-action="continue">Continue</button>
   `;
   transcript.appendChild(banner);
   scrollTranscriptToBottom();
   // Where Continue goes next is menu-restaurant-filter.js's call (it owns
-  // the same "earliest non-mastered section, else loop back to the first"
+  // the same "earliest non-covered section, else loop back to the first"
   // logic the browse list's Train link already uses) — this module only
   // ever asks for it via the callback, never computes it itself.
   banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
     awaitingContinue = false;
-    practiceCallbacks.onMasteredContinue?.();
+    practiceCallbacks.onCoveredContinue?.();
   }, { once: true });
 }
 
@@ -533,7 +533,7 @@ function showMasteredBanner() {
 // to evaluate yet), next is the model's own freely-chosen pick for what
 // it's about to ask, and stop is the app's call (computed server-side in
 // learn-tool-execute.cjs from real coverage — a pass boundary or full
-// mastery always overrides whatever the model proposed as next).
+// coverage always overrides whatever the model proposed as next).
 function handleFactResult(result, next, stop) {
   if (result && currentTarget) {
     const passBefore = passForSection(practiceItemIds, factCoverage);
@@ -547,10 +547,10 @@ function handleFactResult(result, next, stop) {
     }
 
     // Always the pass this fact actually belonged to (passBefore), never
-    // whatever pass comes next — right at a boundary/mastery moment this
-    // is exactly 100% of that pass, a real fourth rung ("Getting Hot")
-    // that belongs right before the transition/mastered banner, not a
-    // marker to suppress.
+    // whatever pass comes next — right at a boundary/coverage-completion
+    // moment this is exactly 100% of that pass, a real fourth rung
+    // ("Getting Hot") that belongs right before the transition/covered
+    // banner, not a marker to suppress.
     const statusAfter = passStatusLabel(practiceItemIds, factCoverage, passBefore);
     if (statusAfter !== statusBefore) {
       appendStatusMarker(statusAfter, { flush: true });
@@ -566,8 +566,8 @@ function handleFactResult(result, next, stop) {
     currentTarget = null;
     return;
   }
-  if (stop === 'mastered') {
-    masteredThisTurn = true;
+  if (stop === 'covered') {
+    coveredThisTurn = true;
     currentTarget = null;
     return;
   }
@@ -590,8 +590,8 @@ async function sendTurn(message, { isKickoff = false } = {}) {
   const thinkingLine = appendThinking();
   const renderer = createStreamRenderer();
   let fullText = '';
-  let turnStopped = false; // set once record_fact_result reports a pass boundary/mastery — anything after that is a wasted follow-up generation, never shown
-  masteredThisTurn = false;
+  let turnStopped = false; // set once record_fact_result reports a pass boundary or full coverage — anything after that is a wasted follow-up generation, never shown
+  coveredThisTurn = false;
   passTransitionThisTurn = false;
 
   try {
@@ -640,7 +640,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
         } else if (evt.type === 'tool_complete' && evt.tool === 'record_fact_result') {
           const { result, next, stop } = evt.result || {};
           handleFactResult(result, next, stop);
-          if (passTransitionThisTurn || masteredThisTurn) {
+          if (passTransitionThisTurn || coveredThisTurn) {
             turnStopped = true;
             // Nothing legitimate follows — flush now rather than waiting
             // for 'done' (which only arrives after a wasted follow-up
@@ -678,9 +678,9 @@ async function sendTurn(message, { isKickoff = false } = {}) {
 
     if (passTransitionThisTurn) {
       showPassTransition();
-    } else if (masteredThisTurn) {
-      showMasteredBanner();
-      flushSectionChat(practiceRestaurantId, practiceSection, 'learned', { useBeacon: false });
+    } else if (coveredThisTurn) {
+      showCoveredBanner();
+      flushSectionChat(practiceRestaurantId, practiceSection, 'covered', { useBeacon: false });
     }
   } finally {
     awaitingResponse = false;
@@ -742,7 +742,7 @@ export function exitPractice() {
  *                                       result (review highlight, pill,
  *                                       Train link)
  *   onTransitionToReview()            — Continue on the pass-transition banner
- *   onMasteredContinue()              — Continue on the Mastered banner, once
+ *   onCoveredContinue()              — Continue on the Covered banner, once
  *                                       the section is fully done
  */
 export function startPractice(restaurantId, section, sectionItemIds, callbacks = {}) {

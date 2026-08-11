@@ -16,7 +16,7 @@
 //   {
 //     _chatId, _userId, restaurantId, section,
 //     messages: [{role, content, timestamp}, ...],
-//     action: 'learned' | 'exited' | 'milestone' | 'abandoned',
+//     action: 'covered' | 'exited' | 'milestone' | 'abandoned',
 //     conversationStart: Firestore timestamp,
 //     conversationEnd: Firestore timestamp,
 //   }
