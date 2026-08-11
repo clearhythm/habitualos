@@ -119,22 +119,6 @@ export function passForSection(sectionItemIds, sectionProgress) {
   return allIngredientsDone ? 'complete' : 'basics';
 }
 
-// Deterministic, not random — first not-yet-covered (item, factType) pair
-// in section/pass order. Mirrors pickNextTarget in
-// netlify/functions/_services/learn-coverage-logic.cjs exactly (can't
-// literally share the file across ESM/CJS): both the client and the
-// server derive "what's this turn about" from the same factCoverage this
-// same way, so they always agree without either side telling the other.
-export function pickNextTarget(sectionItemIds, sectionProgress, pass) {
-  const types = PASS_FACT_TYPES[pass];
-  for (const itemId of sectionItemIds) {
-    for (const type of types) {
-      if (!sectionProgress?.[itemId]?.[type]) return { itemId, factType: type };
-    }
-  }
-  return null;
-}
-
 export function passProgress(sectionItemIds, sectionProgress, pass) {
   const types = PASS_FACT_TYPES[pass];
   let done = 0;

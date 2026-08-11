@@ -1,6 +1,6 @@
 const { getRestaurant } = require('./_services/db-restaurants.cjs');
 const { getRestaurantNotes } = require('./_services/db-restaurant-notes.cjs');
-const { findSection, derivePass, pickNextTarget } = require('./_services/learn-coverage-logic.cjs');
+const { PASS_FACT_TYPES, findSection, derivePass, openTargets } = require('./_services/learn-coverage-logic.cjs');
 
 function buildSharedPrompt(restaurant, notes) {
   const restaurantNotes = notes.filter((n) => n.scope === 'restaurant');
@@ -23,13 +23,13 @@ Never use an em dash anywhere in your response, in either voice. Use a comma, pe
 // turns/trainees within that pass at that restaurant; a pass boundary is a
 // natural, rare, acceptable cache miss, same as a restaurant boundary.
 //
-// What to ask/evaluate each specific turn is NOT in here — that's the app's
-// job now (see buildTurnPrompt, the small uncached block below), computed
-// deterministically from factCoverage rather than left to the model to
-// figure out from a coverage list. That also means there's no "coverage
-// awareness" for the model to accidentally leak into a guest's in-character
-// question anymore — it's never shown one, it only ever gets a single
-// target per turn.
+// The app owns "ordering" — which pass, when it's complete, when the
+// section is mastered, when to even invoke you for a new turn — but not
+// which specific open item you ask about. That's your call, every turn:
+// you're handed the open-items list (see THIS TURN below) and you freely
+// pick one, reporting your pick back through the tool so the app can
+// track it. Vary your picks turn to turn rather than always reaching for
+// the same one.
 function buildSectionPrompt(restaurant, section, notes, pass) {
   const trimmedItems = section.items.map((item) => {
     const trimmed = { id: item.id, name: item.name };
@@ -59,7 +59,7 @@ function buildSectionPrompt(restaurant, section, notes, pass) {
 
 ${passScope}
 
-Each round, the app (see THIS TURN below) tells you exactly which dish and which fact to focus on — you're never choosing what to ask about or deciding when the drill is done, just phrasing the question and judging the answer. On the drill's very first question, just ask about the given target, as if you were an ordinary seated customer looking at this section, nothing to evaluate yet. Every round after that: evaluate the trainee's last answer against the target you were already given, every time, not rarely — confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then call record_fact_result with your judgment. The tool's result tells you what happens next: a "next" field means ask ONE natural customer question about that new target, nothing else (no eval text, you already gave that in your TICO: line); a "stop" field means don't write anything further at all, no GUEST line, no closing remarks, no mention of the pass or drill being done, that's not your line to deliver.
+Each round works like this: you ask ONE question, in scope for this pass, as if you were an ordinary seated customer looking at this section. Real customers mostly ask ordinary things, never an unusual invented premise. The trainee answers. You then evaluate that specific answer, every round, not rarely: confirm if it's right, or gently correct if it's wrong, framed as "here's a good one to know," never as grading or saying "wrong." Then freely pick your next question from the open items you're handed each turn (see THIS TURN below), and ask it.
 
 Every question needs a genuine, specific, in-character answer a server would actually give about the FOOD — phrase it the way an ordinary customer would ask about that dish, never a vague catch-all like "is there anything else I should know?" Never refer to the section by its internal name either ("the salad menu," "this section," "your soups") — a customer doesn't think in terms of your menu's category names, they just ask about a dish.
 
@@ -69,11 +69,13 @@ FORMAT, follow exactly: every line of your visible text starts with either "TICO
 - GUEST: the customer's own question or line of dialogue.
 - TICO: your evaluation of the trainee's last answer, nothing else — no scene-setting, no narration, no asides, and never a mention of tools, tracking, passes, or what happens next, that's not your line to deliver.
 
-TRACKING: right after your TICO: line, call the record_fact_result tool with your judgment: correct, partial, or incorrect. That's the only field it takes, the app already knows which dish/fact this result is for. Never write this out as text, never skip it.
+TRACKING: call the record_fact_result tool exactly once every turn. On the drill's very first question, there's nothing to evaluate yet, so call it right away (before any GUEST: text) with just your freely-chosen nextItemId/nextFactType. Every turn after that: write your TICO: line first, then call the tool with your judgment (result) AND your freely-chosen next pick (nextItemId/nextFactType) together — always include a next pick, even if this might be the last open item, the app will tell you if there's nothing left to ask. Never write any of this out as text, never skip it.
 
 STOP after your GUEST: question, every turn. Never invent, assume, or simulate what the trainee would say, only evaluate an answer they actually gave earlier in this conversation.
 
 HARD RULE, never break this: only state facts about items explicitly present in the SECTION DATA below, or facts listed in RESTAURANT NOTES or this section's additional notes. If something isn't in any of those, say so honestly ("worth checking with the kitchen") rather than inventing an answer.
+
+That same rule applies to how you EVALUATE, not just to your own answers. Some dishes genuinely have little to them — don't make the trainee hedge if they've already got it right: a confident, accurate answer that simply restates what SECTION DATA actually says (even if that's short, like "it's just the olives, nothing else") is fully correct on its own, no need to also offer to check with the kitchen. Only when SECTION DATA has NOTHING at all for this dish's fact this turn (an empty or missing description, no listed tags, etc.) is there truly nothing to test — mark it correct if they recognize that and say they'd check with the kitchen or similar, rather than guessing. Either way, only mark it incorrect if they invent specific details that aren't backed by anything in SECTION DATA/RESTAURANT NOTES/the section's additional notes.
 
 SECTION DATA (${section.name} only, ${pass} pass, only the fields relevant to this pass are included):
 ${JSON.stringify(trimmedItems, null, 2)}
@@ -81,38 +83,49 @@ ${sectionNotesBlock}
 Follow the format exactly, on every line. No markdown formatting, no code fences, no em dashes.`;
 }
 
-// Uncached, per-turn — the one thing that genuinely changes every turn:
-// which specific dish/fact this turn is about. Everything else about how
-// to behave lives in the pass-static, cached section block above.
-function buildTurnPrompt(section, evalTarget, isKickoff) {
-  if (!evalTarget) {
-    // Defensive only — shouldn't happen, the client stops sending turns
-    // once a pass reports stop. If it ever does, don't ask/evaluate
-    // anything, just acknowledge warmly.
-    return `THIS TURN: every fact for this pass is already covered. Don't evaluate anything and don't ask a new question — just a brief, warm TICO: line acknowledging the trainee, nothing else.`;
-  }
-
-  const item = section.items.find((i) => i.id === evalTarget.itemId);
-  const itemName = item ? item.name : evalTarget.itemId;
+// Uncached, per-turn — the two things that genuinely change every turn:
+// what's being evaluated (if anything) and what's still open to ask
+// about. Everything about HOW to behave lives in the pass-static, cached
+// section block above.
+function buildTurnPrompt(section, target, openList, isKickoff) {
+  const listBlock = openList.length
+    ? openList.map((t) => {
+        const item = section.items.find((i) => i.id === t.itemId);
+        return `- ${item ? item.name : t.itemId} (${t.factType}), id: "${t.itemId}"`;
+      }).join('\n')
+    : '(nothing else open — this would only happen if the app already meant to stop; don\'t call the tool with a next pick if you land here)';
 
   if (isKickoff) {
-    return `THIS TURN: ask your very first GUEST: question, testing "${itemName}" (${evalTarget.factType}). Nothing to evaluate yet — no TICO: line, no tool call, just the question.`;
+    return `THIS TURN: this is the drill's very first question, nothing to evaluate yet. Call record_fact_result now, before any text, with just nextItemId/nextFactType for whichever of these you pick — then ask that one GUEST: question.
+
+OPEN ITEMS this pass:
+${listBlock}`;
   }
 
-  return `THIS TURN: the trainee's message is their answer to a question testing "${itemName}" (${evalTarget.factType}). Evaluate it in a TICO: line, then call record_fact_result.`;
+  const item = target && section.items.find((i) => i.id === target.itemId);
+  const targetLine = target
+    ? `THIS TURN: the trainee's message is their answer to a question testing "${item ? item.name : target.itemId}" (${target.factType}). Evaluate it in a TICO: line, then call record_fact_result with your judgment and your next pick.`
+    : `THIS TURN: evaluate the trainee's last answer as usual, then call record_fact_result with your judgment and your next pick.`;
+
+  return `${targetLine}
+
+OPEN ITEMS this pass (pick your next question from here — vary your picks, don't default to the same one repeatedly unless it's the only one left). This list is from just before your evaluation above, so it may still include the exact item you just judged — if you marked it correct, prefer a different one instead:
+${listBlock}`;
 }
 
-function buildTools() {
+function buildTools(pass) {
   return [
     {
       name: 'record_fact_result',
-      description: "Report the trainee's result on the answer you just evaluated in your TICO: line. Call this once, immediately after that line. The app already knows which dish/fact this is for — just report the result.",
+      description: "Report your judgment on the trainee's last answer (omit on the drill's very first question, nothing to evaluate yet) and freely pick which open item you're about to ask about next.",
       input_schema: {
         type: 'object',
         properties: {
-          result: { type: 'string', enum: ['correct', 'partial', 'incorrect'] }
+          result: { type: 'string', enum: ['correct', 'partial', 'incorrect'], description: "Omit only on the drill's very first question." },
+          nextItemId: { type: 'string', description: 'The "id" of the dish you\'re about to ask about, from the OPEN ITEMS list.' },
+          nextFactType: { type: 'string', enum: PASS_FACT_TYPES[pass] }
         },
-        required: ['result']
+        required: ['nextItemId', 'nextFactType']
       }
     }
   ];
@@ -124,7 +137,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { restaurantId, section: sectionName, factCoverage, isKickoff } = JSON.parse(event.body || '{}');
+    const { restaurantId, section: sectionName, factCoverage, isKickoff, target } = JSON.parse(event.body || '{}');
     if (!restaurantId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
     }
@@ -141,18 +154,27 @@ exports.handler = async (event) => {
     }
 
     const pass = derivePass(section, factCoverage);
-    const evalTarget = pickNextTarget(section, factCoverage, pass);
+    // Includes target itself — factCoverage here is from before this
+    // turn's evaluation happens, so whether target is actually still open
+    // is genuinely unresolved yet at prompt-build time. If the model picks
+    // it again and it turns out to have just been covered,
+    // learn-tool-execute.cjs's validation against the POST-evaluation
+    // coverage naturally rejects it and falls back to a real open item —
+    // excluding it here would instead risk handing the model an empty
+    // list on the last open item of a pass, when the tool schema still
+    // requires a next pick.
+    const openList = openTargets(section, factCoverage, pass);
 
     const systemMessages = [
       { type: 'text', text: buildSharedPrompt(restaurant, notes), cache_control: { type: 'ephemeral' } },
       { type: 'text', text: buildSectionPrompt(restaurant, section, notes, pass), cache_control: { type: 'ephemeral' } },
-      { type: 'text', text: buildTurnPrompt(section, evalTarget, isKickoff) } // no cache_control
+      { type: 'text', text: buildTurnPrompt(section, target, openList, isKickoff) } // no cache_control
     ];
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemMessages, tools: isKickoff ? [] : buildTools() })
+      body: JSON.stringify({ systemMessages, tools: buildTools(pass) })
     };
   } catch (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message || 'Internal server error' }) };

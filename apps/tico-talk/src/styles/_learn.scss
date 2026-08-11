@@ -295,13 +295,18 @@
 }
 
 .learn-learned-banner {
+  max-width: 680px;
   text-align: center;
-  padding: $space-md;
-  margin: $space-md $space-lg 0;
+  padding: $space-lg;
+  margin: $space-md auto 0;
   background: color-mix(in srgb, $color-success 12%, transparent);
   border: 1px solid $color-success;
   border-radius: 0.75rem;
   color: $color-text;
+}
+
+.learn-learned-banner__label {
+  margin: 0 0 $space-md;
   font-weight: 600;
 }
 

@@ -193,7 +193,27 @@ function updateTrainIcon(trainLink, restaurantId, contentType) {
 // Target section: the restaurant's last-trained section if it isn't
 // Mastered yet (resume where they left off), else the first non-Mastered
 // section in list order, else just the first section (nothing left to
-// train — reopen it to review).
+// train — reopen it to review). Shared by updateTrainLink (the browse
+// list's Train button) and the Mastered banner's Continue button (see
+// handlePracticeSessionStarted/setMode below) — both are the same "what's
+// next" question, scoped to one content type (food or drinks).
+function nextTrainTarget(contentType) {
+  const categories = categoriesFor(contentType);
+  const categoryNames = categories.map((c) => c.name);
+  if (!categoryNames.length) return null;
+
+  const isMastered = (name) => {
+    const category = categories.find((c) => c.name === name);
+    const itemIds = category ? category.items.map((item) => item.id) : [];
+    return isSectionMastered(itemIds, currentRestaurantProgress.sections?.[name] || {});
+  };
+
+  const lastTrained = currentRestaurantProgress.lastTrained;
+  return (lastTrained && categoryNames.includes(lastTrained) && !isMastered(lastTrained))
+    ? lastTrained
+    : categoryNames.find((name) => !isMastered(name)) || categoryNames[0];
+}
+
 function updateTrainLink(restaurantId, contentType) {
   const venue = document.querySelector(`.menu-review__venue[data-restaurant="${restaurantId}"]`);
   const trainLink = venue?.querySelector('[data-train-link]');
@@ -204,23 +224,11 @@ function updateTrainLink(restaurantId, contentType) {
 
   updateTrainIcon(trainLink, restaurantId, contentType);
 
-  const categories = categoriesFor(contentType);
-  const categoryNames = categories.map((c) => c.name);
-  if (!categoryNames.length) {
+  const target = nextTrainTarget(contentType);
+  if (!target) {
     log('debug', '[menu] updateTrainLink: icon set, no categories loaded yet for target/href', { restaurantId, contentType });
     return;
   }
-
-  const isMastered = (name) => {
-    const category = categories.find((c) => c.name === name);
-    const itemIds = category ? category.items.map((item) => item.id) : [];
-    return isSectionMastered(itemIds, currentRestaurantProgress.sections?.[name] || {});
-  };
-
-  const lastTrained = currentRestaurantProgress.lastTrained;
-  const target = (lastTrained && categoryNames.includes(lastTrained) && !isMastered(lastTrained))
-    ? lastTrained
-    : categoryNames.find((name) => !isMastered(name)) || categoryNames[0];
 
   trainLink.href = pathForTeach(contentType, target);
   trainLink.dataset.targetSection = target;
@@ -465,7 +473,11 @@ function setMode(mode) {
     startPractice(currentRestaurantId, currentSection, currentSectionItemIds, {
       onSessionStarted: handlePracticeSessionStarted,
       onCoverageChanged: handleCoverageChanged,
-      onTransitionToReview: () => setMode('review')
+      onTransitionToReview: () => setMode('review'),
+      onMasteredContinue: () => {
+        const next = nextTrainTarget(currentContentType);
+        if (next) enterDetail(currentContentType, next, 'review');
+      }
     });
   }
 }

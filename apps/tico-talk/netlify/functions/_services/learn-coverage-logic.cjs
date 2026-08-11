@@ -1,9 +1,11 @@
-// Shared coverage arithmetic used by both learn-chat-init.cjs (picks the
-// target for this turn's question/evaluation) and learn-tool-execute.cjs
-// (re-derives that same target, then computes what comes next). Both call
-// sites are handed the same factCoverage for a given turn, so as long as
-// they use this same deterministic logic they always agree on what's
-// being asked about without needing to pass it between them explicitly.
+// Shared coverage arithmetic. The app owns "ordering" — which pass you're
+// in, when a pass is complete, when a section is mastered, what happens
+// next — but NOT which specific open item gets asked about on a given
+// turn. That's the model's free choice: learn-chat-init.cjs hands it the
+// open-items list for the current pass, and it reports its own pick back
+// via record_fact_result's nextItemId/nextFactType. learn-tool-execute.cjs
+// validates that pick against real coverage (falling back to the first
+// open item if it's ever invalid/stale) rather than computing it itself.
 //
 // Mirrored client-side in src/assets/js/learn-coverage.js (ESM vs CJS
 // means it can't literally be the same file) — keep the two in sync by
@@ -21,20 +23,19 @@ function derivePass(section, factCoverage) {
   return allIngredientsDone ? 'complete' : 'basics';
 }
 
-// Deterministic, not random: first not-yet-covered (item, factType) pair
-// in section/pass order. A fixed, predictable drilling order is the right
-// choice for a training tool (systematic coverage, nothing skipped) and
-// it means the client can independently re-derive the exact same target
-// from the same factCoverage, no extra plumbing needed to keep them in
-// sync.
-function pickNextTarget(section, factCoverage, pass) {
+// Every not-yet-covered (item, factType) pair for this pass, in section
+// order. Not a single "the" target — just the full open set, for the
+// model to freely choose from (learn-chat-init.cjs) and for
+// learn-tool-execute.cjs to validate a choice against / fall back to.
+function openTargets(section, factCoverage, pass) {
   const types = PASS_FACT_TYPES[pass];
-  for (const item of section.items) {
-    for (const type of types) {
-      if (!factCoverage?.[item.id]?.[type]) return { itemId: item.id, factType: type };
-    }
-  }
-  return null; // nothing left this pass
+  const open = [];
+  section.items.forEach((item) => {
+    types.forEach((type) => {
+      if (!factCoverage?.[item.id]?.[type]) open.push({ itemId: item.id, factType: type });
+    });
+  });
+  return open;
 }
 
 // Only "correct" marks a fact covered — "partial"/"incorrect" leave it
@@ -44,8 +45,4 @@ function mergeFactResult(factCoverage, itemId, factType, result) {
   return { ...factCoverage, [itemId]: { ...factCoverage?.[itemId], [factType]: true } };
 }
 
-function isPassMastered(section, factCoverage, pass) {
-  return pickNextTarget(section, factCoverage, pass) === null;
-}
-
-module.exports = { PASS_FACT_TYPES, findSection, derivePass, pickNextTarget, mergeFactResult, isPassMastered };
+module.exports = { PASS_FACT_TYPES, findSection, derivePass, openTargets, mergeFactResult };

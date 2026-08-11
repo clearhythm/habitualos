@@ -1,19 +1,20 @@
 const { getRestaurant } = require('./_services/db-restaurants.cjs');
-const { findSection, derivePass, pickNextTarget, mergeFactResult } = require('./_services/learn-coverage-logic.cjs');
+const { findSection, derivePass, openTargets, mergeFactResult } = require('./_services/learn-coverage-logic.cjs');
 const { log } = require('./_utils/log.cjs');
 
-// record_fact_result only carries {result} now — the app already knows
-// which dish/fact this is for. It's re-derived here from the exact same
-// factCoverage the init call for this turn used (forwarded alongside the
-// tool call by chat-stream-core.ts), so this always agrees with what
-// learn-chat-init.cjs told the model to evaluate a moment earlier.
+// The model reports its own free pick (nextItemId/nextFactType) here —
+// this endpoint doesn't compute "what's next" itself, it validates that
+// pick against real coverage and falls back to the first open item if
+// it's ever missing/stale/invalid. What it DOES decide itself: whether
+// there's a next question at all — a pass boundary or full mastery always
+// wins over whatever the model proposed, the app has final say on that.
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
-    const { toolUse, restaurantId, section: sectionName, factCoverage } = JSON.parse(event.body || '{}');
+    const { toolUse, restaurantId, section: sectionName, factCoverage, target } = JSON.parse(event.body || '{}');
     if (toolUse?.name !== 'record_fact_result') {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown tool: ${toolUse?.name}` }) };
     }
@@ -31,36 +32,31 @@ exports.handler = async (event) => {
     }
 
     const pass = derivePass(section, factCoverage);
-    const evalTarget = pickNextTarget(section, factCoverage, pass);
-    const { result } = toolUse.input || {};
+    const { result, nextItemId, nextFactType } = toolUse.input || {};
 
-    // result (correct/partial/incorrect) is included in the response too,
-    // not just used to decide next/stop here — the client needs it to
-    // update its own factCoverage. It already derives the same evalTarget
-    // locally (same factCoverage, same deterministic pickNextTarget), so
-    // {result} plus its own state is all it needs.
-    let toolResult = { result };
-    if (!evalTarget) {
-      // Defensive only — nothing was actually being evaluated this turn.
+    // Nothing to merge on the kickoff turn (no target, no result yet).
+    const updatedCoverage = (target && result) ? mergeFactResult(factCoverage, target.itemId, target.factType, result) : factCoverage;
+    const newPass = derivePass(section, updatedCoverage);
+
+    const toolResult = {};
+    if (result) toolResult.result = result;
+
+    if (pass === 'basics' && newPass === 'complete') {
       toolResult.stop = 'passComplete';
     } else {
-      const updatedCoverage = mergeFactResult(factCoverage, evalTarget.itemId, evalTarget.factType, result);
-      const newPass = derivePass(section, updatedCoverage);
-
-      if (pass === 'basics' && newPass === 'complete') {
-        toolResult.stop = 'passComplete';
+      const openList = openTargets(section, updatedCoverage, newPass);
+      if (openList.length === 0) {
+        toolResult.stop = 'mastered';
       } else {
-        const nextTarget = pickNextTarget(section, updatedCoverage, newPass);
-        if (!nextTarget) {
-          toolResult.stop = 'mastered';
-        } else {
-          const nextItem = section.items.find((i) => i.id === nextTarget.itemId);
-          toolResult.next = { itemId: nextTarget.itemId, itemName: nextItem?.name || nextTarget.itemId, factType: nextTarget.factType };
-        }
+        const proposed = nextItemId && nextFactType ? { itemId: nextItemId, factType: nextFactType } : null;
+        const isValid = proposed && openList.some((t) => t.itemId === proposed.itemId && t.factType === proposed.factType);
+        const next = isValid ? proposed : openList[0];
+        const nextItem = section.items.find((i) => i.id === next.itemId);
+        toolResult.next = { itemId: next.itemId, itemName: nextItem?.name || next.itemId, factType: next.factType };
       }
     }
 
-    log('debug', '[learn-tool-execute] record_fact_result', { result, evalTarget, toolResult });
+    log('debug', '[learn-tool-execute] record_fact_result', { result, target, proposed: { nextItemId, nextFactType }, toolResult });
 
     return {
       statusCode: 200,

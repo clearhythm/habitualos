@@ -5,12 +5,15 @@
 // Owns its own DOM (#learn-transcript, the composer, the progress bar)
 // inside #menu-practice.
 //
-// Each turn is stateless from the model's point of view — what to ask or
-// evaluate is picked deterministically from factCoverage (see
-// pickNextTarget in learn-coverage.js, mirrored server-side in
-// _services/learn-coverage-logic.cjs), not read off an accumulated
-// conversation, so chatHistory is never sent to the model at all (see
-// sendTurn). It still exists purely as a local display/persistence log.
+// Each turn is stateless from the model's point of view — chatHistory is
+// never sent to the model at all (see sendTurn), it exists purely as a
+// local display/persistence log. The app owns coverage, pass/mastery
+// state, and when to even invoke the model for a new turn — but not which
+// open item gets asked about next. That's the model's free choice every
+// turn (given the open-items list, see learn-chat-init.cjs), reported
+// back through the record_fact_result tool call and tracked here as
+// currentTarget, so the following turn's evaluation prompt knows what the
+// trainee's answer is actually about.
 //
 // This module never imports menu-restaurant-filter.js (which owns
 // browse/detail rendering) — the only way information flows back out is
@@ -26,9 +29,7 @@ import {
   markFactCovered,
   markLastTrained,
   passForSection,
-  pickNextTarget,
-  passStatusLabel,
-  isSectionMastered
+  passStatusLabel
 } from './learn-coverage.js';
 import { saveLearnChatBeacon, saveLearnChat } from './collections/learn-chats.js';
 import { log } from './utils/log.js';
@@ -62,8 +63,9 @@ let practiceCallbacks = {};
 let currentChatId = null;
 let chatHistory = [];
 let factCoverage = {};
+let currentTarget = null; // {itemId, factType} the model is currently being asked to evaluate — its own free pick, reported back via record_fact_result; null before the model has picked anything yet
 let awaitingResponse = false;
-let awaitingPassTransition = false; // guards sendTurn's finally from re-enabling input under the transition banner
+let awaitingContinue = false; // guards sendTurn's finally from re-enabling input under the pass-transition or Mastered banner
 let passTransitionShown = false; // guards the transition banner from firing twice per session
 let masteredThisTurn = false;
 let passTransitionThisTurn = false; // set mid-stream by handleFactResult, shown only after the turn's own evaluation text has rendered
@@ -81,8 +83,11 @@ function lsKey(restaurantId, section) {
   return `tico-learn-chat-${restaurantId}-${section}`;
 }
 
-// Returns { chatId, history } for a rehydrated section, or null if
-// there's nothing saved yet (caller should start a brand-new drill).
+// Returns { chatId, history, target } for a rehydrated section, or null
+// if there's nothing saved yet (caller should start a brand-new drill).
+// target is persisted alongside the rest — it's the model's own pick
+// from earlier, not something re-derivable from factCoverage alone, so a
+// reload needs it restored, not recomputed.
 function loadSectionState(restaurantId, section) {
   try {
     const raw = localStorage.getItem(lsKey(restaurantId, section));
@@ -92,9 +97,9 @@ function loadSectionState(restaurantId, section) {
   }
 }
 
-function saveSectionState(restaurantId, section, history, chatId) {
+function saveSectionState(restaurantId, section, history, chatId, target) {
   try {
-    localStorage.setItem(lsKey(restaurantId, section), JSON.stringify({ chatId, history, timestamp: Date.now() }));
+    localStorage.setItem(lsKey(restaurantId, section), JSON.stringify({ chatId, history, target, timestamp: Date.now() }));
   } catch {}
 }
 
@@ -467,12 +472,12 @@ function appendStatusMarker(label, { flush = false } = {}) {
   renderAssistantTurn(content);
   scrollTranscriptToBottom();
   chatHistory.push({ role: 'assistant', content, timestamp: new Date().toISOString() });
-  saveSectionState(practiceRestaurantId, practiceSection, chatHistory, currentChatId);
+  saveSectionState(practiceRestaurantId, practiceSection, chatHistory, currentChatId, currentTarget);
   if (flush) flushSectionChat(practiceRestaurantId, practiceSection, 'milestone', { useBeacon: false });
 }
 
 function showPassTransition() {
-  awaitingPassTransition = true;
+  awaitingContinue = true;
   answerInput.disabled = true;
   sendButton.disabled = true;
   // Basics is genuinely done at this point (chatHistory already has this
@@ -488,7 +493,7 @@ function showPassTransition() {
   transcript.appendChild(banner);
   scrollTranscriptToBottom();
   banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
-    awaitingPassTransition = false;
+    awaitingContinue = false;
     answerInput.disabled = false;
     updateSendButton();
     // Basics and Complete are separate chat passes — already flushed above,
@@ -501,74 +506,83 @@ function showPassTransition() {
 }
 
 function showMasteredBanner() {
+  awaitingContinue = true;
+  answerInput.disabled = true;
+  sendButton.disabled = true;
   const banner = document.createElement('div');
   banner.className = 'learn-learned-banner';
-  banner.textContent = `You’ve mastered ${practiceSection}!`;
+  banner.innerHTML = `
+    <p class="learn-learned-banner__label">You’ve mastered ${practiceSection}!</p>
+    <button type="button" class="btn" data-action="continue">Continue</button>
+  `;
   transcript.appendChild(banner);
   scrollTranscriptToBottom();
+  // Where Continue goes next is menu-restaurant-filter.js's call (it owns
+  // the same "earliest non-mastered section, else loop back to the first"
+  // logic the browse list's Train link already uses) — this module only
+  // ever asks for it via the callback, never computes it itself.
+  banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
+    awaitingContinue = false;
+    practiceCallbacks.onMasteredContinue?.();
+  }, { once: true });
 }
 
-// Called once per record_fact_result tool call, mid-stream. The tool only
-// carries {result} now — which item/fact it's for is re-derived here the
-// same deterministic way the server just did (pickNextTarget over the
-// same factCoverage this turn started with), rather than trusting the
-// model to echo an id back correctly. By construction that target can
-// never already be covered, so there's no "already covered" guard needed
-// here anymore either.
-function handleFactResult(result) {
-  if (!['correct', 'partial', 'incorrect'].includes(result)) return;
+// Called once per record_fact_result tool call, mid-stream.
+// result/next/stop come straight off the tool call — result is the
+// model's judgment on currentTarget (absent on the kickoff turn, nothing
+// to evaluate yet), next is the model's own freely-chosen pick for what
+// it's about to ask, and stop is the app's call (computed server-side in
+// learn-tool-execute.cjs from real coverage — a pass boundary or full
+// mastery always overrides whatever the model proposed as next).
+function handleFactResult(result, next, stop) {
+  if (result && currentTarget) {
+    const passBefore = passForSection(practiceItemIds, factCoverage);
+    const statusBefore = passStatusLabel(practiceItemIds, factCoverage, passBefore);
 
-  const passBefore = passForSection(practiceItemIds, factCoverage);
-  const evalTarget = pickNextTarget(practiceItemIds, factCoverage, passBefore);
-  if (!evalTarget) return; // defensive only — nothing should have been being evaluated
+    if (result === 'correct') {
+      factCoverage = { ...factCoverage, [currentTarget.itemId]: { ...factCoverage[currentTarget.itemId], [currentTarget.factType]: true } };
+      saveFactCoverageCache(practiceRestaurantId, practiceSection, factCoverage);
+      markFactCovered(getOrCreateUserId(), practiceRestaurantId, practiceSection, currentTarget.itemId, currentTarget.factType);
+      syncCoverageUI();
+    }
 
-  const statusBefore = passStatusLabel(practiceItemIds, factCoverage, passBefore);
-
-  if (result === 'correct') {
-    factCoverage = { ...factCoverage, [evalTarget.itemId]: { ...factCoverage[evalTarget.itemId], [evalTarget.factType]: true } };
-    saveFactCoverageCache(practiceRestaurantId, practiceSection, factCoverage);
-    markFactCovered(getOrCreateUserId(), practiceRestaurantId, practiceSection, evalTarget.itemId, evalTarget.factType);
-    syncCoverageUI();
-  }
-
-  const passAfter = passForSection(practiceItemIds, factCoverage);
-  const crossingPassBoundary = passBefore === 'basics' && passAfter === 'complete' && !passTransitionShown;
-  const justMastered = passAfter === 'complete' && isSectionMastered(practiceItemIds, factCoverage);
-
-  // A boundary crossing gets its own banner (shown after the turn finishes
-  // rendering, below) — that already says "you're moving on," so a
-  // "You are: {label}" marker for the pass that's ending (or, worse, the
-  // next pass at 0% done) right at that exact moment is confusing, not
-  // informative. Only show the marker on an ordinary within-pass level-up.
-  if (!crossingPassBoundary && !justMastered) {
-    const statusAfter = passStatusLabel(practiceItemIds, factCoverage, passAfter);
+    // Always the pass this fact actually belonged to (passBefore), never
+    // whatever pass comes next — right at a boundary/mastery moment this
+    // is exactly 100% of that pass, a real fourth rung ("Getting Hot")
+    // that belongs right before the transition/mastered banner, not a
+    // marker to suppress.
+    const statusAfter = passStatusLabel(practiceItemIds, factCoverage, passBefore);
     if (statusAfter !== statusBefore) {
       appendStatusMarker(statusAfter, { flush: true });
     }
   }
 
-  if (crossingPassBoundary) {
+  if (stop === 'passComplete' && !passTransitionShown) {
     passTransitionShown = true;
-    // Deferred: this fires mid-stream (right as RESULT: is parsed), before
-    // this turn's own TICO: evaluation has even rendered yet. Flag it and
-    // let sendTurn show the banner once the full turn is on screen.
+    // Deferred: this fires mid-stream, before this turn's own TICO:
+    // evaluation has even rendered yet. Flag it and let sendTurn show the
+    // banner once the full turn is on screen.
     passTransitionThisTurn = true;
+    currentTarget = null;
     return;
   }
-  if (justMastered) {
+  if (stop === 'mastered') {
     masteredThisTurn = true;
+    currentTarget = null;
+    return;
+  }
+  if (next) {
+    currentTarget = { itemId: next.itemId, factType: next.factType };
   }
 }
 
 // ─── Streaming turns ──────────────────────────────────────────────────
 // Stateless per turn — chatHistory is never sent to the model (see the
-// chatHistory: [] below). The app already knows exactly what this turn is
-// about (factCoverage + the deterministic pickNextTarget), so the model
-// doesn't need the accumulated conversation to figure that out; it only
-// ever needs the one target it's told about in learn-chat-init.cjs's
-// system prompt, plus the trainee's current answer. chatHistory here is
-// purely a local display/persistence log now (rehydration, the Firestore
-// audit trail, the flag-and-confirm correction flow).
+// chatHistory: [] below). currentTarget (sent as `target`) carries the one
+// thing the model actually needs remembered across turns: what it's
+// currently being asked to evaluate. chatHistory here is purely a local
+// display/persistence log now (rehydration, the Firestore audit trail,
+// the flag-and-confirm correction flow).
 async function sendTurn(message, { isKickoff = false } = {}) {
   awaitingResponse = true;
   answerInput.disabled = true;
@@ -592,7 +606,8 @@ async function sendTurn(message, { isKickoff = false } = {}) {
         restaurantId: practiceRestaurantId,
         section: practiceSection,
         factCoverage,
-        isKickoff
+        isKickoff,
+        target: currentTarget
       })
     });
 
@@ -623,15 +638,28 @@ async function sendTurn(message, { isKickoff = false } = {}) {
           fullText += evt.text;
           renderer.update(fullText);
         } else if (evt.type === 'tool_complete' && evt.tool === 'record_fact_result') {
-          const { result } = evt.result || {};
-          if (result) handleFactResult(result);
+          const { result, next, stop } = evt.result || {};
+          handleFactResult(result, next, stop);
           if (passTransitionThisTurn || masteredThisTurn) {
             turnStopped = true;
-          } else {
+            // Nothing legitimate follows — flush now rather than waiting
+            // for 'done' (which only arrives after a wasted follow-up
+            // generation). This also matters beyond latency: the renderer
+            // holds back the last few characters of fullText in case
+            // they're the start of a marker, and finalize() is the only
+            // thing that flushes that tail — skip it and the turn's own
+            // last word or so silently never renders.
+            renderer.finalize(fullText);
+          } else if (fullText) {
             // Whatever text follows is a fresh Claude generation (post tool
             // round-trip), not a literal continuation of the line that was
             // just streaming — force the break rather than counting on the
-            // model to add one on its own.
+            // model to add one on its own. Only when there's already an
+            // open segment to land inside, though (fullText non-empty) —
+            // on a kickoff turn the tool call fires before any text at
+            // all, so this '\n' would otherwise be the very first content
+            // with no marker yet, tripping the renderer's no-marker
+            // fallback into opening a spurious empty bubble for it.
             fullText += '\n';
           }
         } else if (evt.type === 'done') {
@@ -645,7 +673,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
 
     chatHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
     chatHistory.push({ role: 'assistant', content: fullText, timestamp: new Date().toISOString() });
-    saveSectionState(practiceRestaurantId, practiceSection, chatHistory, currentChatId);
+    saveSectionState(practiceRestaurantId, practiceSection, chatHistory, currentChatId, currentTarget);
     if (flagButton) flagButton.hidden = false;
 
     if (passTransitionThisTurn) {
@@ -659,7 +687,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
     // Stays disabled under the pass-transition banner until its own
     // Continue handler re-enables it — otherwise this would immediately
     // undo that disable the moment the stream finishes.
-    if (!awaitingPassTransition) {
+    if (!awaitingContinue) {
       answerInput.disabled = false;
       updateSendButton();
       answerInput.focus();
@@ -694,6 +722,7 @@ export function exitPractice() {
   }
   currentChatId = null;
   chatHistory = [];
+  currentTarget = null;
   activeCorrectionCard = null;
   if (flagButton) flagButton.hidden = true;
   if (transcript) transcript.innerHTML = '';
@@ -713,6 +742,8 @@ export function exitPractice() {
  *                                       result (review highlight, pill,
  *                                       Train link)
  *   onTransitionToReview()            — Continue on the pass-transition banner
+ *   onMasteredContinue()              — Continue on the Mastered banner, once
+ *                                       the section is fully done
  */
 export function startPractice(restaurantId, section, sectionItemIds, callbacks = {}) {
   if (currentChatId && practiceRestaurantId === restaurantId && practiceSection === section) {
@@ -726,7 +757,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   practiceItemIds = sectionItemIds;
   practiceCallbacks = callbacks;
   passTransitionShown = false;
-  awaitingPassTransition = false;
+  awaitingContinue = false;
 
   markLastTrained(getOrCreateUserId(), restaurantId, section);
   callbacks.onSessionStarted?.();
@@ -746,6 +777,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   if (existing) {
     currentChatId = existing.chatId;
     chatHistory = existing.history;
+    currentTarget = existing.target || null;
     chatHistory.forEach((m, i) => {
       if (m.role === 'user') {
         // The very first turn's "kickoff" user message is a technical
@@ -773,6 +805,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   } else {
     currentChatId = generateChatId();
     chatHistory = [];
+    currentTarget = null; // nothing evaluated yet — the model picks its own first question, reported back via the kickoff turn's tool call
     answerForm.hidden = false;
     createGettingStartedElement();
     // No threshold has been crossed yet — this is the starting state, not
