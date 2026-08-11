@@ -1,4 +1,4 @@
-const { markFactLearned, setLastTrained } = require('./_services/db-learn-progress.cjs');
+const { markFactLearned, setLastTrained, setSectionProgress } = require('./_services/db-learn-progress.cjs');
 const { log } = require('./_utils/log.cjs');
 
 exports.handler = async (event) => {
@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { userId, restaurantId, section, itemId, factType, lastTrained } = JSON.parse(event.body || '{}');
+    const { userId, restaurantId, section, itemId, factType, lastTrained, progress } = JSON.parse(event.body || '{}');
     if (!userId) return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
     if (!restaurantId) return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
 
@@ -22,8 +22,14 @@ exports.handler = async (event) => {
       log('debug', '[learn-progress-write] lastTrained =', lastTrained, 'at', restaurantId);
     }
 
-    if (!(itemId && factType) && !lastTrained) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Provide itemId+factType and/or lastTrained' }) };
+    if (progress) {
+      if (!section) return { statusCode: 400, body: JSON.stringify({ error: 'section is required with progress' }) };
+      await setSectionProgress(userId, restaurantId, section, progress);
+      log('debug', '[learn-progress-write] progress =', progress, 'for', section, 'at', restaurantId);
+    }
+
+    if (!(itemId && factType) && !lastTrained && !progress) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Provide itemId+factType and/or lastTrained and/or progress' }) };
     }
 
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };

@@ -12,10 +12,11 @@ export async function getLearnProgress(userId, restaurantId) {
 /**
  * writeLearnProgress — one write endpoint for the resource. Pass
  * itemId+factType to mark a fact covered, lastTrained to set the pointer,
- * or both.
+ * progress ('Training'|'Covered'|'Mastered', with section) to set that
+ * section's canonical status, or any combination.
  */
-export async function writeLearnProgress({ userId, restaurantId, section, itemId, factType, lastTrained }) {
-  return post('/api/learn-progress-write', { userId, restaurantId, section, itemId, factType, lastTrained });
+export async function writeLearnProgress({ userId, restaurantId, section, itemId, factType, lastTrained, progress }) {
+  return post('/api/learn-progress-write', { userId, restaurantId, section, itemId, factType, lastTrained, progress });
 }
 
 /**

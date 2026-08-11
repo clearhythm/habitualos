@@ -15,6 +15,13 @@
 // currentTarget, so the following turn's evaluation prompt knows what the
 // trainee's answer is actually about.
 //
+// Re-entering a Covered section always starts a fresh "review session"
+// (isReviewSession) instead of resuming the original finished drill — any
+// fact type is fair game, mixed together, tracked against its own
+// ephemeral reviewCoverage rather than the real one, and never written to
+// Firestore/the local coverage cache. Real Covered status can't be
+// touched by how a review session goes.
+//
 // This module never imports menu-restaurant-filter.js (which owns
 // browse/detail rendering) — the only way information flows back out is
 // through the callbacks passed into startPractice, so the dependency
@@ -28,11 +35,16 @@ import {
   hydrateSectionCoverage,
   markFactCovered,
   markLastTrained,
+  markSectionProgress,
   passForSection,
   passStatusLabel
 } from './learn-coverage.js';
 import { saveLearnChatBeacon, saveLearnChat } from './collections/learn-chats.js';
 import { log } from './utils/log.js';
+import { scrollToBottom, appendLine, appendThinking } from './utils/chat-transcript.js';
+import { initAutoResizeTextarea, initEnterToSubmit, updateSendButtonState } from './utils/chat-composer.js';
+import { loadSessionCache, saveSessionCache, clearSessionCache } from './utils/chat-session-cache.js';
+import { createGettingStartedElement, createReviewStartedElement, renderAssistantTurn, createStreamRenderer } from './learn-markers.js';
 
 // ─── DOM ───────────────────────────────────────────────────────────────
 const transcript = document.getElementById('learn-transcript');
@@ -40,17 +52,6 @@ const answerForm = document.getElementById('learn-answer-form');
 const answerInput = document.getElementById('learn-answer-input');
 const sendButton = document.getElementById('learn-send-btn');
 const flagButton = document.getElementById('learn-flag-btn');
-
-// Direct scroll control on the page itself, not element.scrollIntoView()
-// — the latter's per-element/per-render geometry guessing is what caused
-// streaming to jump around and rehydrated history to stop short of the
-// true bottom. This always lands exactly at the bottom, unconditionally,
-// regardless of what changed. Whole-page scroll (not an internal
-// container) is deliberate here — see .learn-drill's comment in
-// _learn.scss for why.
-function scrollTranscriptToBottom() {
-  window.scrollTo(0, document.documentElement.scrollHeight);
-}
 
 // ─── Session state ───────────────────────────────────────────────────
 // "Current" for this module means "whichever section Practice is open
@@ -64,6 +65,9 @@ let currentChatId = null;
 let chatHistory = [];
 let factCoverage = {};
 let currentTarget = null; // {itemId, factType} the model is currently being asked to evaluate — its own free pick, reported back via record_fact_result; null before the model has picked anything yet
+let isReviewSession = false; // re-entering an already-Covered (or Mastered) section — fresh chat, ungated "review" pass, never touches the real per-item facts (see startPractice)
+let reviewCoverage = {}; // session-only coverage for review sessions, separate from the real factCoverage; reset every time a review session starts, never saved
+let justMasteredThisSession = false; // set true the moment factCoverage._progress gets upgraded to 'Mastered' this turn, so the completion banner reads "You Mastered this!" instead of "Still got it down!"
 let awaitingResponse = false;
 let awaitingContinue = false; // guards sendTurn's finally from re-enabling input under the pass-transition or Covered banner
 let passTransitionShown = false; // guards the transition banner from firing twice per session
@@ -89,18 +93,11 @@ function lsKey(restaurantId, section) {
 // from earlier, not something re-derivable from factCoverage alone, so a
 // reload needs it restored, not recomputed.
 function loadSectionState(restaurantId, section) {
-  try {
-    const raw = localStorage.getItem(lsKey(restaurantId, section));
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return loadSessionCache(lsKey(restaurantId, section));
 }
 
 function saveSectionState(restaurantId, section, history, chatId, target) {
-  try {
-    localStorage.setItem(lsKey(restaurantId, section), JSON.stringify({ chatId, history, target, timestamp: Date.now() }));
-  } catch {}
+  saveSessionCache(lsKey(restaurantId, section), { chatId, history, target });
 }
 
 // Testing/support utility — clears this section's local chat cache (the
@@ -109,9 +106,7 @@ function saveSectionState(restaurantId, section, history, chatId, target) {
 // stats/reset page isn't itself an active Practice session and has no
 // other way to reach this module's private lsKey.
 export function clearChatState(restaurantId, section) {
-  try {
-    localStorage.removeItem(lsKey(restaurantId, section));
-  } catch {}
+  clearSessionCache(lsKey(restaurantId, section));
 }
 
 // The rare Firestore write — 'exited' (leaving the section), 'covered'
@@ -196,7 +191,7 @@ function renderCorrectionMessage(message) {
   card.innerHTML = `<p class="correction-card__status"></p>`;
   card.querySelector('.correction-card__status').textContent = message;
   transcript.appendChild(card);
-  scrollTranscriptToBottom();
+  scrollToBottom();
   setTimeout(() => card.remove(), 4000);
 }
 
@@ -238,214 +233,24 @@ function renderCorrectionCard(proposedText, scope, section) {
 
   transcript.appendChild(card);
   activeCorrectionCard = card;
-  scrollTranscriptToBottom();
+  scrollToBottom();
 }
 
 flagButton?.addEventListener('click', proposeCorrection);
 
 function updateSendButton() {
-  sendButton.disabled = answerInput.value.trim().length === 0;
+  updateSendButtonState(answerInput, sendButton);
 }
 
-// Auto-resize textarea as the user types — reset to auto first so
-// scrollHeight re-measures from a collapsed state, otherwise it only
-// ever grows.
-answerInput?.addEventListener('input', function () {
-  this.style.height = 'auto';
-  this.style.height = `${this.scrollHeight}px`;
-  updateSendButton();
-});
-
-// Desktop: Enter submits. Mobile (coarse pointer): Enter inserts a
-// newline, matching native textarea behavior. Shift+Enter always inserts
-// a newline on both.
-answerInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    const isMobile = window.matchMedia('(pointer: coarse)').matches;
-    if (!isMobile) {
-      e.preventDefault();
-      answerForm.requestSubmit();
-    }
-  }
-});
-
-function appendLine(speaker, text) {
-  const line = document.createElement('p');
-  line.className = `transcript-line transcript-line--${speaker}`;
-  line.textContent = text;
-  transcript.appendChild(line);
-  scrollTranscriptToBottom();
-}
-
-function appendThinking() {
-  const line = document.createElement('p');
-  line.className = 'transcript-line transcript-line--tico learn-thinking';
-  line.textContent = 'Tico’s thinking…';
-  transcript.appendChild(line);
-  scrollTranscriptToBottom();
-  return line;
-}
-
-// ─── Speaker segments (TICO:/GUEST:/STATUS: line markers) ────────────────
-// The model's raw text is tagged with markers at the start of each line
-// (see learn-chat-init.cjs's system prompt). TICO:/GUEST: are Tico's own
-// voice / the guest's dialogue — rendered as bubbles. Fact-result tracking
-// (which item/fact-type/result the trainee's last answer covered) is a
-// separate record_fact_result tool call now, not a text marker — see the
-// tool_complete handling in sendTurn below, which calls handleFactResult
-// directly. STATUS: is different from TICO/GUEST too — it's never in the
-// model's own stream (the model has no instruction to emit it); it's a
-// synthetic marker this module inserts itself (see appendStatusMarker) so
-// a status level-up gets persisted and replayed through this same
-// parsing/rendering pipeline, in-line in the transcript, exactly like a
-// real turn would be. Markers are parsed out here and never shown as raw
-// text; chatHistory still stores the marked-up text verbatim (including
-// synthetic STATUS entries), since the model conditions on its own past
-// formatting to keep producing it reliably.
-//
-// Matched on a word boundary, not "start of line" — the model doesn't
-// reliably put a newline before every marker (seen gluing GUEST: straight
-// onto the end of the prior sentence with no break at all), and a
-// leading \b still can't false-match inside real dialogue: these are
-// exact all-caps tokens immediately followed by a colon, not a pattern
-// that turns up in ordinary lowercase menu chatter.
-const SEGMENT_MARKER_RE = /\b(TICO|GUEST|STATUS):[ \t]?/;
-const SEGMENT_MARKER_HOLDBACK = 7; // length of "STATUS:" — longest marker
-
-function createSegmentElement(speaker) {
-  const el = document.createElement('p');
-  el.className = speaker === 'tico' ? 'transcript-line transcript-line--tico' : 'transcript-line transcript-line--guest';
-  transcript.appendChild(el);
-  return el;
-}
+initAutoResizeTextarea(answerInput, updateSendButton);
+initEnterToSubmit(answerInput, answerForm);
 
 // Sent as the trainee's "first message" to open every fresh drill — the
 // Anthropic API requires a user turn to start a conversation on, but the
 // trainee never actually typed this, so it's never rendered as a real
-// bubble (see createGettingStartedElement / the rehydration loop below).
+// bubble (see createGettingStartedElement in learn-markers.js / the
+// rehydration loop below).
 const KICKOFF_MESSAGE = 'Let’s get started.';
-
-// Shown once, at the very start of a fresh section — no title, just one
-// line in Tico's own voice (reuses .transcript-line--tico's styling
-// directly via createSegmentElement, same as any TICO: narration line).
-// Not itself persisted as its own chatHistory entry (unlike the status
-// marker) — it's derived purely from position (index 0) + exact content
-// match against KICKOFF_MESSAGE during rehydration, so it doesn't need
-// its own marker type in the TICO:/GUEST:/etc. parsing pipeline.
-function createGettingStartedElement() {
-  const el = createSegmentElement('tico');
-  el.textContent = 'Answer each guest’s question as best you can. Check the Review tab anytime you get stuck, or just try to answer and I’ll help you learn it.';
-  return el;
-}
-
-// A lightweight title block ("You are: / Training"), not a chat bubble —
-// visually distinct from TICO/GUEST dialogue since it's not part of the
-// conversation, it's a status marker sitting in the same timeline.
-function createStatusElement(label) {
-  const el = document.createElement('div');
-  el.className = 'learn-status-marker';
-  const prefix = document.createElement('span');
-  prefix.className = 'learn-status-marker__prefix';
-  prefix.textContent = 'You are:';
-  const value = document.createElement('span');
-  value.className = 'learn-status-marker__label';
-  value.textContent = label;
-  el.appendChild(prefix);
-  el.appendChild(value);
-  transcript.appendChild(el);
-  return el;
-}
-
-// Renders one complete (non-streaming) assistant turn — used to rehydrate
-// a persisted chat, where the full raw text is already available. Also
-// used directly for live STATUS marker insertion (see appendStatusMarker)
-// so both paths share one rendering implementation.
-function renderAssistantTurn(rawText) {
-  const re = new RegExp(SEGMENT_MARKER_RE, 'g');
-  const positions = [];
-  let m;
-  while ((m = re.exec(rawText))) {
-    positions.push({ start: m.index, contentStart: m.index + m[0].length, marker: m[1] });
-  }
-  if (positions.length === 0) {
-    // No markers (older stored data, or the model skipped the format) — fall back to one guest bubble.
-    if (rawText.trim()) createSegmentElement('guest').textContent = rawText.trim();
-    return;
-  }
-  positions.forEach((pos, i) => {
-    if (pos.marker !== 'TICO' && pos.marker !== 'GUEST' && pos.marker !== 'STATUS') return; // hidden tracking markers, never rendered
-    const end = i + 1 < positions.length ? positions[i + 1].start : rawText.length;
-    const text = rawText.slice(pos.contentStart, end).trim();
-    if (!text) return;
-    if (pos.marker === 'STATUS') {
-      createStatusElement(text);
-    } else {
-      createSegmentElement(pos.marker === 'TICO' ? 'tico' : 'guest').textContent = text;
-    }
-  });
-}
-
-// Streaming variant of the same parsing — call createStreamRenderer() once
-// per turn, then feed it the full accumulated text after every token.
-// Fact-result tracking no longer flows through here at all (see the
-// tool_complete handling in sendTurn) — every marker this sees now gets a
-// bubble directly, nothing to buffer/accumulate silently anymore.
-function createStreamRenderer() {
-  let consumedLen = 0;
-  let marker = null;
-  let bubble = null;
-
-  function openSegment(nextMarker) {
-    marker = nextMarker;
-    bubble = (marker === 'TICO' || marker === 'GUEST')
-      ? createSegmentElement(marker === 'TICO' ? 'tico' : 'guest')
-      : null;
-  }
-
-  function absorb(chunk) {
-    if (!chunk) return;
-    if (!bubble && marker === null) {
-      // Safe fallback if the model ever forgets the opening marker entirely.
-      marker = 'GUEST';
-      bubble = createSegmentElement('guest');
-    }
-    if (bubble) {
-      bubble.appendChild(document.createTextNode(chunk));
-      scrollTranscriptToBottom();
-    }
-  }
-
-  return {
-    update(fullTextSoFar) {
-      for (;;) {
-        const unconsumed = fullTextSoFar.slice(consumedLen);
-        const m = SEGMENT_MARKER_RE.exec(unconsumed);
-        if (m && m.index === 0) {
-          openSegment(m[1]);
-          consumedLen += m[0].length;
-          continue;
-        }
-        if (m && m.index > 0) {
-          absorb(unconsumed.slice(0, m.index));
-          consumedLen += m.index;
-          continue;
-        }
-        // No marker in the unconsumed tail — hold back a few characters in
-        // case they're the start of one still arriving token by token.
-        if (unconsumed.length > SEGMENT_MARKER_HOLDBACK) {
-          const safeLen = unconsumed.length - SEGMENT_MARKER_HOLDBACK;
-          absorb(unconsumed.slice(0, safeLen));
-          consumedLen += safeLen;
-        }
-        break;
-      }
-    },
-    finalize(fullText) {
-      absorb(fullText.slice(consumedLen));
-      consumedLen = fullText.length;
-    }
-  };
-}
 
 // ─── Fact coverage ────────────────────────────────────────────────────
 // Notifies the caller (menu-restaurant-filter.js) of the current pass +
@@ -470,7 +275,7 @@ function syncCoverageUI() {
 function appendStatusMarker(label, { flush = false } = {}) {
   const content = `STATUS: ${label}`;
   renderAssistantTurn(content);
-  scrollTranscriptToBottom();
+  scrollToBottom();
   chatHistory.push({ role: 'assistant', content, timestamp: new Date().toISOString() });
   saveSectionState(practiceRestaurantId, practiceSection, chatHistory, currentChatId, currentTarget);
   if (flush) flushSectionChat(practiceRestaurantId, practiceSection, 'milestone', { useBeacon: false });
@@ -491,7 +296,7 @@ function showPassTransition() {
     <button type="button" class="btn" data-action="continue">Continue</button>
   `;
   transcript.appendChild(banner);
-  scrollTranscriptToBottom();
+  scrollToBottom();
   banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
     awaitingContinue = false;
     answerInput.disabled = false;
@@ -511,18 +316,34 @@ function showCoveredBanner() {
   sendButton.disabled = true;
   const banner = document.createElement('div');
   banner.className = 'learn-covered-banner';
+  // Three distinct cases: a genuine first-time full coverage (not a
+  // review session at all), a review session that just newly earned real
+  // Mastered status (was Covered-but-not-Mastered coming in), or a review
+  // session re-confirming Mastery it already had.
+  const label = justMasteredThisSession
+    ? `You Mastered ${practiceSection}!`
+    : isReviewSession
+    ? `Still got ${practiceSection} down!`
+    : `You’ve covered ${practiceSection}!`;
   banner.innerHTML = `
-    <p class="learn-covered-banner__label">You’ve covered ${practiceSection}!</p>
+    <p class="learn-covered-banner__label">${label}</p>
     <button type="button" class="btn" data-action="continue">Continue</button>
   `;
   transcript.appendChild(banner);
-  scrollTranscriptToBottom();
+  scrollToBottom();
   // Where Continue goes next is menu-restaurant-filter.js's call (it owns
   // the same "earliest non-covered section, else loop back to the first"
   // logic the browse list's Train link already uses) — this module only
-  // ever asks for it via the callback, never computes it itself.
+  // ever asks for it via the callback, never computes it itself. If it
+  // loops back to this exact section (everything's covered), a review
+  // session needs to start genuinely fresh, not idempotently resume this
+  // just-finished one — clear state the same way the pass-transition
+  // banner does, rather than relying on the (rare) isNewSection check in
+  // menu-restaurant-filter.js's enterDetail to catch it.
   banner.querySelector('[data-action="continue"]').addEventListener('click', () => {
     awaitingContinue = false;
+    currentChatId = null;
+    chatHistory = [];
     practiceCallbacks.onCoveredContinue?.();
   }, { once: true });
 }
@@ -536,13 +357,21 @@ function showCoveredBanner() {
 // coverage always overrides whatever the model proposed as next).
 function handleFactResult(result, next, stop) {
   if (result && currentTarget) {
-    const passBefore = passForSection(practiceItemIds, factCoverage);
-    const statusBefore = passStatusLabel(practiceItemIds, factCoverage, passBefore);
+    // Review sessions track their own ephemeral coverage, always the
+    // 'review' pass (never derived) — never the real factCoverage, and
+    // never persisted (no cache save, no Firestore write).
+    const passBefore = isReviewSession ? 'review' : passForSection(practiceItemIds, factCoverage);
+    const coverageBefore = isReviewSession ? reviewCoverage : factCoverage;
+    const statusBefore = passStatusLabel(practiceItemIds, coverageBefore, passBefore);
 
     if (result === 'correct') {
-      factCoverage = { ...factCoverage, [currentTarget.itemId]: { ...factCoverage[currentTarget.itemId], [currentTarget.factType]: true } };
-      saveFactCoverageCache(practiceRestaurantId, practiceSection, factCoverage);
-      markFactCovered(getOrCreateUserId(), practiceRestaurantId, practiceSection, currentTarget.itemId, currentTarget.factType);
+      if (isReviewSession) {
+        reviewCoverage = { ...reviewCoverage, [currentTarget.itemId]: { ...reviewCoverage[currentTarget.itemId], [currentTarget.factType]: true } };
+      } else {
+        factCoverage = { ...factCoverage, [currentTarget.itemId]: { ...factCoverage[currentTarget.itemId], [currentTarget.factType]: true } };
+        saveFactCoverageCache(practiceRestaurantId, practiceSection, factCoverage);
+        markFactCovered(getOrCreateUserId(), practiceRestaurantId, practiceSection, currentTarget.itemId, currentTarget.factType);
+      }
       syncCoverageUI();
     }
 
@@ -551,7 +380,8 @@ function handleFactResult(result, next, stop) {
     // moment this is exactly 100% of that pass, a real fourth rung
     // ("Getting Hot") that belongs right before the transition/covered
     // banner, not a marker to suppress.
-    const statusAfter = passStatusLabel(practiceItemIds, factCoverage, passBefore);
+    const coverageAfter = isReviewSession ? reviewCoverage : factCoverage;
+    const statusAfter = passStatusLabel(practiceItemIds, coverageAfter, passBefore);
     if (statusAfter !== statusBefore) {
       appendStatusMarker(statusAfter, { flush: true });
     }
@@ -567,6 +397,25 @@ function handleFactResult(result, next, stop) {
     return;
   }
   if (stop === 'covered') {
+    if (isReviewSession) {
+      // A review session finishing successfully is what actually earns
+      // real Mastered status — but only the first time; if this section
+      // was already Mastered coming in, finishing another review pass
+      // just reconfirms it, no new write.
+      if (factCoverage._progress !== 'Mastered') {
+        justMasteredThisSession = true;
+        factCoverage = { ...factCoverage, _progress: 'Mastered' };
+        markSectionProgress(getOrCreateUserId(), practiceRestaurantId, practiceSection, 'Mastered');
+        syncCoverageUI();
+      }
+    } else {
+      // First time reaching full coverage for this section — the actual
+      // "Covered" moment. Only ever reached on the non-review path, which
+      // only runs for sections that aren't Covered yet, so no guard needed.
+      factCoverage = { ...factCoverage, _progress: 'Covered' };
+      markSectionProgress(getOrCreateUserId(), practiceRestaurantId, practiceSection, 'Covered');
+      syncCoverageUI();
+    }
     coveredThisTurn = true;
     currentTarget = null;
     return;
@@ -587,7 +436,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
   awaitingResponse = true;
   answerInput.disabled = true;
   sendButton.disabled = true;
-  const thinkingLine = appendThinking();
+  const thinkingLine = appendThinking(transcript, 'Tico’s thinking…');
   const renderer = createStreamRenderer();
   let fullText = '';
   let turnStopped = false; // set once record_fact_result reports a pass boundary or full coverage — anything after that is a wasted follow-up generation, never shown
@@ -605,16 +454,17 @@ async function sendTurn(message, { isKickoff = false } = {}) {
         chatHistory: [],
         restaurantId: practiceRestaurantId,
         section: practiceSection,
-        factCoverage,
+        factCoverage: isReviewSession ? reviewCoverage : factCoverage,
         isKickoff,
-        target: currentTarget
+        target: currentTarget,
+        reviewMode: isReviewSession
       })
     });
 
     thinkingLine.remove();
 
     if (!response.ok || !response.body) {
-      appendLine('tico', 'Couldn’t reach Tico just now — try again in a moment.');
+      appendLine(transcript, 'tico', 'Couldn’t reach Tico just now — try again in a moment.');
       return;
     }
 
@@ -666,7 +516,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
           if (!turnStopped) renderer.finalize(fullText);
         } else if (evt.type === 'error') {
           renderer.finalize(fullText);
-          appendLine('tico', evt.error || 'Something went wrong.');
+          appendLine(transcript, 'tico', evt.error || 'Something went wrong.');
         }
       }
     }
@@ -700,7 +550,7 @@ answerForm?.addEventListener('submit', (e) => {
   if (awaitingResponse) return;
   const message = answerInput.value.trim();
   if (!message) return;
-  appendLine('user', message);
+  appendLine(transcript, 'user', message);
   answerInput.value = '';
   answerInput.style.height = 'auto';
   updateSendButton();
@@ -723,6 +573,9 @@ export function exitPractice() {
   currentChatId = null;
   chatHistory = [];
   currentTarget = null;
+  isReviewSession = false;
+  reviewCoverage = {};
+  justMasteredThisSession = false;
   activeCorrectionCard = null;
   if (flagButton) flagButton.hidden = true;
   if (transcript) transcript.innerHTML = '';
@@ -740,7 +593,8 @@ export function exitPractice() {
  *                                       new session (lastTrained bookkeeping)
  *   onCoverageChanged(pass, coverage) — fires on hydration + every fact
  *                                       result (review highlight, pill,
- *                                       Train link)
+ *                                       Train link). coverage carries the
+ *                                       section's _progress field too.
  *   onTransitionToReview()            — Continue on the pass-transition banner
  *   onCoveredContinue()              — Continue on the Covered banner, once
  *                                       the section is fully done
@@ -758,9 +612,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   practiceCallbacks = callbacks;
   passTransitionShown = false;
   awaitingContinue = false;
-
-  markLastTrained(getOrCreateUserId(), restaurantId, section);
-  callbacks.onSessionStarted?.();
+  justMasteredThisSession = false;
 
   // localStorage here is a CACHE of Firestore, not an independent store —
   // Firestore is the actual source of truth. Paint instantly from the
@@ -769,11 +621,46 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   syncCoverageUI();
   hydrateSectionCoverage(getOrCreateUserId(), restaurantId, section).then((reconciled) => {
     factCoverage = reconciled;
-    syncCoverageUI();
+    // A review session tracks its own coverage — a late reconcile
+    // shouldn't re-sync the UI against the real (fully-covered)
+    // factCoverage mid-review, that would look like a regression.
+    if (!isReviewSession) syncCoverageUI();
   });
 
-  const existing = loadSectionState(restaurantId, section);
+  // Covered or Mastered both mean "re-entering this is a review," not a
+  // fresh drill — read straight off the section's own stored _progress,
+  // no per-item derivation.
+  isReviewSession = factCoverage._progress === 'Covered' || factCoverage._progress === 'Mastered';
   transcript.innerHTML = '';
+
+  if (isReviewSession) {
+    // Always genuinely fresh — never resume the original, already-
+    // finished drill (see Erik's ask: re-entering a Covered section
+    // shouldn't just replay the old "you're done" conversation). Ephemeral
+    // coverage only; nothing here ever touches Firestore/the local cache.
+    reviewCoverage = {};
+    currentChatId = generateChatId();
+    chatHistory = [];
+    currentTarget = null;
+    answerForm.hidden = false;
+    if (flagButton) flagButton.hidden = false;
+    createReviewStartedElement();
+    appendStatusMarker(passStatusLabel(practiceItemIds, reviewCoverage, 'review'));
+    sendTurn(KICKOFF_MESSAGE, { isKickoff: true });
+    return;
+  }
+
+  markLastTrained(getOrCreateUserId(), restaurantId, section);
+  // Only ever reached for a section that isn't Covered/Mastered yet (see
+  // isReviewSession above), so this is always a safe, unconditional
+  // "at least Training" — never a downgrade.
+  if (factCoverage._progress !== 'Training') {
+    factCoverage = { ...factCoverage, _progress: 'Training' };
+    markSectionProgress(getOrCreateUserId(), restaurantId, section, 'Training');
+  }
+  callbacks.onSessionStarted?.();
+
+  const existing = loadSectionState(restaurantId, section);
   if (existing) {
     currentChatId = existing.chatId;
     chatHistory = existing.history;
@@ -790,7 +677,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
         if (i === 0 && m.content === KICKOFF_MESSAGE) {
           createGettingStartedElement();
         } else {
-          appendLine('user', m.content);
+          appendLine(transcript, 'user', m.content);
         }
       } else {
         renderAssistantTurn(m.content);
@@ -801,7 +688,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
     // renderAssistantTurn doesn't scroll on its own — one explicit call
     // here after the whole history is rendered guarantees landing at the
     // true bottom regardless of which role the last message happens to be.
-    scrollTranscriptToBottom();
+    scrollToBottom();
   } else {
     currentChatId = generateChatId();
     chatHistory = [];

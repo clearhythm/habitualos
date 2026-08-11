@@ -26,6 +26,7 @@ function getRestaurantName(restaurantId) {
 }
 
 function tierLabel(tier) {
+  if (tier === 'mastered') return 'Mastered';
   if (tier === 'covered') return 'Covered';
   if (tier === 'training') return 'Training';
   return '—';

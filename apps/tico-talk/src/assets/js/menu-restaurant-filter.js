@@ -37,8 +37,7 @@ import {
   hydrateRestaurantProgress,
   computeTierBySection,
   tierForSectionInProgress,
-  passForSection,
-  isSectionCovered
+  passForSection
 } from './learn-coverage.js';
 import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
@@ -197,10 +196,9 @@ function updateTrainIcon(trainLink, restaurantId, contentType) {
 // list's Train button) and the Covered banner's Continue button (see
 // handlePracticeSessionStarted/setMode below) — both are the same "what's
 // next" question, scoped to one content type (food or drinks).
-function isCategoryCovered(contentType, sectionName) {
-  const category = categoriesFor(contentType).find((c) => c.name === sectionName);
-  const itemIds = category ? category.items.map((item) => item.id) : [];
-  return isSectionCovered(itemIds, currentRestaurantProgress.sections?.[sectionName] || {});
+function isCategoryCovered(sectionName) {
+  const progress = currentRestaurantProgress.sections?.[sectionName]?._progress;
+  return progress === 'Covered' || progress === 'Mastered';
 }
 
 function nextTrainTarget(contentType) {
@@ -208,9 +206,9 @@ function nextTrainTarget(contentType) {
   if (!categoryNames.length) return null;
 
   const lastTrained = currentRestaurantProgress.lastTrained;
-  return (lastTrained && categoryNames.includes(lastTrained) && !isCategoryCovered(contentType, lastTrained))
+  return (lastTrained && categoryNames.includes(lastTrained) && !isCategoryCovered(lastTrained))
     ? lastTrained
-    : categoryNames.find((name) => !isCategoryCovered(contentType, name)) || categoryNames[0];
+    : categoryNames.find((name) => !isCategoryCovered(name)) || categoryNames[0];
 }
 
 // Covered sections default straight into Practice (re-drill what you
@@ -220,7 +218,7 @@ function nextTrainTarget(contentType) {
 // to already be covered.
 function initialModeFor(contentType, sectionName) {
   if (hasActiveSession(currentRestaurantId, sectionName)) return 'practice';
-  return isCategoryCovered(contentType, sectionName) ? 'practice' : 'review';
+  return isCategoryCovered(sectionName) ? 'practice' : 'review';
 }
 
 function updateTrainLink(restaurantId, contentType) {
@@ -252,7 +250,9 @@ let currentMenuData = null;
 
 // This restaurant's full learn-progress ({sections, lastTrained}) —
 // fetched once per restaurant load, kept in sync locally afterward (see
-// refreshPillFor) rather than re-fetched on every small change.
+// refreshPillFor) rather than re-fetched on every small change. Each
+// section's own object in `sections` carries its _progress tier directly
+// (Training/Covered/Mastered), read straight through, never re-derived.
 let currentRestaurantProgress = { sections: {}, lastTrained: null };
 
 // JS port of menu-categories.njk's macro — same classes throughout, so
@@ -436,6 +436,8 @@ function handlePracticeSessionStarted() {
 function handleCoverageChanged(pass, sectionCoverage) {
   const review = detailEl.querySelector('.menu-detail__review');
   if (review) review.dataset.pass = pass;
+  // sectionCoverage already carries this section's _progress field
+  // (Training/Covered/Mastered) directly — nothing extra to track.
   currentRestaurantProgress = {
     ...currentRestaurantProgress,
     sections: { ...currentRestaurantProgress.sections, [currentSection]: sectionCoverage }

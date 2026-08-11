@@ -14,7 +14,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { toolUse, restaurantId, section: sectionName, factCoverage, target } = JSON.parse(event.body || '{}');
+    const { toolUse, restaurantId, section: sectionName, factCoverage, target, reviewMode } = JSON.parse(event.body || '{}');
     if (toolUse?.name !== 'record_fact_result') {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown tool: ${toolUse?.name}` }) };
     }
@@ -31,12 +31,16 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown section: ${sectionName}` }) };
     }
 
-    const pass = derivePass(section, factCoverage);
+    // reviewMode forces 'review' for both — see learn-chat-init.cjs, same
+    // reasoning. pass and newPass are always equal in review mode, so the
+    // passComplete branch below naturally never fires, no separate skip
+    // needed.
+    const pass = reviewMode ? 'review' : derivePass(section, factCoverage);
     const { result, nextItemId, nextFactType } = toolUse.input || {};
 
     // Nothing to merge on the kickoff turn (no target, no result yet).
     const updatedCoverage = (target && result) ? mergeFactResult(factCoverage, target.itemId, target.factType, result) : factCoverage;
-    const newPass = derivePass(section, updatedCoverage);
+    const newPass = reviewMode ? 'review' : derivePass(section, updatedCoverage);
 
     const toolResult = {};
     if (result) toolResult.result = result;

@@ -49,6 +49,7 @@ export interface RequestBody {
   factCoverage?: Record<string, Record<string, boolean>>;
   isKickoff?: boolean;
   target?: { itemId: string; factType: string } | null;
+  reviewMode?: boolean;
 }
 
 export interface ChatTypeConfig {
@@ -229,6 +230,7 @@ export function createChatStreamHandler(
       factCoverage,
       isKickoff,
       target,
+      reviewMode,
     } = body;
 
     // Get chat type configuration
@@ -283,6 +285,7 @@ export function createChatStreamHandler(
       if (factCoverage) initBody.factCoverage = factCoverage;
       if (isKickoff) initBody.isKickoff = isKickoff;
       if (target) initBody.target = target;
+      if (reviewMode) initBody.reviewMode = reviewMode;
     }
 
     // Initialize chat session - get system prompt and tools from Node.js function
@@ -427,6 +430,7 @@ export function createChatStreamHandler(
               if (restaurantId) toolBody.restaurantId = restaurantId;
               if (factCoverage) toolBody.factCoverage = factCoverage;
               if (target) toolBody.target = target;
+              if (reviewMode) toolBody.reviewMode = reviewMode;
 
               // Execute tool via Node.js function
               const toolResponse = await fetch(

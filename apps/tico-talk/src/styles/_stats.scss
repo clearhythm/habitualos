@@ -34,7 +34,7 @@
 
   &--covered { color: $color-success; font-weight: 600; }
   &--mastered { color: $color-green; font-weight: 600; }
-  &--training { color: $color-text-muted; }
+  &--training { color: $color-text-muted; font-weight: 600; }
 }
 
 .stats-row__reset {

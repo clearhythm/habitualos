@@ -249,9 +249,14 @@ button.menu-category__header--link {
   padding: 0.125rem $space-md;
 }
 
+// Plain text, no pill shape — same treatment as Covered below, just its
+// own (muted, dark beige) color.
 .menu-category__pill--training {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
   color: $color-text-muted;
-  background: $color-bg-muted;
 }
 
 // Covered: got everything right once. Plain text, no pill shape at all —

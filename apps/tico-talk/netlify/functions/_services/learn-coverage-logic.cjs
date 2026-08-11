@@ -12,7 +12,12 @@
 // hand if this logic ever changes; it's a handful of lines specifically
 // to avoid that risk.
 
-const PASS_FACT_TYPES = { basics: ['ingredients'], complete: ['dietary', 'pricing'] };
+// 'review' is a third, ungated pass — every fact type at once, mixed
+// together. Used only for a Covered section's "review session" (see
+// learn-practice.js's isReviewSession): unlike basics/complete, it's
+// never derived from real coverage, the client tells the server
+// explicitly (reviewMode) to force it.
+const PASS_FACT_TYPES = { basics: ['ingredients'], complete: ['dietary', 'pricing'], review: ['ingredients', 'dietary', 'pricing'] };
 
 function findSection(restaurant, sectionName) {
   return [...restaurant.food, ...restaurant.drinks].find((c) => c.name === sectionName) || null;

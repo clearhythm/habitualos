@@ -35,10 +35,15 @@ function buildSectionPrompt(restaurant, section, notes, pass) {
     const trimmed = { id: item.id, name: item.name };
     // Only expose the fields relevant to the CURRENT pass — not just an
     // instruction to ignore the rest, actually omit them, so there's no
-    // ambiguity about what's in scope right now.
+    // ambiguity about what's in scope right now. review is ungated (any
+    // fact is fair game), so it gets everything.
     if (pass === 'basics') {
       trimmed.description = item.description;
+    } else if (pass === 'complete') {
+      trimmed.price = item.price;
+      if (item.tags && item.tags.length) trimmed.tags = item.tags;
     } else {
+      trimmed.description = item.description;
       trimmed.price = item.price;
       if (item.tags && item.tags.length) trimmed.tags = item.tags;
     }
@@ -53,7 +58,9 @@ function buildSectionPrompt(restaurant, section, notes, pass) {
 
   const passScope = pass === 'basics'
     ? `You are drilling BASICS only right now: ingredients. Every question must be about what's in a dish (ingredients, preparation, what it's made of). Never ask about price, dietary restrictions, or add-ons in this pass, even if the trainee brings one up, gently redirect back to ingredients or note you'll circle back to that later.`
-    : `You are drilling COMPLETE right now: dietary restrictions and pricing. Ingredients are already covered for this section, don't re-drill them. Every question must be about whether a dish is vegetarian/gluten-free/dairy-free/etc, or its price/add-on cost. Never ask a pure ingredients question in this pass.`;
+    : pass === 'complete'
+    ? `You are drilling COMPLETE right now: dietary restrictions and pricing. Ingredients are already covered for this section, don't re-drill them. Every question must be about whether a dish is vegetarian/gluten-free/dairy-free/etc, or its price/add-on cost. Never ask a pure ingredients question in this pass.`
+    : `This is a REVIEW right now, not a first pass — the trainee already covered this whole section once. Any fact is fair game and mixed together: ingredients, dietary, or pricing, in any order, for any dish. This isn't about introducing anything new, it's about keeping it sharp — treat it exactly like a normal customer question either way, nothing about your tone or phrasing should signal "this is a review."`;
 
   return `Drilling section: "${section.name}" at ${restaurant.name}, ${pass} pass.
 
@@ -139,7 +146,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { restaurantId, section: sectionName, factCoverage, isKickoff, target } = JSON.parse(event.body || '{}');
+    const { restaurantId, section: sectionName, factCoverage, isKickoff, target, reviewMode } = JSON.parse(event.body || '{}');
     if (!restaurantId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'restaurantId is required' }) };
     }
@@ -155,7 +162,11 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: `Unknown section: ${sectionName}` }) };
     }
 
-    const pass = derivePass(section, factCoverage);
+    // reviewMode forces 'review' rather than deriving from factCoverage —
+    // a review session's factCoverage is the client's own ephemeral,
+    // session-only tracker (see learn-practice.js), which starts empty
+    // every time, so deriving from it would just say "basics."
+    const pass = reviewMode ? 'review' : derivePass(section, factCoverage);
     // Includes target itself — factCoverage here is from before this
     // turn's evaluation happens, so whether target is actually still open
     // is genuinely unresolved yet at prompt-build time. If the model picks
