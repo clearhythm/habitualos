@@ -122,7 +122,17 @@ OPEN ITEMS this pass (pick your next question from here — vary your picks, don
 ${listBlock}`;
 }
 
-function buildTools(pass) {
+// nextItemId is a real enum, not free text — SECTION DATA (cached, shown
+// for the whole pass) lists every item regardless of coverage, while
+// OPEN ITEMS (uncached, per-turn) is the actual valid set; without a hard
+// constraint here the model can blur the two and confidently propose an
+// item that's already covered or otherwise not currently open. Better
+// prompting alone couldn't guarantee this — the model would occasionally
+// drift back to an item from SECTION DATA regardless — so this makes it
+// structurally impossible rather than just discouraged. Empty openList
+// never reaches here in practice: that's a 'covered' stop, handled by
+// learn-tool-execute.cjs ending the session before another init call.
+function buildTools(pass, openList) {
   return [
     {
       name: 'record_fact_result',
@@ -131,7 +141,7 @@ function buildTools(pass) {
         type: 'object',
         properties: {
           result: { type: 'string', enum: ['correct', 'partial', 'incorrect'], description: "Omit only on the drill's very first question." },
-          nextItemId: { type: 'string', description: 'The "id" of the dish you\'re about to ask about, from the OPEN ITEMS list.' },
+          nextItemId: { type: 'string', enum: [...new Set(openList.map((t) => t.itemId))], description: 'The "id" of the dish you\'re about to ask about, from the OPEN ITEMS list.' },
           nextFactType: { type: 'string', enum: PASS_FACT_TYPES[pass] }
         },
         required: ['nextItemId', 'nextFactType']
@@ -187,7 +197,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemMessages, tools: buildTools(pass) })
+      body: JSON.stringify({ systemMessages, tools: buildTools(pass, openList) })
     };
   } catch (error) {
     return { statusCode: 500, body: JSON.stringify({ error: error.message || 'Internal server error' }) };
