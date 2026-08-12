@@ -5,6 +5,7 @@
 // renderer — see utils/chat-transcript.js for the plain speaker-tagged
 // bubble/scroll helpers this builds on.
 import { scrollToBottom } from './utils/chat-transcript.js';
+import { imageForItem } from './menu-card-images.js';
 
 const transcript = document.getElementById('learn-transcript');
 
@@ -14,7 +15,7 @@ const transcript = document.getElementById('learn-transcript');
 // leading \b still can't false-match inside real dialogue: these are
 // exact all-caps tokens immediately followed by a colon, not a pattern
 // that turns up in ordinary lowercase menu chatter.
-const SEGMENT_MARKER_RE = /\b(TICO|GUEST|STATUS):[ \t]?/;
+const SEGMENT_MARKER_RE = /\b(TICO|GUEST|STATUS|IMAGE):[ \t]?/;
 const SEGMENT_MARKER_HOLDBACK = 7; // length of "STATUS:" — longest marker
 
 function createSegmentElement(speaker) {
@@ -64,19 +65,94 @@ function createStatusElement(label) {
   return el;
 }
 
+// A missed-fact visual scaffold — an opt-in "Show visual aid" link right
+// after a wrong/partial answer during the gated Coverage drill (see
+// handleFactResult in learn-practice.js), never during a Review/Mastery
+// pass, where offering the answer would undermine the point of testing
+// retention. Opt-in rather than auto-shown (Erik's call): it preserves a
+// genuine "do I actually need this" moment rather than reflexively
+// answering every miss, closer to a flashcard app's deliberate "show
+// answer" than an automatic reveal.
+//
+// itemId is looked up fresh against menu-card-images.js's manifest (not
+// embedded as a resolved URL) and against sectionItems for the item's
+// real name/price/description, so a rehydrated old chat still resolves
+// correctly even if the underlying image file's build hash has since
+// changed. Silently renders nothing if the item has no image or isn't
+// found in sectionItems — this only ever fires live for items menu-
+// restaurant-filter.js has already confirmed have one, but rehydration
+// re-resolves it fresh rather than trusting that's still true.
+export function appendShowCardLink(itemId, restaurantId, sectionName, sectionItems) {
+  const src = imageForItem(restaurantId, sectionName, itemId);
+  const item = sectionItems?.find((i) => i.id === itemId);
+  if (!src || !item) return null;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'learn-show-card';
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'learn-show-card__link';
+  link.textContent = 'Show visual aid';
+  wrap.appendChild(link);
+  transcript.appendChild(wrap);
+
+  link.addEventListener('click', () => {
+    wrap.innerHTML = '';
+    wrap.className = 'learn-inline-card';
+
+    const img = document.createElement('img');
+    img.className = 'study-card__image';
+    img.src = src;
+    img.alt = item.name;
+    wrap.appendChild(img);
+
+    const body = document.createElement('div');
+    body.className = 'study-card__body';
+    const nameRow = document.createElement('div');
+    nameRow.className = 'study-card__name-row';
+    const name = document.createElement('h3');
+    name.className = 'study-card__name';
+    name.textContent = item.name;
+    nameRow.appendChild(name);
+    if (item.price) {
+      const price = document.createElement('span');
+      price.className = 'study-card__price';
+      price.textContent = `$${item.price}`;
+      nameRow.appendChild(price);
+    }
+    body.appendChild(nameRow);
+    if (item.description) {
+      const desc = document.createElement('p');
+      desc.className = 'study-card__desc';
+      desc.textContent = item.description;
+      body.appendChild(desc);
+    }
+    wrap.appendChild(body);
+    scrollToBottom();
+  }, { once: true });
+
+  return wrap;
+}
+
 // Renders one complete (non-streaming) assistant turn — used to rehydrate
 // a persisted chat, where the full raw text is already available. Also
 // used directly for live STATUS marker insertion (see appendStatusMarker
 // in learn-practice.js) so both paths share one rendering implementation.
+// IMAGE markers reach their rendering (appendShowCardLink) via a direct
+// call from learn-practice.js's tool_complete handling for the live case
+// (position matters there — see that file's comment), and via this
+// function's own dispatch below for rehydration. restaurantId/sectionName/
+// sectionItems are only needed to resolve an IMAGE marker's itemId — omit
+// for callers that never rehydrate one.
 //
 // TICO:/GUEST: are Tico's own voice / the guest's dialogue — rendered as
-// bubbles. STATUS: is different — it's never in the model's own stream
-// (the model has no instruction to emit it); it's a synthetic marker
-// learn-practice.js inserts itself so a status level-up gets persisted
-// and replayed through this same parsing/rendering pipeline, in-line in
-// the transcript, exactly like a real turn would be. Markers are parsed
-// out here and never shown as raw text.
-export function renderAssistantTurn(rawText) {
+// bubbles. STATUS:/IMAGE: are different — never in the model's own stream
+// (it has no instruction to emit either); they're synthetic markers
+// learn-practice.js inserts itself so they get persisted and replayed
+// through this same parsing/rendering pipeline, in-line in the
+// transcript, exactly like a real turn would be. Markers are parsed out
+// here and never shown as raw text.
+export function renderAssistantTurn(rawText, restaurantId, sectionName, sectionItems) {
   const re = new RegExp(SEGMENT_MARKER_RE, 'g');
   const positions = [];
   let m;
@@ -89,12 +165,14 @@ export function renderAssistantTurn(rawText) {
     return;
   }
   positions.forEach((pos, i) => {
-    if (pos.marker !== 'TICO' && pos.marker !== 'GUEST' && pos.marker !== 'STATUS') return; // hidden tracking markers, never rendered
+    if (pos.marker !== 'TICO' && pos.marker !== 'GUEST' && pos.marker !== 'STATUS' && pos.marker !== 'IMAGE') return; // hidden tracking markers, never rendered
     const end = i + 1 < positions.length ? positions[i + 1].start : rawText.length;
     const text = rawText.slice(pos.contentStart, end).trim();
     if (!text) return;
     if (pos.marker === 'STATUS') {
       createStatusElement(text);
+    } else if (pos.marker === 'IMAGE') {
+      appendShowCardLink(text, restaurantId, sectionName, sectionItems);
     } else {
       createSegmentElement(pos.marker === 'TICO' ? 'tico' : 'guest').textContent = text;
     }

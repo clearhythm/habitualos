@@ -471,6 +471,7 @@ let currentRestaurantId = null;
 let currentContentType = 'food';
 let currentSection = null; // category name — only meaningful in detail
 let currentSectionItemIds = []; // item ids for currentSection — only meaningful in detail
+let currentSectionItems = []; // full item objects for currentSection ({id, name, description, price, ...}) — passed into startPractice so the Practice drill's "Show visual aid" scaffold (see learn-markers.js) can render an item's real menu text, not just its image
 let currentPhase = 'browse'; // 'browse' | 'detail'
 let currentMode = 'review'; // 'review' | 'practice' — only meaningful in detail
 
@@ -516,7 +517,7 @@ function setMode(mode) {
   if (mode === 'review') {
     resetToFirstCard();
   } else if (mode === 'practice') {
-    startPractice(currentRestaurantId, currentSection, currentSectionItemIds, {
+    startPractice(currentRestaurantId, currentSection, currentSectionItemIds, currentSectionItems, {
       onSessionStarted: handlePracticeSessionStarted,
       onCoverageChanged: handleCoverageChanged,
       onTransitionToReview: () => setMode('review'),
@@ -551,6 +552,7 @@ function renderDetailBlock(contentType, sectionName) {
   }
 
   currentSectionItemIds = category.items.map((item) => item.id);
+  currentSectionItems = category.items;
 
   detailEl.innerHTML = '';
 

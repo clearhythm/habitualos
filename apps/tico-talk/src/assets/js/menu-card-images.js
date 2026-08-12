@@ -33,3 +33,11 @@ export function sectionCardImages(restaurantId, sectionName, items) {
   if (!images) return null;
   return items.every((item) => images[item.id]) ? images : null;
 }
+
+// Single-item lookup, no all-or-nothing section gate — used by the
+// Practice drill's missed-fact image scaffold (see learn-markers.js's
+// IMAGE: marker), which wants "does THIS dish have one" regardless of
+// whether the whole section qualifies for the Review card view.
+export function imageForItem(restaurantId, sectionName, itemId) {
+  return MENU_CARD_IMAGES[restaurantId]?.[sectionName]?.[itemId] || null;
+}

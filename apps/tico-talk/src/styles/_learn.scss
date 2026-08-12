@@ -347,6 +347,52 @@
   color: $color-green;
 }
 
+// Missed-fact visual scaffold — an opt-in link right after a wrong/
+// partial answer during the gated Coverage drill (see appendShowCardLink
+// in learn-markers.js), never auto-shown (Erik's call, see that file's
+// comment). Small and understated in its collapsed state, like the
+// Review panel's own text/cards toggle — a nudge, not something that
+// visually dominates a miss.
+// margin-top: 0, not $space-md — .learn-show-card is a direct child of
+// .transcript, which already has its own gap between children; adding
+// top margin on top of that gap was doubling the space above the link.
+// A bit of margin-bottom stays, though — extra relief before the next
+// GUEST: question specifically, not matched by the same gap.
+.learn-show-card {
+  text-align: center;
+  margin: 0 auto $space-sm;
+}
+
+.learn-show-card__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-green;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-green-dark;
+  }
+}
+
+// Expanded state — the full card (image + name/price/description,
+// reusing .study-card__*'s own content styles AND its same border
+// treatment, for visual consistency with the Review panel's cards).
+// Same margin reasoning as .learn-show-card above — no top margin
+// (.transcript's own gap already spaces it from whatever came before),
+// a bit of bottom margin for relief before the next GUEST: question.
+.learn-inline-card {
+  max-width: 320px;
+  margin: 0 auto $space-sm;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
 .learn-pass-transition {
   max-width: 680px;
   text-align: center;

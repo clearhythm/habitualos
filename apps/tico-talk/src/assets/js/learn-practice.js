@@ -44,7 +44,7 @@ import { log } from './utils/log.js';
 import { scrollToBottom, appendLine, appendThinking } from './utils/chat-transcript.js';
 import { initAutoResizeTextarea, initEnterToSubmit, updateSendButtonState } from './utils/chat-composer.js';
 import { loadSessionCache, saveSessionCache, clearSessionCache } from './utils/chat-session-cache.js';
-import { createGettingStartedElement, createReviewStartedElement, renderAssistantTurn, createStreamRenderer } from './learn-markers.js';
+import { createGettingStartedElement, createReviewStartedElement, renderAssistantTurn, createStreamRenderer, appendShowCardLink } from './learn-markers.js';
 
 // ─── DOM ───────────────────────────────────────────────────────────────
 const transcript = document.getElementById('learn-transcript');
@@ -60,6 +60,7 @@ const flagButton = document.getElementById('learn-flag-btn');
 let practiceRestaurantId = null;
 let practiceSection = null;
 let practiceItemIds = [];
+let practiceSectionItems = []; // full item objects ({id, name, description, price, ...}) — only needed for the "Show visual aid" scaffold's card content (see handleFactResult/appendShowCardLink)
 let practiceCallbacks = {};
 let currentChatId = null;
 let chatHistory = [];
@@ -73,6 +74,7 @@ let awaitingContinue = false; // guards sendTurn's finally from re-enabling inpu
 let passTransitionShown = false; // guards the transition banner from firing twice per session
 let coveredThisTurn = false;
 let passTransitionThisTurn = false; // set mid-stream by handleFactResult, shown only after the turn's own evaluation text has rendered
+let missedItemIdThisTurn = null; // set mid-stream by handleFactResult on a wrong/partial answer (Coverage drill only, never during a review/Mastery pass) — shown the same deferred way, after the turn's own evaluation text has rendered
 let activeCorrectionCard = null;
 
 // ─── Section chat persistence (localStorage) ────────────────────────────
@@ -373,6 +375,18 @@ function handleFactResult(result, next, stop) {
         markFactCovered(getOrCreateUserId(), practiceRestaurantId, practiceSection, currentTarget.itemId, currentTarget.factType);
       }
       syncCoverageUI();
+    } else if (!isReviewSession) {
+      // Wrong in some way (incorrect or partial) — offers a "Show visual
+      // aid" link (opt-in, not forced) right after this turn's own
+      // evaluation, only while still learning the section (the gated
+      // Coverage drill). Never during a review/Mastery pass: that's meant
+      // to be a genuine retrieval test, and offering the answer would
+      // undermine exactly what it's checking. Actually inserting the link
+      // is deferred to sendTurn's tool_complete handling (see
+      // missedItemIdThisTurn) — this fires mid-stream, before the turn's
+      // own TICO: evaluation has even rendered yet, and the link has to
+      // land after that text, before the next GUEST: question.
+      missedItemIdThisTurn = currentTarget.itemId;
     }
 
     // Always the pass this fact actually belonged to (passBefore), never
@@ -442,6 +456,7 @@ async function sendTurn(message, { isKickoff = false } = {}) {
   let turnStopped = false; // set once record_fact_result reports a pass boundary or full coverage — anything after that is a wasted follow-up generation, never shown
   coveredThisTurn = false;
   passTransitionThisTurn = false;
+  missedItemIdThisTurn = null;
 
   try {
     const response = await fetch('/api/chat-stream', {
@@ -500,6 +515,23 @@ async function sendTurn(message, { isKickoff = false } = {}) {
             // thing that flushes that tail — skip it and the turn's own
             // last word or so silently never renders.
             renderer.finalize(fullText);
+          } else if (missedItemIdThisTurn) {
+            // Has to land here, between this turn's own evaluation and
+            // the GUEST: question that streams next — not appended after
+            // the whole turn, which is where it used to end up (see
+            // Erik's screenshot of the resulting "wonky" bug). Flush
+            // TICO:'s held-back tail first, then splice a marker into
+            // fullText so the PERSISTED turn text (chatHistory/rehydration)
+            // stays correctly ordered, and consume it via renderer.update
+            // so live playback advances past it too — IMAGE has no bubble
+            // of its own (same as STATUS), so that text is silently
+            // discarded there; appendShowCardLink below is what actually
+            // renders the link, inserted directly at the right position.
+            renderer.finalize(fullText);
+            fullText += `\nIMAGE: ${missedItemIdThisTurn}\n`;
+            renderer.update(fullText);
+            appendShowCardLink(missedItemIdThisTurn, practiceRestaurantId, practiceSection, practiceSectionItems);
+            missedItemIdThisTurn = null;
           } else if (fullText) {
             // Whatever text follows is a fresh Claude generation (post tool
             // round-trip), not a literal continuation of the line that was
@@ -599,7 +631,7 @@ export function exitPractice() {
  *   onCoveredContinue()              — Continue on the Covered banner, once
  *                                       the section is fully done
  */
-export function startPractice(restaurantId, section, sectionItemIds, callbacks = {}) {
+export function startPractice(restaurantId, section, sectionItemIds, sectionItems, callbacks = {}) {
   if (currentChatId && practiceRestaurantId === restaurantId && practiceSection === section) {
     practiceCallbacks = callbacks;
     syncCoverageUI();
@@ -609,6 +641,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
   practiceRestaurantId = restaurantId;
   practiceSection = section;
   practiceItemIds = sectionItemIds;
+  practiceSectionItems = sectionItems;
   practiceCallbacks = callbacks;
   passTransitionShown = false;
   awaitingContinue = false;
@@ -680,7 +713,7 @@ export function startPractice(restaurantId, section, sectionItemIds, callbacks =
           appendLine(transcript, 'user', m.content);
         }
       } else {
-        renderAssistantTurn(m.content);
+        renderAssistantTurn(m.content, restaurantId, section, sectionItems);
       }
     });
     answerForm.hidden = false;
