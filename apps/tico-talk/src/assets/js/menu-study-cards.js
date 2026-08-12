@@ -36,10 +36,15 @@ function buildCard(item, image, cardIndex, total) {
   const card = document.createElement('div');
   card.className = 'study-card';
 
+  // No loading="lazy" — that defers the fetch until the image is both
+  // visible AND near the viewport, which a display:none card never
+  // satisfies until it's already active. loadImage()'s manual current+
+  // next preload (see setActive) already does this on purpose and on a
+  // deliberate schedule; the browser's own heuristic on top of that just
+  // re-blocks the fetch behind visibility and defeats the preload.
   const img = document.createElement('img');
   img.className = 'study-card__image';
   img.alt = item.name;
-  img.loading = 'lazy';
   card.appendChild(img);
   cardImages[cardIndex] = { img, src: image };
 
