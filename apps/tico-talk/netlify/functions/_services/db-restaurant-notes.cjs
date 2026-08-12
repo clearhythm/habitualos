@@ -46,3 +46,9 @@ exports.addRestaurantNote = async (restaurantId, text, { scope, section = null }
   cache.set(restaurantId, [...existing, note]);
   return note;
 };
+
+// Forces the next getRestaurantNotes() call to re-read Firestore instead
+// of serving the warm instance's stale snapshot — see admin-cache-reset.cjs.
+exports.resetCache = () => {
+  cache = null;
+};

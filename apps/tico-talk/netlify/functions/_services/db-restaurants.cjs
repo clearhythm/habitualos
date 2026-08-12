@@ -66,3 +66,9 @@ exports.getRestaurant = async (restaurantId) => {
   if (!restaurant) throw new Error(`Unknown restaurant: ${restaurantId}`);
   return restaurant;
 };
+
+// Forces the next getRestaurant() call to re-read Firestore instead of
+// serving the warm instance's stale snapshot — see admin-cache-reset.cjs.
+exports.resetCache = () => {
+  cache = null;
+};
