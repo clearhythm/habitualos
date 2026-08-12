@@ -3,12 +3,25 @@
 // EVERY item in it has an entry here — partial coverage falls back to the
 // existing plain-text Review list untouched, so sections/restaurants
 // without images are never affected by this file's existence.
+//
+// Real ES module imports, not literal path strings — eleventy-plugin-vite
+// only carries an image into the production build when it's statically
+// referenced this way (or via a literal <img src="..."> in a template);
+// a plain '/assets/images/...' string is invisible to Vite's asset graph
+// and gets silently dropped from the deployed output (confirmed: it 404s
+// in prod even though the file is committed and works in dev, where
+// nothing gets bundled/dropped in the first place). Each import resolves
+// to the real hashed build URL at runtime.
+import tagliatelleLobsterCream from '../images/menu-cards/petes/tagliatelle-lobster-cream.webp';
+import squidPastaPuttanesca from '../images/menu-cards/petes/squid-pasta-puttanesca.webp';
+import clamsWithPasta from '../images/menu-cards/petes/clams-with-pasta.webp';
+
 export const MENU_CARD_IMAGES = {
   petes: {
     Pasta: {
-      'tagliatelle-lobster-cream': '/assets/images/menu-cards/petes/tagliatelle-lobster-cream.webp',
-      'squid-pasta-puttanesca': '/assets/images/menu-cards/petes/squid-pasta-puttanesca.webp',
-      'clams-with-pasta': '/assets/images/menu-cards/petes/clams-with-pasta.webp'
+      'tagliatelle-lobster-cream': tagliatelleLobsterCream,
+      'squid-pasta-puttanesca': squidPastaPuttanesca,
+      'clams-with-pasta': clamsWithPasta
     }
   }
 };
