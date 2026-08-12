@@ -41,6 +41,8 @@ import {
 } from './learn-coverage.js';
 import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
+import { sectionCardImages } from './menu-card-images.js';
+import { renderStudyCards, resetToFirstCard } from './menu-study-cards.js';
 import { log } from './utils/log.js';
 
 const CONTENT_TYPE_KEY = 'tico-current-content-type';
@@ -483,7 +485,13 @@ function applyMode(mode) {
 // conversation rather than restarting it (see module comment).
 function setMode(mode) {
   applyMode(mode);
-  if (mode === 'practice') {
+  // Review's DOM isn't rebuilt on every toggle (see module comment above
+  // applyMode) — resetToFirstCard is a no-op for plain-list sections, and
+  // for study-card sections puts you back at card 1 every time Review is
+  // (re)selected, not just on the section's first render.
+  if (mode === 'review') {
+    resetToFirstCard();
+  } else if (mode === 'practice') {
     startPractice(currentRestaurantId, currentSection, currentSectionItemIds, {
       onSessionStarted: handlePracticeSessionStarted,
       onCoverageChanged: handleCoverageChanged,
@@ -562,7 +570,39 @@ function renderDetailBlock(contentType, sectionName) {
   const review = document.createElement('div');
   review.className = 'menu-detail__review';
   review.dataset.pass = passForSection(currentSectionItemIds, loadFactCoverageCache(currentRestaurantId, sectionName));
-  review.appendChild(renderCategoryList([category], { clickable: false }));
+
+  // Card view only for sections where every item has a reference image
+  // (see menu-card-images.js) — everything else keeps the plain list as
+  // the only view. Sections WITH images still get the plain list too,
+  // reachable via a toggle — cards are for studying, the list is for a
+  // fast lookup ("does it have capers?") without paging through images.
+  const cardImages = sectionCardImages(currentRestaurantId, sectionName, category.items);
+  if (cardImages) {
+    const cardsView = document.createElement('div');
+    const listView = document.createElement('div');
+    listView.hidden = true;
+    listView.appendChild(renderCategoryList([category], { clickable: false }));
+
+    const viewToggle = document.createElement('button');
+    viewToggle.type = 'button';
+    viewToggle.className = 'menu-review__view-toggle';
+    viewToggle.textContent = 'Show text only';
+    viewToggle.addEventListener('click', () => {
+      listView.hidden = !listView.hidden;
+      cardsView.hidden = !cardsView.hidden;
+      viewToggle.textContent = listView.hidden ? 'Ingredients only' : 'Show with visuals';
+    });
+
+    renderStudyCards(cardsView, category.items, cardImages, {
+      onPracticeRequested: () => setMode('practice')
+    });
+
+    review.appendChild(cardsView);
+    review.appendChild(listView);
+    review.appendChild(viewToggle);
+  } else {
+    review.appendChild(renderCategoryList([category], { clickable: false }));
+  }
   detailEl.appendChild(review);
 
   return true;

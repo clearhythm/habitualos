@@ -349,6 +349,164 @@ button.menu-category__header--link {
   margin-top: $space-sm;
 }
 
+// .menu-review__categories is shared with the browse view (many
+// categories side by side, genuinely wants its 1/2/3-column spread) — but
+// inside a single-section detail view it's always exactly one category,
+// where that same multi-column CSS just left it sitting in a wide,
+// left-aligned block on desktop. Scoped to .menu-detail__review only, so
+// the browse view's own layout is untouched.
+.menu-detail__review .menu-review__categories {
+  column-count: 1;
+  margin-top: $space-lg;
+}
+
+// .menu-category's own margin-bottom exists to space multiple stacked
+// categories apart in the browse view — meaningless here, it's always
+// exactly one category, and just left trailing empty space.
+.menu-detail__review .menu-category {
+  margin-bottom: 0;
+}
+
+@media (min-width: $breakpoint-lg) {
+  .menu-detail__review .menu-review__categories {
+    max-width: 33%;
+    margin: $space-lg auto 0;
+  }
+}
+
+// Toggles between the study-card view and the plain text list, for
+// sections that have both (see renderDetailBlock in menu-restaurant-
+// filter.js). Cards are for studying; the list is for a fast lookup
+// without paging through images — small and understated on purpose,
+// it's a secondary path, not an equal alternative to the default view.
+.menu-review__view-toggle {
+  display: block;
+  margin: $space-md auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-green;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-green-dark;
+  }
+}
+
+// Review study card (see menu-study-cards.js) — shown instead of
+// .menu-review__categories only for sections where every item has a
+// reference image (menu-card-images.js). Same mechanism at every width,
+// one dish at a time via Back/Next (.is-active toggled in JS) — desktop
+// just narrows and centers the card instead of switching to a grid,
+// Erik's call: keeps the same visual focus rather than spreading
+// attention across several images at once.
+.study-card {
+  display: none;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+  overflow: hidden;
+
+  &.is-active {
+    display: block;
+  }
+}
+
+@media (min-width: $breakpoint-lg) {
+  .menu-study-cards {
+    max-width: 33%;
+    margin: 0 auto;
+  }
+}
+
+.study-card__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.study-card__body {
+  padding: $space-md $space-lg;
+}
+
+.study-card__name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-sm;
+}
+
+.study-card__name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-green;
+  margin: 0;
+}
+
+.study-card__price {
+  font-weight: 600;
+  color: $color-text-muted;
+  white-space: nowrap;
+}
+
+.study-card__desc {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin-top: $space-xs;
+}
+
+// Grid, not flex — Back is omitted entirely on the first card (see
+// menu-study-cards.js), and with only 2 children a flex space-between
+// row shifts "1 of 3" off-center depending on whether Back exists.
+// Fixed column assignments below keep progress in the true middle
+// column regardless, rather than relying on DOM-order auto-placement.
+.study-card__footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: $space-sm;
+  padding: 0 $space-lg $space-lg;
+}
+
+.study-card__progress {
+  grid-column: 2;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.study-card__back-btn {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.study-card__next-btn {
+  grid-column: 3;
+  justify-self: end;
+}
+
+// End-of-deck bridge into Practice — text-only, no image, centered.
+.study-card--bridge {
+  padding: $space-xl $space-lg;
+  text-align: center;
+}
+
+.study-card__bridge-text {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $color-green;
+  margin: 0 0 $space-md;
+}
+
+.study-card__bridge-actions {
+  display: flex;
+  justify-content: center;
+  gap: $space-sm;
+}
+
 // Placeholder shown in a .menu-content-panel while its menu data is being
 // fetched (see loadMenuForRestaurant in menu-restaurant-filter.js) —
 // replaced wholesale once real content renders, so this never needs its

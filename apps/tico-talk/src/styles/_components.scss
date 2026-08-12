@@ -30,6 +30,20 @@
   }
 }
 
+// Outline treatment for a secondary action sitting alongside a primary
+// .btn (e.g. "Back" next to "Next") — same shape/sizing, less visual
+// weight so the primary action still reads as the default next step.
+.btn--secondary {
+  background: none;
+  color: $color-green;
+  border: 1px solid $color-border;
+
+  &:hover {
+    background: rgba($color-bg-muted, 0.12);
+    color: $color-green-dark;
+  }
+}
+
 .card {
   background: $color-bg-surface;
   border: 1px solid $color-border;
