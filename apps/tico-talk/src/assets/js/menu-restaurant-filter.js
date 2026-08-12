@@ -28,8 +28,11 @@
 // /menu/food/{category}, /menu/drinks/{category} (detail) are real
 // routes — silently rewritten to this same file by netlify.toml (status
 // 200, wildcarded on the category segment). The Review/Practice toggle
-// has no URL of its own; both modes live at the same category URL (not a
-// bookmarkable/deep-linkable distinction, unlike browse vs. detail).
+// rides along as a #review/#practice hash on the same category URL
+// (set/read in setMode/modeFromHash) rather than a distinct route — a
+// client-side-only fragment, no server round-trip, but enough to survive
+// a reload or browser back/forward without silently re-deriving mode
+// from coverage every time.
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
 import {
@@ -221,6 +224,17 @@ function nextTrainTarget(contentType) {
 function initialModeFor(contentType, sectionName) {
   if (hasActiveSession(currentRestaurantId, sectionName)) return 'practice';
   return isCategoryCovered(sectionName) ? 'practice' : 'review';
+}
+
+// Reads the URL's #review/#practice fragment (see setMode) — only
+// meaningful for a reload/direct-visit/back-forward landing on a URL that
+// already names a section, so callers resolving a FRESH section (a
+// category click, the Train link) don't consult this: a stale hash left
+// over from whatever section you were on before shouldn't leak into a
+// section you're entering for the first time this visit.
+function modeFromHash() {
+  const hash = location.hash.slice(1);
+  return hash === 'practice' || hash === 'review' ? hash : null;
 }
 
 function updateTrainLink(restaurantId, contentType) {
@@ -485,6 +499,16 @@ function applyMode(mode) {
 // conversation rather than restarting it (see module comment).
 function setMode(mode) {
   applyMode(mode);
+  // Keeps the URL's #review/#practice fragment in sync with whatever
+  // mode is actually active, so a reload or direct revisit resumes here
+  // (see modeFromHash) instead of always re-deriving from coverage.
+  // replaceState, not pushState — toggling modes isn't real navigation,
+  // it shouldn't add its own browser-history entry (only actual
+  // section/browse navigation should, via enterDetail/enterBrowse).
+  const hashedPath = `${location.pathname}#${mode}`;
+  if (location.pathname + location.hash !== hashedPath) {
+    history.replaceState(null, '', hashedPath);
+  }
   // Review's DOM isn't rebuilt on every toggle (see module comment above
   // applyMode) — resetToFirstCard is a no-op for plain-list sections, and
   // for study-card sections puts you back at card 1 every time Review is
@@ -590,7 +614,7 @@ function renderDetailBlock(contentType, sectionName) {
     viewToggle.addEventListener('click', () => {
       listView.hidden = !listView.hidden;
       cardsView.hidden = !cardsView.hidden;
-      viewToggle.textContent = listView.hidden ? 'Ingredients only' : 'Show with visuals';
+      viewToggle.textContent = listView.hidden ? 'Show text only' : 'Show visual aids';
     });
 
     renderStudyCards(cardsView, category.items, cardImages, {
@@ -643,8 +667,11 @@ function enterDetail(contentType, sectionName, mode, { pushUrl = true } = {}) {
   setCurrentContentType(contentType);
   if (!renderDetailBlock(contentType, sectionName)) return;
   showPhase('detail');
-  setMode(mode);
+  // Path first, then mode — setMode writes its #review/#practice
+  // fragment against whatever location.pathname already is, so the path
+  // has to land first or its own pushState (no hash) would wipe it out.
   if (pushUrl) history.pushState(null, '', pathForTeach(contentType, sectionName));
+  setMode(mode);
 }
 
 // Shared by the breadcrumb link and the restaurant switcher — both leave
@@ -689,8 +716,11 @@ function switchToBrowse(contentType) {
     if (sectionName) {
       // A reload mid-practice should stay in practice, not bounce back
       // to Review — resume it whenever a session already exists for this
-      // section rather than always defaulting to Review on landing.
-      enterDetail(type, sectionName, initialModeFor(type, sectionName), { pushUrl: false });
+      // section rather than always defaulting to Review on landing. The
+      // URL's #review/#practice fragment (see modeFromHash/setMode) wins
+      // when present; initialModeFor's coverage-based guess is only the
+      // fallback for a URL that doesn't name a mode at all.
+      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), { pushUrl: false });
       return;
     }
   }
@@ -721,9 +751,11 @@ window.addEventListener('tico:restaurant-changed', async (e) => {
 });
 
 // Browser back/forward — no reload, so state has to be re-derived from
-// the URL and re-applied manually. The Review/Practice toggle has no URL
-// of its own, so back/forward always lands on Review for whichever
-// category (or bare browse) the URL names.
+// the URL and re-applied manually. Mode toggles use replaceState (see
+// setMode), not pushState, so they don't create their own history
+// entries — back/forward here is purely about section/browse navigation,
+// landing on whichever mode that history entry's #review/#practice
+// fragment (or, absent one, coverage) names for that section.
 window.addEventListener('popstate', () => {
   const { contentType, categorySlug } = parsePath(location.pathname);
   const type = contentType || getCurrentContentType();
@@ -732,7 +764,7 @@ window.addEventListener('popstate', () => {
   if (categorySlug) {
     const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
-      enterDetail(type, sectionName, initialModeFor(type, sectionName), { pushUrl: false });
+      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), { pushUrl: false });
       return;
     }
   }
