@@ -15,6 +15,13 @@
 import tagliatelleLobsterCream from '../images/menu-cards/petes/tagliatelle-lobster-cream.webp';
 import squidPastaPuttanesca from '../images/menu-cards/petes/squid-pasta-puttanesca.webp';
 import clamsWithPasta from '../images/menu-cards/petes/clams-with-pasta.webp';
+import maineLobsterRoll from '../images/menu-cards/petes/maine-lobster-roll.webp';
+import wagyuSmashburger from '../images/menu-cards/petes/wagyu-smashburger.webp';
+import shrimpWhiteCheddarGrits from '../images/menu-cards/petes/shrimp-white-cheddar-grits.webp';
+import steamedClams from '../images/menu-cards/petes/steamed-clams.webp';
+import grilledBranzino from '../images/menu-cards/petes/grilled-branzino.webp';
+import localKingSalmon from '../images/menu-cards/petes/local-king-salmon.webp';
+import filetMignon from '../images/menu-cards/petes/filet-mignon.webp';
 
 export const MENU_CARD_IMAGES = {
   petes: {
@@ -22,6 +29,15 @@ export const MENU_CARD_IMAGES = {
       'tagliatelle-lobster-cream': tagliatelleLobsterCream,
       'squid-pasta-puttanesca': squidPastaPuttanesca,
       'clams-with-pasta': clamsWithPasta
+    },
+    Mains: {
+      'maine-lobster-roll': maineLobsterRoll,
+      'wagyu-smashburger': wagyuSmashburger,
+      'shrimp-white-cheddar-grits': shrimpWhiteCheddarGrits,
+      'steamed-clams': steamedClams,
+      'grilled-branzino': grilledBranzino,
+      'local-king-salmon': localKingSalmon,
+      'filet-mignon': filetMignon
     }
   }
 };
