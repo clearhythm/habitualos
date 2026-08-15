@@ -1,4 +1,4 @@
-// Card-based Review study view: one dish at a time (Back/Next), same
+// Card-based Review study view: one dish/drink at a time (Back/Next), same
 // mechanism on every viewport — desktop just constrains the card to a
 // narrower centered column instead of full width, keeping the same
 // single-card focus rather than showing everything in a grid (Erik's
@@ -11,6 +11,12 @@
 // Review is (re)selected via resetToFirstCard() (see menu-restaurant-
 // filter.js's setMode) — no resume position, Erik's call: it's a short
 // study pass, not a long document you'd expect to pick back up mid-way.
+//
+// Cards with a `recipe` (drinks only, today — {ingredients: string[],
+// instructions: string}) can flip to a back face showing it, via a small
+// per-card button — a plain instant content-swap, not a 3D animation
+// (Erik's call: function over flourish, given he needed this fast for
+// actual bartending, not polish).
 
 let cardEls = [];
 let bridgeEl = null;
@@ -36,6 +42,22 @@ function buildCard(item, image, cardIndex, total) {
   const card = document.createElement('div');
   card.className = 'study-card';
 
+  if (item.recipe) {
+    const flipBtn = document.createElement('button');
+    flipBtn.type = 'button';
+    flipBtn.className = 'study-card__flip-btn';
+    flipBtn.textContent = 'Show recipe';
+    flipBtn.addEventListener('click', () => {
+      const flipped = !card.classList.contains('is-flipped');
+      card.classList.toggle('is-flipped', flipped);
+      flipBtn.textContent = flipped ? 'Show menu info' : 'Show recipe';
+    });
+    card.appendChild(flipBtn);
+  }
+
+  const front = document.createElement('div');
+  front.className = 'study-card__face';
+
   // No loading="lazy" — that defers the fetch until the image is both
   // visible AND near the viewport, which a display:none card never
   // satisfies until it's already active. loadImage()'s manual current+
@@ -45,7 +67,7 @@ function buildCard(item, image, cardIndex, total) {
   const img = document.createElement('img');
   img.className = 'study-card__image';
   img.alt = item.name;
-  card.appendChild(img);
+  front.appendChild(img);
   cardImages[cardIndex] = { img, src: image };
 
   const body = document.createElement('div');
@@ -72,7 +94,48 @@ function buildCard(item, image, cardIndex, total) {
     body.appendChild(desc);
   }
 
-  card.appendChild(body);
+  front.appendChild(body);
+  card.appendChild(front);
+
+  if (item.recipe) {
+    const back = document.createElement('div');
+    back.className = 'study-card__face study-card__face--back';
+
+    const backName = document.createElement('h3');
+    backName.className = 'study-card__name';
+    backName.textContent = item.name;
+    back.appendChild(backName);
+
+    if (item.recipe.ingredients?.length) {
+      const ingredientsHeading = document.createElement('h4');
+      ingredientsHeading.className = 'study-card__recipe-heading';
+      ingredientsHeading.textContent = 'Ingredients';
+      back.appendChild(ingredientsHeading);
+
+      const list = document.createElement('ul');
+      list.className = 'study-card__ingredients';
+      item.recipe.ingredients.forEach((line) => {
+        const li = document.createElement('li');
+        li.textContent = line;
+        list.appendChild(li);
+      });
+      back.appendChild(list);
+    }
+
+    if (item.recipe.instructions) {
+      const prepHeading = document.createElement('h4');
+      prepHeading.className = 'study-card__recipe-heading';
+      prepHeading.textContent = 'Preparation';
+      back.appendChild(prepHeading);
+
+      const prep = document.createElement('p');
+      prep.className = 'study-card__recipe-prep';
+      prep.textContent = item.recipe.instructions;
+      back.appendChild(prep);
+    }
+
+    card.appendChild(back);
+  }
 
   const footer = document.createElement('div');
   footer.className = 'study-card__footer';
@@ -134,7 +197,8 @@ function buildBridge(total, onPracticeRequested) {
 }
 
 // items: category.items (see renderCategoryList's shape) — {id, name,
-// description, price, ...}. images: {itemId: path}, from sectionCardImages.
+// description, price, recipe?: {ingredients, instructions}, ...}.
+// images: {itemId: path}, from sectionCardImages.
 export function renderStudyCards(targetEl, items, images, callbacks = {}) {
   targetEl.innerHTML = '';
   targetEl.classList.add('menu-study-cards');

@@ -422,6 +422,72 @@ button.menu-category__header--link {
   }
 }
 
+// Recipe flip (drinks only, when item.recipe exists) — a plain content
+// swap between .study-card__face (front: image+menu info) and
+// .study-card__face--back (recipe), not a 3D animation (Erik's call:
+// function over flourish). Per-card flip button only — no deck-level
+// mode toggle (removed per Erik: having it live on the card is enough).
+.study-card__face--back {
+  display: none;
+  padding: $space-md $space-lg;
+}
+
+.study-card.is-flipped {
+  .study-card__face:not(.study-card__face--back) {
+    display: none;
+  }
+
+  .study-card__face--back {
+    display: block;
+  }
+}
+
+.study-card__flip-btn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: $space-xs $space-lg;
+  background: $color-bg-muted;
+  border: none;
+  border-bottom: 1px solid $color-border;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-green;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-green-dark;
+  }
+}
+
+.study-card__recipe-heading {
+  font-size: $font-size-sm;
+  font-weight: 700;
+  color: $color-green;
+  margin: $space-md 0 $space-xs;
+
+  &:first-child {
+    margin-top: $space-sm;
+  }
+}
+
+.study-card__ingredients {
+  margin: 0;
+  padding-left: $space-lg;
+  font-size: $font-size-sm;
+  color: $color-text;
+  line-height: 1.6;
+}
+
+.study-card__recipe-prep {
+  font-size: $font-size-sm;
+  color: $color-text;
+  line-height: 1.5;
+  margin: 0;
+}
+
 .study-card__image {
   display: block;
   width: 100%;
