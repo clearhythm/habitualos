@@ -33,7 +33,13 @@ function buildCategoryList(section) {
       price: item.price,
       tags: item.tags,
       allergens: item.allergens,
-      notes: item.notes
+      notes: item.notes,
+      // Staff-only pour ratios/method — never printed on the guest-facing
+      // menu, unlike description. Only drinks have this today. Flows
+      // through the same as notes: available to the drill prompt and the
+      // Review card, but renderCategoryList never reads it for the
+      // guest-facing browse list.
+      recipe: item.recipe
     });
     itemsByCategory.set(item.category, list);
   });

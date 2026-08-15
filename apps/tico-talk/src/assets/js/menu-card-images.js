@@ -22,6 +22,14 @@ import steamedClams from '../images/menu-cards/petes/steamed-clams.webp';
 import grilledBranzino from '../images/menu-cards/petes/grilled-branzino.webp';
 import localKingSalmon from '../images/menu-cards/petes/local-king-salmon.webp';
 import filetMignon from '../images/menu-cards/petes/filet-mignon.webp';
+import gardenGimlet from '../images/menu-cards/petes/garden-gimlet.webp';
+import lycheeMartini from '../images/menu-cards/petes/lychee-martini.webp';
+import pomegranateCosmo from '../images/menu-cards/petes/pomegranate-cosmo.webp';
+import almostFamous from '../images/menu-cards/petes/almost-famous.webp';
+import espressoMartini from '../images/menu-cards/petes/espresso-martini.webp';
+import spicedOldFashioned from '../images/menu-cards/petes/spiced-old-fashioned.webp';
+import buildYourOwnMartini from '../images/menu-cards/petes/build-your-own-martini.webp';
+import aperolSpritz from '../images/menu-cards/petes/aperol-spritz.webp';
 
 export const MENU_CARD_IMAGES = {
   petes: {
@@ -38,6 +46,16 @@ export const MENU_CARD_IMAGES = {
       'grilled-branzino': grilledBranzino,
       'local-king-salmon': localKingSalmon,
       'filet-mignon': filetMignon
+    },
+    'House Cocktails': {
+      'garden-gimlet': gardenGimlet,
+      'lychee-martini': lycheeMartini,
+      'pomegranate-cosmo': pomegranateCosmo,
+      'almost-famous': almostFamous,
+      'espresso-martini': espressoMartini,
+      'spiced-old-fashioned': spicedOldFashioned,
+      'build-your-own-martini': buildYourOwnMartini,
+      'aperol-spritz': aperolSpritz
     }
   }
 };
