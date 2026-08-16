@@ -47,7 +47,7 @@ import {
 } from './learn-coverage.js';
 import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
-import { sectionCardImages, prepImageForItem } from './menu-card-images.js';
+import { sectionCardImages, prepImageForItem, prepImagePositionsForItem } from './menu-card-images.js';
 import { renderStudyCards, resetToFirstCard } from './menu-study-cards.js';
 import { log } from './utils/log.js';
 
@@ -647,16 +647,20 @@ function renderDetailBlock(contentType, sectionName, cardContent) {
     });
 
     const prepImages = {};
+    const prepImagePositions = {};
     category.items.forEach((item) => {
       const prepImage = prepImageForItem(currentRestaurantId, item.id);
       if (prepImage) prepImages[item.id] = prepImage;
+      const positions = prepImagePositionsForItem(currentRestaurantId, item.id);
+      if (positions) prepImagePositions[item.id] = positions;
     });
 
     renderStudyCards(cardsView, category.items, cardImages, {
       onPracticeRequested: () => setMode('practice'),
       initialCardContent: cardContent,
       onCardContentChanged: (mode) => writeHash('review', mode),
-      prepImages
+      prepImages,
+      prepImagePositions
     });
 
     review.appendChild(cardsView);

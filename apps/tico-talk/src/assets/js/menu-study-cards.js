@@ -116,7 +116,72 @@ function buildTabs(card) {
   card.appendChild(tabs);
 }
 
-function buildCard(item, image, cardIndex, total, prepImage) {
+// Extracts the leading "1.5 oz" / "2 dashes" portion of a recipe.
+// ingredients line (e.g. "1.5 oz Tito's" -> "1.5 oz") for the tap badge —
+// falls back to the whole line if it doesn't match that shape (e.g.
+// Build-Your-Own Martini's choice-based lines aren't a strippable
+// amount+name pair, same reason ingredientNames is hand-authored rather
+// than derived — see restructure-ingredient-names.cjs).
+function leadingAmount(line) {
+  const match = line.match(/^([\d.]+\s*(?:oz|dashes?))/i);
+  return match ? match[1] : line;
+}
+
+// Interactive tap-to-highlight: tapping a bottle in the image shows a
+// badge with its amount. One-directional and self-contained — the
+// Ingredients list below is plain, static text (appendIngredientsList,
+// same as the non-interactive case) and takes no part in this; tapping
+// it does nothing, and tapping the image doesn't touch it either. Only
+// built when prepPositions data exists for this item (currently just
+// Pomegranate Cosmo, rough/eyeballed coordinates — see menu-card-
+// images.js).
+function buildInteractivePrep(back, backBody, prepImg, positions, ingredients) {
+  const wrap = document.createElement('div');
+  wrap.className = 'study-card__prep-wrap';
+  wrap.appendChild(prepImg);
+
+  const badge = document.createElement('div');
+  badge.className = 'study-card__prep-badge';
+  wrap.appendChild(badge);
+
+  // Full-height vertical bands, not small circular targets around a
+  // point — closer to each bottle's actual footprint, and forgiving of
+  // the rough eyeballed boundaries (see menu-card-images.js).
+  positions.forEach((pos, i) => {
+    const hotspot = document.createElement('button');
+    hotspot.type = 'button';
+    hotspot.className = 'study-card__prep-hotspot';
+    hotspot.style.left = `${pos.left}%`;
+    hotspot.style.width = `${pos.right - pos.left}%`;
+    hotspot.setAttribute('aria-label', leadingAmount(ingredients[i]));
+    hotspot.addEventListener('click', () => {
+      wrap.classList.add('has-selection');
+      wrap.querySelectorAll('.study-card__prep-hotspot').forEach((el, idx) => {
+        el.classList.toggle('is-active', idx === i);
+      });
+      badge.style.left = `${(pos.left + pos.right) / 2}%`;
+      badge.textContent = leadingAmount(ingredients[i]);
+      badge.classList.add('is-visible');
+    });
+    wrap.appendChild(hotspot);
+  });
+
+  // Tapping anywhere outside the image (the ingredients list, elsewhere
+  // on the card, elsewhere on the page) clears the selection back to the
+  // no-wash, no-badge starting state — a tap on the image is the only
+  // thing that should leave it "in a state."
+  document.addEventListener('click', (e) => {
+    if (wrap.contains(e.target)) return;
+    wrap.classList.remove('has-selection');
+    wrap.querySelectorAll('.study-card__prep-hotspot').forEach((el) => el.classList.remove('is-active'));
+    badge.classList.remove('is-visible');
+  });
+
+  back.appendChild(wrap);
+  appendIngredientsList(backBody, ingredients);
+}
+
+function buildCard(item, image, cardIndex, total, prepImage, prepPositions) {
   const card = document.createElement('div');
   card.className = 'study-card';
 
@@ -185,18 +250,6 @@ function buildCard(item, image, cardIndex, total, prepImage) {
     const back = document.createElement('div');
     back.className = 'study-card__face study-card__face--back';
 
-    // Mirrors the front face's structure exactly: edge-to-edge image (if
-    // there is one — most drinks don't have a prep diagram yet, so this
-    // just falls through to the body starting at the top) then a padded
-    // body starting with a name+price row, same as the front.
-    if (prepImage) {
-      const prepImg = document.createElement('img');
-      prepImg.className = 'study-card__image';
-      prepImg.src = prepImage;
-      prepImg.alt = `${item.name} ratio diagram`;
-      back.appendChild(prepImg);
-    }
-
     const backBody = document.createElement('div');
     backBody.className = 'study-card__body';
 
@@ -214,8 +267,36 @@ function buildCard(item, image, cardIndex, total, prepImage) {
     }
     backBody.appendChild(backNameRow);
 
-    if (item.recipe.ingredients?.length) {
-      appendIngredientsList(backBody, item.recipe.ingredients);
+    // Mirrors the front face's structure exactly: edge-to-edge image (if
+    // there is one — most drinks don't have a prep diagram yet) directly
+    // in `back`, then the padded body starting with the name+price row,
+    // same as the front. Interactive tap-to-highlight only when both an
+    // image AND matching position data exist (currently just Pomegranate
+    // Cosmo) and lengths line up with the real ingredients list — a
+    // mismatch there means the position data's stale relative to the
+    // recipe and would point badges at the wrong bottles, worse than no
+    // interactivity at all.
+    const hasPositions = prepImage && prepPositions?.length === item.recipe.ingredients?.length;
+    if (hasPositions) {
+      const prepImg = document.createElement('img');
+      prepImg.className = 'study-card__image';
+      prepImg.src = prepImage;
+      prepImg.alt = `${item.name} ratio diagram`;
+      // Builds both the image+hotspot overlay AND the Ingredients list
+      // (into backBody) together, since they share tap state — see
+      // buildInteractivePrep's own comment.
+      buildInteractivePrep(back, backBody, prepImg, prepPositions, item.recipe.ingredients);
+    } else {
+      if (prepImage) {
+        const prepImg = document.createElement('img');
+        prepImg.className = 'study-card__image';
+        prepImg.src = prepImage;
+        prepImg.alt = `${item.name} ratio diagram`;
+        back.appendChild(prepImg);
+      }
+      if (item.recipe.ingredients?.length) {
+        appendIngredientsList(backBody, item.recipe.ingredients);
+      }
     }
 
     if (item.recipe.instructions) {
@@ -307,7 +388,7 @@ export function renderStudyCards(targetEl, items, images, callbacks = {}) {
   cardImages = [];
   cardHasRecipe = items.map((item) => Boolean(item.recipe));
   onCardContentChanged = callbacks.onCardContentChanged || null;
-  cardEls = items.map((item, i) => buildCard(item, images[item.id], i, items.length, callbacks.prepImages?.[item.id]));
+  cardEls = items.map((item, i) => buildCard(item, images[item.id], i, items.length, callbacks.prepImages?.[item.id], callbacks.prepImagePositions?.[item.id]));
   bridgeEl = buildBridge(items.length, callbacks.onPracticeRequested);
 
   cardEls.forEach((el) => targetEl.appendChild(el));

@@ -95,3 +95,32 @@ const PREP_IMAGES = {
 export function prepImageForItem(restaurantId, itemId) {
   return PREP_IMAGES[restaurantId]?.[itemId] || null;
 }
+
+// Rough, eyeballed tap regions (of the prep image's own width) for where
+// each bottle sits — one entry per index in that item's recipe.ingredients
+// array, same order (see menu-study-cards.js's interactive tap-to-highlight
+// overlay). `left`/`right` are a full-height vertical band (percent of
+// image width) rather than a small circular target around a point —
+// closer to the actual bottle's own footprint, and a much more forgiving
+// tap target on a rough placeholder image. Bands are contiguous (each
+// one's `right` is the next one's `left`) so every tap on the image lands
+// on exactly one ingredient. No badges shown by default — tapping reveals
+// one badge, centered over the tapped band, near the top of the image
+// (see .study-card__prep-badge) so it clears every bottle's own printed
+// label. Estimated by eye against the cropped (bottles-only) image —
+// expect nudging once seen live.
+const PREP_IMAGE_BOTTLE_POSITIONS = {
+  petes: {
+    'pomegranate-cosmo': [
+      { left: 0,  right: 27 },  // 1.5 oz Tito's
+      { left: 48, right: 65 },  // 1 oz pomegranate juice
+      { left: 27, right: 48 },  // 0.5 oz Cointreau
+      { left: 65, right: 81 },  // 0.5 oz fresh lime juice
+      { left: 81, right: 100 }  // 0.5 oz simple syrup
+    ]
+  }
+};
+
+export function prepImagePositionsForItem(restaurantId, itemId) {
+  return PREP_IMAGE_BOTTLE_POSITIONS[restaurantId]?.[itemId] || null;
+}

@@ -509,6 +509,66 @@ button.menu-category__header--link {
   height: auto;
 }
 
+// Interactive prep diagram (tap-to-highlight, Pomegranate Cosmo prototype)
+// — wraps .study-card__image so the hotspots below can be positioned
+// relative to the image itself via the same left/right percentages used
+// in menu-card-images.js's PREP_IMAGE_BOTTLE_POSITIONS.
+.study-card__prep-wrap {
+  position: relative;
+}
+
+// Full-height vertical bands (left/width set inline per bottle), not
+// small circular targets around a point — closer to each bottle's own
+// footprint and forgiving of the rough eyeballed boundaries. No wash at
+// all until the first tap (.has-selection, set on wrap by the click
+// handler) — the image starts fully clear, not pre-dimmed. Once
+// something's selected, every other band gets the wash so the chosen
+// one reads as "brighter" by contrast — the Ingredients list underneath
+// takes no part in this at all, only the image and its badge react.
+.study-card__prep-hotspot {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.study-card__prep-wrap.has-selection .study-card__prep-hotspot:not(.is-active) {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+// Hidden until the first tap, then appears once, centered over whichever
+// band was tapped. Fixed near the top of the image (not per-bottle) so
+// it always clears every bottle's own printed label underneath it,
+// regardless of which one is selected. Same flat beige chip as
+// .menu-item__tag (the dietary-tag pill elsewhere on this page) — no
+// border, no brand-green fill, just a quiet muted-text pill.
+.study-card__prep-badge {
+  position: absolute;
+  top: 14%;
+  transform: translate(-50%, -50%);
+  background: $color-bg-muted;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  font-weight: 700;
+  padding: 0.125rem $space-sm;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.1s;
+
+  &.is-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 .study-card__body {
   padding: $space-md $space-lg;
 }
