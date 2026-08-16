@@ -41,8 +41,8 @@
 .hero-full {
   position: relative;
   width: 100%;
-  height: 100vh; // dvh fallback below — mobile browsers that don't support dvh just keep this
-  height: 100dvh; // dynamic viewport height — accounts for the mobile browser chrome (address bar) showing/hiding, so the hero doesn't jump or overscroll like plain vh does
+  height: 100vh; // svh fallback below — browsers that don't support svh just keep this
+  height: 100svh; // small viewport height — locked to the viewport's smallest possible size (toolbar fully expanded) so it never recalculates as mobile browser chrome shows/hides on scroll. Tried 100dvh (dynamic) first, but that recalculates on every chrome size change, which made object-fit: cover recrop the image each time — that recropping was the "jumpy" repositioning on scroll.
   overflow: hidden;
 
   &__img {
