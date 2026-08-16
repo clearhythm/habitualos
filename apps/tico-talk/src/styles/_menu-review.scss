@@ -423,13 +423,18 @@ button.menu-category__header--link {
 }
 
 // Recipe flip (drinks only, when item.recipe exists) — a plain content
-// swap between .study-card__face (front: image+menu info) and
-// .study-card__face--back (recipe), not a 3D animation (Erik's call:
-// function over flourish). Per-card flip button only — no deck-level
-// mode toggle (removed per Erik: having it live on the card is enough).
+// swap between .study-card__face (front: Overview) and
+// .study-card__face--back (Preparation), not a 3D animation (Erik's
+// call: function over flourish). Tabs, not a single relabeling toggle
+// button — same visual language as .menu-detail__toggle/__mode-btn
+// (the Review/Practice tabs) on purpose, so this reads as the same kind
+// of control rather than a new pattern to learn.
+// No padding here — mirrors the front face exactly: an edge-to-edge
+// image (when there's a prep diagram) sits directly in this face, and
+// .study-card__body (shared with the front) carries its own padding
+// around the name/price/text content below it.
 .study-card__face--back {
   display: none;
-  padding: $space-md $space-lg;
 }
 
 .study-card.is-flipped {
@@ -442,35 +447,45 @@ button.menu-category__header--link {
   }
 }
 
-.study-card__flip-btn {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: $space-xs $space-lg;
-  background: $color-bg-muted;
+// Flush with the card's own edge, not an inset pill — relies on
+// .study-card's own overflow:hidden + border-radius (see above) to clip
+// these into rounded top corners for free, rather than rounding the
+// tabs themselves.
+.study-card__tabs {
+  display: flex;
+}
+
+.study-card__tab {
+  flex: 1;
   border: none;
-  border-bottom: 1px solid $color-border;
+  background: $color-bg-muted;
   font-family: inherit;
   font-size: $font-size-sm;
   font-weight: 600;
-  color: $color-green;
-  text-align: center;
+  color: $color-text-muted;
+  padding: $space-sm $space-md;
   cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
 
-  &:hover {
-    color: $color-green-dark;
+  &:hover:not(.is-active) {
+    color: $color-text;
+  }
+
+  &.is-active {
+    background: $color-green;
+    color: #ffffff;
   }
 }
 
+// No :first-child special case needed — the name-row is always the true
+// first child of .study-card__body now (front and back both), so this
+// heading's margin-top is always spacing it away from real content above.
 .study-card__recipe-heading {
   font-size: $font-size-sm;
   font-weight: 700;
   color: $color-green;
   margin: $space-md 0 $space-xs;
-
-  &:first-child {
-    margin-top: $space-sm;
-  }
 }
 
 .study-card__ingredients {

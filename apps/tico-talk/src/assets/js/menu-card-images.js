@@ -75,3 +75,23 @@ export function sectionCardImages(restaurantId, sectionName, items) {
 export function imageForItem(restaurantId, sectionName, itemId) {
   return MENU_CARD_IMAGES[restaurantId]?.[sectionName]?.[itemId] || null;
 }
+
+// Prep/ratio diagram images (Preparation face only, drinks) — a separate,
+// optional-per-item manifest, not gated section-wide like MENU_CARD_IMAGES
+// above (a section can have hero images for every item while only some
+// items also have a prep diagram). Just one entry right now (Pomegranate
+// Cosmo) — a rough placeholder Erik wanted to see in context before
+// deciding whether to reproduce it for the rest, see the "too artistic" /
+// color-linking feedback in conversation. Real ES import, same reason as
+// MENU_CARD_IMAGES — a plain path string gets dropped by Vite in prod.
+import pomegranateCosmoPrep from '../images/menu-cards/petes/pomegranate-cosmo-prep.webp';
+
+const PREP_IMAGES = {
+  petes: {
+    'pomegranate-cosmo': pomegranateCosmoPrep
+  }
+};
+
+export function prepImageForItem(restaurantId, itemId) {
+  return PREP_IMAGES[restaurantId]?.[itemId] || null;
+}

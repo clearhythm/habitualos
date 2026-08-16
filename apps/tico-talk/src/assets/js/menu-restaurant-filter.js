@@ -32,7 +32,10 @@
 // (set/read in setMode/modeFromHash) rather than a distinct route — a
 // client-side-only fragment, no server round-trip, but enough to survive
 // a reload or browser back/forward without silently re-deriving mode
-// from coverage every time.
+// from coverage every time. The study cards' Overview/Preparation tabs
+// (menu-study-cards.js) are a second, independent state living in the
+// same fragment as a query-style param — #review?card-content=preparation
+// — not nested inside mode (see writeHash/modeFromHash/cardContentFromHash).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
 import {
@@ -44,7 +47,7 @@ import {
 } from './learn-coverage.js';
 import { hasActiveSession, exitPractice, startPractice } from './learn-practice.js';
 import { getRestaurantMenu } from './collections/restaurant-menus.js';
-import { sectionCardImages } from './menu-card-images.js';
+import { sectionCardImages, prepImageForItem } from './menu-card-images.js';
 import { renderStudyCards, resetToFirstCard } from './menu-study-cards.js';
 import { log } from './utils/log.js';
 
@@ -233,8 +236,35 @@ function initialModeFor(contentType, sectionName) {
 // over from whatever section you were on before shouldn't leak into a
 // section you're entering for the first time this visit.
 function modeFromHash() {
-  const hash = location.hash.slice(1);
-  return hash === 'practice' || hash === 'review' ? hash : null;
+  const mode = location.hash.slice(1).split('?')[0];
+  return mode === 'practice' || mode === 'review' ? mode : null;
+}
+
+// The study cards' Server/Bartender toggle (see menu-study-cards.js) rides
+// as a query-style param on the same hash: #review?card-content=preparation.
+// A state alongside Review/Practice, not nested inside it — same "only
+// meaningful for reload/popstate, not a fresh section entry" rule as
+// modeFromHash above, and the same reasoning: don't leak the last
+// section's choice into a section you're opening for the first time.
+function cardContentFromHash() {
+  const query = location.hash.split('?')[1] || '';
+  return new URLSearchParams(query).get('card-content') === 'preparation' ? 'preparation' : null;
+}
+
+// Rebuilds the full #mode?card-content=... hash from scratch rather than
+// patching it in place — the two segments are independent state (see
+// above) but only ever live together in one URL fragment, so whichever
+// one changes, the other has to be explicitly carried forward or it's
+// silently dropped. replaceState, not pushState — matches setMode's own
+// reasoning: neither of these is real navigation, so neither should add
+// its own browser-history entry.
+function writeHash(mode, cardContent) {
+  let hash = `#${mode}`;
+  if (cardContent === 'preparation') hash += '?card-content=preparation';
+  const hashedPath = `${location.pathname}${hash}`;
+  if (location.pathname + location.hash !== hashedPath) {
+    history.replaceState(null, '', hashedPath);
+  }
 }
 
 function updateTrainLink(restaurantId, contentType) {
@@ -503,13 +533,10 @@ function setMode(mode) {
   // Keeps the URL's #review/#practice fragment in sync with whatever
   // mode is actually active, so a reload or direct revisit resumes here
   // (see modeFromHash) instead of always re-deriving from coverage.
-  // replaceState, not pushState — toggling modes isn't real navigation,
-  // it shouldn't add its own browser-history entry (only actual
-  // section/browse navigation should, via enterDetail/enterBrowse).
-  const hashedPath = `${location.pathname}#${mode}`;
-  if (location.pathname + location.hash !== hashedPath) {
-    history.replaceState(null, '', hashedPath);
-  }
+  // Carries the current card-content forward rather than dropping it —
+  // switching to Practice and back to Review should keep whatever
+  // Server/Bartender state was already set, not reset it.
+  writeHash(mode, cardContentFromHash());
   // Review's DOM isn't rebuilt on every toggle (see module comment above
   // applyMode) — resetToFirstCard is a no-op for plain-list sections, and
   // for study-card sections puts you back at card 1 every time Review is
@@ -523,7 +550,7 @@ function setMode(mode) {
       onTransitionToReview: () => setMode('review'),
       onCoveredContinue: () => {
         const next = nextTrainTarget(currentContentType);
-        if (next) enterDetail(currentContentType, next, initialModeFor(currentContentType, next));
+        if (next) enterDetail(currentContentType, next, initialModeFor(currentContentType, next), null);
       }
     });
   }
@@ -544,7 +571,7 @@ function getRestaurantName(restaurantId) {
 // locally (instant, no network) — learn-practice.js corrects it once
 // hydration reconciles against Firestore, via the onCoverageChanged
 // callback above.
-function renderDetailBlock(contentType, sectionName) {
+function renderDetailBlock(contentType, sectionName, cardContent) {
   const category = categoriesFor(contentType).find((c) => c.name === sectionName);
   if (!category) {
     log('debug', '[menu] renderDetailBlock: category not found', { contentType, sectionName });
@@ -619,8 +646,17 @@ function renderDetailBlock(contentType, sectionName) {
       viewToggle.textContent = listView.hidden ? 'Show text only' : 'Show visual aids';
     });
 
+    const prepImages = {};
+    category.items.forEach((item) => {
+      const prepImage = prepImageForItem(currentRestaurantId, item.id);
+      if (prepImage) prepImages[item.id] = prepImage;
+    });
+
     renderStudyCards(cardsView, category.items, cardImages, {
-      onPracticeRequested: () => setMode('practice')
+      onPracticeRequested: () => setMode('practice'),
+      initialCardContent: cardContent,
+      onCardContentChanged: (mode) => writeHash('review', mode),
+      prepImages
     });
 
     review.appendChild(cardsView);
@@ -660,14 +696,17 @@ function enterBrowse(contentType, { pushUrl = true } = {}) {
   }
 }
 
-function enterDetail(contentType, sectionName, mode, { pushUrl = true } = {}) {
+// cardContent: same "only meaningful for reload/popstate, not a fresh
+// section entry" rule as mode — callers pass cardContentFromHash() for a
+// restore, or null for a fresh click/Train-link entry (see cardContentFromHash).
+function enterDetail(contentType, sectionName, mode, cardContent, { pushUrl = true } = {}) {
   const isNewSection = currentPhase !== 'detail' || currentSection !== sectionName;
-  log('debug', '[menu] enterDetail', { contentType, sectionName, mode, pushUrl, isNewSection });
+  log('debug', '[menu] enterDetail', { contentType, sectionName, mode, cardContent, pushUrl, isNewSection });
   if (isNewSection) exitPractice();
   currentContentType = contentType;
   currentSection = sectionName;
   setCurrentContentType(contentType);
-  if (!renderDetailBlock(contentType, sectionName)) return;
+  if (!renderDetailBlock(contentType, sectionName, cardContent)) return;
   showPhase('detail');
   // Path first, then mode — setMode writes its #review/#practice
   // fragment against whatever location.pathname already is, so the path
@@ -722,7 +761,7 @@ function switchToBrowse(contentType) {
       // URL's #review/#practice fragment (see modeFromHash/setMode) wins
       // when present; initialModeFor's coverage-based guess is only the
       // fallback for a URL that doesn't name a mode at all.
-      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), { pushUrl: false });
+      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), cardContentFromHash(), { pushUrl: false });
       return;
     }
   }
@@ -766,7 +805,7 @@ window.addEventListener('popstate', () => {
   if (categorySlug) {
     const sectionName = findSectionBySlug(type, categorySlug);
     if (sectionName) {
-      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), { pushUrl: false });
+      enterDetail(type, sectionName, modeFromHash() || initialModeFor(type, sectionName), cardContentFromHash(), { pushUrl: false });
       return;
     }
   }
@@ -818,7 +857,7 @@ document.addEventListener('click', (e) => {
   if (categoryLink) {
     const panel = categoryLink.closest('.menu-content-panel');
     log('debug', '[menu] click: category link', { contentType: panel?.dataset.contentType, section: categoryLink.dataset.section });
-    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, initialModeFor(panel.dataset.contentType, categoryLink.dataset.section));
+    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, initialModeFor(panel.dataset.contentType, categoryLink.dataset.section), null);
     return;
   }
 
@@ -826,7 +865,7 @@ document.addEventListener('click', (e) => {
   if (trainLink) {
     e.preventDefault();
     log('debug', '[menu] click: train link', { currentContentType, targetSection: trainLink.dataset.targetSection });
-    if (trainLink.dataset.targetSection) enterDetail(currentContentType, trainLink.dataset.targetSection, initialModeFor(currentContentType, trainLink.dataset.targetSection));
+    if (trainLink.dataset.targetSection) enterDetail(currentContentType, trainLink.dataset.targetSection, initialModeFor(currentContentType, trainLink.dataset.targetSection), null);
     return;
   }
 
