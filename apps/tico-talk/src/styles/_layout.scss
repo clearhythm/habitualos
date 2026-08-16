@@ -173,6 +173,31 @@
   }
 }
 
+// Light homepage footer — small, muted, out of the way. Not the
+// sidemenu's own footer (nav.njk's .sidemenu-footer, always present
+// behind the hamburger); this only shows at the bottom of the homepage
+// itself.
+.site-footer {
+  text-align: center;
+  padding: $space-2xl $space-lg $space-xl;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+
+  &__tagline,
+  &__copyright {
+    margin: 0 0 $space-xs;
+  }
+
+  &__link {
+    color: $color-text-muted;
+    text-decoration: underline;
+
+    &:hover {
+      color: $color-text;
+    }
+  }
+}
+
 // Grid utilities
 .grid   { display: grid; gap: $space-lg; }
 .grid-2 { @media (min-width: $breakpoint-md) { grid-template-columns: repeat(2, 1fr); } }
