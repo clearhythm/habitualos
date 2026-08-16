@@ -7,7 +7,7 @@
 // next hydration (union-merge is monotonic, never removes).
 import { getOrCreateUserId } from './utils/user-id.js';
 import { resolveInitialRestaurantId } from './restaurant.js';
-import { getRestaurantMenu } from './collections/restaurant-menus.js';
+import { getRestaurantMenu, clearMenuCache } from './collections/restaurant-menus.js';
 import { hydrateRestaurantProgress, computeTierBySection, clearFactCoverageCache } from './learn-coverage.js';
 import { resetSectionProgress } from './collections/learn-progress.js';
 import { clearChatState } from './learn-practice.js';
@@ -15,6 +15,7 @@ import { log } from './utils/log.js';
 
 const listEl = document.getElementById('stats-sections');
 const venueNameEl = document.getElementById('stats-venue-name');
+const refreshMenuBtn = document.getElementById('stats-refresh-menu');
 let currentRestaurantId = null;
 
 // Reads the restaurant's display name from the sidemenu switcher's own
@@ -91,6 +92,15 @@ async function load() {
     listEl.appendChild(renderRow(category.name, tierBySection[category.name] || 'blank'));
   });
 }
+
+refreshMenuBtn?.addEventListener('click', async () => {
+  refreshMenuBtn.disabled = true;
+  refreshMenuBtn.textContent = 'Refreshing…';
+  clearMenuCache();
+  await load();
+  refreshMenuBtn.textContent = 'Refresh menu data';
+  refreshMenuBtn.disabled = false;
+});
 
 (async function () {
   const fallbackId = document.body.dataset.firstRestaurantId;
