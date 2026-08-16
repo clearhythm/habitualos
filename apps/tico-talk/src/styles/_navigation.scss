@@ -146,7 +146,12 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   z-index: 1001;
   height: 100dvh;
   width: 100%;
-  padding: 0 2rem;
+  // Top padding used to come from .sidemenu-venue (the restaurant
+  // switcher, now moved in-page — see venue-header.njk) clearing the
+  // fixed nav-bar/hamburger above it. That element is gone, so the panel
+  // itself owns that clearance now instead of the nav links sitting flush
+  // against the top edge.
+  padding: 90px 2rem 0;
   background: $color-bg-surface;
   overflow-y: auto;
   display: flex;
@@ -184,79 +189,6 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
         pointer-events: none;
       }
     }
-  }
-}
-
-// Ambient identity anchor above the venue name.
-.sidemenu-venue {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba($color-text, 0.5);
-}
-
-// The venue label sits at the very top of the panel, so it alone clears
-// the fixed nav-bar/hamburger — the account label below doesn't need this.
-// It's a <button> (the switcher trigger), so reset button chrome while
-// keeping the shared label look above untouched.
-.sidemenu-venue {
-  padding-top: 90px;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: 100%;
-  border: none;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.sidemenu-venue__chevron {
-  font-size: 0.7rem;
-  color: rgba($color-text, 0.4);
-}
-
-.sidemenu-venue-switcher {
-  position: relative;
-}
-
-// Lightweight inline popover — two restaurants today, not a heavy
-// component. Anchored under the trigger, closes on selection or an
-// outside click (see navigation.js).
-.restaurant-switcher {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
-  min-width: 180px;
-  margin-top: 0.25rem;
-  padding: 0.4rem;
-  background: $color-bg-surface;
-  border: 1px solid $color-border;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-}
-
-.restaurant-switcher__option {
-  padding: 0.5rem 0.6rem;
-  border: none;
-  background: none;
-  text-align: left;
-  font-family: inherit;
-  font-size: 1rem;
-  color: rgba($color-text, 0.85);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s;
-
-  &:hover { background: rgba($color-text, 0.06); }
-
-  &.is-current {
-    color: $color-green;
-    font-weight: 600;
   }
 }
 

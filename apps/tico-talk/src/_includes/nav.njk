@@ -16,21 +16,9 @@
 
 <div class="sidemenu-main" id="sidemenu-main">
   <div class="sidemenu-left">
-    {% if restaurants.length %}
-    <div class="sidemenu-venue-switcher">
-      <button class="sidemenu-venue" id="restaurant-switcher-trigger" aria-expanded="false" aria-label="Switch restaurant">
-        <span id="current-restaurant-name">{{ restaurants[0].name }}</span>
-        <span class="sidemenu-venue__chevron" aria-hidden="true">▾</span>
-      </button>
-      <div class="restaurant-switcher" id="restaurant-switcher" hidden>
-        {% for restaurant in restaurants %}
-        <button class="restaurant-switcher__option" data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</button>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
     <ul>
-      <li><a href="/menu/">Menu</a></li>
+      <li><a href="/menu/food/">Food</a></li>
+      <li><a href="/menu/drinks/">Drinks</a></li>
       <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Off-Menu</a></li>
       <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
       <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Upselling</a></li>

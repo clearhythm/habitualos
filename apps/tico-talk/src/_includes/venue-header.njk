@@ -5,42 +5,44 @@
    clickable differs by context — this is the one shared wrapper that
    replaced the old separate /learn/ page and its own divergent layout.
 
-   showToggle renders the title as an in-page Food/Drinks dropdown
-   instead of static text — both options always present, content-type
-   filtered client-side (see menu-restaurant-filter.js), same mechanism
-   as the sidemenu's restaurant switcher (no page reload, one file, no
-   content duplication). /menu/food/, /menu/drinks/, and
-   /menu/food/{category} (etc.) are real, independently-visitable routes
-   via Netlify rewrites (netlify.toml, status 200 — not a redirect, so
-   the URL bar keeps showing the route the visitor actually requested)
-   that silently serve this same file; the page script reads the real
-   URL on load to pick the right content type (and category, if present)
-   on a direct visit. showToggle is omitted on teach/drill — mid-flow
-   isn't the place to jump to the other content type, so those phases get
-   a plain static (or, for drill, JS-filled — see nameId/titleId) title.
+   showSwitcher renders the restaurant name as a dropdown (options =
+   `restaurants`) instead of static text — Food/Drinks no longer toggle
+   in-page (that's now the sidebar's Food/Drinks links, see nav.njk); the
+   restaurant switcher moved here instead, in the same visual pattern
+   (trigger + chevron + popover) that toggle used to use, per Erik's
+   request. /menu/food/, /menu/drinks/, and /menu/food/{category} (etc.)
+   are real, independently-visitable routes via Netlify rewrites
+   (netlify.toml, status 200 — not a redirect, so the URL bar keeps
+   showing the route the visitor actually requested) that silently serve
+   this same file; the page script reads the real URL on load to pick the
+   right content type (and category, if present) on a direct visit.
+   showSwitcher is omitted on teach/drill — mid-flow isn't the place to
+   jump to a different restaurant, so those phases get a plain static (or,
+   for drill, JS-filled — see nameId/titleId) name.
 
    nameId/titleId: drill is one shared dynamic block (not baked per
    category, since chat transcripts are inherently dynamic), so its
    restaurant name + Food/Drinks title can't be server-rendered per
    category like teach's can — these let the page script target and
    fill them in once a drill starts. #}
-{% macro venueHeader(restaurantName, title, showToggle=false, nameId=false, titleId=false) %}
-<p class="menu-review__venue-name"{% if nameId %} id="{{ nameId }}"{% endif %}>{{ restaurantName }}</p>
-<div class="page-header">
-  {% if showToggle %}
-  <div class="page-title-switcher">
-    <button class="page-title page-title-switcher__trigger" type="button" aria-expanded="false" aria-label="Switch between Food and Drinks">
-      <span class="page-title-switcher__label">{{ title }}</span>
-      <span class="page-title-switcher__chevron" aria-hidden="true">▾</span>
-    </button>
-    <div class="content-type-switcher" hidden>
-      <button class="content-type-switcher__option" type="button" data-content-type="food">Food</button>
-      <button class="content-type-switcher__option" type="button" data-content-type="drink">Drinks</button>
-    </div>
+{% macro venueHeader(restaurantName, title, showSwitcher=false, restaurants=[], nameId=false, titleId=false) %}
+{% if showSwitcher %}
+<div class="venue-switcher">
+  <button class="menu-review__venue-name venue-switcher__trigger" type="button" aria-expanded="false" aria-label="Switch restaurant">
+    <span class="venue-switcher__label">{{ restaurantName }}</span>
+    <span class="venue-switcher__chevron" aria-hidden="true">▾</span>
+  </button>
+  <div class="venue-switcher__options" hidden>
+    {% for restaurant in restaurants %}
+    <button class="venue-switcher__option" type="button" data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</button>
+    {% endfor %}
   </div>
-  {% else %}
+</div>
+{% else %}
+<p class="menu-review__venue-name"{% if nameId %} id="{{ nameId }}"{% endif %}>{{ restaurantName }}</p>
+{% endif %}
+<div class="page-header">
   <p class="page-title"{% if titleId %} id="{{ titleId }}"{% endif %}>{{ title }}</p>
-  {% endif %}
   {{ caller() }}
 </div>
 {% endmacro %}

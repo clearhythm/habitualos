@@ -15,6 +15,14 @@
   margin-bottom: $space-lg;
 }
 
+// The venue switcher's own margin-bottom is 0 (see _menu-review.scss) —
+// that's correct for browse, which has its own :has(+ .page-header)
+// override, but detail has no equivalent, so its switcher lost the gap
+// above "Food › Starters" entirely without this.
+.menu-detail__header .venue-switcher {
+  margin-bottom: $space-lg;
+}
+
 .menu-detail__title {
   margin-bottom: $space-md;
 }

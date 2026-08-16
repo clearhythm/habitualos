@@ -37,7 +37,7 @@
 // same fragment as a query-style param — #review?card-content=preparation
 // — not nested inside mode (see writeHash/modeFromHash/cardContentFromHash).
 import { getOrCreateUserId } from './utils/user-id.js';
-import { resolveInitialRestaurantId, applyRestaurantFilter } from './restaurant.js';
+import { resolveInitialRestaurantId, applyRestaurantFilter, setCurrentRestaurantId, saveLastRestaurant } from './restaurant.js';
 import {
   loadFactCoverageCache,
   hydrateRestaurantProgress,
@@ -122,19 +122,29 @@ function findSectionBySlug(contentType, slug) {
   return match?.name || null;
 }
 
+// Food/Drinks no longer toggles in-page (that's the sidebar's Food/Drinks
+// links now — see nav.njk) but the browse title still has to say the
+// right one, since /menu/food/ and /menu/drinks/ both render this same
+// page and only the URL says which is current.
 function applyContentTypeFilter(contentType) {
   const toggled = document.querySelectorAll('.menu-content-panel[data-content-type]');
   toggled.forEach((el) => {
     el.hidden = el.dataset.contentType !== contentType;
   });
   log('debug', '[menu] applyContentTypeFilter', { contentType, elementsToggled: toggled.length });
-  document.querySelectorAll('.page-title-switcher').forEach((wrapper) => {
-    const label = contentType === 'drink' ? 'Drinks' : 'Food';
-    const trigger = wrapper.querySelector('.page-title-switcher__label');
-    if (trigger) trigger.textContent = label;
-    wrapper.querySelectorAll('.content-type-switcher__option').forEach((opt) => {
-      opt.classList.toggle('is-current', opt.dataset.contentType === contentType);
-    });
+  const label = contentType === 'drink' ? 'Drinks' : 'Food';
+  document.querySelectorAll('#menu-browse .page-title').forEach((el) => {
+    el.textContent = label;
+  });
+}
+
+// Highlights the current restaurant in every venue switcher's dropdown
+// (one per restaurant section — see venue-header.njk) — only the visible
+// section's switcher is ever seen, but marking all of them is simpler
+// than tracking which one that is.
+function markCurrentRestaurant(restaurantId) {
+  document.querySelectorAll('.venue-switcher__option').forEach((opt) => {
+    opt.classList.toggle('is-current', opt.dataset.restaurantId === restaurantId);
   });
 }
 
@@ -556,11 +566,34 @@ function setMode(mode) {
   }
 }
 
-// Reads the restaurant's display name from the sidemenu switcher's own
-// DOM (nav.njk already renders it there) — no separate restaurant-name
-// data needed client-side just for this.
+// Reads the restaurant's display name from the browse view's own venue
+// switcher DOM (venue-header.njk already renders every restaurant's
+// name there) — no separate restaurant-name data needed client-side
+// just for this.
 function getRestaurantName(restaurantId) {
-  return document.querySelector(`.restaurant-switcher__option[data-restaurant-id="${restaurantId}"]`)?.textContent || '';
+  return document.querySelector(`.venue-switcher__option[data-restaurant-id="${restaurantId}"]`)?.textContent || '';
+}
+
+// Builds a restaurant switcher for the detail header by cloning the
+// browse phase's own switcher DOM (venue-header.njk bakes the full
+// restaurant list there already, once, at build time) rather than a
+// second, separate source of restaurant names/ids just for this. Falling
+// back to plain text is defensive only — browse always renders before
+// detail is reachable, so a .venue-switcher should always exist by now.
+function buildVenueName() {
+  const source = browseEl?.querySelector('.venue-switcher');
+  if (!source) {
+    const p = document.createElement('p');
+    p.className = 'menu-review__venue-name';
+    p.textContent = getRestaurantName(currentRestaurantId);
+    return p;
+  }
+  const clone = source.cloneNode(true);
+  clone.querySelector('.venue-switcher__label').textContent = getRestaurantName(currentRestaurantId);
+  clone.querySelectorAll('.venue-switcher__option').forEach((opt) => {
+    opt.classList.toggle('is-current', opt.dataset.restaurantId === currentRestaurantId);
+  });
+  return clone;
 }
 
 // Builds the detail shell's entire contents (breadcrumb, restaurant
@@ -586,10 +619,7 @@ function renderDetailBlock(contentType, sectionName, cardContent) {
   const header = document.createElement('div');
   header.className = 'menu-detail__header';
 
-  const venueName = document.createElement('p');
-  venueName.className = 'menu-review__venue-name';
-  venueName.textContent = getRestaurantName(currentRestaurantId);
-  header.appendChild(venueName);
+  header.appendChild(buildVenueName());
 
   const title = document.createElement('p');
   title.className = 'page-title menu-detail__title';
@@ -733,6 +763,7 @@ function switchToBrowse(contentType) {
   const fallbackId = document.body.dataset.firstRestaurantId;
   currentRestaurantId = await resolveInitialRestaurantId(getOrCreateUserId(), fallbackId);
   applyRestaurantFilter('.menu-review__venue', currentRestaurantId);
+  markCurrentRestaurant(currentRestaurantId);
 
   const { contentType, categorySlug } = parsePath(location.pathname);
   const type = contentType || getCurrentContentType();
@@ -784,6 +815,7 @@ window.addEventListener('tico:restaurant-changed', async (e) => {
   currentRestaurantId = e.detail.restaurantId;
   log('debug', '[menu] tico:restaurant-changed', { previousRestaurantId, currentRestaurantId, currentPhase, currentContentType });
   applyRestaurantFilter('.menu-review__venue', currentRestaurantId);
+  markCurrentRestaurant(currentRestaurantId);
   await loadMenuForRestaurant(currentRestaurantId);
 
   if (currentPhase === 'browse') {
@@ -817,7 +849,7 @@ window.addEventListener('popstate', () => {
 });
 
 // ─── Delegated click handling ────────────────────────────────────────
-// One handler for: the browse Food/Drinks switcher, clicking a category
+// One handler for: the browse restaurant switcher, clicking a category
 // name (browse → detail), the Train link (browse → detail), the
 // Review/Practice toggle, and the detail page's breadcrumb (detail →
 // browse) — event delegation throughout since these elements exist once
@@ -827,29 +859,38 @@ window.addEventListener('popstate', () => {
 // classes/data attributes the old baked markup did.
 function closeSwitcher(wrapper) {
   wrapper.classList.remove('is-open');
-  wrapper.querySelector('.content-type-switcher').hidden = true;
-  wrapper.querySelector('.page-title-switcher__trigger')?.setAttribute('aria-expanded', 'false');
+  wrapper.querySelector('.venue-switcher__options').hidden = true;
+  wrapper.querySelector('.venue-switcher__trigger')?.setAttribute('aria-expanded', 'false');
 }
 
 document.addEventListener('click', (e) => {
-  const openSwitcher = document.querySelector('.page-title-switcher.is-open');
-  const option = e.target.closest('.content-type-switcher__option');
-  const trigger = e.target.closest('.page-title-switcher__trigger');
+  const openSwitcher = document.querySelector('.venue-switcher.is-open');
+  const option = e.target.closest('.venue-switcher__option');
+  const trigger = e.target.closest('.venue-switcher__trigger');
 
   if (option) {
-    log('debug', '[menu] click: content-type-switcher__option', { contentType: option.dataset.contentType });
-    switchToBrowse(option.dataset.contentType);
+    const restaurantId = option.dataset.restaurantId;
+    log('debug', '[menu] click: venue-switcher__option', { restaurantId });
+    // No page reload — every page that renders restaurant-tagged content
+    // listens for this and re-filters in place (see the
+    // tico:restaurant-changed listener below).
+    if (restaurantId !== currentRestaurantId) {
+      const userId = getOrCreateUserId();
+      setCurrentRestaurantId(restaurantId);
+      saveLastRestaurant(userId, restaurantId);
+      window.dispatchEvent(new CustomEvent('tico:restaurant-changed', { detail: { restaurantId } }));
+    }
     if (openSwitcher) closeSwitcher(openSwitcher);
     return;
   }
 
   if (trigger) {
-    const wrapper = trigger.closest('.page-title-switcher');
-    const willOpen = wrapper.querySelector('.content-type-switcher').hidden;
+    const wrapper = trigger.closest('.venue-switcher');
+    const willOpen = wrapper.querySelector('.venue-switcher__options').hidden;
     if (openSwitcher) closeSwitcher(openSwitcher);
     if (willOpen) {
       wrapper.classList.add('is-open');
-      wrapper.querySelector('.content-type-switcher').hidden = false;
+      wrapper.querySelector('.venue-switcher__options').hidden = false;
       trigger.setAttribute('aria-expanded', 'true');
     }
     return;
@@ -890,6 +931,6 @@ document.addEventListener('click', (e) => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  const openSwitcher = document.querySelector('.page-title-switcher.is-open');
+  const openSwitcher = document.querySelector('.venue-switcher.is-open');
   if (openSwitcher) closeSwitcher(openSwitcher);
 });

@@ -10,14 +10,16 @@
   margin-bottom: $space-lg;
 }
 
-// venue-header.njk always renders the venue name immediately followed by
-// a .page-header sibling (browse, teach, and drill all use this same
+// venue-header.njk always renders the venue name (or, when showSwitcher
+// is set, the .venue-switcher wrapping it) immediately followed by a
+// .page-header sibling (browse, teach, and drill all use this same
 // macro) — keying off that sibling relationship instead of an ancestor
 // wrapper class means every phase gets the same spacing/centering
 // automatically, rather than each wrapper needing its own copy of this
 // rule (see the bug this replaced: teach/drill silently fell back to the
 // plain 1.5rem margin below because they aren't .menu-review__venue).
-.menu-review__venue-name:has(+ .page-header) {
+.menu-review__venue-name:has(+ .page-header),
+.venue-switcher:has(+ .page-header) {
   margin-bottom: $space-xl;
   text-align: center;
 }
@@ -34,18 +36,29 @@
   }
 }
 
-// In-page Food/Drinks toggle — the title itself becomes the trigger,
-// mirroring the sidemenu's restaurant switcher (.sidemenu-venue /
-// .restaurant-switcher) exactly, just reusing .page-title's own
-// font-size/weight instead of the switcher's smaller label style.
-.page-title-switcher {
+// In-page restaurant switcher (browse view only — see venue-header.njk's
+// showSwitcher) — the venue name itself becomes the trigger. This used
+// to be the in-page Food/Drinks toggle (that's the sidebar's Food/Drinks
+// links now, see nav.njk) and, before that, the sidemenu's own
+// restaurant switcher (.sidemenu-venue) — same visual pattern moved
+// twice now, still just a trigger + chevron + popover.
+.venue-switcher {
   position: relative;
+  // display: inline-block wouldn't actually center itself via the
+  // text-align: center rule above — that only centers an inline-block's
+  // own children, not the box itself within its parent. flex +
+  // justify-content: center on this full-width wrapper centers the
+  // trigger button correctly.
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0;
 }
 
-.page-title-switcher__trigger {
+.venue-switcher__trigger {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  margin: 0;
   border: none;
   background: none;
   padding: 0;
@@ -54,19 +67,22 @@
   text-align: left;
 }
 
-.page-title-switcher__chevron {
-  // Proportionate to .page-title (2rem) rather than the smaller
-  // .sidemenu-venue label context this pattern is borrowed from.
-  font-size: 1.75rem;
+.venue-switcher__chevron {
+  // Proportionate to .menu-review__venue-name ($font-size-2xl).
+  font-size: 1.3rem;
+  line-height: 1; // the glyph's own line-height threw off vertical centering against the label text next to it
   color: $color-green;
 }
 
-.content-type-switcher {
+.venue-switcher__options {
   position: absolute;
   top: 100%;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
-  min-width: 140px;
+  // width: max-content, not a fixed min-width — a fixed width was
+  // narrower than some restaurant names, wrapping them across two lines.
+  width: max-content;
   margin-top: 0.25rem;
   padding: 0.4rem;
   background: $color-bg-surface;
@@ -77,7 +93,7 @@
   flex-direction: column;
 }
 
-.content-type-switcher__option {
+.venue-switcher__option {
   display: block;
   padding: 0.5rem 0.6rem;
   border: none;
@@ -89,6 +105,7 @@
   color: rgba($color-text, 0.85);
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
   transition: background 0.15s;
 
   &:hover { background: rgba($color-text, 0.06); }

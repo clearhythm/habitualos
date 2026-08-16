@@ -18,12 +18,11 @@ const venueNameEl = document.getElementById('stats-venue-name');
 const refreshMenuBtn = document.getElementById('stats-refresh-menu');
 let currentRestaurantId = null;
 
-// Reads the restaurant's display name from the sidemenu switcher's own
-// DOM (nav.njk already renders it there) — same pattern
-// menu-restaurant-filter.js uses, no separate restaurant-name data
-// needed client-side just for this.
+// Reads the restaurant's display name from the page's own hidden data
+// list (see stats.njk) — restaurant switching is /menu/-only now, so
+// there's no sidemenu switcher DOM to read this off of anymore.
 function getRestaurantName(restaurantId) {
-  return document.querySelector(`.restaurant-switcher__option[data-restaurant-id="${restaurantId}"]`)?.textContent || '';
+  return document.querySelector(`#stats-restaurant-names [data-restaurant-id="${restaurantId}"]`)?.textContent || '';
 }
 
 function tierLabel(tier) {

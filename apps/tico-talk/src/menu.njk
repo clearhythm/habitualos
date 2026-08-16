@@ -31,7 +31,7 @@ pageScript: /assets/js/menu-restaurant-filter.js
 <div id="menu-browse" hidden>
   {% for restaurant in restaurants %}
   <section class="menu-review__venue" data-restaurant="{{ restaurant.id }}" hidden>
-    {% call venueHeader(restaurant.name, "Food", true) %}
+    {% call venueHeader(restaurant.name, "Food", true, restaurants) %}
     <a class="page-header__action" href="#" data-train-link>
       Train
       {# One icon, not two hidden-toggled ones — its shape (tray/margarita

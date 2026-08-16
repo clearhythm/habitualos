@@ -8,6 +8,16 @@ pageScript: /assets/js/stats.js
 <p class="page-title">Progress</p>
 <p class="stats-venue-name" id="stats-venue-name"></p>
 
+{# No switcher here (restaurant switching is /menu/-only now — see
+   venue-header.njk) — just enough data for stats.js to resolve an id to
+   a display name, since it can no longer read that off the sidemenu's
+   switcher DOM (removed, see nav.njk). #}
+<ul id="stats-restaurant-names" hidden>
+  {% for restaurant in restaurants %}
+  <li data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</li>
+  {% endfor %}
+</ul>
+
 <button type="button" class="stats-row__reset" id="stats-refresh-menu">Refresh menu data</button>
 
 <div class="stats-sections" id="stats-sections">
