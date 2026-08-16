@@ -29,46 +29,147 @@
   margin-bottom: $space-xl;
 }
 
-// Homepage lander — comp hero image + real HTML tagline/CTA below it
-.hero-lander {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding-top: 0;
-  margin-top: -$space-md;
+// Homepage hero — full-bleed scene (edge to edge, no .container padding,
+// see index.njk's noContainer) with the wordmark/tagline/CTA overlaid
+// directly on the art's open sky, rather than a small boxed image with
+// text stacked below it. object-fit: cover + a fixed viewport-relative
+// height means the same wide source image (tico-hero-ocean-table.webp —
+// generated with generous empty space on both sides specifically for
+// this) shows edge to edge on a wide desktop viewport and crops in
+// tighter toward the centered table/sun on a narrow mobile one, with no
+// separate mobile/desktop assets or JS needed.
+.hero-full {
+  position: relative;
+  width: 100%;
+  height: 100vh; // dvh fallback below — mobile browsers that don't support dvh just keep this
+  height: 100dvh; // dynamic viewport height — accounts for the mobile browser chrome (address bar) showing/hiding, so the hero doesn't jump or overscroll like plain vh does
+  overflow: hidden;
 
-  // Both images are crops of what used to be one 1024px-wide composition
-  // (previously shown at max-width: 420px). The crops removed the dead
-  // space around each element, so they need to be scaled down by the same
-  // ratio (420/1024) rather than each capped at 420px again, or they'd
-  // render larger than the original design intended.
-  &__logo {
+  &__img {
     width: 100%;
-    max-width: 252px; // 614px crop × (420/1024)
-    height: auto;
-    margin-top: 14px;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
   }
 
-  &__mascot {
-    width: 100%;
-    max-width: 274px; // 668px crop × (420/1024)
-    height: auto;
-    margin: 14px 0;
+  // Fixed nav sits on top (its own semi-transparent background lets the
+  // art show through slightly) — the image runs the full screen behind
+  // it rather than starting below it. Pushed further down than a
+  // near-top start — content sitting right under the nav read as
+  // cramped, especially on mobile. Centered, not left-aligned — a
+  // centered block is self-bounded at any viewport width with no need
+  // to match it against .container's edge (which left-align required).
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: calc(var(--nav-height, #{$nav-height}) + 20%) $space-lg 0;
+
+    @media (min-width: $breakpoint-md) {
+      padding-top: calc(var(--nav-height, #{$nav-height}) + 14%);
+    }
   }
 
-  &__tagline {
+  &__row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: $space-lg;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  &__headline {
+    font-family: $font-family-accent;
+    font-weight: 600;
     font-size: $font-size-xl;
-    line-height: 1.4;
-    margin-bottom: $space-xs;
+    line-height: 1.25;
+    color: $color-green;
+    margin: 0;
 
     @media (min-width: $breakpoint-sm) {
       font-size: $font-size-2xl;
     }
   }
 
-  .btn {
-    margin-top: $space-lg;
+  // The word people actually scan for — sized well above the
+  // surrounding lines so it reads as the headline's real focal point,
+  // not just another line of the same sentence.
+  &__rotator {
+    display: inline-block;
+    font-size: 5rem;
+    font-weight: 700;
+    color: $color-primary;
+    transition: opacity 0.2s ease;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 6rem;
+    }
+
+    &.is-fading {
+      opacity: 0;
+    }
+  }
+
+  &__tail {
+    font-size: $font-size-base;
+    font-style: italic;
+    font-weight: 400;
+    color: $color-green;
+  }
+
+  &__cta {
+    flex-shrink: 0;
+  }
+}
+
+// Real title + body copy below the full-bleed hero — not another row of
+// same-weight punchy lines like the hero itself. The hero makes the
+// promise; this is the brief marketing-style explanation of how.
+.hero-explain {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+  padding-top: $space-2xl;
+
+  // Simple thin-line icon in a circle, not an illustration — meant to
+  // repeat above every written section on the page (this is the first),
+  // so it needs to be quick to swap/add to per-section without a new
+  // image generation each time, unlike the hero art.
+  &__icon-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 1px solid $color-border-hover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto $space-md;
+  }
+
+  &__icon {
+    width: 32px;
+    height: 32px;
+    color: $color-green;
+  }
+
+  &__title {
+    font-family: $font-family-accent;
+    font-weight: 600;
+    font-size: $font-size-2xl;
+    color: $color-green;
+    margin: 0 0 $space-md;
+  }
+
+  &__body {
+    font-size: $font-size-base;
+    line-height: 1.6;
+    color: $color-text-muted;
+    margin: 0 0 $space-lg;
   }
 }
 
