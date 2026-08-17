@@ -870,15 +870,22 @@ document.addEventListener('click', (e) => {
 
   if (option) {
     const restaurantId = option.dataset.restaurantId;
-    log('debug', '[menu] click: venue-switcher__option', { restaurantId });
-    // No page reload — every page that renders restaurant-tagged content
-    // listens for this and re-filters in place (see the
-    // tico:restaurant-changed listener below).
+    log('debug', '[menu] click: venue-switcher__option', { restaurantId, currentPhase });
     if (restaurantId !== currentRestaurantId) {
+      // No page reload — every page that renders restaurant-tagged
+      // content listens for this and re-filters in place (see the
+      // tico:restaurant-changed listener below, which already drops
+      // detail back to browse as part of switching).
       const userId = getOrCreateUserId();
       setCurrentRestaurantId(restaurantId);
       saveLastRestaurant(userId, restaurantId);
       window.dispatchEvent(new CustomEvent('tico:restaurant-changed', { detail: { restaurantId } }));
+    } else if (currentPhase === 'detail') {
+      // Selecting the restaurant you're already on, from mid-category —
+      // still acts as a shortcut back to its Food/Drinks landing, same
+      // as the breadcrumb, so you don't have to switch away and back
+      // just to get there.
+      switchToBrowse(currentContentType);
     }
     if (openSwitcher) closeSwitcher(openSwitcher);
     return;
