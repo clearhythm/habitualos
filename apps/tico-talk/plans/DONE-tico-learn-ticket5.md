@@ -1,5 +1,12 @@
 # Ticket 5: two-pass fact coverage (Basics → Complete) on the Menu drill
 
+**DONE.** Corrected below (2026-08-17) against the actual live code — a
+few specifics drifted from this doc as the implementation evolved past
+it (most notably: the tool call was never removed, and there's no
+progress bar). Left as historical record of the decisions made, not
+current-state documentation to trust blindly for anything not corrected
+here.
+
 ## App Context
 
 Tico-talk is a restaurant staff training app (`apps/tico-talk`). This
@@ -30,16 +37,25 @@ different device recovers real progress instead of looking reset.
   — `db-restaurants.cjs`'s `buildCategoryList` stripped `item._id`. Fixed
   by exposing it as `id` in the trimmed item shape (feeds both the prompt
   and `/api/restaurant-menu-get`).
-- **Tier vocabulary**: blank (not started) → **Training** → **Mastered**.
-  Menu's own ceiling for this drill — not a claim on the separate cross-app
+- **Tier vocabulary** (CORRECTED — three states, not two): blank (not
+  started) → **Training** → **Covered** → **Mastered**. Covered was added
+  during implementation: full coverage on a section reads differently the
+  first time you get through it (Covered — plain colored text) versus
+  having actually retained it over time (Mastered — solid pill). Menu's
+  own ceiling for this drill — not a claim on the separate cross-app
   4-dot skill-tree scale (`practice.njk`), which may get simplified
-  separately.
-- **Browse-list pill** (right-aligned on the category row): two states
-  only, kept quiet on purpose. **Training** shows only on the single
+  separately. **Mastered's real mechanic (earned via repeated correct
+  Review passes over time) is still NOT built** — the tier and its
+  styling exist, but nothing currently promotes a section from Covered to
+  Mastered. Everything that reaches full coverage today tops out at
+  Covered.
+- **Browse-list pill** (right-aligned on the category row), CORRECTED to
+  match the three states above. **Training** shows only on the single
   most-recently-entered-Practice section (a "where was I" pointer, not a
-  general any-progress flag) provided it isn't yet Mastered. **Mastered**
-  shows once every item has both passes fully covered. Otherwise blank —
-  no pill for "some other section has partial progress."
+  general any-progress flag) provided it isn't yet Covered/Mastered.
+  **Covered**/**Mastered** show once earned, per the tier vocabulary
+  above. Otherwise blank — no pill for "some other section has partial
+  progress."
 - **Basics → Complete transition**: finishing every item's ingredients in
   Practice disables input and appends an inline celebration banner in the
   transcript with a Continue button. Continue flips the toggle to Review,
@@ -47,10 +63,23 @@ different device recovers real progress instead of looking reset.
   of Basics) — a deliberate "look again with fresh eyes" moment before
   being quizzed on the new fields — then Practice resumes the same
   conversation, Complete-pass only.
-- **Tool removed**: the old `mark_section_learned` tool-call (one
-  whole-section boolean, model self-graded) is gone, replaced by an
-  `ITEM:`/`FACT_TYPE:`/`RESULT:` line-marker convention — deterministic,
-  per-item-per-fact-type, computed client-side from the stream.
+- **Tool call kept, redesigned (CORRECTED — this plan originally intended
+  to remove it entirely; that didn't happen and the replacement described
+  below was never built)**: the old `mark_section_learned` tool-call (one
+  whole-section boolean, model self-graded) is gone, but it was replaced
+  by a *new* tool, `record_fact_result` — not by a client-parsed line-
+  marker convention. The model calls `record_fact_result` every turn with
+  its judgment on the last answer plus its own freely-chosen next
+  itemId/factType; `learn-tool-execute.cjs` validates that proposed pick
+  against real coverage server-side (falling back to the first open item
+  if it's missing/stale/invalid) and decides whether there's a next
+  question at all — a pass boundary or full coverage always wins over
+  whatever the model proposed. Visible text is still line-delimited, but
+  with a smaller, different marker set than originally planned: `TICO:` /
+  `GUEST:` / `STATUS:` / `IMAGE:` (see `learn-markers.js`,
+  `SEGMENT_MARKER_RE`/`SEGMENT_MARKER_HOLDBACK` = 7, the length of
+  `"STATUS:"`) — there's no `ITEM:`/`FACT_TYPE:`/`RESULT:` marker set;
+  that data travels through the tool call's structured input instead.
 - **`learn-progress` id scheme**: one Firestore doc per **(user,
   restaurant)** pair, not one doc per user with restaurant as a nested
   object key. Doc id is **deterministic**, not randomly generated —
@@ -112,13 +141,20 @@ different device recovers real progress instead of looking reset.
 - `packages/edge-functions/chat-stream-core.ts` (+ synced copy at
   `apps/tico-talk/netlify/edge-functions/_lib/chat-stream-core.ts`) —
   `factCoverage` added to `RequestBody`/`initBody`.
-- `netlify/edge-functions/chat-stream.ts` — `learn`'s `toolExecuteEndpoint`
-  is now `null` (no tools left).
+- `netlify/edge-functions/chat-stream.ts` — CORRECTED: `learn`'s
+  `toolExecuteEndpoint` is still `/api/learn-tool-execute` — it was never
+  set to `null`, since the tool call itself was kept (see the key
+  decisions section above).
 
 **Backend**
 - `netlify/functions/_services/db-restaurants.cjs` — exposes `item.id`.
 - `netlify/functions/_services/db-learn-progress.cjs` — rewritten around
   the `lp-` per-(user, restaurant) schema above.
+- `netlify/functions/_services/learn-coverage-logic.cjs` (NEW, missing
+  from the original plan) — the server-side half of the pass/coverage
+  arithmetic (`findSection`, `derivePass`, `openTargets`,
+  `mergeFactResult`), used by both `learn-chat-init.cjs` and
+  `learn-tool-execute.cjs`.
 - `netlify/functions/_utils/data-utils.cjs` (NEW) — `generateChatId()`/
   `generateProgressId()`, the one place server-side id prefixes live.
 - `netlify/functions/learn-progress-write.cjs` (NEW) — one write endpoint
@@ -126,23 +162,39 @@ different device recovers real progress instead of looking reset.
   endpoint per field — matches `learn-chats`' get/save shape.
 - `netlify/functions/learn-progress-get.cjs` (NEW) — reads
   `{sections, lastTrained}` for one restaurant.
-- `netlify/functions/learn-tool-execute.cjs` — deleted.
+- `netlify/functions/learn-tool-execute.cjs` — CORRECTED: NOT deleted —
+  rewritten to handle the new `record_fact_result` tool (see key
+  decisions above), not removed.
 - `netlify/functions/learn-chat-init.cjs` — rewritten: pass-aware
-  `buildSectionPrompt`, uncached `buildCoveragePrompt`, the
-  `TICO:/GUEST:/ITEM:/FACT_TYPE:/RESULT:` format, `tools: []`.
+  `buildSectionPrompt`, uncached `buildCoveragePrompt`. CORRECTED: the
+  visible-text format is `TICO:`/`GUEST:` (not the `ITEM:`/`FACT_TYPE:`/
+  `RESULT:` set this plan originally intended), and it still builds and
+  passes real tools (`buildTools(pass, openList)`) — `tools: []` never
+  happened.
 
 **Client**
 - `src/assets/js/menu-restaurant-filter.js` — rendering/filter/browse only
   (see file boundaries above); computes/refreshes browse-list pills, the
   Train-link target, and the Review panel's initial `data-pass`.
-- `src/assets/js/learn-practice.js` (NEW) — the Practice chat: marker
-  parsing (5 markers now, `SEGMENT_MARKER_HOLDBACK` 10), fact-coverage
-  tracking, the pass-transition/Mastered banners, per-section chat
-  persistence, the flag-and-confirm correction flow.
+- `src/assets/js/learn-practice.js` (NEW) — the Practice chat: the
+  `record_fact_result` tool-call flow, fact-coverage tracking, the
+  pass-transition/tier banners, per-section chat persistence, the
+  flag-and-confirm correction flow. CORRECTED: marker parsing itself
+  (`SEGMENT_MARKER_RE`/`SEGMENT_MARKER_HOLDBACK`) actually lives in a
+  separate new file, `learn-markers.js` (see below) — 4 markers (`TICO`/
+  `GUEST`/`STATUS`/`IMAGE`), holdback 7 (length of `"STATUS:"`), not the
+  "5 markers, holdback 10" this plan originally guessed at.
+- `src/assets/js/learn-markers.js` (NEW, missing from the original plan)
+  — marker/segment parsing off the raw stream (`createStreamRenderer`,
+  `renderAssistantTurn`) plus the getting-started/review-started/show-card
+  transcript elements. Split out from `learn-practice.js` rather than
+  inline there.
 - `src/assets/js/learn-coverage.js` (NEW, not under `utils/`) — cache/
   reconcile logic (`hydrateSectionCoverage`, `hydrateRestaurantProgress`)
-  and the tier/pass arithmetic (`passForSection`, `isSectionMastered`,
-  `tierForSection`, `computeTierBySection`, `tierForSectionInProgress`).
+  and the tier/pass arithmetic (`passForSection`, `tierForSection`,
+  `computeTierBySection`, `tierForSectionInProgress`) — CORRECTED: three
+  tiers (training/covered/mastered), not `isSectionMastered` as a
+  boolean.
 - `src/assets/js/collections/learn-progress.js` (NEW) — thin CRUD
   (`getLearnProgress`/`writeLearnProgress`), no caching or derived logic,
   matching `collections/learn-chats.js`'s shape.
@@ -153,9 +205,15 @@ different device recovers real progress instead of looking reset.
   `learn-coverage.js`'s per-item-per-fact-type tracking).
 
 **Templates & styles**
-- `src/menu.njk` — progress bar markup added inside `#menu-practice`.
-- `src/styles/_learn.scss` — progress bar, pass-transition banner, and
-  the `.menu-detail__review[data-pass]` highlight selectors.
+- `src/menu.njk` — CORRECTED: no progress bar was ever added here. A
+  progress bar was tried and then deliberately dropped in favor of the
+  Training/Covered/Mastered tier states above doing that job instead —
+  `#menu-practice`'s status line (`appendStatusMarker` in
+  `learn-practice.js`) covers this in-transcript instead of template
+  markup.
+- `src/styles/_learn.scss` — pass-transition banner and the
+  `.menu-detail__review[data-pass]` highlight selectors (no progress bar
+  styles — see above).
 - `src/styles/_menu-review.scss` — `.menu-category__header` (wraps the
   category name + pill on one row) and `.menu-category__pill` variants.
 
@@ -168,27 +226,34 @@ becomes THE menu) is still valid, just not built yet — out of scope here.
 
 1. `node --check` on every new/modified `.cjs` file — done, all pass.
 2. Full `pnpm`/`npm run build` (SCSS + Vite bundle) — done, passes clean.
-3. Not yet done: end-to-end exercise via `netlify dev` with
-   `ANTHROPIC_API_KEY` set —
+3. CORRECTED — superseded by real usage rather than formally worked
+   through as a checklist: the feature has been live and in everyday use
+   since (Erik actively drilling real menu/drink sections), which is a
+   stronger signal than a one-time manual pass would have been. The
+   items below were the original test plan; not re-verified line-by-line
+   against today's `ITEM:`/`FACT_TYPE:`/`RESULT:`-less, tool-call-based
+   reality, but nothing in ongoing use suggests any of the underlying
+   behavior is broken.
    - Fresh section's Practice: price/tags muted, description bold
      (`data-pass="basics"`); drill only asks ingredient questions even if
-     volunteered otherwise; `ITEM:`/`FACT_TYPE:`/`RESULT:` never leak into
-     the visible transcript.
+     volunteered otherwise.
    - Finish every item's ingredients: input disables, transition banner
      fires exactly once, Continue flips to Review with price/tags now
      bold, Practice resumes the same conversation asking only
      dietary/pricing.
-   - Finish dietary + pricing: Mastered banner fires, the matching
+   - Finish dietary + pricing: tier banner fires, the matching
      `learn-progress/{lp-...}` doc in Firestore (found by
      `_userId`/`_restaurantId`) shows `sections` → section → item → all
-     three fact types `true`, and the browse pill flips to Mastered.
+     three fact types `true`, and the browse pill flips to Covered (see
+     the corrected tier vocabulary above — not Mastered, which isn't
+     computed yet).
    - Enter Practice for a different section without finishing the first:
      confirm the Training pill moves, doesn't linger on the old section.
-   - Reload mid-Basics and mid-Complete: progress bar/pass resume
-     correctly.
-   - Restaurant isolation: Mastered progress at one restaurant doesn't
-     leak into a same-named section at another.
-   - Clear localStorage mid-drill, reload: progress bar recovers from
+   - Reload mid-Basics and mid-Complete: pass resumes correctly (no
+     progress bar to check — see above).
+   - Restaurant isolation: progress at one restaurant doesn't leak into a
+     same-named section at another.
+   - Clear localStorage mid-drill, reload: coverage recovers from
      Firestore, doesn't reset to zero.
    - Cache check (with a real API key): `cache_read_input_tokens` shows
      reads turn 2+ within one pass; a pass boundary is an expected,
