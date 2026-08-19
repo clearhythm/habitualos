@@ -160,34 +160,49 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   @media (min-width: $breakpoint-md) {
     width: 420px;
   }
+}
 
-  ul {
-    list-style: none;
-    padding: 0.5rem 0 2vh 0;
+// Training group — the main destinations (Food/Drinks/etc). Same
+// label+list pattern as "My Account" below it, so the two groups read
+// as parallel sections in one sequential flow rather than one being an
+// unlabeled primary list and the other a visually distinct footer block.
+.sidemenu-group {
+  margin-bottom: $space-lg;
+}
+
+.sidemenu-group__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba($color-text, 0.4);
+}
+
+.sidemenu-left ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    padding: 0.5rem 0;
     margin: 0;
 
-    li {
-      padding: 0.5rem 0;
-      margin: 0;
+    a {
+      font-size: 1.5rem;
+      text-decoration: none;
+      color: rgba($color-text, 0.75);
+      transition: color 0.2s;
 
-      a {
-        font-size: 1.5rem;
-        text-decoration: none;
-        color: rgba($color-text, 0.75);
-        transition: color 0.2s;
+      &:hover { color: $color-green; }
+    }
 
-        &:hover { color: $color-green; }
-      }
-
-      // Competencies without a real page yet — same size/position as the
-      // real links around them, just muted and inert. Specificity has to
-      // match the plain `a`/`a:hover` rules above (same ul/li/a nesting
-      // depth) to actually win, not just add a class on top of it.
-      a.sidemenu-disabled,
-      a.sidemenu-disabled:hover {
-        color: rgba($color-text, 0.35);
-        pointer-events: none;
-      }
+    // Competencies without a real page yet — same size/position as the
+    // real links around them, just muted and inert. Specificity has to
+    // match the plain `a`/`a:hover` rules above (same ul/li/a nesting
+    // depth) to actually win, not just add a class on top of it.
+    a.sidemenu-disabled,
+    a.sidemenu-disabled:hover {
+      color: rgba($color-text, 0.35);
+      pointer-events: none;
     }
   }
 }
@@ -219,45 +234,19 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   opacity: 1;
 }
 
-// Footer block — the only thing actually pinned to the bottom of the
-// panel (margin-top: auto pushes it down regardless of how much content
-// is above it). Genuinely secondary/utility content, so smaller than the
-// primary nav groups above — that size drop is intentional here only.
-.sidemenu-footer {
-  margin-top: auto;
-  padding-bottom: 2.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: $space-sm;
-
-  a {
-    font-size: $font-size-base;
-    text-decoration: none;
-    color: rgba($color-text, 0.5);
-    transition: color 0.2s;
-
-    &:hover { color: $color-green; }
-  }
-
-  p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: rgba($color-text, 0.4);
-  }
-}
-
 // "My Account" group — Profile (Progress lives inside it now), Settings,
-// Sign out. Everything "about you"; the main nav list above is
+// Sign out. Everything "about you"; the Training group above is
 // everything "about the restaurant/menu" — that's the real boundary,
-// not just visual grouping. Small/label-led like the rest of the footer
-// (see .sidemenu-footer's own comment on why this block is
-// intentionally smaller than the primary nav).
+// not just visual grouping. Same label+list pattern as Training (see
+// .sidemenu-group above), sequential in normal flow — not pinned to the
+// bottom of the panel anymore. Still deliberately smaller/muted than
+// Training's links, since this is secondary/utility content, not the
+// primary reason someone opened the menu.
 .sidemenu-account {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  padding-bottom: $space-sm;
-  border-bottom: 1px solid rgba($color-text, 0.15);
+  padding-bottom: 2.5rem; // bottom breathing room, now that nothing pins this to the panel's bottom edge for it
 }
 
 .sidemenu-account__label {
@@ -271,26 +260,22 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   display: flex;
   align-items: center;
   gap: $space-xs;
+  font-size: $font-size-base;
+  text-decoration: none;
+  color: rgba($color-text, 0.75); // matches Training's link color — no longer deliberately grayed out
+  transition: color 0.2s;
+
+  // Overrides _base.scss's global a:hover { text-decoration: underline }
+  // — every other link in this panel (Training's list) never gets one,
+  // so these shouldn't either.
+  &:hover {
+    color: $color-green;
+    text-decoration: none;
+  }
 }
 
-.sidemenu-auth-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  background: $color-bg-muted;
-  font-size: 1rem;
-}
-
-// Icon + tagline row
-.sidemenu-footer-row {
-  display: flex;
-  align-items: center;
-  gap: $space-xs;
-}
-
-.sidemenu-logo {
-  font-size: 1.125rem;
+.sidemenu-account__icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }

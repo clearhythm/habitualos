@@ -5,7 +5,8 @@ permalink: /profile/
 pageScript: /assets/js/profile.js
 ---
 
-<p class="page-title">Profile</p>
+{% from "icons.njk" import profileIcon %}
+<p class="page-title page-title--icon">{{ profileIcon('page-title__icon') }}Profile</p>
 <p class="profile-venue-name" id="profile-venue-name"></p>
 
 {# No switcher here (restaurant switching is /menu/-only — see

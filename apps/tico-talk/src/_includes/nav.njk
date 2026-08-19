@@ -16,33 +16,39 @@
 
 <div class="sidemenu-main" id="sidemenu-main">
   <div class="sidemenu-left">
-    <ul>
-      <li><a href="/menu/food/">Food</a></li>
-      <li><a href="/menu/drinks/">Drinks</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Presentation</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Guest Complaints</a></li>
-    </ul>
-    <div class="sidemenu-footer">
-      {# Progress lives inside Profile now (it's the same shareable-with-
-         management data, not a separate destination — see Profile's own
-         page). Languages moved to a Settings toggle, not a section — it
-         was never really a peer of Food/Drinks/Recommendations, it's
-         cross-cutting. #}
-      <div class="sidemenu-account">
-        <p class="sidemenu-account__label">My Account</p>
-        <a href="/profile/" class="sidemenu-account__link">
-          <span class="sidemenu-auth-avatar" aria-hidden="true">🧑</span>
-          Profile
-        </a>
-        <a href="/settings/" class="sidemenu-account__link">Settings</a>
-        <a href="#" class="sidemenu-account__link">Sign out</a>
-      </div>
-      <div class="sidemenu-footer-row">
-        <span class="sidemenu-logo" aria-hidden="true">🌮</span>
-        <p class="sidemenu-copyright">Tico. Make every ticket count.</p>
-      </div>
-      <a href="/about/" class="sidemenu-about-link">About</a>
+    <div class="sidemenu-group">
+      <p class="sidemenu-group__label">Your Craft</p>
+      <ul>
+        <li><a href="/menu/food/">Food</a></li>
+        <li><a href="/menu/drinks/">Drinks</a></li>
+        <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Presentation</a></li>
+        <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
+        <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Guest Complaints</a></li>
+        <li><a href="/">About Tico</a></li>
+      </ul>
+    </div>
+    {# Progress lives inside Profile now (it's the same shareable-with-
+       management data, not a separate destination — see Profile's own
+       page). Languages moved to a Settings toggle, not a section — it
+       was never really a peer of Food/Drinks/Recommendations, it's
+       cross-cutting. Same label+list pattern as Training above —
+       parallel structure, not pinned to the bottom of the panel
+       anymore, just the next group in sequence. #}
+    <div class="sidemenu-account">
+      <p class="sidemenu-account__label">Your Account (Erik Burns)</p>
+      {% from "icons.njk" import profileIcon, settingsIcon, signOutIcon %}
+      <a href="/profile/" class="sidemenu-account__link">
+        {{ profileIcon('sidemenu-account__icon') }}
+        Profile
+      </a>
+      <a href="/settings/" class="sidemenu-account__link">
+        {{ settingsIcon('sidemenu-account__icon') }}
+        Settings
+      </a>
+      <a href="#" class="sidemenu-account__link">
+        {{ signOutIcon('sidemenu-account__icon') }}
+        Sign out
+      </a>
     </div>
   </div>
   <div class="sidemenu-right">

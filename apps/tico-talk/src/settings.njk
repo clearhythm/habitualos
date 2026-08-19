@@ -5,7 +5,8 @@ permalink: /settings/
 pageScript: /assets/js/settings.js
 ---
 
-<p class="page-title">Settings</p>
+{% from "icons.njk" import settingsIcon %}
+<p class="page-title page-title--icon">{{ settingsIcon('page-title__icon') }}Settings</p>
 
 <div class="settings-group">
   <h2 class="settings-group__title">Language</h2>

@@ -29,6 +29,22 @@
   margin-bottom: $space-xl;
 }
 
+// Profile/Settings reuse the same icon shown next to their link in the
+// sidebar's "My Account" group (see icons.njk) — ties the page back to
+// how you got there, rather than each having its own separate mark.
+.page-title--icon {
+  display: flex;
+  align-items: center;
+  gap: $space-sm;
+}
+
+.page-title__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: $color-green;
+}
+
 // Homepage hero — full-bleed scene (edge to edge, no .container padding,
 // see index.njk's noContainer) with the wordmark/tagline/CTA overlaid
 // directly on the art's open sky, rather than a small boxed image with
@@ -175,9 +191,9 @@
 
 // Rendered once by base.njk (see footer.njk) — every page gets one of
 // two variants based on its contentType frontmatter. Not the sidemenu's
-// own footer (nav.njk's .sidemenu-footer, always present behind the
-// hamburger) — this is the bottom-of-page one. Sits outside <main>, so
-// it's full-width-capable on any page regardless of that page's own
+// own "My Account" group (nav.njk, always present behind the hamburger)
+// — this is the bottom-of-page one. Sits outside <main>, so it's
+// full-width-capable on any page regardless of that page's own
 // noContainer setting.
 .site-footer {
   text-align: center;

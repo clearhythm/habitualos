@@ -1,0 +1,35 @@
+{# Shared small icons — reused between the sidebar's "My Account" links
+   and the matching page's own title, so the two stay visually tied
+   together rather than each having its own one-off mark. #}
+{% macro profileIcon(class='icon') %}
+<svg class="{{ class }}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <circle cx="12" cy="5" r="2.2" stroke="currentColor" stroke-width="1.8"/>
+  <circle cx="6" cy="18" r="2.2" stroke="currentColor" stroke-width="1.8"/>
+  <circle cx="18" cy="18" r="2.2" stroke="currentColor" stroke-width="1.8"/>
+  <path d="M12 7.2V11M12 11L6 15.8M12 11L18 15.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+</svg>
+{% endmacro %}
+
+{# Solid teeth on a ring, not thin radiating lines — a first attempt
+   used rays from a small circle, which read as a sun, not a gear. #}
+{% macro settingsIcon(class='icon') %}
+<svg class="{{ class }}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6"/>
+  <circle cx="12" cy="12" r="2.4" stroke="currentColor" stroke-width="1.6"/>
+  <g fill="currentColor">
+    <rect x="10.8" y="3" width="2.4" height="3.4" rx="0.4"/>
+    <rect x="10.8" y="17.6" width="2.4" height="3.4" rx="0.4"/>
+    <rect x="10.8" y="3" width="2.4" height="3.4" rx="0.4" transform="rotate(60 12 12)"/>
+    <rect x="10.8" y="17.6" width="2.4" height="3.4" rx="0.4" transform="rotate(60 12 12)"/>
+    <rect x="10.8" y="3" width="2.4" height="3.4" rx="0.4" transform="rotate(120 12 12)"/>
+    <rect x="10.8" y="17.6" width="2.4" height="3.4" rx="0.4" transform="rotate(120 12 12)"/>
+  </g>
+</svg>
+{% endmacro %}
+
+{% macro signOutIcon(class='icon') %}
+<svg class="{{ class }}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <path d="M13 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M10 12h10.5M17.5 8.5 21 12l-3.5 3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+{% endmacro %}
