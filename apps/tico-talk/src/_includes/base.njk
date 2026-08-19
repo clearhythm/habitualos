@@ -23,6 +23,9 @@
     {% endif %}
   </main>
 
+  {% from "footer.njk" import marketingFooter, appFooter %}
+  {% if contentType == 'marketing' %}{{ marketingFooter() }}{% else %}{{ appFooter() }}{% endif %}
+
   <script type="module" src="/assets/js/navigation.js"></script>
   {% if pageScript %}<script type="module" src="{{ pageScript }}"></script>{% endif %}
 </body>

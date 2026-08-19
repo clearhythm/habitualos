@@ -173,20 +173,15 @@
   }
 }
 
-// Light homepage footer — small, muted, out of the way. Not the
-// sidemenu's own footer (nav.njk's .sidemenu-footer, always present
-// behind the hamburger); this only shows at the bottom of the homepage
-// itself.
+// Rendered once by base.njk (see footer.njk) — every page gets one of
+// two variants based on its contentType frontmatter. Not the sidemenu's
+// own footer (nav.njk's .sidemenu-footer, always present behind the
+// hamburger) — this is the bottom-of-page one. Sits outside <main>, so
+// it's full-width-capable on any page regardless of that page's own
+// noContainer setting.
 .site-footer {
   text-align: center;
-  padding: $space-2xl $space-lg $space-xl;
-  color: $color-text-muted;
   font-size: $font-size-sm;
-
-  &__tagline,
-  &__copyright {
-    margin: 0 0 $space-xs;
-  }
 
   &__link {
     color: $color-text-muted;
@@ -195,6 +190,28 @@
     &:hover {
       color: $color-text;
     }
+  }
+}
+
+// Every non-marketing page (the default — no frontmatter needed) gets
+// this: small, muted, out of the way, just a copyright line.
+.site-footer--app {
+  padding: $space-2xl $space-lg $space-xl;
+  color: $color-text-muted;
+}
+
+// Marketing pages only (/, /about/) — genuinely full-width and more
+// present, a real closing section rather than trailing fine print. A
+// distinct background is what actually makes "full width" read as
+// intentional rather than just wide empty space either side of the text.
+.site-footer--marketing {
+  padding: $space-2xl $space-lg;
+  background: $color-bg-muted;
+  color: $color-text-muted;
+
+  .site-footer__tagline,
+  .site-footer__copyright {
+    margin: 0 0 $space-xs;
   }
 }
 

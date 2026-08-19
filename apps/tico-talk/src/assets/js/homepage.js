@@ -6,7 +6,7 @@
 // of the menu"). As a standalone label, Service fits fine again. Kept
 // short/similar-length on purpose (Erik dropped "Recommendations" for
 // exactly this reason) so the headline doesn't jump around as it cycles.
-const WORDS = ['Food', 'Drinks', 'Stories'];
+const WORDS = ['Food', 'Drinks', 'Service'];
 const el = document.getElementById('hero-rotator');
 
 if (el) {

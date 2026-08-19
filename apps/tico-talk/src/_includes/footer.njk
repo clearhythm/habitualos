@@ -1,0 +1,17 @@
+{# Two explicit footers, not one parameterized by variant — the content
+   here is simple/static enough that a branch inside a single macro
+   would just be indirection. base.njk decides which one to call, based
+   on a page's `contentType: marketing` frontmatter. #}
+{% macro marketingFooter() %}
+<footer class="site-footer site-footer--marketing">
+  <p class="site-footer__tagline">Tico. Make every ticket count.</p>
+  <p class="site-footer__copyright">© 2026 Erik Burns. All rights reserved.</p>
+  <a href="/about/" class="site-footer__link">About</a>
+</footer>
+{% endmacro %}
+
+{% macro appFooter() %}
+<footer class="site-footer site-footer--app">
+  <p class="site-footer__copyright">© 2026 Erik Burns. All rights reserved.</p>
+</footer>
+{% endmacro %}
