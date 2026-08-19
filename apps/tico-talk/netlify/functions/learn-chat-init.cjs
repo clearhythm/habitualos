@@ -39,11 +39,19 @@ function buildSectionPrompt(restaurant, section, notes, pass) {
     // fact is fair game), so it gets everything.
     if (pass === 'basics') {
       trimmed.description = item.description;
+      // description is guest-facing menu copy, not the real recipe — a
+      // drink's actual ingredient list (e.g. a syrup that's never
+      // printed on the menu) can be more complete than its description.
+      // Drilling ingredients against description alone meant the model
+      // could "correctly" reject a trainee who knew the real recipe,
+      // just because that detail wasn't in the abbreviated guest text.
+      if (item.recipe?.ingredientNames?.length) trimmed.ingredients = item.recipe.ingredientNames;
     } else if (pass === 'complete') {
       trimmed.price = item.price;
       if (item.tags && item.tags.length) trimmed.tags = item.tags;
     } else {
       trimmed.description = item.description;
+      if (item.recipe?.ingredientNames?.length) trimmed.ingredients = item.recipe.ingredientNames;
       trimmed.price = item.price;
       if (item.tags && item.tags.length) trimmed.tags = item.tags;
     }
