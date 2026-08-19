@@ -1,23 +1,26 @@
 @use 'variables' as *;
 
-// /stats/ — currently just a testing/support "reset progress" utility,
-// not a real skill-tree view yet (see stats.njk). Kept deliberately
-// plain — this isn't a trainee-facing feature.
-.stats-venue-name {
+// /profile/ — the shareable-with-management view (see profile.njk):
+// who you are, and your real Progress, including Reset (a real
+// management action, not just a debug tool — see profile.js). Not a
+// real skill-tree view yet, deliberately plain.
+.profile-venue-name {
   color: $color-text-muted;
   margin-bottom: $space-lg;
 }
 
-#stats-refresh-menu {
-  margin-bottom: $space-lg;
+.profile-section-title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin-bottom: $space-md;
 }
 
-.stats-sections {
+.profile-sections {
   display: flex;
   flex-direction: column;
 }
 
-.stats-row {
+.profile-row {
   display: flex;
   align-items: center;
   gap: $space-md;
@@ -27,12 +30,12 @@
   &:last-child { border-bottom: none; }
 }
 
-.stats-row__name {
+.profile-row__name {
   flex: 1;
   font-weight: 600;
 }
 
-.stats-row__tier {
+.profile-row__tier {
   font-size: $font-size-sm;
   color: $color-text-muted;
 
@@ -41,7 +44,7 @@
   &--training { color: $color-text-muted; font-weight: 600; }
 }
 
-.stats-row__reset {
+.profile-row__reset {
   border: 1px solid $color-border;
   background: none;
   color: $color-text-muted;

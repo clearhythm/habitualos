@@ -17,9 +17,9 @@ function cacheKey(restaurantId) {
 // Drops every cached restaurant's menu (not just the current one — a
 // phone that's switched restaurants could have more than one stale
 // entry), forcing the next getRestaurantMenu call for each to refetch.
-// Manual escape hatch for the 24h TTL above (see /stats/'s "Refresh menu
-// data" button) — staff shouldn't have to know how to clear site data on
-// their own phone to see a menu correction land immediately.
+// Manual escape hatch for the 24h TTL above (see /settings/'s "Refresh
+// menu data" button) — staff shouldn't have to know how to clear site
+// data on their own phone to see a menu correction land immediately.
 export function clearMenuCache() {
   Object.keys(localStorage)
     .filter((key) => key.startsWith('tico-menu-cache-'))

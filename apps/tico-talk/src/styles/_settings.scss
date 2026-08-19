@@ -1,0 +1,39 @@
+@use 'variables' as *;
+
+// /settings/ — private account settings, deliberately plain. Never
+// shown to management (see _profile.scss for the shareable page).
+.settings-group {
+  margin-bottom: $space-xl;
+}
+
+.settings-group__title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  margin-bottom: $space-sm;
+}
+
+.settings-group__body {
+  color: $color-text-muted;
+}
+
+.settings-btn {
+  border: 1px solid $color-border;
+  background: none;
+  color: $color-text-muted;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    color: $color-text;
+    border-color: $color-text-muted;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}

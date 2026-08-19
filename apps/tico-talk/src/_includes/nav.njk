@@ -19,24 +19,28 @@
     <ul>
       <li><a href="/menu/food/">Food</a></li>
       <li><a href="/menu/drinks/">Drinks</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Off-Menu</a></li>
+      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Presentation</a></li>
       <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Upselling</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Complaints</a></li>
-      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Languages</a></li>
-      <li><a href="/stats/">Progress</a></li>
+      <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Guest Complaints</a></li>
     </ul>
     <div class="sidemenu-footer">
-      <div class="sidemenu-auth">
-        <a href="/profile/" class="sidemenu-auth-profile">
+      {# Progress lives inside Profile now (it's the same shareable-with-
+         management data, not a separate destination — see Profile's own
+         page). Languages moved to a Settings toggle, not a section — it
+         was never really a peer of Food/Drinks/Recommendations, it's
+         cross-cutting. #}
+      <div class="sidemenu-account">
+        <p class="sidemenu-account__label">My Account</p>
+        <a href="/profile/" class="sidemenu-account__link">
           <span class="sidemenu-auth-avatar" aria-hidden="true">🧑</span>
-          <span class="sidemenu-auth-name">Erik</span>
+          Profile
         </a>
-        <a href="#" class="sidemenu-auth-link">Sign out</a>
+        <a href="/settings/" class="sidemenu-account__link">Settings</a>
+        <a href="#" class="sidemenu-account__link">Sign out</a>
       </div>
       <div class="sidemenu-footer-row">
         <span class="sidemenu-logo" aria-hidden="true">🌮</span>
-        <p class="sidemenu-copyright">Tico — Talk with Confidence</p>
+        <p class="sidemenu-copyright">Tico. Make every ticket count.</p>
       </div>
       <a href="/about/" class="sidemenu-about-link">About</a>
     </div>

@@ -2,7 +2,30 @@
 layout: base.njk
 title: Profile — Tico
 permalink: /profile/
+pageScript: /assets/js/profile.js
 ---
 
-<h1 class="page-title">Profile</h1>
-<p>Account and sign-in settings will live here.</p>
+<p class="page-title">Profile</p>
+<p class="profile-venue-name" id="profile-venue-name"></p>
+
+{# No switcher here (restaurant switching is /menu/-only — see
+   venue-header.njk) — just enough data for profile.js to resolve an id
+   to a display name, since it can't read that off a sidemenu switcher
+   DOM (removed, see nav.njk). #}
+<ul id="profile-restaurant-names" hidden>
+  {% for restaurant in restaurants %}
+  <li data-restaurant-id="{{ restaurant.id }}">{{ restaurant.name }}</li>
+  {% endfor %}
+</ul>
+
+{# Progress lives here now, not on its own /stats/ page — it's the same
+   shareable-with-management data Profile itself is for, not a separate
+   destination. Reset stays here too, as the full original widget
+   (name + tier + Reset together) — it's a real, if occasional,
+   management action (re-training someone), not just a private debug
+   tool, so it belongs on the shareable page rather than tucked away on
+   /settings/. #}
+<h2 class="profile-section-title">Progress</h2>
+<div class="profile-sections" id="profile-sections">
+  <p>Loading…</p>
+</div>

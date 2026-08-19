@@ -1,0 +1,24 @@
+---
+layout: base.njk
+title: Settings — Tico
+permalink: /settings/
+pageScript: /assets/js/settings.js
+---
+
+<p class="page-title">Settings</p>
+
+<div class="settings-group">
+  <h2 class="settings-group__title">Language</h2>
+  <p class="settings-group__body">
+    Current working language: <strong id="settings-language">English</strong>
+  </p>
+</div>
+
+{# Refresh is genuinely just a data-cache utility (menu content, not
+   progress) — fine to live here on its own. The per-section progress
+   reset widget lives on /profile/ instead, as the full thing (name,
+   tier, and Reset together) — see profile.njk. #}
+<div class="settings-group">
+  <h2 class="settings-group__title">Data</h2>
+  <button type="button" class="settings-btn" id="settings-refresh-menu">Refresh menu data</button>
+</div>

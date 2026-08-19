@@ -246,17 +246,28 @@ body.sidemenu-open .nav-hamburger span:nth-child(3) {
   }
 }
 
-// Auth row — avatar + name (links to Profile) and a separate Sign out
-// action, on one line, matching apps/signal's sidemenu-auth pattern.
-.sidemenu-auth {
+// "My Account" group — Profile (Progress lives inside it now), Settings,
+// Sign out. Everything "about you"; the main nav list above is
+// everything "about the restaurant/menu" — that's the real boundary,
+// not just visual grouping. Small/label-led like the rest of the footer
+// (see .sidemenu-footer's own comment on why this block is
+// intentionally smaller than the primary nav).
+.sidemenu-account {
   display: flex;
-  align-items: center;
-  gap: $space-sm;
+  flex-direction: column;
+  gap: 0.4rem;
   padding-bottom: $space-sm;
   border-bottom: 1px solid rgba($color-text, 0.15);
 }
 
-.sidemenu-auth-profile {
+.sidemenu-account__label {
+  margin: 0 0 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba($color-text, 0.4);
+}
+
+.sidemenu-account__link {
   display: flex;
   align-items: center;
   gap: $space-xs;
