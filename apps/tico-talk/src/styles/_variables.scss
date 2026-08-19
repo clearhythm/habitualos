@@ -35,8 +35,16 @@ $font-size-xl:   1.25rem;
 $font-size-2xl:  1.5rem;
 $font-size-3xl:  2rem;
 
-// Nav height — masthead padding (0.875rem × 2) + font/icon line ≈ 3.5rem
-$nav-height: 3.5rem;
+// Nav height — this is a fallback only (navigation.js sets the real
+// --nav-height CSS var from the nav bar's actual measured offsetHeight
+// once it runs, on DOMContentLoaded). Needs to match the real rendered
+// height as closely as possible, or content using var(--nav-height,
+// #{$nav-height}) visibly jumps once JS corrects it — this was stale
+// (a leftover 0.875rem masthead padding, since changed to 1.25rem) and
+// undershot the real ~64px height by 8px, which was exactly the
+// homepage hero's "jumps down on load" bug.
+// .nav-bar padding (1.25rem × 2 = 40px) + .nav-bar__logo height (24px) = 64px
+$nav-height: 4rem;
 
 // Breakpoints
 $breakpoint-sm: 640px;
