@@ -311,6 +311,12 @@ let currentMenuData = null;
 // (Training/Covered/Mastered), read straight through, never re-derived.
 let currentRestaurantProgress = { sections: {}, lastTrained: null };
 
+function pillLabel(tier) {
+  if (tier === 'mastered') return 'Mastered';
+  if (tier === 'covered') return 'Covered';
+  return 'Training';
+}
+
 // JS port of menu-categories.njk's macro — same classes throughout, so
 // the existing CSS needs no changes. Built with createElement/textContent
 // (not innerHTML) matching this file's existing DOM-building style —
@@ -340,14 +346,13 @@ function renderCategoryList(categories, { clickable = false, tierBySection = nul
     heading.textContent = category.name;
     header.appendChild(heading);
 
-    // Pill: blank/no pill by default, kept deliberately quiet — only
-    // "training" (the single most-recently-entered-Practice section) or
-    // "covered" (every fact covered) ever show. See learn-coverage.js.
+    // Pill: blank/no pill by default. Shows on any section that's at
+    // least Training — see tierForSection in learn-coverage.js.
     const tier = tierBySection?.[category.name];
     if (tier && tier !== 'blank') {
       const pill = document.createElement('span');
       pill.className = `menu-category__pill menu-category__pill--${tier}`;
-      pill.textContent = tier === 'covered' ? 'Covered' : 'Training';
+      pill.textContent = pillLabel(tier);
       header.appendChild(pill);
     }
 
@@ -469,7 +474,7 @@ function refreshCategoryPill(sectionName, tier) {
     header.appendChild(pill);
   }
   pill.className = `menu-category__pill menu-category__pill--${tier}`;
-  pill.textContent = tier === 'covered' ? 'Covered' : 'Training';
+  pill.textContent = pillLabel(tier);
 }
 
 function refreshPillFor(sectionName) {
@@ -909,7 +914,11 @@ document.addEventListener('click', (e) => {
   if (categoryLink) {
     const panel = categoryLink.closest('.menu-content-panel');
     log('debug', '[menu] click: category link', { contentType: panel?.dataset.contentType, section: categoryLink.dataset.section });
-    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, initialModeFor(panel.dataset.contentType, categoryLink.dataset.section), null);
+    // Always Review, regardless of coverage/active-session — a category
+    // label click is browsing into a section, not resuming a drill (that's
+    // what the Train link / Continue banners are for, which still use
+    // initialModeFor). Erik's call for demo predictability.
+    if (panel) enterDetail(panel.dataset.contentType, categoryLink.dataset.section, 'review', null);
     return;
   }
 

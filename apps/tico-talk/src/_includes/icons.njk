@@ -2,7 +2,7 @@
    and the matching page's own title, so the two stay visually tied
    together rather than each having its own one-off mark. #}
 {% macro profileIcon(class='icon') %}
-<svg class="{{ class }}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+<svg class="{{ class }}" style="rotate: 180deg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
   <circle cx="12" cy="5" r="2.2" stroke="currentColor" stroke-width="1.8"/>
   <circle cx="6" cy="18" r="2.2" stroke="currentColor" stroke-width="1.8"/>
   <circle cx="18" cy="18" r="2.2" stroke="currentColor" stroke-width="1.8"/>

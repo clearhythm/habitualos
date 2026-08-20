@@ -4,12 +4,13 @@
 // DATA ACCESS LAYER (Learn Chats) for Firestore.
 // Full conversation log for /learn/ drill sessions — distinct from
 // db-learn-progress.cjs's fact-coverage tracking. One doc per section-
-// drill "chat life," saved at a boundary (learned / exited), not per
-// turn — see apps/tico-talk/plans/REVIEW-tico-learn-ticket2.md and
+// drill "chat life," saved at a boundary (learned / exited / abandoned),
+// not per turn — see apps/tico-talk/plans/REVIEW-tico-learn-ticket2.md and
 // tico-learn-ticket3.md's "Why boundary-triggered, not per-turn." A
-// browser's own copy of the conversation lives in localStorage and is
-// trusted indefinitely (never expired client-side) — this collection is
-// a rare, deliberate backup write, not a continuous sync.
+// browser's own copy of the conversation lives in localStorage, good for
+// 24h (see SECTION_STATE_TTL_MS in src/assets/js/learn-practice.js) —
+// this collection is the backup write that fires right as an expiring
+// local copy is about to be cleared, not a continuous sync.
 //
 // Schema:
 //   learn-chats/{chatId}
@@ -23,10 +24,10 @@
 // 'milestone': a status threshold crossed mid-session (Training ->
 // Warming Up -> Getting Hot, see passStatusLabel in
 // src/assets/js/learn-coverage.js) — an explicit, deliberate write
-// trigger beyond the two session-boundary actions. 'abandoned' is no
-// longer triggered by current client code (the TTL-based expiry that
-// produced it was removed once chat history became permanent) but stays
-// in the type union since past data may still carry it.
+// trigger beyond the two session-boundary actions. 'abandoned': the local
+// copy hit its 24h TTL and is about to be cleared (see
+// flushAbandonedChat in src/assets/js/learn-practice.js) — the write that
+// keeps a stale-but-real conversation from just disappearing.
 // ------------------------------------------------------
 
 const { create, get, Timestamp } = require('@habitualos/db-core');

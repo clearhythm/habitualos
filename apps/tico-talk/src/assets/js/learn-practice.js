@@ -78,10 +78,9 @@ let missedItemIdThisTurn = null; // set mid-stream by handleFactResult on a wron
 let activeCorrectionCard = null;
 
 // ─── Section chat persistence (localStorage) ────────────────────────────
-// LS is the primary read/write surface — every turn writes here, and it's
-// trusted indefinitely, never expired/cleared client-side. Firestore is a
-// rare, deliberate write (not a continuous sync): only at real boundaries
-// (leaving a section, covering it) or when a status threshold is
+// LS is the primary read/write surface — every turn writes here. Firestore
+// is a rare, deliberate write (not a continuous sync): only at real
+// boundaries (leaving a section, covering it) or when a status threshold is
 // crossed (see appendStatusMarker below) — see saveLearnChat below.
 // Keyed by restaurant + section together since two restaurants can share
 // a category name.
@@ -89,13 +88,54 @@ function lsKey(restaurantId, section) {
   return `tico-learn-chat-${restaurantId}-${section}`;
 }
 
+// A resumable in-progress (not-yet-Covered) chat only stays resumable for
+// 24h — past that it reads as stale ("why is Tico still asking about
+// yesterday's conversation") rather than a helpful pick-up-where-you-left-
+// off. Covered/Mastered sections never hit this: re-entering those always
+// starts a genuinely fresh review session regardless of age (see
+// isReviewSession in startPractice), so age-gating only matters for the
+// Training-tier resume path below.
+const SECTION_STATE_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Backs up an expiring LS entry to Firestore (action: 'abandoned') before
+// it's cleared, so a stale local chat is discarded from the resume path
+// without actually losing it — a deliberate write triggered only at the
+// moment of expiry, not on every turn (same one-write-per-boundary
+// discipline as flushSectionChat below). Built from the cached payload
+// directly, not the module's own chatHistory/currentChatId, since this can
+// fire before any session for this restaurant+section is open this page
+// load (loadSectionState is called from cold on entry).
+function flushAbandonedChat(restaurantId, section, cached) {
+  if (!cached.history?.some((m) => m.role === 'user')) return; // nothing worth saving
+  saveLearnChat({
+    chatId: cached.chatId,
+    userId: getOrCreateUserId(),
+    restaurantId,
+    section,
+    messages: cached.history,
+    action: 'abandoned',
+    conversationStart: cached.history[0]?.timestamp || null,
+    conversationEnd: new Date().toISOString()
+  }).catch(() => {});
+}
+
 // Returns { chatId, history, target } for a rehydrated section, or null
-// if there's nothing saved yet (caller should start a brand-new drill).
+// if there's nothing saved yet, or what's saved is older than
+// SECTION_STATE_TTL_MS (caller should start a brand-new drill either way —
+// the expiring entry is flushed to Firestore first, see flushAbandonedChat).
 // target is persisted alongside the rest — it's the model's own pick
 // from earlier, not something re-derivable from factCoverage alone, so a
 // reload needs it restored, not recomputed.
 function loadSectionState(restaurantId, section) {
-  return loadSessionCache(lsKey(restaurantId, section));
+  const key = lsKey(restaurantId, section);
+  const cached = loadSessionCache(key);
+  if (!cached) return null;
+  if (Date.now() - (cached.timestamp || 0) > SECTION_STATE_TTL_MS) {
+    flushAbandonedChat(restaurantId, section, cached);
+    clearSessionCache(key);
+    return null;
+  }
+  return cached;
 }
 
 function saveSectionState(restaurantId, section, history, chatId, target) {
@@ -635,6 +675,11 @@ export function startPractice(restaurantId, section, sectionItemIds, sectionItem
   if (currentChatId && practiceRestaurantId === restaurantId && practiceSection === section) {
     practiceCallbacks = callbacks;
     syncCoverageUI();
+    // Re-selecting Practice after a Review detour re-shows the same
+    // transcript in place (see doc comment) — without this, the page
+    // stays scrolled wherever Review left it instead of landing back on
+    // the conversation's true bottom.
+    scrollToBottom();
     return;
   }
 

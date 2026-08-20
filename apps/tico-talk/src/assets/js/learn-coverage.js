@@ -162,16 +162,16 @@ export function passProgress(sectionItemIds, sectionProgress, pass) {
 }
 
 // Browse-list pill state — reads the section's own stored _progress
-// directly (Mastered wins, then Covered), no per-item derivation. Training
-// only shows for the single most-recently-entered-Practice section
-// (isLastTrained, passed in by the caller) — kept deliberately quiet, not
-// every section with a _progress of 'Training' shows a pill, only the
-// active one.
-export function tierForSection(sectionProgress, isLastTrained) {
+// directly (Mastered wins, then Covered, then Training). Any section
+// that's been started shows its pill, not just the single most-recently-
+// entered one — lastTrained still decides where the Train link/Continue
+// banner sends you next (see nextTrainTarget in menu-restaurant-filter.js),
+// it just no longer gates whether a started section's progress is visible.
+export function tierForSection(sectionProgress) {
   const progress = sectionProgress?._progress;
   if (progress === 'Mastered') return 'mastered';
   if (progress === 'Covered') return 'covered';
-  if (progress === 'Training' && isLastTrained) return 'training';
+  if (progress === 'Training') return 'training';
   return 'blank';
 }
 
@@ -180,8 +180,7 @@ export function computeTierBySection(menuData, progress) {
   const tierBySection = {};
   [...(menuData?.food || []), ...(menuData?.drinks || [])].forEach((category) => {
     const sectionProgress = progress.sections?.[category.name] || {};
-    const isLastTrained = progress.lastTrained === category.name;
-    tierBySection[category.name] = tierForSection(sectionProgress, isLastTrained);
+    tierBySection[category.name] = tierForSection(sectionProgress);
   });
   return tierBySection;
 }
@@ -190,6 +189,5 @@ export function computeTierBySection(menuData, progress) {
 // a write, without a full re-fetch/re-render of the browse list.
 export function tierForSectionInProgress(menuData, progress, sectionName) {
   const sectionProgress = progress.sections?.[sectionName] || {};
-  const isLastTrained = progress.lastTrained === sectionName;
-  return tierForSection(sectionProgress, isLastTrained);
+  return tierForSection(sectionProgress);
 }
