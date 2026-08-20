@@ -6,15 +6,21 @@
    only need to set one flag, and footerType only shows up as an
    explicit override on the rare page that mixes nav and footer (e.g.
    /app/: app nav, but keeps the marketing tagline footer). #}
+{# Same link set as marketingNav() (see nav.njk) — the footer is a second,
+   full listing of the same 5 destinations, not a curated subset. #}
 {% macro marketingFooter() %}
 <footer class="site-footer site-footer--marketing">
-  <div class="site-footer__brand-col">
+  <div class="site-footer__inner">
     <img class="site-footer__mark" src="/assets/images/tico-logomark.png" alt="Tico" width="80" height="80">
-  </div>
-  <div class="site-footer__text-col">
-    <p class="site-footer__tagline">Tico. Make every ticket count.</p>
+    <p class="site-footer__tagline">Tico. Make every ticket <span class="site-footer__tagline-accent">count</span>.</p>
+    <nav class="site-footer__links">
+      <a href="/train/" class="site-footer__link">Train</a>
+      <a href="/insights/" class="site-footer__link">Insights</a>
+      <a href="/about/" class="site-footer__link">About</a>
+      <a href="/contact/" class="site-footer__link">Contact</a>
+      <a href="/app/" class="site-footer__link">For Servers</a>
+    </nav>
     <p class="site-footer__copyright">© 2026 Erik Burns. All rights reserved.</p>
-    <a href="/about/" class="site-footer__link">About</a>
   </div>
 </footer>
 {% endmacro %}

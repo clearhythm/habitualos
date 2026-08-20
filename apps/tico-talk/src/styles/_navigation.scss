@@ -126,6 +126,20 @@
   }
 }
 
+// Pre-JS fallback for --nav-height (see navigation.js, which corrects
+// this to the real measured value on load) — the shared $nav-height
+// default in _variables.scss is tuned for the app nav's flush full-width
+// bar, but the floating pill here is both shorter and inset 1rem from
+// the top, so without this override the hero briefly renders with too
+// much top padding on first paint, then visibly snaps up once JS
+// measures the real (shorter) value. :has() rather than a body class —
+// no existing page-level hook otherwise carries "which nav is this."
+body:has(.nav-bar--marketing) {
+  @media (min-width: $breakpoint-md) {
+    --nav-height: 4.5rem;
+  }
+}
+
 // Real hamburger icon + open/close transition — three bars morphing into an
 // ×, matching apps/signal's nav toggle pattern. Driven by the same
 // body.sidemenu-open class the existing toggle JS already sets.

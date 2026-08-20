@@ -5,37 +5,100 @@
 // .container/.page-title/.btn from layout.scss/components.scss rather
 // than redefining page chrome; this file only adds what's new.
 
-.marketing-split {
+// Homepage's Train/Insights section — a real two-column layout, not
+// three blocks fighting over two grid slots (an intro-as-a-third-grid-
+// item attempt silently stole one of the two product columns, which is
+// what actually looked broken/wasted). Left: intro (Products eyebrow +
+// heading + one-line preamble). Right: the two products stacked as a
+// list, not side by side — Erik's call, reads as "here's the list" next
+// to "here's why," rather than three same-weight things competing.
+.marketing-products {
   display: grid;
-  gap: $space-2xl;
+  gap: $space-xl;
   padding-top: $space-2xl;
   padding-bottom: $space-2xl;
 
   @media (min-width: $breakpoint-md) {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: $space-2xl;
   }
 }
 
-.marketing-split__col {
-  padding: $space-xl;
-  background: $color-bg-surface;
-  border-radius: 1rem;
+.marketing-products__intro {
+  max-width: 24rem;
 }
 
-.marketing-split__title {
+.marketing-products__heading {
   font-family: $font-family-accent;
+  font-weight: 600;
   font-size: $font-size-2xl;
   color: $color-green;
-  margin: 0 0 $space-sm;
-}
-
-.marketing-split__body {
-  color: $color-text;
-  line-height: 1.55;
   margin: 0 0 $space-md;
 }
 
-.marketing-split__link {
+.marketing-products__preamble {
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $color-text-muted;
+  margin: 0;
+}
+
+// The product list — each .marketing-explain__col below, stacked with a
+// divider between them rather than the section's own border-heavy
+// .marketing-section treatment (this is a homepage teaser, not the full
+// product-page body).
+.marketing-products__list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xl;
+}
+
+// Badge reuses the app's own existing "real badge" convention
+// (.menu-category__pill--mastered in _menu-review.scss: solid color
+// fill, white text, rounded-full pill) rather than a monogram box, which
+// didn't read as an actual badge — same shape language, just the
+// product name instead of an initial.
+.marketing-explain__col {
+  padding-top: $space-lg;
+  border-top: 1px solid $color-border;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.marketing-explain__badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: $space-sm $space-xl;
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 $space-md;
+
+  &--train { background: $color-green; }
+  &--insights { background: $color-primary; }
+}
+
+.marketing-explain__title {
+  font-family: $font-family-accent;
+  font-weight: 600;
+  font-size: $font-size-2xl;
+  color: $color-green;
+  margin: 0 0 $space-md;
+}
+
+.marketing-explain__body {
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $color-text-muted;
+  margin: 0 0 $space-lg;
+}
+
+// Plain amber text link, not a button — Erik's call, reverting the
+// green-outline .btn--secondary treatment tried here briefly.
+.marketing-explain__link {
   color: $color-primary;
   font-weight: 600;
   text-decoration: none;

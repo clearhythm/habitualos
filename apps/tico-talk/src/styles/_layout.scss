@@ -203,17 +203,7 @@
 // full-width-capable on any page regardless of that page's own
 // noContainer setting.
 .site-footer {
-  text-align: center;
   font-size: $font-size-sm;
-
-  &__link {
-    color: $color-text-muted;
-    text-decoration: underline;
-
-    &:hover {
-      color: $color-text;
-    }
-  }
 }
 
 // Every non-marketing page (the default — no frontmatter needed) gets
@@ -221,36 +211,32 @@
 .site-footer--app {
   padding: $space-2xl $space-lg $space-xl;
   color: $color-text-muted;
+  text-align: center;
 }
 
 // Marketing pages only (/, /about/) — genuinely full-width and more
 // present, a real closing section rather than trailing fine print. A
 // distinct background is what actually makes "full width" read as
 // intentional rather than just wide empty space either side of the text.
+// One centered vertical stack (mark, links, tagline, copyright) — not a
+// two-column split (brand block vs. a tall link list never balanced
+// against each other, per Erik). The background itself stays full-bleed;
+// .site-footer__inner just caps content width, same "wrapper inside a
+// full-bleed section" split as .container elsewhere on the site.
 .site-footer--marketing {
   padding: $space-2xl $space-lg;
   background: $color-bg-muted;
   color: $color-text-muted;
+  text-align: center;
+}
+
+.site-footer__inner {
+  max-width: 500px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $space-xl;
-
-  @media (min-width: $breakpoint-sm) {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: $space-2xl;
-  }
-}
-
-// Mark alone — the footer's visual anchor. Dropped the logotype
-// alongside it (Erik's call: the wordmark text competed with the mark
-// rather than complementing it); the mark carries `alt="Tico"` now that
-// it's the only brand element in the footer, not purely decorative.
-.site-footer__brand-col {
-  display: flex;
-  flex-shrink: 0;
+  gap: $space-md;
 }
 
 .site-footer__mark {
@@ -260,11 +246,63 @@
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.16));
 }
 
-.site-footer__text-col {
-  .site-footer__tagline,
-  .site-footer__copyright {
-    margin: 0 0 $space-xs;
+// One horizontal row — echoes marketingNav()'s own link row (see
+// nav.njk) rather than a separate tall vertical list.
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $space-md $space-lg;
+}
+
+// Deliberately higher-contrast than the tagline/copyright below —
+// these are the footer's actual clickable nav items, not trailing fine
+// print, so they need to read that way at a glance. Sit at reduced
+// opacity until the footer as a whole is hovered (see
+// .site-footer--marketing:hover below) — "wakes up" the link row rather
+// than each link only reacting to its own direct hover. Color shift only
+// on hover, no underline — text-decoration: none has to be repeated in
+// the :hover rule itself, not just the base rule: the global a:hover
+// (_base.scss) is an element+pseudo-class selector, which beats a lone
+// class selector like the un-hovered ".site-footer__link" on specificity,
+// so without this it silently won and put the underline back.
+.site-footer__link {
+  display: inline-block;
+  color: $color-green;
+  font-weight: 600;
+  text-decoration: none;
+  opacity: 0.88;
+  transition: opacity 0.25s ease, color 0.2s ease;
+
+  &:hover {
+    color: $color-green-dark;
+    text-decoration: none;
   }
+}
+
+.site-footer--marketing:hover .site-footer__link {
+  opacity: 1;
+}
+
+// Emphasized above the copyright fine print below it — bigger, brand
+// green, accent serif (matches the italic-tagline treatment used
+// elsewhere, e.g. .hero-full__tail/.marketing-eyebrow).
+.site-footer__tagline {
+  margin: 0;
+  font-family: $font-family-accent;
+  font-style: italic;
+  font-size: $font-size-lg;
+  color: $color-green;
+}
+
+// Matches .hero-full__rotator's "Count" treatment — same accent color
+// tying the footer's tagline back to the homepage hero's headline.
+.site-footer__tagline-accent {
+  color: $color-primary;
+}
+
+.site-footer__copyright {
+  margin: 0;
 }
 
 // Grid utilities

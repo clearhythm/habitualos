@@ -11,10 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const toggle = document.getElementById('sidemenu-toggle');
   const overlay = document.getElementById('sidemenu-overlay');
 
-  // Set --nav-height from the actual rendered bar height so the
-  // page-canvas mixin stays accurate.
+  // Set --nav-height from the nav's actual distance-from-viewport-top
+  // (not just its own offsetHeight) so the page-canvas mixin/hero padding
+  // stay accurate for both the app nav (flush, top: 0 — bottom equals its
+  // own height) and the marketing floating pill (top: 1rem — bottom is
+  // taller than its height alone by that offset, which offsetHeight alone
+  // would silently drop).
   if (navBar) {
-    document.documentElement.style.setProperty('--nav-height', navBar.offsetHeight + 'px');
+    document.documentElement.style.setProperty('--nav-height', navBar.getBoundingClientRect().bottom + 'px');
   }
 
   function closeMenu() {
