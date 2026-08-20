@@ -10,6 +10,11 @@ export default createChatStreamHandler({
     toolExecuteEndpoint: "/api/learn-tool-execute",
     signalPatterns: [],
   },
+  "insights": {
+    initEndpoint: "/api/insights-chat-init",
+    toolExecuteEndpoint: "/api/insights-tool-execute",
+    signalPatterns: [],
+  },
 });
 
 export const config = {

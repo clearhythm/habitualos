@@ -1,0 +1,250 @@
+---
+layout: base.njk
+title: Tico Insights — Demo
+contentType: marketing
+permalink: /insights/demo/
+pageScript: /assets/js/insights-demo.js
+---
+
+<p class="marketing-eyebrow">Tico Insights — Demo</p>
+<h1 class="page-title">Insights</h1>
+
+<div class="insights-demo__banner">
+  Sample data — {{ insightsAnalytics.restaurantName }}, {{ insightsAnalytics.month }}. Not live restaurant data.
+</div>
+
+{% set ppaTitle = "Per Person Average — revenue per guest (check total ÷ guest count, not per table)" %}
+
+{# Insights is a mode of the app (like Train is) — this sidebar is the
+   set of canned views within that mode, not a page-local tab bar.
+   Revenue Breakdown and Staff Performance both read from the same
+   seeded dataset, just aggregated differently (restaurant-wide per-day
+   vs. per-server-per-shift) — see src/_data/insightsAnalytics.js.
+   Revenue Breakdown goes first/default — the whole-floor view is
+   the natural starting altitude before drilling into one server. #}
+<div class="insights-dash">
+  <nav class="insights-dash__sidebar">
+    <button type="button" class="insights-dash__nav-item is-active" data-view="revenue-trends">Revenue Breakdown</button>
+    <button type="button" class="insights-dash__nav-item" data-view="server-performance">Staff Performance</button>
+    <button type="button" class="insights-dash__nav-item" data-view="your-insights">Answers</button>
+  </nav>
+
+  <div class="insights-dash__main">
+    <div class="insights-dash__view is-active" data-view="revenue-trends">
+      <p class="marketing-lede">
+        See your total revenue by day, week, and month.
+      </p>
+
+      <div class="insights-demo__stats">
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">{{ insightsAnalytics.month }} total</span>
+          <span class="insights-demo__stat-value">${{ insightsAnalytics.revenueTrends.monthly.revenue | commas }}</span>
+        </div>
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">Checks</span>
+          <span class="insights-demo__stat-value">{{ insightsAnalytics.revenueTrends.monthly.checkCount | commas }}</span>
+        </div>
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">Avg <abbr class="insights-demo__abbr" data-tooltip="{{ ppaTitle }}">PPA<span class="sr-only"> ({{ ppaTitle }})</span></abbr></span>
+          <span class="insights-demo__stat-value">${{ insightsAnalytics.revenueTrends.monthly.avgPPA | commas(2) }}</span>
+        </div>
+      </div>
+
+      <div class="insights-demo__chart-header">
+        <h2 class="insights-demo__chart-title">Revenue over time</h2>
+        <div class="insights-demo__range-toggle" role="tablist">
+          <button type="button" class="insights-demo__range-btn is-active" data-range="day">Day</button>
+          <button type="button" class="insights-demo__range-btn" data-range="week">Week</button>
+        </div>
+      </div>
+
+      <div class="insights-demo__chart" data-range-chart="day">
+        {% for day in insightsAnalytics.revenueTrends.daily %}
+        <div class="insights-demo__bar-wrap" tabindex="0" data-tooltip="{{ day.date }}: ${{ day.revenue | commas }}">
+          <div class="insights-demo__bar" style="height: {{ (day.revenue / insightsAnalytics.revenueTrends.maxDailyRevenue * 100) | round(0) }}%"></div>
+          <span class="insights-demo__bar-label">{{ day.day }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="insights-demo__chart" data-range-chart="week" hidden>
+        {% for week in insightsAnalytics.revenueTrends.weekly %}
+        <div class="insights-demo__bar-wrap" tabindex="0" data-tooltip="{{ week.label }}: ${{ week.revenue | commas }}">
+          <div class="insights-demo__bar" style="height: {{ (week.revenue / insightsAnalytics.revenueTrends.maxWeeklyRevenue * 100) | round(0) }}%"></div>
+          <span class="insights-demo__bar-label">{{ week.label | replace('Aug ', '') }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      {# Overview row — each one framed the same way as the server delta
+         column already is: not just the top X, but by how much vs. the
+         rest. "Top shift" is lunch-vs-dinner, not a literal hour — the
+         data has no per-check timestamp finer than that. #}
+      <h2 class="insights-demo__chart-title">Highlights</h2>
+      <div class="insights-demo__stats">
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">Top day</span>
+          <span class="insights-demo__stat-value">Aug {{ insightsAnalytics.revenueTrends.topDay.day }}</span>
+          <span class="insights-demo__stat-delta insights-demo__delta insights-demo__delta--up">
+            ▲ +${{ insightsAnalytics.revenueTrends.topDay.deltaVsAvg | commas }} vs. avg day
+          </span>
+        </div>
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">Top shift</span>
+          <span class="insights-demo__stat-value">{{ insightsAnalytics.revenueTrends.topShift.period | capitalize }}, Aug {{ insightsAnalytics.revenueTrends.topShift.day }}</span>
+          <span class="insights-demo__stat-delta insights-demo__delta insights-demo__delta--up">
+            ▲ +${{ insightsAnalytics.revenueTrends.topShift.deltaVsAvg | commas }} vs. avg shift
+          </span>
+        </div>
+        <div class="insights-demo__stat">
+          <span class="insights-demo__stat-label">Top server</span>
+          <span class="insights-demo__stat-value">{{ insightsAnalytics.revenueTrends.topServer.name }}</span>
+          <span class="insights-demo__stat-delta insights-demo__delta insights-demo__delta--up">
+            ▲ +${{ insightsAnalytics.revenueTrends.topServer.avgDelta | commas(2) }} <abbr class="insights-demo__abbr" data-tooltip="{{ ppaTitle }}">PPA<span class="sr-only"> ({{ ppaTitle }})</span></abbr> vs. peers
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="insights-dash__view" data-view="server-performance" hidden>
+      <p class="marketing-lede">
+        Each server's <abbr class="insights-demo__abbr" data-tooltip="{{ ppaTitle }}">PPA<span class="sr-only"> ({{ ppaTitle }})</span></abbr>, benchmarked
+        against the average of the other servers working that exact same
+        shift — not a restaurant-wide average. That same-shift comparison
+        is what makes it fair: it self-normalizes for time of day, day of
+        week, and one-off events, since everyone being compared worked
+        identical conditions.
+      </p>
+
+      <div class="insights-demo__tabs" role="tablist">
+        <button type="button" class="insights-demo__tab is-active" data-tab="analytics" role="tab" aria-selected="true">Analytics</button>
+        <button type="button" class="insights-demo__tab" data-tab="raw" role="tab" aria-selected="false">Raw Data</button>
+      </div>
+
+      <div class="insights-demo__panel" data-panel="analytics">
+        <div class="insights-demo__table-wrap">
+          <table class="insights-demo__table">
+            <thead>
+              <tr>
+                <th>Server</th>
+                <th>Shifts</th>
+                <th>Avg <abbr class="insights-demo__abbr" data-tooltip="{{ ppaTitle }}">PPA<span class="sr-only"> ({{ ppaTitle }})</span></abbr></th>
+                <th>Avg vs. peer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for server in insightsAnalytics.servers %}
+              <tr>
+                <td>
+                  {{ server.name }}
+                  {% if server.lowSample %}<span class="insights-demo__low-sample">Low sample</span>{% endif %}
+                </td>
+                <td>{{ server.shifts | commas }}</td>
+                <td>${{ server.avgPPA | commas(2) }}</td>
+                <td class="insights-demo__delta insights-demo__delta--{{ 'up' if server.avgDelta > 0 else 'down' }}">
+                  {{ '▲' if server.avgDelta > 0 else '▼' }}
+                  {{ '+' if server.avgDelta > 0 }}${{ server.avgDelta | commas(2) }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# Raw checks behind the rollup above — Erik's ask: trusting the
+         analytics means being able to see the actual records they're
+         built from, not just the final number. <details>/<summary> per
+         server rather than custom JS — native collapse/expand. #}
+      <div class="insights-demo__panel" data-panel="raw" hidden>
+        {% for group in insightsAnalytics.checksByServer %}
+        <details class="insights-demo__group">
+          <summary>
+            {{ group.server }} — {{ group.checkCount | commas }} checks, ${{ group.totalRevenue | commas }} total
+          </summary>
+          <div class="insights-demo__table-wrap">
+            <table class="insights-demo__table insights-demo__table--raw">
+              <thead>
+                <tr>
+                  <th>Check</th>
+                  <th>Date</th>
+                  <th>Shift</th>
+                  <th>Guests</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th><abbr class="insights-demo__abbr" data-tooltip="{{ ppaTitle }}">PPA<span class="sr-only"> ({{ ppaTitle }})</span></abbr></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for check in group.checks %}
+                <tr>
+                  <td>{{ check.checkId }}</td>
+                  <td>{{ check.date }}</td>
+                  <td>{{ check.period }}</td>
+                  <td>{{ check.guestCount | commas }}</td>
+                  <td class="insights-demo__items">{{ check.items }}</td>
+                  <td>${{ check.total | commas }}</td>
+                  <td>${{ check.ppa | commas(2) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# "Answers" — its own tab rather than living under each view above,
+       so a chat can grow to full width and isn't duplicated per view.
+       The fixed composer below (visible from any tab, including this
+       one) always starts a fresh thread here. Grounding comes from
+       whatever the model actually looks up to answer the question (see
+       renderToolVisual in insights-demo.js, rendering each tool's real
+       result inline) rather than a snapshot of whichever view you
+       happened to be on — that's scoped to the question asked, not
+       whatever was on screen a moment before. Once a thread's open, its
+       own reply box (bottom of its transcript) continues that specific
+       conversation. Stays hidden until the first question is ever asked
+       (see #insights-chats-results). #}
+    <div class="insights-dash__view" data-view="your-insights" hidden>
+      <p class="marketing-lede">
+        Ask a question from anywhere in Insights — it lands here as its
+        own thread, with the data behind the answer shown alongside it.
+      </p>
+
+      <div class="insights-chats__results" id="insights-chats-results" hidden>
+        <h2 class="insights-chats__title">Chats</h2>
+        <div class="insights-chats__list" id="insights-chats-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# Fixed composer — visible across every Insights tab, not scoped to any
+   one view. Reuses .learn-input-row/.learn-textarea/.learn-send-btn
+   wholesale (see src/app/menu.njk's #learn-answer-form), same floating-
+   pill treatment as the marketing nav (see _insights-demo.scss). Submit
+   always starts a brand-new thread under "Answers" and switches
+   there — it's the "ask anything" entry point, not a way to continue a
+   thread already in progress (that's each thread's own reply box). #}
+<div class="learn-input-shell insights-demo__input-shell">
+  <form class="learn-input-row" id="insights-chats-form" autocomplete="off">
+    <div class="learn-input-wrap">
+      <textarea
+        id="insights-chats-input"
+        class="learn-textarea"
+        rows="1"
+        placeholder="Ask a question about this data…"
+        aria-label="Ask a question about this data"
+      ></textarea>
+      <div class="learn-input-toolbar">
+        <button type="submit" id="insights-chats-send" class="learn-send-btn" disabled aria-label="Send">
+          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" aria-hidden="true">
+            <path d="M8 1.5L12.5 9H10V14.5H6V9H3.5L8 1.5Z" transform="rotate(90 8 8)"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

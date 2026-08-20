@@ -1,0 +1,511 @@
+@use 'variables' as *;
+
+// /insights/demo/ — the Tico Insights PoC: static benchmark tables
+// (pre-computed at build time, see src/_data/insightsAnalytics.js) plus
+// a streaming chat over the same dataset (netlify/functions/
+// insights-chat-init.cjs + insights-tool-execute.cjs, via the shared
+// /api/chat-stream infra). Deliberately not polished to the same degree
+// as the rest of the marketing site — the reference doc is explicit that
+// this is a rough prototype meant to demonstrate the concept, not
+// production analytics.
+
+.insights-demo__banner {
+  background: $color-bg-muted;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  padding: $space-sm $space-md;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+  margin: 0 0 $space-xl;
+}
+
+// PPA is explained via a custom hover tooltip on the term itself
+// (wherever it appears — lede text, table headers, stat labels), not a
+// standalone definition paragraph or the native title="" tooltip — Erik's
+// call on both: keep it inline where it's used, and the browser's own
+// tooltip has an ugly ~1s delay plus an unwanted help cursor. Just the
+// underline/color hover state lives here; the actual popup is the shared
+// .js-tooltip below (see utils/tooltip.js) — a CSS ::after was tried
+// first but gets clipped by any scrollable ancestor (the tables and the
+// chart both have overflow-x: auto), which a JS tooltip appended
+// straight to <body> doesn't have that problem with.
+.insights-demo__abbr {
+  text-decoration: underline dotted;
+  text-decoration-color: $color-border-hover;
+  text-underline-offset: 2px;
+  cursor: default;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: $color-green;
+    text-decoration-style: solid;
+    text-decoration-color: $color-green;
+  }
+}
+
+// Single shared tooltip element, appended to <body> and positioned via
+// getBoundingClientRect() by utils/tooltip.js — deliberately not scoped
+// under .insights-demo, since it lives outside that DOM subtree entirely
+// (that's the whole point: escaping any ancestor's overflow clipping).
+.js-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background: $color-text;
+  color: #ffffff;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  line-height: 1.4;
+  padding: $space-xs $space-sm;
+  border-radius: 0.375rem;
+  max-width: 260px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.08s ease;
+
+  &.is-visible {
+    opacity: 1;
+  }
+}
+
+// Sidebar shell — the set of canned views within "Insights mode" (see
+// insights-demo.njk's comment). Stacks on mobile; sidebar becomes a
+// horizontal row above the content instead of a left column.
+.insights-dash {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xl;
+  margin-bottom: $space-2xl;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.insights-dash__sidebar {
+  display: flex;
+  flex-direction: row;
+  gap: $space-sm;
+  flex-wrap: wrap;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 200px;
+  }
+}
+
+.insights-dash__nav-item {
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0.5rem;
+  padding: $space-sm $space-md;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: $color-text-muted;
+  cursor: pointer;
+
+  &.is-active {
+    background: $color-bg-surface;
+    color: $color-green;
+    font-weight: 600;
+  }
+}
+
+.insights-dash__main {
+  flex: 1;
+  min-width: 0; // lets long table content scroll within, not overflow the flex row
+}
+
+.insights-demo__tabs {
+  display: flex;
+  gap: $space-sm;
+  border-bottom: 1px solid $color-border;
+  margin-bottom: $space-xl;
+}
+
+.insights-demo__tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: $space-sm $space-md;
+  margin-bottom: -1px;
+  font-family: $font-family;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: $color-text-muted;
+  cursor: pointer;
+
+  &.is-active {
+    color: $color-green;
+    border-bottom-color: $color-green;
+  }
+}
+
+.insights-demo__table-wrap {
+  overflow-x: auto;
+  margin-bottom: $space-2xl;
+}
+
+// Raw Data tab — one collapsible <details> per server (native expand/
+// collapse, no JS). Closed by default; the summary line alone already
+// shows the rollup (check count + total), so nothing's hidden, just
+// collapsed until you want the underlying rows.
+.insights-demo__group {
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  padding: $space-md;
+  margin-bottom: $space-md;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: $color-green;
+  }
+
+  &[open] summary {
+    margin-bottom: $space-md;
+  }
+
+  .insights-demo__table-wrap {
+    margin: $space-md 0 0;
+  }
+}
+
+.insights-demo__table--raw {
+  font-size: $font-size-sm;
+}
+
+.insights-demo__items {
+  max-width: 320px;
+  color: $color-text-muted;
+}
+
+.insights-demo__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-base;
+
+  th, td {
+    text-align: left;
+    padding: $space-sm $space-md;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: 600;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+  }
+}
+
+.insights-demo__low-sample {
+  display: inline-block;
+  margin-left: $space-sm;
+  font-size: $font-size-sm;
+  color: $color-warning;
+  border: 1px solid $color-warning;
+  border-radius: 999px;
+  padding: 0 $space-sm;
+}
+
+.insights-demo__delta {
+  font-weight: 600;
+
+  &--up { color: $color-success; }
+  &--down { color: $color-danger; }
+}
+
+.insights-demo__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-md;
+  margin-bottom: $space-2xl;
+}
+
+.insights-demo__stat {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xs;
+  background: $color-bg-surface;
+  border-radius: 0.75rem;
+  padding: $space-md $space-lg;
+  min-width: 140px;
+}
+
+.insights-demo__stat-label {
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.insights-demo__stat-value {
+  font-family: $font-family-accent;
+  font-weight: 600;
+  font-size: $font-size-2xl;
+  color: $color-green;
+}
+
+.insights-demo__chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $space-sm;
+  margin-bottom: $space-md;
+
+  .insights-demo__chart-title { margin: 0; }
+}
+
+.insights-demo__range-toggle {
+  display: flex;
+  gap: $space-xs;
+  background: $color-bg-surface;
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.insights-demo__range-btn {
+  background: none;
+  border: none;
+  border-radius: 999px;
+  padding: $space-xs $space-md;
+  font-family: $font-family;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $color-text-muted;
+  cursor: pointer;
+
+  &.is-active {
+    background: $color-green;
+    color: #ffffff;
+  }
+}
+
+// Plain CSS bars (height % of the tallest day), not a charting library —
+// consistent with the rest of the site's lightweight approach, and a
+// PoC doesn't need axis ticks/tooltips beyond the native title attribute.
+.insights-demo__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 160px;
+  padding: 0 0 $space-lg;
+  margin-bottom: $space-2xl;
+  overflow-x: auto;
+  border-bottom: 1px solid $color-border;
+}
+
+.insights-demo__bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 0 20px;
+  height: 100%;
+}
+
+.insights-demo__bar {
+  width: 100%;
+  min-height: 2px;
+  background: $color-green;
+  border-radius: 2px 2px 0 0;
+}
+
+.insights-demo__bar-label {
+  font-size: 0.65rem;
+  color: $color-text-muted;
+  margin-top: $space-xs;
+}
+
+// Page content needs room at the bottom so the fixed composer (see
+// .insights-demo__input-shell below) never overlaps the last thing in
+// either dashboard view — same reasoning as .learn-drill's own
+// padding-bottom for the Practice composer it's reusing the exact
+// classes of. On Answers, the composer itself is hidden (see
+// insights-demo.js — every thread has its own reply box there instead),
+// so that reserved space would just be a dead gap; --no-composer drops it.
+.insights-dash {
+  padding-bottom: 8rem;
+
+  &--no-composer {
+    padding-bottom: 0;
+  }
+}
+
+// The fixed input bar itself reuses .learn-input-shell/.learn-textarea/
+// .learn-send-btn wholesale (see insights-demo.njk) — genuinely the same
+// composer as Practice's, not a lookalike. Two small overrides on top:
+.insights-demo__input-shell {
+  // Floats with a gap off the bottom edge, mirroring the nav pill's own
+  // top: 1rem inset, instead of Practice's flush bottom: 0 — same
+  // "floating chrome" pairing as the border-radius/blur/shadow match
+  // below, not just anchored flat like the page edge itself.
+  bottom: 1rem;
+
+  // Practice's .learn-input-wrap stacks the textarea above its own
+  // toolbar row (flex-direction: column) — right for a 2-button toolbar
+  // (flag + send), but it's what made a single-send-button composer read
+  // as two rows tall by default instead of one. Row layout instead:
+  // textarea and send button side by side, genuinely one line tall at
+  // rest, matching the nav pill's own single-row shape.
+  .learn-input-wrap {
+    flex-direction: row;
+    align-items: center;
+    border: none;
+    border-radius: 999px;
+    background: color-mix(in srgb, $color-bg 75%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  // A bit more vertical padding than Practice's own (0.5rem) — the nav
+  // pill's own $space-md (1rem) rhythm is what actually makes it read as
+  // a substantial floating pill rather than a thin bar; matching that
+  // here too.
+  .learn-textarea {
+    padding-left: $space-lg;
+    padding-top: $space-md;
+    padding-bottom: $space-md;
+  }
+
+  .learn-input-toolbar {
+    padding: 0 $space-sm 0 0;
+  }
+
+  // Base .learn-send-btn is opacity: 0 (fully hidden) until there's text —
+  // right when it shares a toolbar with other controls (Practice's flag
+  // button stays put either way), but on this single-button composer it
+  // left the pill with nothing marking it as "type a question here" at
+  // rest, which is most of why it read as too subtle. Dimmed instead of
+  // hidden: the green arrow is always present, faint until there's
+  // something to send, full strength once there is — that alone gives the
+  // pill enough visual weight without adding a label element that would
+  // need its own scaling story as the textarea grows.
+  .learn-send-btn {
+    border-radius: 999px;
+    opacity: 0.35;
+
+    &:not(:disabled) {
+      opacity: 1;
+    }
+  }
+}
+
+// "Answers" — one dedicated tab holding every chat thread, rather
+// than a slide-up panel or a composer duplicated per dashboard view. The
+// fixed composer above always starts a new thread here; each thread is
+// its own collapsible entry with its own reply form for follow-ups.
+.insights-chats__results {
+  margin-top: $space-lg;
+}
+
+.insights-chats__title {
+  font-family: $font-family-accent;
+  font-weight: 600;
+  color: $color-green;
+  margin: 0 0 $space-md;
+}
+
+.insights-chats__list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+}
+
+// Same collapsible shape as .insights-demo__group (Raw Data's per-server
+// rows) — a chat thread and a data group are both "collapsed by default,
+// summary tells you what's inside" content, so they share the pattern
+// rather than inventing a second one. Newest thread is prepended to the
+// top of .insights-chats__list and opened automatically (see
+// insights-demo.js), so it's always the first one you see.
+.insights-chats__thread {
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  padding: $space-md;
+
+  &[open] .insights-chats__thread-summary {
+    margin-bottom: $space-md;
+  }
+}
+
+.insights-chats__thread-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $space-md;
+  cursor: pointer;
+  font-weight: 600;
+  color: $color-green;
+}
+
+.insights-chats__thread-time {
+  flex-shrink: 0;
+  font-weight: 400;
+  font-size: $font-size-sm;
+  color: $color-text-muted;
+}
+
+.insights-chats__thread-transcript {
+  .transcript-line--answer {
+    align-self: flex-start;
+    background: $color-bg-surface;
+    border: 1px solid $color-border;
+    border-radius: 0.75rem 0.75rem 0.75rem 0.15rem;
+    white-space: pre-wrap;
+  }
+
+  .transcript-line--lookup {
+    align-self: flex-start;
+    font-size: $font-size-sm;
+    font-style: italic;
+    color: $color-text-muted;
+  }
+
+  // A tool result rendered as a real table/stat-tile block (see
+  // renderToolVisual in insights-demo.js) reusing .insights-demo__table-
+  // wrap/.insights-demo__stats wholesale — both carry their own
+  // dashboard-sized margins ($space-2xl bottom), too much whitespace
+  // sitting inline in a chat thread between a question and its answer.
+  .insights-chats__visual {
+    margin: $space-sm 0;
+  }
+}
+
+// A thread's own follow-up input — same pill language as the fixed
+// composer above, just smaller and in-flow (not fixed), since it belongs
+// to one specific thread rather than being the page-wide entry point.
+.insights-chats__thread-reply {
+  margin-top: $space-md;
+
+  .learn-input-wrap {
+    flex-direction: row;
+    align-items: center;
+    border: 1px solid $color-border;
+    border-radius: 999px;
+    background: $color-bg;
+  }
+
+  .learn-textarea {
+    padding-left: $space-md;
+    padding-top: $space-sm;
+    padding-bottom: $space-sm;
+  }
+
+  .learn-input-toolbar {
+    padding: 0 $space-xs 0 0;
+  }
+
+  .learn-send-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    opacity: 0.35;
+
+    &:not(:disabled) {
+      opacity: 1;
+    }
+  }
+}

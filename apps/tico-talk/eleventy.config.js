@@ -2,10 +2,19 @@ import path from "path";
 import * as sass from "sass";
 import { fileURLToPath } from "url";
 import EleventyVitePlugin from "@11ty/eleventy-plugin-vite";
+import { formatNumber } from "./src/assets/js/utils/format.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default async function(eleventyConfig) {
+  // Thousands/millions separators for any number shown in a template —
+  // one shared implementation (src/assets/js/utils/format.js) reused
+  // here at build time rather than a template-only helper, so the same
+  // formatting logic is available client-side too if ever needed.
+  // Handles rounding itself, so callers don't need a separate round
+  // filter first: {{ value | commas(2) }} for 2 decimals, {{ value | commas }} for none.
+  eleventyConfig.addFilter("commas", (value, decimals = 0) => formatNumber(value, decimals));
+
   eleventyConfig.addPlugin(EleventyVitePlugin, {
     viteOptions: {
       // AI_VERIFY_HMR_PORT: set by the eleventy:serve:ai script so Claude's
@@ -57,6 +66,16 @@ export default async function(eleventyConfig) {
   // JS: passthrough so files land in _site/ for Vite to transform.
   eleventyConfig.addPassthroughCopy("src/assets/js");
   eleventyConfig.addPassthroughCopy("src/assets/images");
+
+  // Tico Insights' seeded demo dataset lives outside src/ (see
+  // netlify/functions/_data/insights-mock-checks.json's own comments) —
+  // deliberately, so the Netlify function can read the same file directly
+  // without a duplicate copy inside src/. But 11ty's dev server only
+  // watches dir.input ("src") by default, so without this, regenerating
+  // that file (scripts/generate-insights-mock-data.cjs) never triggers a
+  // rebuild — src/_data/insightsAnalytics.js would keep serving whatever
+  // it read at the last build that WAS triggered by something else.
+  eleventyConfig.addWatchTarget("netlify/functions/_data/insights-mock-checks.json");
 
   return {
     dir: { input: "src", output: "_site", includes: "_includes" },
