@@ -17,6 +17,13 @@
   padding: 5rem $space-lg $space-md; // horizontal matches .nav-bar's padding so edges align
 }
 
+// Marketing pages sit under the floating pill nav (see .nav-bar--marketing),
+// not a flush full-width bar — the base 5rem top padding was tuned for
+// the latter and reads cramped under the pill's own inset + height.
+.container--marketing {
+  padding-top: 7.5rem;
+}
+
 .main {
   flex: 1;
   padding-bottom: $space-2xl;
@@ -224,7 +231,36 @@
   padding: $space-2xl $space-lg;
   background: $color-bg-muted;
   color: $color-text-muted;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-xl;
 
+  @media (min-width: $breakpoint-sm) {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: $space-2xl;
+  }
+}
+
+// Mark alone — the footer's visual anchor. Dropped the logotype
+// alongside it (Erik's call: the wordmark text competed with the mark
+// rather than complementing it); the mark carries `alt="Tico"` now that
+// it's the only brand element in the footer, not purely decorative.
+.site-footer__brand-col {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.site-footer__mark {
+  width: 4.5rem;
+  height: 4.5rem;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.16));
+}
+
+.site-footer__text-col {
   .site-footer__tagline,
   .site-footer__copyright {
     margin: 0 0 $space-xs;

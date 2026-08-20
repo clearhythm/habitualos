@@ -11,20 +11,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body{% if bodyClass %} class="{{ bodyClass }}"{% endif %} data-first-restaurant-id="{{ restaurants[0].id }}">
-  {% if not noNav %}{% include "nav.njk" %}{% endif %}
+  {# contentType ('marketing' | 'app', defaults to 'app' when absent) is
+     the primary flag — it alone picks the nav below, and the footer
+     mirrors it too unless a page sets footerType to override just the
+     footer. Two flags because one page needs to mix and match: /app/
+     wants the app nav but keeps its marketing tagline footer (footerType:
+     marketing there, contentType left at the 'app' default). #}
+  {% if not noNav %}
+    {% from "nav.njk" import marketingNav, appNav %}
+    {% if contentType == 'marketing' %}{{ marketingNav() }}{% else %}{{ appNav() }}{% endif %}
+  {% endif %}
 
   <main class="main">
     {% if noContainer %}
       {{ content | safe }}
     {% else %}
-      <div class="container">
+      <div class="container{% if contentType == 'marketing' %} container--marketing{% endif %}">
         {{ content | safe }}
       </div>
     {% endif %}
   </main>
 
+  {# Future auth hook: once real sign-in exists, this is where a
+     contentType != 'marketing' page should redirect to login if there's
+     no session. Keying off contentType (already page-level metadata,
+     not a URL prefix) means today's choice to skip a literal /app/
+     URL-prefix architecture doesn't box that in later — /app/ itself
+     stays contentType: 'app' (the default) on purpose, since it's meant
+     to work as a pre-auth orientation screen, not a gated page. #}
+  {% set effectiveFooterType = footerType or contentType %}
   {% from "footer.njk" import marketingFooter, appFooter %}
-  {% if contentType == 'marketing' %}{{ marketingFooter() }}{% else %}{{ appFooter() }}{% endif %}
+  {% if effectiveFooterType == 'marketing' %}{{ marketingFooter() }}{% else %}{{ appFooter() }}{% endif %}
 
   <script type="module" src="/assets/js/navigation.js"></script>
   {% if pageScript %}<script type="module" src="{{ pageScript }}"></script>{% endif %}

@@ -1,3 +1,43 @@
+{# Two explicit nav variants, not one parameterized macro — same
+   reasoning as footer.njk's marketingFooter()/appFooter() split. Chosen
+   by a page's `contentType` frontmatter (defaults to 'app' when absent,
+   see base.njk) — the primary marketing/app classification for a page.
+   footer.njk mirrors this same flag by default too, but can be
+   overridden per-page via `footerType` for the rare page that needs to
+   mix and match (e.g. /app/: app nav, marketing footer). #}
+
+{# Desktop: logo + links centered together as one row (no hamburger).
+   Mobile: hamburger (left) + centered logo, links collapse into a
+   dropdown under the bar, toggled by the same #sidemenu-toggle /
+   body.sidemenu-open mechanism appNav's hamburger already uses (see
+   navigation.js) — reuses the existing, tested toggle wiring rather than
+   the app's full off-canvas sidemenu-main panel, which is styled for the
+   account/craft sidebar, not a plain 5-link list. #}
+{% macro marketingNav() %}
+<div class="nav-bar nav-bar--marketing" id="nav-bar">
+  <div class="nav-bar__slot nav-bar__slot--left">
+    <button id="sidemenu-toggle" class="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <div class="nav-bar__brand">
+    <a href="/"><img class="nav-bar__logo" src="/assets/images/tico-logo.webp" alt="Tico" width="614" height="313"></a>
+  </div>
+
+  <nav class="nav-bar__links">
+    <a href="/train/">Train</a>
+    <a href="/insights/">Insights</a>
+    <a href="/about/">About</a>
+    <a href="/contact/">Contact</a>
+    <a href="/app/">For Servers</a>
+  </nav>
+
+  <div class="nav-bar__slot nav-bar__slot--right"></div>
+</div>
+{% endmacro %}
+
+{% macro appNav() %}
 <div class="nav-bar" id="nav-bar">
   <div class="nav-bar__slot nav-bar__slot--left">
     <button id="sidemenu-toggle" class="nav-hamburger" aria-label="Menu">
@@ -6,7 +46,7 @@
   </div>
 
   <div class="nav-bar__brand">
-    {% if not hideNavLabel %}<a href="/"><img class="nav-bar__logo" src="/assets/images/tico-logo.webp" alt="Tico" width="614" height="313"></a>{% endif %}
+    {% if not hideNavLabel %}<a href="/app/"><img class="nav-bar__logo" src="/assets/images/tico-logo.webp" alt="Tico" width="614" height="313"></a>{% endif %}
   </div>
 
   <div class="nav-bar__slot nav-bar__slot--right">
@@ -24,7 +64,6 @@
         <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Presentation</a></li>
         <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Recommendations</a></li>
         <li><a href="#" class="sidemenu-disabled" aria-disabled="true">Guest Complaints</a></li>
-        <li><a href="/">About Tico</a></li>
       </ul>
     </div>
     {# Progress lives inside Profile now (it's the same shareable-with-
@@ -55,3 +94,4 @@
     <div class="sidemenu-overlay" id="sidemenu-overlay"></div>
   </div>
 </div>
+{% endmacro %}

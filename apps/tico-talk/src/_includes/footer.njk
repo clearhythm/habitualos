@@ -1,12 +1,21 @@
 {# Two explicit footers, not one parameterized by variant — the content
    here is simple/static enough that a branch inside a single macro
-   would just be indirection. base.njk decides which one to call, based
-   on a page's `contentType: marketing` frontmatter. #}
+   would just be indirection. base.njk picks the footer from a page's
+   `footerType` frontmatter, falling back to `contentType` (the flag that
+   picks the nav, see nav.njk) when footerType isn't set — so most pages
+   only need to set one flag, and footerType only shows up as an
+   explicit override on the rare page that mixes nav and footer (e.g.
+   /app/: app nav, but keeps the marketing tagline footer). #}
 {% macro marketingFooter() %}
 <footer class="site-footer site-footer--marketing">
-  <p class="site-footer__tagline">Tico. Make every ticket count.</p>
-  <p class="site-footer__copyright">© 2026 Erik Burns. All rights reserved.</p>
-  <a href="/about/" class="site-footer__link">About</a>
+  <div class="site-footer__brand-col">
+    <img class="site-footer__mark" src="/assets/images/tico-logomark.png" alt="Tico" width="80" height="80">
+  </div>
+  <div class="site-footer__text-col">
+    <p class="site-footer__tagline">Tico. Make every ticket count.</p>
+    <p class="site-footer__copyright">© 2026 Erik Burns. All rights reserved.</p>
+    <a href="/about/" class="site-footer__link">About</a>
+  </div>
 </footer>
 {% endmacro %}
 

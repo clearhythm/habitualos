@@ -43,6 +43,89 @@
   display: block;
 }
 
+// Marketing site's link row. Mobile: collapsed behind the hamburger,
+// dropping down as a simple panel under the bar (same #sidemenu-toggle /
+// body.sidemenu-open toggle appNav's hamburger uses — see navigation.js
+// — just a plain dropdown here instead of the app's full off-canvas
+// sidemenu-main, which is styled for the account/craft sidebar).
+// Desktop: inline, centered alongside the logo — see .nav-bar--marketing
+// below for the floating-pill treatment (7shifts-style) this sits inside.
+.nav-bar__links {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-md;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  padding: $space-lg;
+  background: $color-bg;
+  border-bottom: 1px solid $color-border;
+
+  body.sidemenu-open & {
+    display: flex;
+  }
+
+  a {
+    color: $color-text;
+    font-family: $font-family;
+    font-size: $font-size-base;
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover { color: $color-primary; }
+  }
+}
+
+// Desktop: the mobile dropdown becomes a floating rounded pill — inset
+// from the viewport edges, logo + links centered together as one row,
+// hamburger hidden. Not just full-width-with-a-border like the app nav;
+// a distinct, more "marketing site" treatment (Erik's reference: 7shifts).
+.nav-bar--marketing {
+  @media (min-width: $breakpoint-md) {
+    top: 1rem;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: auto;
+    max-width: calc(100% - #{$space-lg} * 2);
+    justify-content: center;
+    gap: $space-2xl;
+    padding: $space-md $space-xl;
+    border-radius: 999px;
+    background: color-mix(in srgb, $color-bg 75%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    // Always translucent/blurred, scrolled or not — a floating pill
+    // reads as "glass" regardless of scroll position, unlike the
+    // app nav's flush bar (base .scrolled rule), which only blurs once
+    // there's page content to blur behind it.
+    &.scrolled {
+      background: color-mix(in srgb, $color-bg 75%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: none;
+    }
+
+    .nav-bar__slot { display: none; }
+
+    .nav-bar__links {
+      display: flex;
+      flex-direction: row;
+      position: static;
+      padding: 0;
+      background: none;
+      border-bottom: none;
+      gap: $space-lg;
+
+      a { font-size: $font-size-sm; }
+    }
+  }
+}
+
 // Real hamburger icon + open/close transition — three bars morphing into an
 // ×, matching apps/signal's nav toggle pattern. Driven by the same
 // body.sidemenu-open class the existing toggle JS already sets.

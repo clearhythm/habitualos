@@ -1,0 +1,98 @@
+@use 'variables' as *;
+
+// GM-facing marketing site — homepage split section, product page
+// (/train/, /insights/) layout, and shared bits (eyebrow, lede). Reuses
+// .container/.page-title/.btn from layout.scss/components.scss rather
+// than redefining page chrome; this file only adds what's new.
+
+.marketing-split {
+  display: grid;
+  gap: $space-2xl;
+  padding-top: $space-2xl;
+  padding-bottom: $space-2xl;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.marketing-split__col {
+  padding: $space-xl;
+  background: $color-bg-surface;
+  border-radius: 1rem;
+}
+
+.marketing-split__title {
+  font-family: $font-family-accent;
+  font-size: $font-size-2xl;
+  color: $color-green;
+  margin: 0 0 $space-sm;
+}
+
+.marketing-split__body {
+  color: $color-text;
+  line-height: 1.55;
+  margin: 0 0 $space-md;
+}
+
+.marketing-split__link {
+  color: $color-primary;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+.marketing-eyebrow {
+  font-family: $font-family-accent;
+  font-style: italic;
+  color: $color-primary;
+  font-size: $font-size-lg;
+  margin: 0 0 $space-sm;
+}
+
+.marketing-lede {
+  font-size: $font-size-lg;
+  color: $color-text-muted;
+  line-height: 1.5;
+  max-width: 46rem;
+  margin: 0 0 $space-lg;
+}
+
+.marketing-section {
+  max-width: 46rem;
+  padding: $space-xl 0;
+  border-top: 1px solid $color-border;
+
+  h2 {
+    font-family: $font-family-accent;
+    color: $color-green;
+    font-size: $font-size-xl;
+    margin: 0 0 $space-sm;
+  }
+
+  p {
+    line-height: 1.6;
+    margin: 0 0 $space-md;
+
+    &:last-child { margin-bottom: 0; }
+  }
+}
+
+.marketing-feature-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: $space-sm 0;
+    border-bottom: 1px solid $color-border;
+    line-height: 1.5;
+
+    &:last-child { border-bottom: none; }
+  }
+}
+
+.marketing-cta-bottom {
+  margin-top: $space-lg;
+}
