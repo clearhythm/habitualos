@@ -96,6 +96,12 @@
   margin: 0 0 $space-lg;
 }
 
+.marketing-explain__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-lg;
+}
+
 // Plain amber text link, not a button — Erik's call, reverting the
 // green-outline .btn--secondary treatment tried here briefly.
 .marketing-explain__link {

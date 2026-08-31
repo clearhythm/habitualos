@@ -122,17 +122,62 @@ function getShiftBreakdown({ date, server } = {}) {
     .sort((a, b) => (a.date + a.period).localeCompare(b.date + b.period));
 }
 
-// Optional server filter — every check already carries both `server` and
-// its own `items` array, so a per-server breakdown (e.g. "what does Larry
-// sell more of than Sol") is just a groupby, not something this dataset
-// lacks the granularity for.
-function getItemPopularity({ server } = {}) {
+// Category mirrors src/_data/insightsAnalytics.js's CATEGORY_BY_NAME
+// (same STARTERS/MAINS/DRINKS/BOTTLES split from scripts/generate-
+// insights-mock-data.cjs) — kept in sync by eye, same duplication-
+// across-module-systems reasoning as the rest of this file. Without it,
+// a question like "which dishes make the most money" would have the
+// model guessing food-vs-drink from item names alone instead of
+// answering from real data.
+const CATEGORY_BY_NAME = new Map([
+  ["Castelvetrano Olives", "Starters"],
+  ["House Smoked Salmon Dip", "Starters"],
+  ["Shishito Peppers", "Starters"],
+  ["Straciatella & Prosciutto", "Starters"],
+  ["Shrimp Cocktail", "Starters"],
+  ["Ahi Tuna Crudo", "Starters"],
+  ["Dungeness Crab Cocktail", "Starters"],
+  ["Wagyu Smashburger", "Mains"],
+  ["Maine Lobster Roll", "Mains"],
+  ["Shrimp & White Cheddar Grits", "Mains"],
+  ["Steamed Clams", "Mains"],
+  ["Grilled Branzino", "Mains"],
+  ["Local King Salmon", "Mains"],
+  ["Filet Mignon", "Mains"],
+  ["Pomegranate Cosmo", "Cocktails"],
+  ["Lychee Martini", "Cocktails"],
+  ["Aperol Spritz", "Cocktails"],
+  ["Garden Gimlet", "Cocktails"],
+  ["Almost Famous", "Cocktails"],
+  ["Spiced Old Fashioned", "Cocktails"],
+  ["Espresso Martini", "Cocktails"],
+  ["Storr's Chardonnay", "Wine by the Glass"],
+  ["Rombauer Chardonnay", "Wine by the Glass"],
+  ["Soquel Vineyards Pinot Noir", "Wine by the Glass"],
+  ["Ridge Three Valley's Zinfandel", "Wine by the Glass"],
+  ["Roth Cabernet Sauvignon", "Wine by the Glass"],
+  ["DAOU Cabernet Sauvignon", "Wine by the Glass"],
+  ['La Marea "Kristy Vineyard"', "Wine by the Bottle"],
+  ["The Prisoner Cab. Sauvignon", "Wine by the Bottle"],
+  ["Round Pond Estate Cab. Sauvignon", "Wine by the Bottle"],
+  ["Paul Hobbs Pinot Noir", "Wine by the Bottle"]
+]);
+
+// Optional server/category filters — every check already carries both
+// `server` and its own `items` array, so a per-server breakdown (e.g.
+// "what does Larry sell more of than Sol") is just a groupby, not
+// something this dataset lacks the granularity for. category is one of
+// "Starters"/"Mains"/"Cocktails"/"Wine by the Glass"/"Wine by the
+// Bottle" (matches Menu Mix's own categories exactly).
+function getItemPopularity({ server, category } = {}) {
   const checks = loadChecks();
   const byItem = new Map();
   for (const check of checks) {
     if (server && check.server !== server) continue;
     for (const item of check.items) {
-      const row = byItem.get(item.name) || { name: item.name, count: 0, revenue: 0 };
+      const itemCategory = CATEGORY_BY_NAME.get(item.name) || "Other";
+      if (category && itemCategory !== category) continue;
+      const row = byItem.get(item.name) || { name: item.name, category: itemCategory, count: 0, revenue: 0 };
       row.count += 1;
       row.revenue += item.price;
       byItem.set(item.name, row);

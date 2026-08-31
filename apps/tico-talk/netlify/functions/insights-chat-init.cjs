@@ -20,7 +20,7 @@ PPA means revenue per guest (a check's total divided by its guest count, not per
 
 The per-server peer benchmark (get_server_performance) compares each server's PPA on a shift only to the OTHER servers working that exact same shift (same date + time of day), not a restaurant-wide average — this is what normalizes for time of day/day-of-week/events, so don't describe it as a simple average.
 
-get_item_popularity accepts an optional server filter, so "what does Larry sell more of than Sol" style questions are answerable by calling it once per server and comparing — every check ties its items directly to the server who worked it. What's genuinely out of reach: individual check contents and per-guest seat assignment (no tool returns that), so only say this demo's data doesn't go granular enough for questions actually at that level, not for a per-server item comparison.
+get_item_popularity accepts optional server and category filters. server: "what does Larry sell more of than Sol" style questions are answerable by calling it once per server and comparing — every check ties its items directly to the server who worked it. category is one of "Starters"/"Mains"/"Cocktails"/"Wine by the Glass"/"Wine by the Bottle" — use it for "which dishes" (Starters + Mains, so call it once per category and combine) vs. "which drinks" (Cocktails + both wine categories) questions rather than guessing food-vs-drink from an item's name. Every returned item also carries its own category field, so you can also just filter an unfiltered result yourself. Results are sorted by order count, not revenue — for "which item makes the most money" questions, re-sort by each item's revenue field yourself rather than assuming the first result is the top earner. What's genuinely out of reach: individual check contents, per-guest seat assignment, and food/drink cost (no gross profit or margin, only revenue) — say this demo's data doesn't go there rather than guessing, but that's a narrower gap than it might sound: item-level revenue and category are both real.
 
 Answer concisely, in plain prose (no markdown headers/tables), citing specific numbers once you have them. Never use an em dash, use a comma, period, or parentheses instead.`;
 
@@ -48,11 +48,12 @@ const TOOLS = [
   },
   {
     name: 'get_item_popularity',
-    description: 'Top 20 menu items by how many times they were ordered this month, with total revenue from each. Optionally filter by server to see what that specific server sells most — call it once per server (e.g. once for Larry, once for Sol) and compare the two results for "what does X sell more of than Y" style questions. Omit server for a restaurant-wide ranking, for "what sells well" style questions.',
+    description: 'Top 20 menu items by how many times they were ordered this month, with total revenue and category from each (sorted by order count, not revenue — re-sort yourself for "highest revenue" questions). Optionally filter by server (what that specific server sells most — call once per server to compare) and/or category ("Starters"/"Mains"/"Cocktails"/"Wine by the Glass"/"Wine by the Bottle", for "which dishes" vs. "which drinks" questions). Omit both for a restaurant-wide ranking.',
     input_schema: {
       type: 'object',
       properties: {
-        server: { type: 'string', description: 'Server name, optional' }
+        server: { type: 'string', description: 'Server name, optional' },
+        category: { type: 'string', enum: ['Starters', 'Mains', 'Cocktails', 'Wine by the Glass', 'Wine by the Bottle'], description: 'Menu category, optional' }
       }
     }
   }
