@@ -93,6 +93,7 @@
     justify-content: center;
     gap: $space-2xl;
     padding: $space-md $space-xl;
+    border: 1px solid $color-border;
     border-radius: 999px;
     background: color-mix(in srgb, $color-bg 75%, transparent);
     backdrop-filter: blur(12px);
