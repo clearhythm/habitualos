@@ -86,12 +86,38 @@
   display: flex;
   flex-direction: row;
   gap: $space-sm;
-  flex-wrap: wrap;
+
+  // Mobile: one row, horizontally swipeable instead of wrapping to
+  // multiple lines (four tabs wrapped got tall before any content
+  // showed). scroll-snap gives each tab a definite resting position
+  // instead of free-scrolling to an arbitrary spot mid-tab.
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+
+  // Fades the trailing edge so a tab cut off at the edge of the
+  // viewport reads as "swipe for more," not just visually clipped —
+  // same discoverability trick horizontally-scrolling chip/tab rows use
+  // everywhere. Pure CSS, no JS needed to track scroll position.
+  mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent 100%);
+
+  .insights-dash__nav-item {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
 
   @media (min-width: $breakpoint-md) {
     flex-direction: column;
     flex-shrink: 0;
     width: 200px;
+    overflow-x: visible;
+    mask-image: none;
+    -webkit-mask-image: none;
+
+    .insights-dash__nav-item {
+      scroll-snap-align: none;
+    }
   }
 }
 
@@ -147,6 +173,35 @@
 .insights-demo__table-wrap {
   overflow-x: auto;
   margin-bottom: $space-2xl;
+}
+
+// Menu Mix — Dishes/Drinks side by side on desktop, same
+// breakpoint as .insights-dash's own sidebar/main split; stacked on
+// mobile since there's no room for two tables next to each other.
+.insights-demo__menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: $space-xl;
+
+  @media (min-width: $breakpoint-md) {
+    flex-direction: row;
+
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
+.insights-demo__menu-category {
+  font-size: $font-size-sm;
+  font-weight: 600;
+  color: $color-text-muted;
+  margin: $space-lg 0 $space-sm;
+
+  &:first-of-type {
+    margin-top: $space-sm;
+  }
 }
 
 // Raw Data tab — one collapsible <details> per server (native expand/
@@ -319,30 +374,33 @@
   margin-top: $space-xs;
 }
 
-// Page content needs room at the bottom so the fixed composer (see
-// .insights-demo__input-shell below) never overlaps the last thing in
-// either dashboard view — same reasoning as .learn-drill's own
-// padding-bottom for the Practice composer it's reusing the exact
-// classes of. On Answers, the composer itself is hidden (see
-// insights-demo.js — every thread has its own reply box there instead),
-// so that reserved space would just be a dead gap; --no-composer drops it.
-.insights-dash {
-  padding-bottom: 8rem;
-
-  &--no-composer {
-    padding-bottom: 0;
-  }
-}
-
-// The fixed input bar itself reuses .learn-input-shell/.learn-textarea/
+// The input bar itself reuses .learn-input-shell/.learn-textarea/
 // .learn-send-btn wholesale (see insights-demo.njk) — genuinely the same
-// composer as Practice's, not a lookalike. Two small overrides on top:
+// composer as Practice's, not a lookalike. Overrides on top:
 .insights-demo__input-shell {
-  // Floats with a gap off the bottom edge, mirroring the nav pill's own
-  // top: 1rem inset, instead of Practice's flush bottom: 0 — same
-  // "floating chrome" pairing as the border-radius/blur/shadow match
-  // below, not just anchored flat like the page edge itself.
+  // Practice's own composer is position: fixed (pinned to the viewport
+  // for the whole scroll) — right for a single-screen drill, but on this
+  // much longer page it meant the composer kept floating over the
+  // footer once you scrolled past all the content. Sticky instead: it
+  // still hovers bottom: 1rem above the viewport while scrolling through
+  // .insights-dash (the same "always reachable" feel as fixed), but it's
+  // a real in-flow element positioned as the last thing before the
+  // footer, so once its own natural position is reached it just docks
+  // there and scrolls away with the page instead of covering the footer.
+  position: sticky;
   bottom: 1rem;
+
+  // The base class centers a narrower, capped-width pill via left: 50%;
+  // transform: translateX(-50%); max-width: 1200px — all of that assumed
+  // it was a page-level element independent of any column. Now that it
+  // lives inside .insights-dash__main, it should just be that column's
+  // full width, not a separately-centered pill inset within it — drop
+  // the centering trick and the cap, keep only a little breathing room
+  // above it.
+  left: auto;
+  transform: none;
+  max-width: none;
+  margin-top: $space-md;
 
   // Practice's .learn-input-wrap stacks the textarea above its own
   // toolbar row (flex-direction: column) — right for a 2-button toolbar
@@ -355,9 +413,12 @@
     align-items: center;
     border: none;
     border-radius: 999px;
-    background: color-mix(in srgb, $color-bg 75%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    // A translucent blur made sense floating over scrolling content —
+    // it's a solid in-flow bar on the page's own white background now,
+    // so a plain fill is both simpler and actually visible. Same warm
+    // cream the stat tiles already use elsewhere on this page, not a
+    // new color.
+    background: $color-bg-surface;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 

@@ -117,13 +117,100 @@ export default function () {
     ? { name: servers[0].name, avgPPA: servers[0].avgPPA, avgDelta: servers[0].avgDelta }
     : null;
 
+  const menuMix = computeMenuMix(checks);
+
   return {
     servers,
     checksByServer,
     revenueTrends,
+    menuMix,
     restaurantName: "Pete's Fish House",
     month: "August 2026",
     checkCount: checks.length
+  };
+}
+
+// Menu Mix — dishes and drinks ranked by order count this month,
+// organized by actual menu category with menu price shown per item, so
+// it reads like the menu itself rather than a flat popularity list.
+// Check items only carry a name/price, not a stored category, so the
+// name -> category map below mirrors scripts/generate-insights-mock-
+// data.cjs's STARTERS/MAINS/DRINKS/BOTTLES arrays exactly — DRINKS
+// itself splits into Cocktails vs. Wine by the Glass here, a distinction
+// the generator doesn't track either, just item order within that array.
+// Kept in sync by eye, same duplication-across-module-systems reasoning
+// as this file's other aggregations vs. insights-data.cjs. No gross
+// profit (would need the restaurant's actual food/drink cost, which
+// this dataset doesn't have) or specials/promotions dimension (flagged
+// for later) — menu price and popularity only, for now.
+const CATEGORY_BY_NAME = new Map([
+  ["Castelvetrano Olives", "Starters"],
+  ["House Smoked Salmon Dip", "Starters"],
+  ["Shishito Peppers", "Starters"],
+  ["Straciatella & Prosciutto", "Starters"],
+  ["Shrimp Cocktail", "Starters"],
+  ["Ahi Tuna Crudo", "Starters"],
+  ["Dungeness Crab Cocktail", "Starters"],
+  ["Wagyu Smashburger", "Mains"],
+  ["Maine Lobster Roll", "Mains"],
+  ["Shrimp & White Cheddar Grits", "Mains"],
+  ["Steamed Clams", "Mains"],
+  ["Grilled Branzino", "Mains"],
+  ["Local King Salmon", "Mains"],
+  ["Filet Mignon", "Mains"],
+  ["Pomegranate Cosmo", "Cocktails"],
+  ["Lychee Martini", "Cocktails"],
+  ["Aperol Spritz", "Cocktails"],
+  ["Garden Gimlet", "Cocktails"],
+  ["Almost Famous", "Cocktails"],
+  ["Spiced Old Fashioned", "Cocktails"],
+  ["Espresso Martini", "Cocktails"],
+  ["Storr's Chardonnay", "Wine by the Glass"],
+  ["Rombauer Chardonnay", "Wine by the Glass"],
+  ["Soquel Vineyards Pinot Noir", "Wine by the Glass"],
+  ["Ridge Three Valley's Zinfandel", "Wine by the Glass"],
+  ["Roth Cabernet Sauvignon", "Wine by the Glass"],
+  ["DAOU Cabernet Sauvignon", "Wine by the Glass"],
+  ['La Marea "Kristy Vineyard"', "Wine by the Bottle"],
+  ["The Prisoner Cab. Sauvignon", "Wine by the Bottle"],
+  ["Round Pond Estate Cab. Sauvignon", "Wine by the Bottle"],
+  ["Paul Hobbs Pinot Noir", "Wine by the Bottle"]
+]);
+
+const DISH_CATEGORIES = ["Starters", "Mains"];
+const DRINK_CATEGORIES = ["Cocktails", "Wine by the Glass", "Wine by the Bottle"];
+
+function computeMenuMix(checks) {
+  const byItem = new Map();
+  for (const check of checks) {
+    for (const item of check.items) {
+      const row = byItem.get(item.name) || { name: item.name, price: item.price, count: 0, revenue: 0 };
+      row.count += 1;
+      row.revenue += item.price;
+      byItem.set(item.name, row);
+    }
+  }
+
+  const byCategory = new Map();
+  for (const row of byItem.values()) {
+    const category = CATEGORY_BY_NAME.get(row.name) || "Other";
+    if (!byCategory.has(category)) byCategory.set(category, []);
+    byCategory.get(category).push(row);
+  }
+
+  const buildCategories = (names) =>
+    names
+      .filter((name) => byCategory.has(name))
+      .map((name) => ({
+        name,
+        items: byCategory.get(name)
+          .sort((a, b) => b.count - a.count)
+          .map((item, i) => ({ ...item, rank: i + 1 }))
+      }));
+
+  return {
+    dishes: buildCategories(DISH_CATEGORIES),
+    drinks: buildCategories(DRINK_CATEGORIES)
   };
 }
 

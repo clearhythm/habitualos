@@ -26,6 +26,7 @@ pageScript: /assets/js/insights-demo.js
   <nav class="insights-dash__sidebar">
     <button type="button" class="insights-dash__nav-item is-active" data-view="revenue-trends">Revenue Breakdown</button>
     <button type="button" class="insights-dash__nav-item" data-view="server-performance">Staff Performance</button>
+    <button type="button" class="insights-dash__nav-item" data-view="menu-performance">Menu Mix</button>
     <button type="button" class="insights-dash__nav-item" data-view="your-insights">Answers</button>
   </nav>
 
@@ -195,6 +196,83 @@ pageScript: /assets/js/insights-demo.js
       </div>
     </div>
 
+    {# Dishes/drinks ranked by order count this month, grouped by actual
+       menu category with menu price shown per item — reads like the
+       menu itself, not a flat popularity list. See src/_data/
+       insightsAnalytics.js's computeMenuMix for the category split (no
+       gross profit — needs real food/drink cost this dataset doesn't
+       have — or specials/promotions dimension yet, flagged for later). #}
+    <div class="insights-dash__view" data-view="menu-performance" hidden>
+      <p class="marketing-lede">
+        Your top-moving dishes and drinks this month, by how often
+        they're ordered.
+      </p>
+
+      <div class="insights-demo__menu-grid">
+        <div>
+          <h2 class="insights-demo__chart-title">Dishes</h2>
+          {% for category in insightsAnalytics.menuMix.dishes %}
+          <h3 class="insights-demo__menu-category">{{ category.name }}</h3>
+          <div class="insights-demo__table-wrap">
+            <table class="insights-demo__table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Item</th>
+                  <th>Price</th>
+                  <th>Orders</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in category.items %}
+                <tr>
+                  <td>{{ item.rank }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>${{ item.price | commas }}</td>
+                  <td>{{ item.count | commas }}</td>
+                  <td>${{ item.revenue | commas }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div>
+          <h2 class="insights-demo__chart-title">Drinks</h2>
+          {% for category in insightsAnalytics.menuMix.drinks %}
+          <h3 class="insights-demo__menu-category">{{ category.name }}</h3>
+          <div class="insights-demo__table-wrap">
+            <table class="insights-demo__table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Item</th>
+                  <th>Price</th>
+                  <th>Orders</th>
+                  <th>Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in category.items %}
+                <tr>
+                  <td>{{ item.rank }}</td>
+                  <td>{{ item.name }}</td>
+                  <td>${{ item.price | commas }}</td>
+                  <td>{{ item.count | commas }}</td>
+                  <td>${{ item.revenue | commas }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
     {# "Answers" — its own tab rather than living under each view above,
        so a chat can grow to full width and isn't duplicated per view.
        The fixed composer below (visible from any tab, including this
@@ -218,33 +296,40 @@ pageScript: /assets/js/insights-demo.js
         <div class="insights-chats__list" id="insights-chats-list"></div>
       </div>
     </div>
-  </div>
-</div>
 
-{# Fixed composer — visible across every Insights tab, not scoped to any
-   one view. Reuses .learn-input-row/.learn-textarea/.learn-send-btn
-   wholesale (see src/app/menu.njk's #learn-answer-form), same floating-
-   pill treatment as the marketing nav (see _insights-demo.scss). Submit
-   always starts a brand-new thread under "Answers" and switches
-   there — it's the "ask anything" entry point, not a way to continue a
-   thread already in progress (that's each thread's own reply box). #}
-<div class="learn-input-shell insights-demo__input-shell">
-  <form class="learn-input-row" id="insights-chats-form" autocomplete="off">
-    <div class="learn-input-wrap">
-      <textarea
-        id="insights-chats-input"
-        class="learn-textarea"
-        rows="1"
-        placeholder="Ask a question about this data…"
-        aria-label="Ask a question about this data"
-      ></textarea>
-      <div class="learn-input-toolbar">
-        <button type="submit" id="insights-chats-send" class="learn-send-btn" disabled aria-label="Send">
-          <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" aria-hidden="true">
-            <path d="M8 1.5L12.5 9H10V14.5H6V9H3.5L8 1.5Z" transform="rotate(90 8 8)"/>
-          </svg>
-        </button>
-      </div>
+    {# Composer — visible across every Insights tab, not scoped to any
+       one view, so it lives here as the last child of .insights-dash__main
+       rather than as a page-level element outside .insights-dash
+       entirely. That's what makes it full-width of the content column
+       for free: on desktop it's a plain in-flow block inside the flex
+       item that also holds the tables/charts (matching their width, not
+       a separately-centered pill), and on mobile, since .insights-dash
+       stacks to a single column at that breakpoint, "the content
+       column's width" and "the page's width" are the same thing anyway.
+       Reuses .learn-input-row/.learn-textarea/.learn-send-btn wholesale
+       (see src/app/menu.njk's #learn-answer-form). Submit always starts
+       a brand-new thread under "Answers" and switches there — it's the
+       "ask anything" entry point, not a way to continue a thread already
+       in progress (that's each thread's own reply box). #}
+    <div class="learn-input-shell insights-demo__input-shell">
+      <form class="learn-input-row" id="insights-chats-form" autocomplete="off">
+        <div class="learn-input-wrap">
+          <textarea
+            id="insights-chats-input"
+            class="learn-textarea"
+            rows="1"
+            placeholder="Ask questions about your data…"
+            aria-label="Ask questions about your data"
+          ></textarea>
+          <div class="learn-input-toolbar">
+            <button type="submit" id="insights-chats-send" class="learn-send-btn" disabled aria-label="Send">
+              <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14" aria-hidden="true">
+                <path d="M8 1.5L12.5 9H10V14.5H6V9H3.5L8 1.5Z" transform="rotate(90 8 8)"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>

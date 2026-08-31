@@ -18,7 +18,6 @@ initTooltips();
 // ─── Sidebar view switch ─────────────────────────────────────────────
 const navItems = document.querySelectorAll('.insights-dash__nav-item');
 const dashViews = document.querySelectorAll('.insights-dash__view');
-const dash = document.querySelector('.insights-dash');
 const composerShell = document.querySelector('.insights-demo__input-shell');
 
 function switchView(view) {
@@ -29,13 +28,11 @@ function switchView(view) {
     v.classList.toggle('is-active', active);
   });
 
-  // The fixed composer is the "ask from anywhere else" entry point — once
+  // The composer is the "ask from anywhere else" entry point — once
   // you're already on Answers, every thread has its own reply box,
-  // so a second, redundant "ask a question" input floating on top of that
-  // same tab is just clutter, not a second way to do the same thing.
-  const onAnswers = view === 'your-insights';
-  if (composerShell) composerShell.hidden = onAnswers;
-  if (dash) dash.classList.toggle('insights-dash--no-composer', onAnswers);
+  // so a second, redundant "ask a question" input is just clutter, not
+  // a second way to do the same thing.
+  if (composerShell) composerShell.hidden = view === 'your-insights';
 }
 
 navItems.forEach((navItem) => {
