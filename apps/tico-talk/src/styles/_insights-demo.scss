@@ -411,14 +411,12 @@
   .learn-input-wrap {
     flex-direction: row;
     align-items: center;
-    border: none;
-    border-radius: 999px;
-    // A translucent blur made sense floating over scrolling content —
-    // it's a solid in-flow bar on the page's own white background now,
-    // so a plain fill is both simpler and actually visible. Same warm
-    // cream the stat tiles already use elsewhere on this page, not a
+    // White on white needs a real edge, not just the shadow — same
+    // $color-border used on tables/cards elsewhere on this page, not a
     // new color.
-    background: $color-bg-surface;
+    border: 1px solid $color-border;
+    border-radius: 999px;
+    background: $color-bg;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   }
 
