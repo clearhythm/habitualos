@@ -1,3 +1,7 @@
+import { initTicoTalkPlayer } from './utils/tico-talk-player.js';
+
+initTicoTalkPlayer();
+
 // Rotating word in the homepage hero — "Make every [guest/visit/
 // ticket]" above the fixed "Count." Each word gestures at a different
 // facet of the same mission (guest = experience, visit = the occasion

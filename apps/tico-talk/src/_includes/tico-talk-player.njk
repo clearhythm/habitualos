@@ -1,0 +1,16 @@
+{# Shared "Tico Talk" player card — the same markup on the homepage
+   (fetches the article's text remotely) and on /research/ itself (reads
+   its own #research-article directly) — see utils/tico-talk-player.js
+   for the play logic that handles both cases from one shared module, so
+   there's a single source of truth for both the article text and the
+   player behavior. Set `ticoTalkSubtitle` before including to override
+   the default subtitle. #}
+<div class="tico-talk-card">
+  <button type="button" class="tico-talk-card__art" id="tico-talk-play" aria-label="Play">
+    <img src="/assets/images/tico-logomark.png" alt="" class="tico-talk-card__logo">
+    <span class="tico-talk-card__play-icon" id="tico-talk-play-icon" aria-hidden="true">▶</span>
+  </button>
+  <p class="tico-talk-card__subtitle">
+    {{ ticoTalkSubtitle or "How to \"make every ticket count\" with Tico — the research behind why service quality drives repeat visits." }}
+  </p>
+</div>

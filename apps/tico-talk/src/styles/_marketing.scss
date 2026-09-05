@@ -166,6 +166,65 @@
   margin-top: $space-lg;
 }
 
+// Tico Talk player card (see _includes/tico-talk-player.njk) — a
+// podcast-episode-style thumbnail: square art, play icon overlaid, a
+// subtitle beside it. Same card on the homepage (fetches the article
+// remotely) and on /research/ itself (reads its own text) — see
+// utils/tico-talk-player.js.
+.tico-talk-card {
+  display: flex;
+  align-items: center;
+  gap: $space-md;
+  margin: $space-md 0;
+}
+
+.tico-talk-card__art {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  border: none;
+  border-radius: 0.75rem;
+  background: $color-bg-surface;
+  padding: $space-md;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tico-talk-card__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tico-talk-card__play-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 0.75rem;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.tico-talk-card__art:hover .tico-talk-card__play-icon,
+.tico-talk-card__art:focus-visible .tico-talk-card__play-icon {
+  opacity: 1;
+}
+
+.tico-talk-card__subtitle {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}
+
 .marketing-table-wrap {
   overflow-x: auto;
   margin: $space-md 0 $space-lg;
