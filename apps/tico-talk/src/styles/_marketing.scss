@@ -165,3 +165,41 @@
 .marketing-cta-bottom {
   margin-top: $space-lg;
 }
+
+.marketing-table-wrap {
+  overflow-x: auto;
+  margin: $space-md 0 $space-lg;
+}
+
+.marketing-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th, td {
+    text-align: left;
+    padding: $space-sm $space-md;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: 600;
+    color: $color-text-muted;
+    font-size: $font-size-sm;
+  }
+}
+
+// Research page's supporting-research section — collapsed by default,
+// same "trust means being able to see the underlying work" reasoning as
+// Insights' own Raw Data tabs, just applied to citations instead of
+// check-level data.
+.marketing-appendix {
+  summary {
+    cursor: pointer;
+    color: $color-green;
+    margin-bottom: $space-md;
+  }
+
+  h3 {
+    margin-top: $space-xl;
+  }
+}
