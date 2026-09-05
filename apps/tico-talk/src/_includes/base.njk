@@ -39,9 +39,11 @@
      URL-prefix architecture doesn't box that in later — /app/ itself
      stays contentType: 'app' (the default) on purpose, since it's meant
      to work as a pre-auth orientation screen, not a gated page. #}
-  {% set effectiveFooterType = footerType or contentType %}
-  {% from "footer.njk" import marketingFooter, appFooter %}
-  {% if effectiveFooterType == 'marketing' %}{{ marketingFooter() }}{% else %}{{ appFooter() }}{% endif %}
+  {% if not noFooter %}
+    {% set effectiveFooterType = footerType or contentType %}
+    {% from "footer.njk" import marketingFooter, appFooter %}
+    {% if effectiveFooterType == 'marketing' %}{{ marketingFooter() }}{% else %}{{ appFooter() }}{% endif %}
+  {% endif %}
 
   <script type="module" src="/assets/js/navigation.js"></script>
   {% if pageScript %}<script type="module" src="{{ pageScript }}"></script>{% endif %}

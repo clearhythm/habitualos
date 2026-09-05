@@ -1,0 +1,16 @@
+{# Reusable article-preview card — square art (an image, or the Tico
+   logomark as a default) plus a subtitle, linking to the full piece.
+   Currently only used for the /research/ whitepaper; written generic
+   (href/image/subtitle all overridable) so if this becomes a real
+   multi-post blog later, each entry can set its own values before
+   including this rather than needing a new component. Set
+   `articleCardHref` / `articleCardImage` / `articleCardSubtitle` before
+   including to override the defaults. #}
+<a href="{{ articleCardHref or '/research/' }}" class="article-card">
+  <span class="article-card__art">
+    <img src="{{ articleCardImage or '/assets/images/tico-logomark.png' }}" alt="" class="article-card__image">
+  </span>
+  <p class="article-card__subtitle">
+    {{ articleCardSubtitle or "How to \"make every ticket count\" with Tico — the research behind why service quality drives repeat visits." }}
+  </p>
+</a>

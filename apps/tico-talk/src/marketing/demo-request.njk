@@ -1,0 +1,31 @@
+---
+layout: base.njk
+title: Request Demo Access — Tico
+permalink: /demo/request/
+pageScript: /assets/js/demo-request.js
+noNav: true
+noFooter: true
+noContainer: true
+bodyClass: auth-page-body
+---
+
+<div class="auth-card">
+  <img src="/assets/images/tico-logomark.png" alt="Tico" class="auth-card__logo">
+  <h1 class="auth-card__heading">Request Demo Access</h1>
+  <p class="auth-card__body">
+    You need a password to try the demo. Request access below.
+  </p>
+
+  <form id="demo-request-form" class="auth-card__form">
+    <input type="email" name="email" placeholder="Your email" required>
+    <button type="submit" class="auth-card__button">Request Access</button>
+  </form>
+
+  <div id="demo-request-thanks" class="auth-card__thanks" hidden>
+    <p>
+      Thanks! Email sign-up isn't wired up yet — reach out directly in
+      the meantime and we'll get you access.
+    </p>
+    <p><a href="mailto:erik@erikburns.com">erik@erikburns.com</a></p>
+  </div>
+</div>

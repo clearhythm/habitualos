@@ -166,59 +166,42 @@
   margin-top: $space-lg;
 }
 
-// Tico Talk player card (see _includes/tico-talk-player.njk) — a
-// podcast-episode-style thumbnail: square art, play icon overlaid, a
-// subtitle beside it. Same card on the homepage (fetches the article
-// remotely) and on /research/ itself (reads its own text) — see
-// utils/tico-talk-player.js.
-.tico-talk-card {
+// Article-preview card (see _includes/article-card.njk) — square art
+// (image or the Tico logomark by default) plus a subtitle, linking to
+// the full piece. Generic on purpose: written for /research/ today, but
+// reusable per-entry if this becomes a real multi-post blog later.
+.article-card {
   display: flex;
   align-items: center;
   gap: $space-md;
   margin: $space-md 0;
+  text-decoration: none;
+
+  &:hover .article-card__art {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
 }
 
-.tico-talk-card__art {
-  position: relative;
+.article-card__art {
   flex-shrink: 0;
   width: 96px;
   height: 96px;
-  border: none;
   border-radius: 0.75rem;
   background: $color-bg-surface;
   padding: $space-md;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: box-shadow 0.15s ease;
 }
 
-.tico-talk-card__logo {
+.article-card__image {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
 
-.tico-talk-card__play-icon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 1.5rem;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 0.75rem;
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
-}
-
-.tico-talk-card__art:hover .tico-talk-card__play-icon,
-.tico-talk-card__art:focus-visible .tico-talk-card__play-icon {
-  opacity: 1;
-}
-
-.tico-talk-card__subtitle {
+.article-card__subtitle {
   margin: 0;
   color: $color-text-muted;
   font-size: $font-size-sm;
@@ -261,4 +244,111 @@
   h3 {
     margin-top: $space-xl;
   }
+}
+
+// Full-page shell for chrome-less "auth-style" pages (/demo/request/
+// today — noNav/noFooter/noContainer set in its frontmatter) — same
+// beige background + centered-card idea as the password gate's own
+// inlined page (netlify/edge-functions/auth.ts), so the two feel
+// consistent instead of one being a full site page and the other a
+// standalone card. Centering is scoped to .main specifically, not body —
+// .main already has its own flex: 1 (the normal nav/main/footer sticky-
+// layout rule), which swallows body-level centering since a flex: 1
+// child just grows to fill all available space rather than leaving room
+// to center within; overriding .main's own display/align/justify here
+// is what actually centers the card instead of it sticking to a corner.
+.auth-page-body {
+  background: $color-bg-surface;
+
+  .main {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: $space-lg;
+  }
+}
+
+// Placeholder request-access card (/demo/request/) — values matched
+// directly to the password gate's own card (netlify/edge-functions/
+// auth.ts), which lives as inlined HTML there since an edge function
+// can't reach this compiled stylesheet. Two separate copies for now
+// since this is just a placeholder, not worth unifying into a shared
+// component yet — but the actual sizes/weights below are copied 1:1
+// from that file, not approximated, so the two read as the same design.
+.auth-card {
+  max-width: 380px;
+  width: 100%;
+  padding: 2.5rem 2rem;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.auth-card__logo {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto $space-lg;
+  display: block;
+}
+
+.auth-card__heading {
+  font-family: $font-family-accent;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: $color-green;
+  margin: 0 0 $space-sm;
+}
+
+.auth-card__body {
+  color: $color-text-muted;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 $space-lg;
+}
+
+.auth-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-md;
+
+  input {
+    width: 100%;
+    padding: $space-sm $space-md;
+    border: 1px solid $color-border;
+    border-radius: 0.5rem;
+    font-size: $font-size-base;
+    font-family: inherit;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: $color-green;
+    }
+  }
+}
+
+.auth-card__button {
+  width: 100%;
+  padding: 0.85rem;
+  background: $color-green;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: $font-size-base;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-green-dark;
+  }
+}
+
+.auth-card__thanks p {
+  color: $color-text-muted;
+  font-size: 0.95rem;
+  margin: 0 0 $space-sm;
 }
